@@ -1,6 +1,23 @@
-// api/health.js - Checks backend server health
+// api/health.js - Checks backend status automatically
 
-const DEFAULT_SERVER_URL = process.env.LLMSERVER_URL || "http://localhost:8000";
+async function getLiveServerUrl() {
+  if (process.env.LLMSERVER_URL) {
+    return process.env.LLMSERVER_URL.replace(/\/+$/, "");
+  }
+  try {
+    const rawRes = await fetch(
+      `https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt?_t=${Date.now()}`,
+      { cache: "no-store" }
+    );
+    if (rawRes.ok) {
+      const urlText = (await rawRes.text()).trim();
+      if (urlText && urlText.startsWith("http")) {
+        return urlText.replace(/\/+$/, "");
+      }
+    }
+  } catch (err) {}
+  return "http://localhost:8000";
+}
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -10,11 +27,7 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const targetUrl = (
-    req.query.serverUrl ||
-    req.headers["x-server-url"] ||
-    DEFAULT_SERVER_URL
-  ).replace(/\/+$/, "");
+  const targetUrl = await getLiveServerUrl();
 
   try {
     const controller = new AbortController();
@@ -30,7 +43,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: "ok", serverUrl: targetUrl, data });
     }
     return res.status(upstream.status).json({
-      status: "degraded",
+      status: "offline",
       serverUrl: targetUrl,
       httpStatus: upstream.status,
     });

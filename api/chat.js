@@ -1,66 +1,65 @@
-// api/chat.js - Vercel Serverless Function proxying to yasamarium/llmserver
+// api/chat.js - Vercel Serverless Function proxying directly to yasamarium/llmserver
 
-// Built-in defaults (no manual Vercel env vars required)
-const DEFAULT_SERVER_URL = process.env.LLMSERVER_URL || "http://localhost:8000";
-const DEFAULT_API_KEY = process.env.LLMSERVER_API_KEY || "";
+const DEFAULT_API_KEY = "qwen3-direct-access";
+
+async function getLiveServerUrl() {
+  // 1. If explicit environment variable exists in Vercel, use it
+  if (process.env.LLMSERVER_URL) {
+    return process.env.LLMSERVER_URL.replace(/\/+$/, "");
+  }
+
+  // 2. Fetch live endpoint automatically published by yasamarium/llmserver runner on GitHub
+  try {
+    const rawRes = await fetch(
+      `https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt?_t=${Date.now()}`,
+      { cache: "no-store" }
+    );
+    if (rawRes.ok) {
+      const urlText = (await rawRes.text()).trim();
+      if (urlText && urlText.startsWith("http")) {
+        return urlText.replace(/\/+$/, "");
+      }
+    }
+  } catch (err) {
+    console.error("Failed to fetch endpoint.txt:", err);
+  }
+
+  return "http://localhost:8000";
+}
 
 export const config = {
   runtime: "nodejs",
 };
 
 export default async function handler(req, res) {
-  // Set CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-server-url, x-api-key");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed. Use POST." });
+    return res.status(405).json({ error: "Method not allowed." });
   }
 
-  const {
-    messages,
-    temperature = 0.7,
-    max_tokens = 512,
-    stream = true,
-    serverUrl,
-    apiKey,
-  } = req.body || {};
+  const { messages, temperature = 0.7, max_tokens = 512, stream = true } = req.body || {};
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: { message: "Messages array is required." } });
   }
 
-  // Resolve server URL: header > request body > env var > default
-  const resolvedUrl = (
-    req.headers["x-server-url"] ||
-    serverUrl ||
-    DEFAULT_SERVER_URL
-  ).replace(/\/+$/, "");
-
-  // Resolve API Key: header > request body > env var > default
-  const resolvedApiKey = (
-    req.headers["x-api-key"] ||
-    apiKey ||
-    DEFAULT_API_KEY
-  ).trim();
+  const targetUrl = await getLiveServerUrl();
+  const apiKey = process.env.LLMSERVER_API_KEY || DEFAULT_API_KEY;
 
   try {
-    const upstreamHeaders = {
-      "Content-Type": "application/json",
-    };
-    if (resolvedApiKey) {
-      upstreamHeaders["Authorization"] = `Bearer ${resolvedApiKey}`;
-    }
-
-    const endpoint = `${resolvedUrl}/v1/chat/completions`;
-    const upstreamRes = await fetch(endpoint, {
+    const upstreamRes = await fetch(`${targetUrl}/v1/chat/completions`, {
       method: "POST",
-      headers: upstreamHeaders,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
         model: "qwen3-4b",
         messages,
@@ -92,11 +91,11 @@ export default async function handler(req, res) {
       return res.status(200).json(data);
     }
   } catch (error) {
-    console.error("Upstream connection error:", error);
+    console.error("Direct connection error:", error);
     return res.status(502).json({
       error: {
-        message: `Could not connect to llmserver at '${resolvedUrl}'. Make sure the GitHub Actions runner / tunnel is online. Details: ${error.message}`,
-        type: "upstream_unavailable",
+        message: `Could not connect to Qwen3 4B backend (${targetUrl}). The runner may be initializing. Please try again in a few moments.`,
+        type: "backend_initializing",
       },
     });
   }
