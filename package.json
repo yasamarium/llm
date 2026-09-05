@@ -1,0 +1,22 @@
+{
+  "name": "yasamarium-llm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Modern user-facing web chat interface for Qwen3 4B, deployed on Vercel",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "qwen3",
+    "llm",
+    "chat",
+    "vercel",
+    "ai"
+  ],
+  "author": "yasamarium",
+  "license": "MIT"
+}
