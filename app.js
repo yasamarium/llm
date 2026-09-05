@@ -1,4 +1,4 @@
-// app.js - 120fps Fluid iOS Client with Multi-Model Support (1B & 1.7B)
+// app.js - 120fps Fluid iOS Client with Separated Thinking & Reply
 
 (function () {
   "use strict";
@@ -17,7 +17,7 @@
   const btn17B = document.getElementById("btn17B");
   const btn1B = document.getElementById("btn1B");
 
-  let selectedModel = "1.7b"; // default model
+  let selectedModel = "1.7b";
   let conversation = [];
   let abortController = null;
   let isGenerating = false;
@@ -88,7 +88,7 @@
   }
 
   function renderMarkdown(rawText) {
-    if (!rawText) return '<span class="ios-cursor"></span>';
+    if (!rawText) return "";
     if (typeof marked !== "undefined") {
       return marked.parse(rawText);
     }
@@ -112,6 +112,79 @@
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // Separate Thinking & Reply Parser
+  // ---------------------------------------------------------------------------
+  function parseThinkingAndReply(raw) {
+    const thinkStart = raw.indexOf("<think>");
+    if (thinkStart === -1) {
+      // Check if raw starts with partial or leading tag
+      return { thinking: null, reply: raw, isThinkingDone: true };
+    }
+
+    const thinkEnd = raw.indexOf("</think>");
+    if (thinkEnd === -1) {
+      // Currently generating inside thinking
+      const thinking = raw.substring(thinkStart + 7).trimStart();
+      return { thinking, reply: "", isThinkingDone: false };
+    }
+
+    // Thinking is completed, reply is streaming
+    const thinking = raw.substring(thinkStart + 7, thinkEnd).trim();
+    const reply = raw.substring(thinkEnd + 8).trimStart();
+    return { thinking, reply, isThinkingDone: true };
+  }
+
+  function renderAssistantBubble(bubbleElement, rawContent, isLive = false) {
+    const { thinking, reply, isThinkingDone } = parseThinkingAndReply(rawContent);
+
+    let html = "";
+
+    if (thinking !== null) {
+      // Determine if thought container should be open
+      // During active thinking, keep open. Once thinking is finished, collapse automatically.
+      const isOpen = isLive && !isThinkingDone;
+      const pulseClass = !isThinkingDone ? "thinking-active" : "";
+      const labelText = !isThinkingDone ? "Thinking..." : "Thought Process";
+
+      html += `
+        <div class="ios-thought-container ${isOpen ? "open" : ""}" id="thoughtBox">
+          <button class="thought-toggle-btn" type="button">
+            <span class="thought-pulse-icon">💭</span>
+            <span class="thought-label">${labelText}</span>
+            <span class="thought-chevron">›</span>
+          </button>
+          <div class="thought-body">${thinking.replace(/\n/g, "<br>")}</div>
+        </div>
+      `;
+    }
+
+    // Final clean reply
+    const renderedReply = renderMarkdown(reply);
+    const cursor = isLive ? '<span class="ios-cursor"></span>' : "";
+
+    html += `<div class="ios-reply-body">${renderedReply}${cursor}</div>`;
+
+    bubbleElement.innerHTML = html;
+
+    // Attach click toggle for the thought accordion
+    const toggleBtn = bubbleElement.querySelector(".thought-toggle-btn");
+    if (toggleBtn) {
+      toggleBtn.onclick = (e) => {
+        e.stopPropagation();
+        const container = toggleBtn.closest(".ios-thought-container");
+        if (container) {
+          container.classList.toggle("open");
+        }
+      };
+    }
+
+    attachCodeCopy(bubbleElement);
+    if (typeof hljs !== "undefined") {
+      bubbleElement.querySelectorAll("pre code").forEach(hljs.highlightElement);
+    }
+  }
+
   function appendMessage(role, content = "") {
     if (welcomeView) {
       welcomeView.style.display = "none";
@@ -126,7 +199,7 @@
     if (role === "user") {
       bubble.textContent = content;
     } else {
-      bubble.innerHTML = renderMarkdown(content);
+      renderAssistantBubble(bubble, content, false);
     }
 
     row.appendChild(bubble);
@@ -201,7 +274,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Direct Message Transmission with 120fps Batching
+  // Message Transmission with Separated Thinking & 120fps Batching
   // ---------------------------------------------------------------------------
   async function sendMessage() {
     const text = messageInput.value.trim();
@@ -230,8 +303,7 @@
       if (!renderScheduled) {
         renderScheduled = true;
         requestAnimationFrame(() => {
-          assistantBubble.innerHTML =
-            renderMarkdown(accumulatedText) + '<span class="ios-cursor"></span>';
+          renderAssistantBubble(assistantBubble, accumulatedText, true);
           smoothScrollToBottom();
           renderScheduled = false;
         });
@@ -292,21 +364,22 @@
         }
       }
 
-      // Final render
+      // Final render without cursor
       requestAnimationFrame(() => {
-        assistantBubble.innerHTML = renderMarkdown(accumulatedText);
-        attachCodeCopy(assistantBubble);
-        if (typeof hljs !== "undefined") {
-          assistantBubble.querySelectorAll("pre code").forEach(hljs.highlightElement);
-        }
+        renderAssistantBubble(assistantBubble, accumulatedText, false);
         smoothScrollToBottom();
       });
 
-      conversation.push({ role: "assistant", content: accumulatedText });
+      // Save clean response to conversation history
+      const parsedFinal = parseThinkingAndReply(accumulatedText);
+      conversation.push({ role: "assistant", content: parsedFinal.reply || accumulatedText });
     } catch (err) {
       if (err.name === "AbortError") {
-        assistantBubble.innerHTML =
-          renderMarkdown(accumulatedText) + '<p style="color: var(--text-tertiary); font-style: italic;">(Stopped)</p>';
+        renderAssistantBubble(assistantBubble, accumulatedText, false);
+        const stopNotice = document.createElement("p");
+        stopNotice.style.cssText = "color: var(--text-tertiary); font-style: italic; margin-top: 8px;";
+        stopNotice.textContent = "(Stopped)";
+        assistantBubble.appendChild(stopNotice);
       } else {
         assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;">⚠️ ${err.message}</div>`;
       }

@@ -357,6 +357,88 @@ html, body {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
+/* iOS Thinking Process Accordion (Separated Thought & Reply) */
+.ios-thought-container {
+  background: rgba(255, 255, 255, 0.03);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: all 0.2s var(--spring-easing);
+}
+
+.thought-toggle-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-ios);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.thought-toggle-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.thought-label {
+  flex: 1;
+  text-align: left;
+}
+
+.thought-pulse-icon {
+  font-size: 13px;
+  display: inline-block;
+}
+
+.thought-chevron {
+  font-size: 14px;
+  transition: transform 0.25s var(--spring-easing);
+  color: var(--text-tertiary);
+  display: inline-block;
+}
+.ios-thought-container.open .thought-chevron {
+  transform: rotate(90deg);
+}
+
+.thought-body {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.35s var(--spring-easing), opacity 0.25s ease, padding 0.25s ease;
+  background: rgba(0, 0, 0, 0.25);
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  padding: 0 12px;
+  border-top: 0.5px solid transparent;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ios-thought-container.open .thought-body {
+  max-height: 400px;
+  overflow-y: auto;
+  opacity: 1;
+  padding: 10px 12px;
+  border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+.ios-reply-body {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
 .ios-bubble p {
   margin-bottom: 10px;
 }
