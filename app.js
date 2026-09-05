@@ -16,6 +16,7 @@
 
   const btn17B = document.getElementById("btn17B");
   const btn1B = document.getElementById("btn1B");
+  const btn05B = document.getElementById("btn05B");
 
   let selectedModel = "1.7b";
   let conversation = [];
@@ -23,19 +24,21 @@
   let isGenerating = false;
 
   // ---------------------------------------------------------------------------
-  // Model Switcher (1.7B vs 1B)
+  // Model Switcher (1.7B vs 1B vs 0.5B)
   // ---------------------------------------------------------------------------
   function setModel(model) {
     if (selectedModel === model) return;
     selectedModel = model;
 
-    if (model === "1b") {
-      btn1B.classList.add("active");
-      btn17B.classList.remove("active");
+    btn17B.classList.toggle("active", model === "1.7b");
+    btn1B.classList.toggle("active", model === "1b");
+    btn05B.classList.toggle("active", model === "0.5b");
+
+    if (model === "0.5b") {
+      if (welcomeHeading) welcomeHeading.textContent = "How can 0.5B help you?";
+    } else if (model === "1b") {
       if (welcomeHeading) welcomeHeading.textContent = "How can 1B help you?";
     } else {
-      btn17B.classList.add("active");
-      btn1B.classList.remove("active");
       if (welcomeHeading) welcomeHeading.textContent = "How can I help you?";
     }
 
@@ -44,6 +47,7 @@
 
   btn17B.addEventListener("click", () => setModel("1.7b"));
   btn1B.addEventListener("click", () => setModel("1b"));
+  btn05B.addEventListener("click", () => setModel("0.5b"));
 
   // ---------------------------------------------------------------------------
   // Status Check: "Connecting to AS cloud" / "Connected to AS cloud"

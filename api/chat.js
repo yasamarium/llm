@@ -1,6 +1,12 @@
-// api/chat.js - Intelligent Load-Balanced Proxy for AS Cloud (1B & 1.7B Fleet)
+// api/chat.js - Intelligent Load-Balanced Proxy for AS Cloud (0.5B, 1B & 1.7B Fleet)
 
 const DEFAULT_API_KEY = "qwen3-direct-access";
+
+// 0.5B Ultra-Lightweight Cluster Pool (server5 & server6)
+const CLUSTER_0_5B = [
+  "https://raw.githubusercontent.com/yasamarium/server5/main/endpoint.txt",
+  "https://raw.githubusercontent.com/yasamarium/server6/main/endpoint.txt",
+];
 
 // Dedicated 1B node
 const NODE_1B = "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt";
@@ -32,13 +38,30 @@ async function resolveServerUrl(modelType) {
     return process.env.LLMSERVER_URL.replace(/\/+$/, "");
   }
 
-  // 1. Dedicated 1B Routing
+  // 1. 0.5B Ultra-Lightweight Cluster Routing
+  if (modelType === "0.5b") {
+    const candidates = [...CLUSTER_0_5B];
+    const startIndex = roundRobinIndex % candidates.length;
+    roundRobinIndex = (roundRobinIndex + 1) % candidates.length;
+
+    const orderedCandidates = [
+      ...candidates.slice(startIndex),
+      ...candidates.slice(0, startIndex),
+    ];
+
+    for (const candidate of orderedCandidates) {
+      const url = await fetchEndpointUrl(candidate);
+      if (url) return url;
+    }
+  }
+
+  // 2. Dedicated 1B Routing
   if (modelType === "1b") {
     const url = await fetchEndpointUrl(NODE_1B);
     if (url) return url;
   }
 
-  // 2. 1.7B Cluster Routing with Round-Robin & Health Check Failover
+  // 3. 1.7B Cluster Routing with Round-Robin & Health Check Failover
   const candidates = [...CLUSTER_1_7B];
   // Rotate starting candidate based on roundRobinIndex
   const startIndex = roundRobinIndex % candidates.length;
@@ -79,7 +102,7 @@ export default async function handler(req, res) {
 
   const {
     messages,
-    model = "1.7b", // "1b" or "1.7b"
+    model = "1.7b", // "0.5b", "1b", or "1.7b"
     temperature = 0.7,
     max_tokens = 512,
     stream = true,
@@ -89,9 +112,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: { message: "Messages array is required." } });
   }
 
-  const is1B = model.toLowerCase().includes("1b");
-  const targetUrl = await resolveServerUrl(is1B ? "1b" : "1.7b");
+  const is05B = model.toLowerCase().includes("0.5b");
+  const is1B = model.toLowerCase().includes("1b") && !is05B;
+  const modelType = is05B ? "0.5b" : (is1B ? "1b" : "1.7b");
+  const targetUrl = await resolveServerUrl(modelType);
   const apiKey = process.env.LLMSERVER_API_KEY || DEFAULT_API_KEY;
+  const upstreamModel = is05B ? "qwen-0.5b" : (is1B ? "qwen-1b" : "qwen3-1.7b");
 
   try {
     const upstreamRes = await fetch(`${targetUrl}/v1/chat/completions`, {
@@ -101,7 +127,7 @@ export default async function handler(req, res) {
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: is1B ? "qwen-1b" : "qwen3-1.7b",
+        model: upstreamModel,
         messages,
         temperature: Number(temperature),
         max_tokens: Number(max_tokens),

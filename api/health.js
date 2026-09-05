@@ -1,4 +1,9 @@
-// api/health.js - Checks health of 1B or 1.7B cluster nodes
+// api/health.js - Checks health of 0.5B, 1B or 1.7B cluster nodes
+
+const CLUSTER_0_5B = [
+  "https://raw.githubusercontent.com/yasamarium/server5/main/endpoint.txt",
+  "https://raw.githubusercontent.com/yasamarium/server6/main/endpoint.txt",
+];
 
 const NODE_1B = "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt";
 
@@ -29,9 +34,19 @@ export default async function handler(req, res) {
   }
 
   const modelQuery = (req.query.model || "1.7b").toLowerCase();
-  const is1B = modelQuery.includes("1b");
+  const is05B = modelQuery.includes("0.5b");
+  const is1B = modelQuery.includes("1b") && !is05B;
 
-  const endpointsToCheck = is1B ? [NODE_1B] : CLUSTER_1_7B;
+  let endpointsToCheck = CLUSTER_1_7B;
+  let modelLabel = "1.7B";
+
+  if (is05B) {
+    endpointsToCheck = CLUSTER_0_5B;
+    modelLabel = "0.5B";
+  } else if (is1B) {
+    endpointsToCheck = [NODE_1B];
+    modelLabel = "1B";
+  }
 
   for (const endpointMeta of endpointsToCheck) {
     const targetUrl = await fetchEndpointUrl(endpointMeta);
@@ -50,7 +65,7 @@ export default async function handler(req, res) {
         const data = await upstream.json();
         return res.status(200).json({
           status: "ok",
-          model: is1B ? "1B" : "1.7B",
+          model: modelLabel,
           serverUrl: targetUrl,
           data,
         });
@@ -60,7 +75,7 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     status: "offline",
-    model: is1B ? "1B" : "1.7B",
+    model: modelLabel,
     message: "Nodes initializing",
   });
 }
