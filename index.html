@@ -2,99 +2,108 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Qwen3 4B - Direct AI Chat</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Qwen3 4B</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22black%22 stroke=%22white%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2220%22 fill=%22white%22/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <!-- Markdown & Code Syntax Highlighting -->
+  <!-- Markdown & Code Highlight -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark-dimmed.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
   <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 </head>
 <body>
-  <div class="app-container">
-    <!-- Top Navigation Bar -->
-    <header class="navbar">
-      <div class="nav-left">
-        <div class="logo-icon">⚡</div>
-        <div class="logo-text">
-          <span class="brand">yasamarium</span>
-          <span class="separator">/</span>
-          <span class="app-name">llm</span>
+  <div class="ios-app">
+    <!-- iOS Navigation Bar -->
+    <header class="ios-navbar">
+      <div class="nav-brand">
+        <div class="brand-glyph">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
         </div>
-        <span class="badge model-badge">Qwen3 4B</span>
+        <span class="brand-title">Qwen 4B</span>
       </div>
 
-      <div class="nav-right">
-        <!-- Live Connection Status Pill -->
-        <div id="statusBtn" class="status-pill checking">
-          <span class="status-dot"></span>
-          <span id="statusText">Connecting to runner...</span>
+      <!-- AS Cloud Status Indicator -->
+      <div class="status-indicator">
+        <div id="statusPill" class="ios-pill checking">
+          <span class="status-pulse"></span>
+          <span id="statusLabel">Connecting to AS cloud...</span>
         </div>
+      </div>
 
-        <button id="newChatBtn" class="btn btn-secondary" title="Start a new chat">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-          <span>New Chat</span>
+      <!-- Action Button -->
+      <div class="nav-actions">
+        <button id="newChatBtn" class="ios-circle-btn" title="New Conversation" aria-label="New Conversation">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
         </button>
       </div>
     </header>
 
-    <!-- Chat Messages Stream -->
-    <main class="chat-viewport" id="chatViewport">
-      <!-- Welcome Empty State -->
-      <div class="welcome-container" id="welcomeContainer">
-        <div class="welcome-card">
-          <div class="welcome-avatar">⚡</div>
-          <h1>Qwen3 4B Chat</h1>
-          <p class="subtitle">Direct connection to GitHub Actions inference runner</p>
+    <!-- Chat Messages Viewport -->
+    <main class="ios-chat-viewport" id="chatViewport">
+      <!-- Minimalist Welcome State -->
+      <div class="welcome-view" id="welcomeView">
+        <div class="welcome-content">
+          <div class="ios-sparkle-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+            </svg>
+          </div>
+          <h1 class="welcome-heading">How can I help you?</h1>
           
-          <div class="quick-prompts">
-            <button class="prompt-chip" data-prompt="Explain quantum computing in simple terms.">
-              💡 Explain quantum computing
+          <div class="suggestion-pills">
+            <button class="suggestion-chip" data-prompt="Explain quantum computing in simple terms.">
+              Explain quantum computing
             </button>
-            <button class="prompt-chip" data-prompt="Write a Python script to download a file with progress reporting.">
-              🐍 Python download script
+            <button class="suggestion-chip" data-prompt="Write a concise Python script to parse and clean a JSON dataset.">
+              Python script to clean data
             </button>
-            <button class="prompt-chip" data-prompt="What are the main advantages of running GGUF quantized models on CPU?">
-              ⚙️ Why GGUF on CPU?
+            <button class="suggestion-chip" data-prompt="Draft a polite and professional follow-up email.">
+              Professional follow-up email
             </button>
-            <button class="prompt-chip" data-prompt="Write a concise and professional email to follow up on a project proposal.">
-              ✉️ Professional follow-up email
+            <button class="suggestion-chip" data-prompt="Summarize the core principles of effective system design.">
+              Core system design principles
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Messages container -->
-      <div class="messages-list" id="messagesList"></div>
+      <!-- Messages Stream -->
+      <div class="messages-flow" id="messagesFlow"></div>
     </main>
 
-    <!-- Bottom Input Area -->
-    <footer class="input-container">
-      <div class="input-wrapper">
-        <textarea 
-          id="messageInput" 
-          rows="1" 
-          placeholder="Message Qwen3 4B... (Shift+Enter for newline)"
-          autofocus
+    <!-- iOS Dynamic Island / Bottom Input Capsule -->
+    <footer class="ios-input-dock">
+      <div class="input-capsule">
+        <textarea
+          id="messageInput"
+          rows="1"
+          placeholder="Message"
+          autocomplete="off"
+          autocorrect="on"
+          autocapitalize="sentences"
+          spellcheck="true"
         ></textarea>
-        
-        <div class="input-actions">
-          <button id="stopBtn" class="btn btn-stop hidden" title="Stop generating">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-            <span>Stop</span>
+
+        <div class="dock-actions">
+          <button id="stopBtn" class="stop-capsule-btn hidden" title="Stop">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="5" y="5" width="14" height="14" rx="2"/>
+            </svg>
           </button>
-          
-          <button id="sendBtn" class="btn btn-send" title="Send message">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+
+          <button id="sendBtn" class="send-capsule-btn" title="Send" aria-label="Send">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
           </button>
         </div>
-      </div>
-      <div class="input-footer-text">
-        <span>Running Qwen3 4B GGUF Q4_K_M • Powered by <strong>yasamarium/llmserver</strong></span>
       </div>
     </footer>
   </div>

@@ -1,99 +1,87 @@
-// app.js - Direct Client Application for yasamarium/llm
+// app.js - 120fps Fluid iOS Client for Qwen3 4B
 
 (function () {
+  "use strict";
+
   const chatViewport = document.getElementById("chatViewport");
-  const welcomeContainer = document.getElementById("welcomeContainer");
-  const messagesList = document.getElementById("messagesList");
+  const welcomeView = document.getElementById("welcomeView");
+  const messagesFlow = document.getElementById("messagesFlow");
   const messageInput = document.getElementById("messageInput");
   const sendBtn = document.getElementById("sendBtn");
   const stopBtn = document.getElementById("stopBtn");
   const newChatBtn = document.getElementById("newChatBtn");
-  const statusBtn = document.getElementById("statusBtn");
-  const statusText = document.getElementById("statusText");
+  const statusPill = document.getElementById("statusPill");
+  const statusLabel = document.getElementById("statusLabel");
 
   let conversation = [];
   let abortController = null;
   let isGenerating = false;
+  let isConnected = false;
 
   // ---------------------------------------------------------------------------
-  // Status Check & Health Verification (Direct Auto-Discovery)
+  // Status Check: "Connecting to AS cloud" / "Connected to AS cloud"
   // ---------------------------------------------------------------------------
-  async function checkServerHealth() {
+  async function checkConnection() {
     try {
       const res = await fetch(`/api/health?_t=${Date.now()}`);
       const data = await res.json();
 
       if (data.status === "ok") {
-        updateStatusPill("online", "Qwen3 4B Online");
+        updateStatus("online", "Connected to AS cloud");
+        isConnected = true;
         return true;
       } else {
-        updateStatusPill("checking", "Runner Initializing...");
+        updateStatus("checking", "Connecting to AS cloud...");
+        isConnected = false;
         return false;
       }
-    } catch (err) {
-      updateStatusPill("offline", "Server Offline");
+    } catch (e) {
+      updateStatus("offline", "AS cloud offline");
+      isConnected = false;
       return false;
     }
   }
 
-  function updateStatusPill(status, text) {
-    statusBtn.className = `status-pill ${status}`;
-    statusText.textContent = text;
+  function updateStatus(state, text) {
+    statusPill.className = `ios-pill ${state}`;
+    statusLabel.textContent = text;
   }
 
   // Poll health every 15 seconds
-  setInterval(checkServerHealth, 15000);
+  setInterval(checkConnection, 15000);
 
   // ---------------------------------------------------------------------------
-  // Message Handling & UI
+  // 120fps Optimized Rendering & Scroll Helpers
   // ---------------------------------------------------------------------------
-  function appendMessage(role, content = "") {
-    if (welcomeContainer) {
-      welcomeContainer.classList.add("hidden");
-    }
-
-    const row = document.createElement("div");
-    row.className = `message-row ${role}`;
-
-    const avatar = document.createElement("div");
-    avatar.className = "avatar";
-    avatar.textContent = role === "user" ? "You" : "⚡";
-
-    const contentBox = document.createElement("div");
-    contentBox.className = "message-content";
-
-    if (role === "user") {
-      contentBox.textContent = content;
-    } else {
-      contentBox.innerHTML = renderMarkdown(content);
-    }
-
-    row.appendChild(avatar);
-    row.appendChild(contentBox);
-    messagesList.appendChild(row);
-
-    scrollToBottom();
-    return contentBox;
+  let scrollRafId = null;
+  function smoothScrollToBottom() {
+    if (scrollRafId) cancelAnimationFrame(scrollRafId);
+    scrollRafId = requestAnimationFrame(() => {
+      chatViewport.scrollTo({
+        top: chatViewport.scrollHeight,
+        behavior: "smooth",
+      });
+    });
   }
 
-  function renderMarkdown(text) {
-    if (!text) return '<span class="streaming-cursor"></span>';
+  function renderMarkdown(rawText) {
+    if (!rawText) return '<span class="ios-cursor"></span>';
     if (typeof marked !== "undefined") {
-      return marked.parse(text);
+      return marked.parse(rawText);
     }
-    return text.replace(/\n/g, "<br>");
+    return rawText.replace(/\n/g, "<br>");
   }
 
-  function attachCodeCopyButtons(container) {
+  function attachCodeCopy(container) {
     container.querySelectorAll("pre").forEach((pre) => {
-      if (pre.querySelector(".copy-btn")) return;
+      if (pre.querySelector(".code-copy-btn")) return;
       const btn = document.createElement("button");
-      btn.className = "copy-btn";
+      btn.className = "code-copy-btn";
       btn.textContent = "Copy";
       btn.onclick = () => {
         const code = pre.querySelector("code")?.innerText || pre.innerText;
         navigator.clipboard.writeText(code).then(() => {
-          btn.textContent = "Copied!";
+          btn.textContent = "Copied";
           setTimeout(() => (btn.textContent = "Copy"), 2000);
         });
       };
@@ -101,23 +89,56 @@
     });
   }
 
-  function scrollToBottom() {
-    chatViewport.scrollTop = chatViewport.scrollHeight;
+  function appendMessage(role, content = "") {
+    if (welcomeView) {
+      welcomeView.style.display = "none";
+    }
+
+    const row = document.createElement("div");
+    row.className = `ios-row ${role}`;
+
+    const bubble = document.createElement("div");
+    bubble.className = "ios-bubble";
+
+    if (role === "user") {
+      bubble.textContent = content;
+    } else {
+      bubble.innerHTML = renderMarkdown(content);
+    }
+
+    row.appendChild(bubble);
+    messagesFlow.appendChild(row);
+
+    smoothScrollToBottom();
+    return bubble;
   }
 
-  messageInput.addEventListener("input", function () {
-    this.style.height = "auto";
-    this.style.height = `${Math.min(this.scrollHeight, 160)}px`;
-  });
+  // ---------------------------------------------------------------------------
+  // Input Handling
+  // ---------------------------------------------------------------------------
+  function autoResizeInput() {
+    messageInput.style.height = "auto";
+    const newHeight = Math.min(messageInput.scrollHeight, 140);
+    messageInput.style.height = `${newHeight}px`;
+    sendBtn.disabled = !messageInput.value.trim() || isGenerating;
+  }
 
-  messageInput.addEventListener("keydown", function (e) {
+  messageInput.addEventListener("input", autoResizeInput);
+
+  messageInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      if (!isGenerating && messageInput.value.trim()) {
+        sendMessage();
+      }
     }
   });
 
-  sendBtn.addEventListener("click", sendMessage);
+  sendBtn.addEventListener("click", () => {
+    if (!isGenerating && messageInput.value.trim()) {
+      sendMessage();
+    }
+  });
 
   stopBtn.addEventListener("click", () => {
     if (abortController) {
@@ -131,23 +152,25 @@
       abortController.abort();
     }
     conversation = [];
-    messagesList.innerHTML = "";
-    welcomeContainer.classList.remove("hidden");
+    messagesFlow.innerHTML = "";
+    if (welcomeView) welcomeView.style.display = "flex";
     setGenerating(false);
+    messageInput.value = "";
+    autoResizeInput();
     messageInput.focus();
   });
 
-  document.querySelectorAll(".prompt-chip").forEach((chip) => {
+  document.querySelectorAll(".suggestion-chip").forEach((chip) => {
     chip.addEventListener("click", () => {
       messageInput.value = chip.getAttribute("data-prompt");
+      autoResizeInput();
       sendMessage();
     });
   });
 
   function setGenerating(generating) {
     isGenerating = generating;
-    sendBtn.disabled = generating;
-    messageInput.disabled = generating;
+    sendBtn.disabled = generating || !messageInput.value.trim();
     stopBtn.classList.toggle("hidden", !generating);
     if (!generating) {
       messageInput.focus();
@@ -155,14 +178,14 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Send & Stream Message (Direct, Zero-Config)
+  // Direct Message Transmission with 120fps Batching
   // ---------------------------------------------------------------------------
   async function sendMessage() {
     const text = messageInput.value.trim();
     if (!text || isGenerating) return;
 
     messageInput.value = "";
-    messageInput.style.height = "auto";
+    autoResizeInput();
 
     appendMessage("user", text);
     conversation.push({ role: "user", content: text });
@@ -173,11 +196,25 @@
     abortController = new AbortController();
 
     const fullMessages = [
-      { role: "system", content: "You are Qwen3 4B, an intelligent, helpful, and precise AI assistant." },
+      { role: "system", content: "You are a helpful, precise, and polite AI assistant." },
       ...conversation,
     ];
 
     let accumulatedText = "";
+    let renderScheduled = false;
+
+    // 120fps render loop
+    function scheduleRender() {
+      if (!renderScheduled) {
+        renderScheduled = true;
+        requestAnimationFrame(() => {
+          assistantBubble.innerHTML =
+            renderMarkdown(accumulatedText) + '<span class="ios-cursor"></span>';
+          smoothScrollToBottom();
+          renderScheduled = false;
+        });
+      }
+    }
 
     try {
       const response = await fetch("/api/chat", {
@@ -195,7 +232,7 @@
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errMsg =
-          errorData.error?.message || `HTTP ${response.status}: Failed to reach LLM runner.`;
+          errorData.error?.message || `Failed to connect to AS cloud (HTTP ${response.status}).`;
         throw new Error(errMsg);
       }
 
@@ -226,34 +263,38 @@
               "";
             if (delta) {
               accumulatedText += delta;
-              assistantBubble.innerHTML =
-                renderMarkdown(accumulatedText) + '<span class="streaming-cursor"></span>';
-              scrollToBottom();
+              scheduleRender();
             }
           } catch (e) {}
         }
       }
 
-      assistantBubble.innerHTML = renderMarkdown(accumulatedText);
-      attachCodeCopyButtons(assistantBubble);
-      if (typeof hljs !== "undefined") {
-        assistantBubble.querySelectorAll("pre code").forEach(hljs.highlightElement);
-      }
+      // Final render without cursor
+      requestAnimationFrame(() => {
+        assistantBubble.innerHTML = renderMarkdown(accumulatedText);
+        attachCodeCopy(assistantBubble);
+        if (typeof hljs !== "undefined") {
+          assistantBubble.querySelectorAll("pre code").forEach(hljs.highlightElement);
+        }
+        smoothScrollToBottom();
+      });
+
       conversation.push({ role: "assistant", content: accumulatedText });
-      scrollToBottom();
     } catch (err) {
       if (err.name === "AbortError") {
         assistantBubble.innerHTML =
-          renderMarkdown(accumulatedText) + '<p class="text-muted"><em>(Generation stopped)</em></p>';
+          renderMarkdown(accumulatedText) + '<p style="color: var(--text-tertiary); font-style: italic;">(Stopped)</p>';
       } else {
-        assistantBubble.innerHTML = `<div style="color: var(--status-offline); padding: 6px 0;">⚠️ <strong>Error:</strong> ${err.message}</div>`;
+        assistantBubble.innerHTML = `<div style="color: var(--status-red);">⚠️ ${err.message}</div>`;
       }
     } finally {
       setGenerating(false);
       abortController = null;
+      autoResizeInput();
     }
   }
 
-  // Initial health check
-  checkServerHealth();
+  // Initialize
+  autoResizeInput();
+  checkConnection();
 })();
