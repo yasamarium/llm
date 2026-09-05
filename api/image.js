@@ -1,4 +1,4 @@
-﻿// api/image.js - Intelligent Load-Balanced Image Generation Proxy (SD-Turbo Fleet)
+// api/image.js - Intelligent Load-Balanced Image Generation Proxy (SD-Turbo Fleet)
 
 const DEFAULT_API_KEY = "qwen3-direct-access";
 
@@ -43,7 +43,7 @@ async function resolveImageServerUrl() {
 }
 
 export const config = {
-  runtime: "nodejs",
+  maxDuration: 60,
 };
 
 export default async function handler(req, res) {
