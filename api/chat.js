@@ -1,27 +1,60 @@
-// api/chat.js - Vercel Serverless Function proxying directly to yasamarium/llmserver
+// api/chat.js - Intelligent Load-Balanced Proxy for AS Cloud (1B & 1.7B Fleet)
 
 const DEFAULT_API_KEY = "qwen3-direct-access";
 
-async function getLiveServerUrl() {
-  // 1. If explicit environment variable exists in Vercel, use it
+// Dedicated 1B node
+const NODE_1B = "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt";
+
+// 1.7B Cluster Pool (Load Balanced across multiple GitHub Actions runners)
+const CLUSTER_1_7B = [
+  "https://raw.githubusercontent.com/yasamarium/server2/main/endpoint.txt",
+  "https://raw.githubusercontent.com/yasamarium/server3/main/endpoint.txt",
+  "https://raw.githubusercontent.com/yasamarium/server4/main/endpoint.txt",
+  "https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt",
+];
+
+let roundRobinIndex = 0;
+
+async function fetchEndpointUrl(rawUrl) {
+  try {
+    const res = await fetch(`${rawUrl}?_t=${Date.now()}`, { cache: "no-store" });
+    if (res.ok) {
+      const text = (await res.text()).trim();
+      if (text.startsWith("http")) return text.replace(/\/+$/, "");
+    }
+  } catch (err) {}
+  return null;
+}
+
+async function resolveServerUrl(modelType) {
+  // If user explicitly set LLMSERVER_URL in Vercel environment, honor it
   if (process.env.LLMSERVER_URL) {
     return process.env.LLMSERVER_URL.replace(/\/+$/, "");
   }
 
-  // 2. Fetch live endpoint automatically published by yasamarium/llmserver runner on GitHub
-  try {
-    const rawRes = await fetch(
-      `https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt?_t=${Date.now()}`,
-      { cache: "no-store" }
-    );
-    if (rawRes.ok) {
-      const urlText = (await rawRes.text()).trim();
-      if (urlText && urlText.startsWith("http")) {
-        return urlText.replace(/\/+$/, "");
-      }
+  // 1. Dedicated 1B Routing
+  if (modelType === "1b") {
+    const url = await fetchEndpointUrl(NODE_1B);
+    if (url) return url;
+  }
+
+  // 2. 1.7B Cluster Routing with Round-Robin & Health Check Failover
+  const candidates = [...CLUSTER_1_7B];
+  // Rotate starting candidate based on roundRobinIndex
+  const startIndex = roundRobinIndex % candidates.length;
+  roundRobinIndex = (roundRobinIndex + 1) % candidates.length;
+
+  const orderedCandidates = [
+    ...candidates.slice(startIndex),
+    ...candidates.slice(0, startIndex),
+  ];
+
+  // Try each node in the cluster until an online one is found
+  for (const candidate of orderedCandidates) {
+    const url = await fetchEndpointUrl(candidate);
+    if (url) {
+      return url;
     }
-  } catch (err) {
-    console.error("Failed to fetch endpoint.txt:", err);
   }
 
   return "http://localhost:8000";
@@ -44,13 +77,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed." });
   }
 
-  const { messages, temperature = 0.7, max_tokens = 512, stream = true } = req.body || {};
+  const {
+    messages,
+    model = "1.7b", // "1b" or "1.7b"
+    temperature = 0.7,
+    max_tokens = 512,
+    stream = true,
+  } = req.body || {};
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: { message: "Messages array is required." } });
   }
 
-  const targetUrl = await getLiveServerUrl();
+  const is1B = model.toLowerCase().includes("1b");
+  const targetUrl = await resolveServerUrl(is1B ? "1b" : "1.7b");
   const apiKey = process.env.LLMSERVER_API_KEY || DEFAULT_API_KEY;
 
   try {
@@ -61,7 +101,7 @@ export default async function handler(req, res) {
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "qwen3-4b",
+        model: is1B ? "qwen-1b" : "qwen3-1.7b",
         messages,
         temperature: Number(temperature),
         max_tokens: Number(max_tokens),
@@ -91,11 +131,11 @@ export default async function handler(req, res) {
       return res.status(200).json(data);
     }
   } catch (error) {
-    console.error("Direct connection error:", error);
+    console.error("Upstream connection error:", error);
     return res.status(502).json({
       error: {
-        message: `Could not connect to Qwen3 4B backend (${targetUrl}). The runner may be initializing. Please try again in a few moments.`,
-        type: "backend_initializing",
+        message: `AS cloud node (${targetUrl}) is currently initializing. Please try again in a few moments.`,
+        type: "cluster_node_initializing",
       },
     });
   }

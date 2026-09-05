@@ -1,22 +1,23 @@
-// api/health.js - Checks backend status automatically
+// api/health.js - Checks health of 1B or 1.7B cluster nodes
 
-async function getLiveServerUrl() {
-  if (process.env.LLMSERVER_URL) {
-    return process.env.LLMSERVER_URL.replace(/\/+$/, "");
-  }
+const NODE_1B = "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt";
+
+const CLUSTER_1_7B = [
+  "https://raw.githubusercontent.com/yasamarium/server2/main/endpoint.txt",
+  "https://raw.githubusercontent.com/yasamarium/server3/main/endpoint.txt",
+  "https://raw.githubusercontent.com/yasamarium/server4/main/endpoint.txt",
+  "https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt",
+];
+
+async function fetchEndpointUrl(rawUrl) {
   try {
-    const rawRes = await fetch(
-      `https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt?_t=${Date.now()}`,
-      { cache: "no-store" }
-    );
-    if (rawRes.ok) {
-      const urlText = (await rawRes.text()).trim();
-      if (urlText && urlText.startsWith("http")) {
-        return urlText.replace(/\/+$/, "");
-      }
+    const res = await fetch(`${rawUrl}?_t=${Date.now()}`, { cache: "no-store" });
+    if (res.ok) {
+      const text = (await res.text()).trim();
+      if (text.startsWith("http")) return text.replace(/\/+$/, "");
     }
   } catch (err) {}
-  return "http://localhost:8000";
+  return null;
 }
 
 export default async function handler(req, res) {
@@ -27,31 +28,39 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const targetUrl = await getLiveServerUrl();
+  const modelQuery = (req.query.model || "1.7b").toLowerCase();
+  const is1B = modelQuery.includes("1b");
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const endpointsToCheck = is1B ? [NODE_1B] : CLUSTER_1_7B;
 
-    const upstream = await fetch(`${targetUrl}/health`, {
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
+  for (const endpointMeta of endpointsToCheck) {
+    const targetUrl = await fetchEndpointUrl(endpointMeta);
+    if (!targetUrl) continue;
 
-    if (upstream.ok) {
-      const data = await upstream.json();
-      return res.status(200).json({ status: "ok", serverUrl: targetUrl, data });
-    }
-    return res.status(upstream.status).json({
-      status: "offline",
-      serverUrl: targetUrl,
-      httpStatus: upstream.status,
-    });
-  } catch (err) {
-    return res.status(200).json({
-      status: "offline",
-      serverUrl: targetUrl,
-      message: err.message,
-    });
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const upstream = await fetch(`${targetUrl}/health`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (upstream.ok) {
+        const data = await upstream.json();
+        return res.status(200).json({
+          status: "ok",
+          model: is1B ? "1B" : "1.7B",
+          serverUrl: targetUrl,
+          data,
+        });
+      }
+    } catch (e) {}
   }
+
+  return res.status(200).json({
+    status: "offline",
+    model: is1B ? "1B" : "1.7B",
+    message: "Nodes initializing",
+  });
 }

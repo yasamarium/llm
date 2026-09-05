@@ -1,10 +1,11 @@
-// app.js - 120fps Fluid iOS Client for Qwen3 4B
+// app.js - 120fps Fluid iOS Client with Multi-Model Support (1B & 1.7B)
 
 (function () {
   "use strict";
 
   const chatViewport = document.getElementById("chatViewport");
   const welcomeView = document.getElementById("welcomeView");
+  const welcomeHeading = document.getElementById("welcomeHeading");
   const messagesFlow = document.getElementById("messagesFlow");
   const messageInput = document.getElementById("messageInput");
   const sendBtn = document.getElementById("sendBtn");
@@ -13,31 +14,54 @@
   const statusPill = document.getElementById("statusPill");
   const statusLabel = document.getElementById("statusLabel");
 
+  const btn17B = document.getElementById("btn17B");
+  const btn1B = document.getElementById("btn1B");
+
+  let selectedModel = "1.7b"; // default model
   let conversation = [];
   let abortController = null;
   let isGenerating = false;
-  let isConnected = false;
+
+  // ---------------------------------------------------------------------------
+  // Model Switcher (1.7B vs 1B)
+  // ---------------------------------------------------------------------------
+  function setModel(model) {
+    if (selectedModel === model) return;
+    selectedModel = model;
+
+    if (model === "1b") {
+      btn1B.classList.add("active");
+      btn17B.classList.remove("active");
+      if (welcomeHeading) welcomeHeading.textContent = "How can 1B help you?";
+    } else {
+      btn17B.classList.add("active");
+      btn1B.classList.remove("active");
+      if (welcomeHeading) welcomeHeading.textContent = "How can I help you?";
+    }
+
+    checkConnection();
+  }
+
+  btn17B.addEventListener("click", () => setModel("1.7b"));
+  btn1B.addEventListener("click", () => setModel("1b"));
 
   // ---------------------------------------------------------------------------
   // Status Check: "Connecting to AS cloud" / "Connected to AS cloud"
   // ---------------------------------------------------------------------------
   async function checkConnection() {
     try {
-      const res = await fetch(`/api/health?_t=${Date.now()}`);
+      const res = await fetch(`/api/health?model=${selectedModel}&_t=${Date.now()}`);
       const data = await res.json();
 
       if (data.status === "ok") {
-        updateStatus("online", "Connected to AS cloud");
-        isConnected = true;
+        updateStatus("online", `Connected to AS cloud (${selectedModel.toUpperCase()})`);
         return true;
       } else {
         updateStatus("checking", "Connecting to AS cloud...");
-        isConnected = false;
         return false;
       }
     } catch (e) {
       updateStatus("offline", "AS cloud offline");
-      isConnected = false;
       return false;
     }
   }
@@ -47,11 +71,10 @@
     statusLabel.textContent = text;
   }
 
-  // Poll health every 15 seconds
   setInterval(checkConnection, 15000);
 
   // ---------------------------------------------------------------------------
-  // 120fps Optimized Rendering & Scroll Helpers
+  // 120fps Rendering & Scroll Helpers
   // ---------------------------------------------------------------------------
   let scrollRafId = null;
   function smoothScrollToBottom() {
@@ -196,14 +219,13 @@
     abortController = new AbortController();
 
     const fullMessages = [
-      { role: "system", content: "You are a helpful, precise, and polite AI assistant." },
+      { role: "system", content: "You are a helpful, concise, and polite AI assistant." },
       ...conversation,
     ];
 
     let accumulatedText = "";
     let renderScheduled = false;
 
-    // 120fps render loop
     function scheduleRender() {
       if (!renderScheduled) {
         renderScheduled = true;
@@ -223,6 +245,7 @@
         signal: abortController.signal,
         body: JSON.stringify({
           messages: fullMessages,
+          model: selectedModel,
           temperature: 0.7,
           max_tokens: 512,
           stream: true,
@@ -269,7 +292,7 @@
         }
       }
 
-      // Final render without cursor
+      // Final render
       requestAnimationFrame(() => {
         assistantBubble.innerHTML = renderMarkdown(accumulatedText);
         attachCodeCopy(assistantBubble);
@@ -285,7 +308,7 @@
         assistantBubble.innerHTML =
           renderMarkdown(accumulatedText) + '<p style="color: var(--text-tertiary); font-style: italic;">(Stopped)</p>';
       } else {
-        assistantBubble.innerHTML = `<div style="color: var(--status-red);">⚠️ ${err.message}</div>`;
+        assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;">⚠️ ${err.message}</div>`;
       }
     } finally {
       setGenerating(false);

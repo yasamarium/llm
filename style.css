@@ -74,7 +74,7 @@ html, body {
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .brand-glyph {
@@ -93,11 +93,38 @@ html, body {
   transform: scale(1.05);
 }
 
-.brand-title {
-  font-size: 15px;
+/* iOS Segmented Control */
+.ios-segmented-control {
+  display: flex;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2.5px;
+  border-radius: 18px;
+  border: 0.5px solid var(--border-subtle);
+  user-select: none;
+}
+
+.segment-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-ios);
+  font-size: 11.5px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  padding: 4px 11px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s var(--spring-easing);
+  letter-spacing: -0.01em;
+}
+
+.segment-btn:hover {
   color: #ffffff;
+}
+
+.segment-btn.active {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* AS Cloud Status Pill */
@@ -129,7 +156,6 @@ html, body {
   transition: all 0.3s var(--spring-easing);
 }
 
-/* Status States */
 .ios-pill.online .status-pulse {
   background: var(--status-green);
   box-shadow: 0 0 10px rgba(48, 209, 88, 0.6);
@@ -194,7 +220,6 @@ html, body {
   flex-direction: column;
 }
 
-/* Subtle iOS Scrollbar */
 .ios-chat-viewport::-webkit-scrollbar {
   width: 4px;
 }
@@ -332,7 +357,6 @@ html, body {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
-/* Markdown in Assistant Bubbles */
 .ios-bubble p {
   margin-bottom: 10px;
 }
@@ -367,7 +391,6 @@ html, body {
   color: #e5e5ea;
 }
 
-/* Copy Code Button */
 .code-copy-btn {
   position: absolute;
   top: 8px;
@@ -388,7 +411,6 @@ html, body {
   color: #ffffff;
 }
 
-/* 120fps Smooth Typewriter Pulse */
 .ios-cursor {
   display: inline-block;
   width: 2px;
@@ -467,7 +489,6 @@ html, body {
   margin-bottom: 2px;
 }
 
-/* Send Button: Minimalist Black & White Arrow */
 .send-capsule-btn {
   width: 32px;
   height: 32px;
@@ -495,7 +516,6 @@ html, body {
   cursor: not-allowed;
 }
 
-/* Stop Button */
 .stop-capsule-btn {
   width: 32px;
   height: 32px;
@@ -517,18 +537,18 @@ html, body {
   display: none !important;
 }
 
-/* Responsive Mobile Tweaks */
 @media (max-width: 640px) {
   .ios-navbar {
-    padding: 0 14px;
+    padding: 0 12px;
     height: 56px;
   }
-  .brand-title {
-    font-size: 14px;
+  .segment-btn {
+    padding: 3px 8px;
+    font-size: 11px;
   }
   .ios-pill {
-    padding: 4px 9px;
-    font-size: 10.5px;
+    padding: 4px 8px;
+    font-size: 10px;
   }
   .ios-chat-viewport {
     padding: 72px 14px 100px 14px;

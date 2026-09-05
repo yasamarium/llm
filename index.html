@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Qwen3 4B</title>
+  <title>AS Intelligence</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22black%22 stroke=%22white%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2220%22 fill=%22white%22/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,16 @@
             <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
         </div>
-        <span class="brand-title">Qwen 4B</span>
+        
+        <!-- Apple-style Segmented Model Switcher -->
+        <div class="ios-segmented-control" id="modelSwitcher">
+          <button class="segment-btn active" id="btn17B" data-model="1.7b" title="Qwen3 1.7B Cluster">
+            1.7B
+          </button>
+          <button class="segment-btn" id="btn1B" data-model="1b" title="1B Ultra Fast Node">
+            1B
+          </button>
+        </div>
       </div>
 
       <!-- AS Cloud Status Indicator -->
@@ -55,7 +64,7 @@
               <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
             </svg>
           </div>
-          <h1 class="welcome-heading">How can I help you?</h1>
+          <h1 class="welcome-heading" id="welcomeHeading">How can I help you?</h1>
           
           <div class="suggestion-pills">
             <button class="suggestion-chip" data-prompt="Explain quantum computing in simple terms.">
@@ -78,7 +87,7 @@
       <div class="messages-flow" id="messagesFlow"></div>
     </main>
 
-    <!-- iOS Dynamic Island / Bottom Input Capsule -->
+    <!-- iOS Bottom Input Capsule -->
     <footer class="ios-input-dock">
       <div class="input-capsule">
         <textarea
