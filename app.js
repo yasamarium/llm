@@ -17,6 +17,7 @@
   const btn17B = document.getElementById("btn17B");
   const btn1B = document.getElementById("btn1B");
   const btn05B = document.getElementById("btn05B");
+  const btnImage = document.getElementById("btnImage");
 
   let selectedModel = "1.7b";
   let conversation = [];
@@ -24,7 +25,7 @@
   let isGenerating = false;
 
   // ---------------------------------------------------------------------------
-  // Model Switcher (1.7B vs 1B vs 0.5B)
+  // Model Switcher (1.7B vs 1B vs 0.5B vs Image)
   // ---------------------------------------------------------------------------
   function setModel(model) {
     if (selectedModel === model) return;
@@ -33,12 +34,19 @@
     btn17B.classList.toggle("active", model === "1.7b");
     btn1B.classList.toggle("active", model === "1b");
     btn05B.classList.toggle("active", model === "0.5b");
+    if (btnImage) btnImage.classList.toggle("active", model === "image");
 
-    if (model === "0.5b") {
+    if (model === "image") {
+      messageInput.placeholder = "Describe an image to generate...";
+      if (welcomeHeading) welcomeHeading.textContent = "What would you like to imagine?";
+    } else if (model === "0.5b") {
+      messageInput.placeholder = "Message";
       if (welcomeHeading) welcomeHeading.textContent = "How can 0.5B help you?";
     } else if (model === "1b") {
+      messageInput.placeholder = "Message";
       if (welcomeHeading) welcomeHeading.textContent = "How can 1B help you?";
     } else {
+      messageInput.placeholder = "Message";
       if (welcomeHeading) welcomeHeading.textContent = "How can I help you?";
     }
 
@@ -48,6 +56,7 @@
   btn17B.addEventListener("click", () => setModel("1.7b"));
   btn1B.addEventListener("click", () => setModel("1b"));
   btn05B.addEventListener("click", () => setModel("0.5b"));
+  if (btnImage) btnImage.addEventListener("click", () => setModel("image"));
 
   // ---------------------------------------------------------------------------
   // Status Check: "Connecting to AS cloud" / "Connected to AS cloud"
@@ -58,7 +67,8 @@
       const data = await res.json();
 
       if (data.status === "ok") {
-        updateStatus("online", `Connected to AS cloud (${selectedModel.toUpperCase()})`);
+        const label = selectedModel === "image" ? "SD-Turbo" : selectedModel.toUpperCase();
+        updateStatus("online", `Connected to AS cloud (${label})`);
         return true;
       } else {
         updateStatus("checking", "Connecting to AS cloud...");
@@ -277,6 +287,93 @@
     }
   }
 
+  function escapeHtml(str) {
+    return (str || "").replace(/[&<>"']/g, (m) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    }[m]));
+  }
+
+  // ---------------------------------------------------------------------------
+  // SD-Turbo Image Generation Handler
+  // ---------------------------------------------------------------------------
+  async function generateImageMessage(prompt) {
+    appendMessage("user", prompt);
+
+    const assistantBubble = appendMessage("assistant", "");
+    assistantBubble.innerHTML = `
+      <div class="ios-image-loading">
+        <div class="image-shimmer"></div>
+        <div class="image-loading-content">
+          <span class="ios-spinner"></span>
+          <span>Imagining with AS cloud (SD-Turbo)...</span>
+        </div>
+      </div>
+    `;
+
+    setGenerating(true);
+    abortController = new AbortController();
+
+    try {
+      const response = await fetch("/api/image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: abortController.signal,
+        body: JSON.stringify({ prompt, size: "512x512" }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errMsg = errorData.error?.message || `Failed to generate image (HTTP ${response.status}).`;
+        throw new Error(errMsg);
+      }
+
+      const resData = await response.json();
+      const item = resData.data?.[0];
+      if (!item) {
+        throw new Error("No image data returned from server.");
+      }
+
+      const dataUrl = item.b64_json ? `data:image/png;base64,${item.b64_json}` : item.url;
+      const downloadFileName = `as_cloud_${Date.now()}.png`;
+
+      assistantBubble.innerHTML = `
+        <div class="ios-image-card">
+          <div class="image-frame">
+            <img src="${dataUrl}" alt="${escapeHtml(prompt)}" class="generated-image" />
+          </div>
+          <div class="image-meta-bar">
+            <span class="image-prompt-text">"${escapeHtml(prompt)}"</span>
+            <a href="${dataUrl}" download="${downloadFileName}" class="image-download-btn" title="Save Image">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Save</span>
+            </a>
+          </div>
+        </div>
+      `;
+
+      conversation.push({ role: "assistant", content: `[Generated Image: "${prompt}"]` });
+      smoothScrollToBottom();
+    } catch (err) {
+      if (err.name === "AbortError") {
+        assistantBubble.innerHTML = `<div style="color: var(--text-tertiary); font-style: italic;">(Image generation canceled)</div>`;
+      } else {
+        assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;">⚠️ ${escapeHtml(err.message)}</div>`;
+      }
+    } finally {
+      setGenerating(false);
+      abortController = null;
+      autoResizeInput();
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Message Transmission with Separated Thinking & 120fps Batching
   // ---------------------------------------------------------------------------
@@ -286,6 +383,16 @@
 
     messageInput.value = "";
     autoResizeInput();
+
+    // Check if Image Mode or /image command
+    const isImageCommand = text.toLowerCase().startsWith("/image ") || text.toLowerCase().startsWith("/imagine ");
+    if (selectedModel === "image" || isImageCommand) {
+      const prompt = isImageCommand ? text.replace(/^\/(image|imagine)\s+/i, "").trim() : text;
+      if (prompt) {
+        generateImageMessage(prompt);
+        return;
+      }
+    }
 
     appendMessage("user", text);
     conversation.push({ role: "user", content: text });

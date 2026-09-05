@@ -1,4 +1,9 @@
-// api/health.js - Checks health of 0.5B, 1B or 1.7B cluster nodes
+// api/health.js - Checks health of 0.5B, 1B, 1.7B or SD-Turbo cluster nodes
+
+const CLUSTER_IMAGE = [
+  "https://raw.githubusercontent.com/yasamarium/server7/main/endpoint.txt",
+  "https://raw.githubusercontent.com/yasamarium/server8/main/endpoint.txt",
+];
 
 const CLUSTER_0_5B = [
   "https://raw.githubusercontent.com/yasamarium/server5/main/endpoint.txt",
@@ -34,13 +39,17 @@ export default async function handler(req, res) {
   }
 
   const modelQuery = (req.query.model || "1.7b").toLowerCase();
+  const isImage = modelQuery.includes("image") || modelQuery.includes("turbo");
   const is05B = modelQuery.includes("0.5b");
   const is1B = modelQuery.includes("1b") && !is05B;
 
   let endpointsToCheck = CLUSTER_1_7B;
   let modelLabel = "1.7B";
 
-  if (is05B) {
+  if (isImage) {
+    endpointsToCheck = CLUSTER_IMAGE;
+    modelLabel = "SD-Turbo";
+  } else if (is05B) {
     endpointsToCheck = CLUSTER_0_5B;
     modelLabel = "0.5B";
   } else if (is1B) {
