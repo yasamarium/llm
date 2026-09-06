@@ -24,7 +24,6 @@
   const currentModelName = document.getElementById("currentModelName");
   const currentModelBadge = document.getElementById("currentModelBadge");
   const popoverItems = document.querySelectorAll(".popover-item");
-  const quickPills = document.querySelectorAll(".quick-pill");
 
   // Image Attachment Elements
   const attachBtn = document.getElementById("attachBtn");
@@ -332,11 +331,6 @@
       item.classList.toggle("active", item.getAttribute("data-model") === model);
     });
 
-    // Update quick pills active state
-    quickPills.forEach((pill) => {
-      pill.classList.toggle("active", pill.getAttribute("data-model") === model);
-    });
-
     // Update input placeholder & welcome heading
     messageInput.placeholder = cfg.placeholder;
     if (welcomeHeading) {
@@ -350,13 +344,6 @@
   popoverItems.forEach((item) => {
     item.addEventListener("click", () => {
       const model = item.getAttribute("data-model");
-      if (model) setModel(model);
-    });
-  });
-
-  quickPills.forEach((pill) => {
-    pill.addEventListener("click", () => {
-      const model = pill.getAttribute("data-model");
       if (model) setModel(model);
     });
   });
@@ -1219,6 +1206,59 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Instant Preset Greeting Detection (HI, hello, hey, etc.) - No LLM query
+  // ---------------------------------------------------------------------------
+  function isGreeting(rawText) {
+    if (!rawText) return false;
+    const cleaned = rawText
+      .trim()
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, "")
+      .trim()
+      .replace(/\s+/g, " ");
+
+    const exactGreetings = new Set([
+      "hi", "hii", "hiii", "hiiii",
+      "hey", "heyy", "heyyy",
+      "hello", "helloo", "hellooo",
+      "hola", "namaste", "salam", "salaam",
+      "assalam alaikum", "assalamu alaikum", "assalamualaikum",
+      "yo", "sup", "whats up", "what is up", "whatsup",
+      "howdy", "good morning", "good afternoon", "good evening", "good day",
+      "hi there", "hello there", "hey there",
+      "hi bot", "hello bot", "hey bot",
+      "hi as", "hello as", "hey as"
+    ]);
+
+    if (exactGreetings.has(cleaned)) return true;
+
+    const pattern = /^(h+i+|h+e+y+|h+e+l+l*o+|h+o+l+a|namaste|salam|assalam|yo|sup|howdy)(\s+(there|buddy|bro|friend|bot|as|cloud))?$/i;
+    return pattern.test(cleaned);
+  }
+
+  function getPresetGreetingReply(modelKey) {
+    const cfg = MODEL_CONFIG[modelKey];
+    const modelName = cfg?.name || "AS Intelligence";
+
+    if (cfg?.isExclusive) {
+      const s62Replies = [
+        `Hello! 👋 I'm **${modelName}**, running on **AS Cloud (EXCLUSIVE S-62)**. How can I assist you today?`,
+        `Hey there! 👋 **${modelName}** is ready on **AS Cloud (EXCLUSIVE S-62)**. What would you like to explore or solve?`,
+        `Hi! 😊 **${modelName} (EXCLUSIVE S-62)** at your service. Feel free to ask any question, brainstorm ideas, or generate code!`,
+      ];
+      return s62Replies[Math.floor(Math.random() * s62Replies.length)];
+    }
+
+    const standardReplies = [
+      `Hello! 👋 I'm **${modelName}**, powered by **AS Cloud**. How can I help you today?`,
+      `Hey there! 👋 How can I assist you with your questions, coding, or projects today?`,
+      `Hi! 😊 I'm ready to help. Feel free to ask questions, explore ideas, or use our media tools!`,
+      `Hello! 👋 What would you like to work on today?`,
+    ];
+    return standardReplies[Math.floor(Math.random() * standardReplies.length)];
+  }
+
+  // ---------------------------------------------------------------------------
   // Message Transmission with Separated Thinking & 120fps Batching
   // ---------------------------------------------------------------------------
   async function sendMessage() {
@@ -1305,6 +1345,32 @@
         generateImageMessage(prompt);
         return;
       }
+    }
+
+    // 4. Instant Preset Reply for Greetings (HI, hello, hey, etc.) - Never queries model!
+    if (isGreeting(text)) {
+      appendMessage("user", text);
+      conversation.push({ role: "user", content: text });
+
+      const assistantBubble = appendMessage("assistant", "");
+      const reply = getPresetGreetingReply(selectedModel);
+      conversation.push({ role: "assistant", content: reply });
+
+      triggerHaptic("light");
+
+      let charIndex = 0;
+      const step = 3;
+      const timer = setInterval(() => {
+        charIndex += step;
+        const currentSlice = reply.slice(0, charIndex);
+        renderAssistantBubble(assistantBubble, currentSlice, charIndex < reply.length, selectedModel);
+        smoothScrollToBottom();
+        if (charIndex >= reply.length) {
+          clearInterval(timer);
+          renderAssistantBubble(assistantBubble, reply, false, selectedModel);
+        }
+      }, 14);
+      return;
     }
 
     appendMessage("user", text);

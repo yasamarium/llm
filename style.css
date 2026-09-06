@@ -518,7 +518,7 @@ html, body {
 .composer-top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   padding: 0 4px;
 }
@@ -531,16 +531,16 @@ html, body {
 .model-picker-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.08);
   border: 0.5px solid var(--border-strong);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-radius: 9999px;
-  padding: 5px 12px 5px 10px;
+  padding: 6px 13px 6px 10px;
   color: #ffffff;
   font-family: var(--font-ios);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
   outline: none;
@@ -1736,32 +1736,23 @@ html, body {
   }
 
   .model-picker-trigger {
-    padding: 4px 9px 4px 8px;
-    font-size: 11.5px;
-    gap: 5px;
+    padding: 5px 12px 5px 10px;
+    font-size: 12px;
+    gap: 6px;
     flex-shrink: 0;
   }
 
   .model-picker-name {
-    max-width: 86px;
+    max-width: 190px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 11.5px;
+    font-size: 12px;
   }
 
   .model-picker-badge {
     font-size: 9px;
-    padding: 1px 4px;
-  }
-
-  .bottom-quick-pills {
-    max-width: calc(100% - 130px);
-    gap: 4px;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-    flex: 1;
-    overflow-x: auto;
+    padding: 1.5px 5px;
   }
 
   .quick-pill {

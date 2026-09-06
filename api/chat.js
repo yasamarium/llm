@@ -102,6 +102,34 @@ async function getAvailableEndpoints(modelKey) {
   return validUrls.length > 0 ? validUrls : ["http://localhost:8000"];
 }
 
+function isGreeting(rawText) {
+  if (!rawText) return false;
+  const cleaned = rawText
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  const exactGreetings = new Set([
+    "hi", "hii", "hiii", "hiiii",
+    "hey", "heyy", "heyyy",
+    "hello", "helloo", "hellooo",
+    "hola", "namaste", "salam", "salaam",
+    "assalam alaikum", "assalamu alaikum", "assalamualaikum",
+    "yo", "sup", "whats up", "what is up", "whatsup",
+    "howdy", "good morning", "good afternoon", "good evening", "good day",
+    "hi there", "hello there", "hey there",
+    "hi bot", "hello bot", "hey bot",
+    "hi as", "hello as", "hey as"
+  ]);
+
+  if (exactGreetings.has(cleaned)) return true;
+
+  const pattern = /^(h+i+|h+e+y+|h+e+l+l*o+|h+o+l+a|namaste|salam|assalam|yo|sup|howdy)(\s+(there|buddy|bro|friend|bot|as|cloud))?$/i;
+  return pattern.test(cleaned);
+}
+
 export const config = {
   runtime: "nodejs",
 };
@@ -132,6 +160,31 @@ export default async function handler(req, res) {
   }
 
   const modelKey = normalizeModel(model);
+
+  // Instant preset reply for greetings (HI, hello, hey, etc.) - saves cloud inference & latency
+  const lastUserMsg = messages[messages.length - 1]?.content || "";
+  if (isGreeting(lastUserMsg)) {
+    const isS62 = Boolean(S62_MODELS[modelKey]);
+    const replyText = isS62
+      ? `Hello! 👋 I'm **${modelKey.toUpperCase()}**, running on **AS Cloud (EXCLUSIVE S-62)**. How can I assist you today?`
+      : `Hello! 👋 I'm **AS Intelligence**, powered by **AS Cloud**. How can I help you today?`;
+
+    if (stream) {
+      res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
+
+      const sseMsg = { choices: [{ delta: { content: replyText } }] };
+      res.write(`data: ${JSON.stringify(sseMsg)}\n\n`);
+      res.write("data: [DONE]\n\n");
+      return res.end();
+    } else {
+      return res.status(200).json({
+        choices: [{ message: { role: "assistant", content: replyText } }],
+      });
+    }
+  }
 
   // Handle EXCLUSIVE S-62 Flagship models
   if (S62_MODELS[modelKey]) {
