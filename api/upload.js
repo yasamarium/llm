@@ -1,4 +1,6 @@
 // api/upload.js - AS Cloud Release Storage Database Uploader
+import { createShortLink } from "./shortener.js";
+
 export const config = {
   api: {
     bodyParser: {
@@ -40,10 +42,17 @@ export async function uploadBufferToRelease(buffer, filename, contentType = "ima
 
   const asset = await uploadRes.json();
   const directUrl = asset.browser_download_url || `https://github.com/${OWNER}/${REPO}/releases/download/${TAG}/${safeFilename}`;
+
+  let shortLink = null;
+  try {
+    shortLink = await createShortLink(directUrl, null, { filename: safeFilename });
+  } catch (_) {}
+
   return {
     filename: safeFilename,
     directUrl,
-    proxyUrl: `/api/proxy-image?url=${encodeURIComponent(directUrl)}&name=${encodeURIComponent(safeFilename)}`,
+    shortUrl: shortLink ? shortLink.shortUrl : null,
+    proxyUrl: shortLink ? shortLink.shortUrl : `/api/proxy-image?url=${encodeURIComponent(directUrl)}&name=${encodeURIComponent(safeFilename)}`,
   };
 }
 

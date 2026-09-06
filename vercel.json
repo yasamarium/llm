@@ -3,11 +3,15 @@
   "cleanUrls": true,
   "framework": null,
   "functions": {
-    "api/image.js": {
-      "maxDuration": 60
-    },
-    "api/chat.js": {
-      "maxDuration": 60
-    }
-  }
+    "api/image.js": { "maxDuration": 60 },
+    "api/chat.js": { "maxDuration": 60 },
+    "api/edit-image.js": { "maxDuration": 60 },
+    "api/proxy-image.js": { "maxDuration": 60 },
+    "api/i.js": { "maxDuration": 60 },
+    "api/s.js": { "maxDuration": 60 }
+  },
+  "rewrites": [
+    { "source": "/i/:id*", "destination": "/api/i?id=:id*" },
+    { "source": "/s/:id*", "destination": "/api/s?id=:id*" }
+  ]
 }

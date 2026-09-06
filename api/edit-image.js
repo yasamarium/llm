@@ -1,5 +1,6 @@
 // api/edit-image.js - AS Cloud Image-to-Image AI Editor (Nanobanana + Release Database)
 import { uploadBufferToRelease } from "./upload.js";
+import { createShortLink } from "./shortener.js";
 
 export const config = {
   api: {
@@ -104,13 +105,33 @@ export default async function handler(req, res) {
       // If saving to release fails, resultUrl is still valid
     }
 
+    // Create short links in yasamarium/links database
+    let originalShort = null;
+    let resultShort = null;
+    try {
+      [originalShort, resultShort] = await Promise.all([
+        createShortLink(directImageUrl, null, { prompt: prompt.trim(), kind: "original" }).catch(() => null),
+        createShortLink(savedEditedUrl, null, { prompt: prompt.trim(), kind: "edited" }).catch(() => null),
+      ]);
+    } catch (_) {}
+
+    const originalProxyUrl = originalShort
+      ? originalShort.shortUrl
+      : `/api/proxy-image?url=${encodeURIComponent(directImageUrl)}&name=original.jpg`;
+
+    const resultProxyUrl = resultShort
+      ? resultShort.shortUrl
+      : `/api/proxy-image?url=${encodeURIComponent(savedEditedUrl)}&name=${encodeURIComponent(savedFilename)}`;
+
     return res.status(200).json({
       status: "ok",
       prompt: prompt.trim(),
       filename: savedFilename,
-      original_proxy_url: `/api/proxy-image?url=${encodeURIComponent(directImageUrl)}&name=original_${Date.now()}.jpg`,
+      original_proxy_url: originalProxyUrl,
+      original_short_url: originalShort ? originalShort.shortUrl : null,
       original_storage_url: directImageUrl,
-      result_proxy_url: `/api/proxy-image?url=${encodeURIComponent(savedEditedUrl)}&name=${encodeURIComponent(savedFilename)}`,
+      result_proxy_url: resultProxyUrl,
+      result_short_url: resultShort ? resultShort.shortUrl : null,
       result_storage_url: savedEditedUrl,
       upstream_result_url: resultUrl,
     });
