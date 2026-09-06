@@ -33,6 +33,16 @@
   const attachedFileName = document.getElementById("attachedFileName");
   const removeAttachedBtn = document.getElementById("removeAttachedBtn");
 
+  // iOS 18 Lightbox Elements
+  const imageLightbox = document.getElementById("imageLightbox");
+  const lightboxBackdrop = document.getElementById("lightboxBackdrop");
+  const closeLightboxBtn = document.getElementById("closeLightboxBtn");
+  const lightboxImg = document.getElementById("lightboxImg");
+  const lightboxTitle = document.getElementById("lightboxTitle");
+  const lightboxSaveBtn = document.getElementById("lightboxSaveBtn");
+  const lightboxCopyBtn = document.getElementById("lightboxCopyBtn");
+  const lightboxTabBtn = document.getElementById("lightboxTabBtn");
+
   let attachedImage = null; // { data: base64/url, name: "file.jpg", type: "image/jpeg" }
   let selectedModel = "1.7b";
   let conversation = [];
@@ -47,6 +57,97 @@
       } catch (e) {}
     }
   }
+
+  // Cross-browser clipboard copy with fallback
+  async function copyTextToClipboard(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (_) {}
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand("copy");
+    } catch (e) {}
+    document.body.removeChild(textArea);
+    return true;
+  }
+
+  // Open iOS 18 Fullscreen Image Lightbox
+  function openImageLightbox(src, title = "Image Preview", fallbackSrc = "") {
+    if (!imageLightbox || !lightboxImg) return;
+
+    let fullUrl = src;
+    if (src && src.startsWith("/")) {
+      fullUrl = window.location.origin + src;
+    }
+
+    lightboxImg.src = src;
+    if (fallbackSrc) {
+      lightboxImg.onerror = () => { lightboxImg.src = fallbackSrc; };
+    } else {
+      lightboxImg.onerror = null;
+    }
+
+    if (lightboxTitle) {
+      lightboxTitle.textContent = title || "Image Preview";
+    }
+
+    if (lightboxSaveBtn) {
+      lightboxSaveBtn.href = src;
+      lightboxSaveBtn.setAttribute("download", `as_image_${Date.now()}.jpg`);
+    }
+
+    if (lightboxTabBtn) {
+      lightboxTabBtn.href = src;
+    }
+
+    if (lightboxCopyBtn) {
+      lightboxCopyBtn.setAttribute("data-url", fullUrl);
+      lightboxCopyBtn.innerHTML = "<span>Copy URL</span>";
+    }
+
+    imageLightbox.classList.remove("hidden");
+    triggerHaptic("light");
+  }
+
+  function closeImageLightbox() {
+    if (!imageLightbox) return;
+    imageLightbox.classList.add("hidden");
+    if (lightboxImg) lightboxImg.src = "";
+  }
+
+  if (closeLightboxBtn) closeLightboxBtn.addEventListener("click", closeImageLightbox);
+  if (lightboxBackdrop) lightboxBackdrop.addEventListener("click", closeImageLightbox);
+
+  if (lightboxCopyBtn) {
+    lightboxCopyBtn.addEventListener("click", () => {
+      const urlToCopy = lightboxCopyBtn.getAttribute("data-url");
+      if (urlToCopy) {
+        copyTextToClipboard(urlToCopy).then(() => {
+          lightboxCopyBtn.innerHTML = "<span>Copied!</span>";
+          triggerHaptic("medium");
+          setTimeout(() => {
+            if (lightboxCopyBtn) lightboxCopyBtn.innerHTML = "<span>Copy URL</span>";
+          }, 2000);
+        });
+      }
+    });
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && imageLightbox && !imageLightbox.classList.contains("hidden")) {
+      closeImageLightbox();
+    }
+  });
 
   const MODEL_CONFIG = {
     "1.7b": { name: "Qwen 1.7B", glyph: "✦", badge: "4 Nodes", title: "How can 1.7B help you?", placeholder: "Message Qwen 1.7B..." },
@@ -613,6 +714,13 @@
         });
       }
 
+      const genImg = assistantBubble.querySelector(".generated-image");
+      if (genImg) {
+        genImg.addEventListener("click", () => {
+          openImageLightbox(dataUrl, `Generated: "${prompt}"`);
+        });
+      }
+
       conversation.push({ role: "assistant", content: `[Generated Image: "${prompt}"]` });
       smoothScrollToBottom();
     } catch (err) {
@@ -969,11 +1077,11 @@
       assistantBubble.innerHTML = `
         <div class="ios-edit-card">
           <div class="edit-card-grid">
-            <div class="edit-col">
+            <div class="edit-col original-col" title="Click to view full original image">
               <span class="edit-col-badge">Original</span>
               <img src="${escapeHtml(originalProxyUrl)}" alt="Original Image" onerror="this.src='${escapeHtml(originalStorageUrl)}'" />
             </div>
-            <div class="edit-col">
+            <div class="edit-col edited-col" title="Click to view full edited image">
               <span class="edit-col-badge" style="background: rgba(48, 209, 88, 0.75);">Edited</span>
               <img src="${escapeHtml(resultProxyUrl)}" alt="Edited Image" onerror="this.src='${escapeHtml(resultStorageUrl)}'" />
             </div>
@@ -982,7 +1090,7 @@
           <div class="edit-card-body">
             <div class="edit-prompt-text">✨ "${escapeHtml(finalPrompt)}"</div>
             <div class="edit-actions-bar">
-              <a href="${escapeHtml(resultProxyUrl)}" download="as_edited_${Date.now()}.jpg" target="_blank" class="media-btn-primary" title="Download Edited Image">
+              <a href="${escapeHtml(resultProxyUrl)}" download="as_edited_${Date.now()}.jpg" target="_blank" class="media-btn-primary" title="Save Edited Image">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/>
@@ -991,29 +1099,51 @@
                 <span>Save Result</span>
               </a>
 
-              <button type="button" class="media-btn-secondary copy-proxy-btn" data-url="${escapeHtml(resultProxyUrl)}">
+              <button type="button" class="media-btn-secondary copy-proxy-btn" data-url="${escapeHtml(resultProxyUrl)}" title="Copy Image Link">
                 <span>Copy URL</span>
               </button>
 
-              <a href="${escapeHtml(resultProxyUrl)}" target="_blank" rel="noopener noreferrer" class="media-btn-secondary" title="Open Fullscreen">
+              <button type="button" class="media-btn-secondary view-full-btn" title="Open Fullscreen Lightbox">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
                 </svg>
                 <span>View Full</span>
-              </a>
+              </button>
             </div>
           </div>
         </div>
       `;
 
+      const origCol = assistantBubble.querySelector(".original-col");
+      if (origCol) {
+        origCol.addEventListener("click", () => {
+          openImageLightbox(originalProxyUrl, "Original Image", originalStorageUrl);
+        });
+      }
+
+      const editedCol = assistantBubble.querySelector(".edited-col");
+      if (editedCol) {
+        editedCol.addEventListener("click", () => {
+          openImageLightbox(resultProxyUrl, `Edited: "${finalPrompt}"`, resultStorageUrl);
+        });
+      }
+
+      const viewFullBtn = assistantBubble.querySelector(".view-full-btn");
+      if (viewFullBtn) {
+        viewFullBtn.addEventListener("click", () => {
+          openImageLightbox(resultProxyUrl, `Edited: "${finalPrompt}"`, resultStorageUrl);
+        });
+      }
+
       const copyBtn = assistantBubble.querySelector(".copy-proxy-btn");
       if (copyBtn) {
         copyBtn.addEventListener("click", () => {
-          const fullUrl = window.location.origin + copyBtn.getAttribute("data-url");
-          navigator.clipboard.writeText(fullUrl).then(() => {
-            copyBtn.innerHTML = "<span>Copied!</span>";
-            triggerHaptic("light");
-            setTimeout(() => { copyBtn.innerHTML = "<span>Copy URL</span>"; }, 2000);
+          const rawUrl = copyBtn.getAttribute("data-url");
+          const fullUrl = rawUrl.startsWith("http") ? rawUrl : window.location.origin + rawUrl;
+          copyTextToClipboard(fullUrl).then(() => {
+            copyBtn.innerHTML = "<span>Copied Link!</span>";
+            triggerHaptic("medium");
+            setTimeout(() => { if (copyBtn) copyBtn.innerHTML = "<span>Copy URL</span>"; }, 2000);
           });
         });
       }

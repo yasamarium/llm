@@ -43,7 +43,7 @@ export async function uploadBufferToRelease(buffer, filename, contentType = "ima
   return {
     filename: safeFilename,
     directUrl,
-    proxyUrl: `/api/proxy-image?url=${encodeURIComponent(directUrl)}`,
+    proxyUrl: `/api/proxy-image?url=${encodeURIComponent(directUrl)}&name=${encodeURIComponent(safeFilename)}`,
   };
 }
 

@@ -84,18 +84,21 @@ export default async function handler(req, res) {
 
     // 3. Download the result image and save permanently to our GitHub Release database
     let savedEditedUrl = resultUrl;
+    let savedFilename = `edited_${Date.now()}.jpg`;
     try {
       const imgRes = await fetch(resultUrl, {
         headers: { "User-Agent": "Mozilla/5.0" },
       });
       if (imgRes.ok) {
         const imgBuffer = Buffer.from(await imgRes.arrayBuffer());
+        savedFilename = `edited_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.jpg`;
         const editedUpload = await uploadBufferToRelease(
           imgBuffer,
-          `edited_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.jpg`,
+          savedFilename,
           "image/jpeg"
         );
         savedEditedUrl = editedUpload.directUrl;
+        if (editedUpload.filename) savedFilename = editedUpload.filename;
       }
     } catch (e) {
       // If saving to release fails, resultUrl is still valid
@@ -104,9 +107,10 @@ export default async function handler(req, res) {
     return res.status(200).json({
       status: "ok",
       prompt: prompt.trim(),
-      original_proxy_url: `/api/proxy-image?url=${encodeURIComponent(directImageUrl)}`,
+      filename: savedFilename,
+      original_proxy_url: `/api/proxy-image?url=${encodeURIComponent(directImageUrl)}&name=original_${Date.now()}.jpg`,
       original_storage_url: directImageUrl,
-      result_proxy_url: `/api/proxy-image?url=${encodeURIComponent(savedEditedUrl)}`,
+      result_proxy_url: `/api/proxy-image?url=${encodeURIComponent(savedEditedUrl)}&name=${encodeURIComponent(savedFilename)}`,
       result_storage_url: savedEditedUrl,
       upstream_result_url: resultUrl,
     });

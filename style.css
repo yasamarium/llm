@@ -1755,3 +1755,137 @@ html, body {
     opacity: 1;
   }
 }
+
+/* ==========================================================================
+   iOS 18 Fullscreen Image Lightbox Modal
+   ========================================================================== */
+.ios-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.25s var(--spring-easing);
+}
+
+.ios-lightbox.hidden {
+  display: none !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  z-index: 1;
+}
+
+.lightbox-dialog {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 94vw;
+  max-height: 94vh;
+  padding: 12px;
+  animation: lightboxPop 0.28s var(--spring-easing) forwards;
+}
+
+@keyframes lightboxPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.lightbox-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 6px;
+}
+
+.lightbox-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 75vw;
+}
+
+.lightbox-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 0.5px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.lightbox-close-btn:hover {
+  background: rgba(255, 255, 255, 0.24);
+  transform: scale(1.08);
+}
+
+.lightbox-stage {
+  max-width: 90vw;
+  max-height: calc(82vh - 90px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  background: #000000;
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: calc(82vh - 90px);
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.lightbox-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  background: rgba(24, 24, 28, 0.9);
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  flex-wrap: wrap;
+}
+
+.edit-col img,
+.generated-image {
+  cursor: zoom-in;
+}
+
