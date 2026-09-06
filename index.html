@@ -72,7 +72,7 @@
               🎨 /edit Remove background
             </button>
             <button class="suggestion-chip" data-prompt="Explain quantum computing in simple terms.">
-              Explain quantum computing
+              🔮 Ask GPT-5 / S-62: Quantum Computing
             </button>
             <button class="suggestion-chip" data-prompt="Write a concise Python script to parse and clean a JSON dataset.">
               Python script to clean data
@@ -107,6 +107,9 @@
           <!-- Quick Access Horizontal Pill Dock -->
           <div class="bottom-quick-pills" id="bottomQuickPills">
             <button class="quick-pill active" data-model="1.7b">Qwen Medium</button>
+            <button class="quick-pill pill-exclusive" data-model="gpt-5">🔮 GPT-5 <span class="pill-s62-tag">S-62</span></button>
+            <button class="quick-pill pill-exclusive" data-model="claude-opus-4.8">🎭 Claude Opus <span class="pill-s62-tag">S-62</span></button>
+            <button class="quick-pill pill-exclusive" data-model="kimi-k2.6">🌙 Kimi <span class="pill-s62-tag">S-62</span></button>
             <button class="quick-pill" data-model="r1">🧠 DeepSeek High</button>
             <button class="quick-pill" data-model="qwen3b">✨ Qwen High</button>
             <button class="quick-pill" data-model="llama3b">🦙 Llama High</button>
@@ -181,6 +184,37 @@
       </div>
 
       <div class="popover-models-list">
+        <div class="popover-group-label exclusive-group-label">EXCLUSIVE S-62 • FLAGSHIP CLOUD</div>
+        <button class="popover-item exclusive-s62-item" data-model="gpt-5" role="menuitem">
+          <span class="popover-item-icon">🔮</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">GPT-5</div>
+            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
+          </div>
+          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item exclusive-s62-item" data-model="claude-opus-4.8" role="menuitem">
+          <span class="popover-item-icon">🎭</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Claude Opus 4.8</div>
+            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
+          </div>
+          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item exclusive-s62-item" data-model="kimi-k2.6" role="menuitem">
+          <span class="popover-item-icon">🌙</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Kimi K2.6</div>
+            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
+          </div>
+          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
+          <span class="popover-check">✓</span>
+        </button>
+
         <div class="popover-group-label">HIGH CAPACITY & REASONING</div>
         <button class="popover-item" data-model="r1" role="menuitem">
           <span class="popover-item-icon">🧠</span>

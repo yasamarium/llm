@@ -151,6 +151,30 @@
   });
 
   const MODEL_CONFIG = {
+    "gpt-5": {
+      name: "GPT-5",
+      glyph: "🔮",
+      badge: "EXCLUSIVE S-62",
+      title: "How can GPT-5 help you today?",
+      placeholder: "Message GPT-5 (Runs on AS cloud EXCLUSIVE S-62)...",
+      isExclusive: true,
+    },
+    "claude-opus-4.8": {
+      name: "Claude Opus 4.8",
+      glyph: "🎭",
+      badge: "EXCLUSIVE S-62",
+      title: "How can Claude Opus help you today?",
+      placeholder: "Message Claude Opus 4.8 (Runs on AS cloud EXCLUSIVE S-62)...",
+      isExclusive: true,
+    },
+    "kimi-k2.6": {
+      name: "Kimi K2.6",
+      glyph: "🌙",
+      badge: "EXCLUSIVE S-62",
+      title: "How can Kimi help you today?",
+      placeholder: "Message Kimi K2.6 (Runs on AS cloud EXCLUSIVE S-62)...",
+      isExclusive: true,
+    },
     "1.7b": { name: "Qwen Medium", glyph: "✦", badge: "4 Nodes", title: "How can Qwen Medium help you?", placeholder: "Message Qwen Medium..." },
     "r1": { name: "DeepSeek High", glyph: "🧠", badge: "3 Nodes", title: "DeepSeek High (Reasoning)", placeholder: "Ask a complex reasoning or logic problem..." },
     "llama3b": { name: "Llama High", glyph: "🦙", badge: "2 Nodes", title: "Llama High (Meta)", placeholder: "Message Llama High..." },
@@ -298,7 +322,10 @@
     // Update bottom trigger button UI
     if (currentModelGlyph) currentModelGlyph.textContent = cfg.glyph;
     if (currentModelName) currentModelName.textContent = cfg.name;
-    if (currentModelBadge) currentModelBadge.textContent = cfg.badge;
+    if (currentModelBadge) {
+      currentModelBadge.textContent = cfg.badge;
+      currentModelBadge.classList.toggle("badge-exclusive-s62", Boolean(cfg.isExclusive));
+    }
 
     // Update popover items active state
     popoverItems.forEach((item) => {

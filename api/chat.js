@@ -40,6 +40,12 @@ const ENDPOINTS = {
   "phi": ["https://raw.githubusercontent.com/yasamarium/server14/main/endpoint.txt"],
 };
 
+const S62_MODELS = {
+  "gpt-5": "https://apis.davidcyril.name.ng/ai/gpt-5",
+  "kimi-k2.6": "https://apis.davidcyril.name.ng/ai/kimi-k2.6",
+  "claude-opus-4.8": "https://apis.davidcyril.name.ng/ai/claude-opus-4.8",
+};
+
 let roundRobinIndex = 0;
 
 async function fetchEndpointUrl(rawUrl) {
@@ -55,6 +61,9 @@ async function fetchEndpointUrl(rawUrl) {
 
 function normalizeModel(rawModel) {
   const m = (rawModel || "").toLowerCase();
+  if (m.includes("gpt-5") || m.includes("gpt5")) return "gpt-5";
+  if (m.includes("kimi") || m.includes("k2.6")) return "kimi-k2.6";
+  if (m.includes("claude") || m.includes("opus")) return "claude-opus-4.8";
   if (m.includes("r1") || m.includes("deepseek")) return "r1";
   if (m.includes("coder") || m.includes("code")) return "coder";
   if (m.includes("llama3b") || m.includes("llama-3b") || m.includes("llama 3b") || m.includes("llama")) return "llama3b";
@@ -123,6 +132,73 @@ export default async function handler(req, res) {
   }
 
   const modelKey = normalizeModel(model);
+
+  // Handle EXCLUSIVE S-62 Flagship models
+  if (S62_MODELS[modelKey]) {
+    const s62Url = S62_MODELS[modelKey];
+
+    // Build prompt from messages array
+    let promptText = "";
+    if (messages.length === 1) {
+      promptText = messages[0].content || "";
+    } else {
+      const recent = messages.slice(-6);
+      promptText = recent
+        .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+        .join("\n") + "\nAssistant:";
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 35000);
+
+      const upstreamRes = await fetch(`${s62Url}?prompt=${encodeURIComponent(promptText)}`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!upstreamRes.ok) {
+        throw new Error(`EXCLUSIVE S-62 node (${modelKey}) returned HTTP ${upstreamRes.status}`);
+      }
+
+      const json = await upstreamRes.json();
+      let replyText = json.data || json.result || json.response || "";
+      if (!replyText && typeof json === "string") replyText = json;
+      if (!replyText) replyText = "No response output received from AS cloud (EXCLUSIVE S-62).";
+
+      if (stream) {
+        res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+        res.setHeader("Cache-Control", "no-cache, no-transform");
+        res.setHeader("Connection", "keep-alive");
+        res.setHeader("X-Accel-Buffering", "no");
+
+        const words = replyText.split(" ");
+        for (let i = 0; i < words.length; i += 2) {
+          const chunk = (i > 0 ? " " : "") + words.slice(i, i + 2).join(" ");
+          const sseMsg = {
+            choices: [{ delta: { content: chunk } }],
+          };
+          res.write(`data: ${JSON.stringify(sseMsg)}\n\n`);
+          if (i + 2 < words.length) {
+            await new Promise((r) => setTimeout(r, 16));
+          }
+        }
+        res.write("data: [DONE]\n\n");
+        return res.end();
+      } else {
+        return res.status(200).json({
+          choices: [{ message: { role: "assistant", content: replyText } }],
+        });
+      }
+    } catch (err) {
+      return res.status(502).json({
+        error: {
+          message: `EXCLUSIVE S-62 node (${modelKey}) error: ${err.message}`,
+        },
+      });
+    }
+  }
+
   const targetUrls = await getAvailableEndpoints(modelKey);
   const apiKey = process.env.LLMSERVER_API_KEY || DEFAULT_API_KEY;
 
