@@ -557,7 +557,18 @@ html, body {
 }
 
 .model-picker-glyph {
-  font-size: 13px;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.model-picker-glyph svg {
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
 .model-picker-name {
@@ -770,14 +781,41 @@ html, body {
 }
 
 .popover-item-icon {
-  font-size: 15px;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  color: var(--text-primary);
+  border-radius: 6px;
 }
+
+.popover-item-icon svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+
+/* Individual Model SVG Theme Accents */
+.popover-item[data-model="gpt-5"] .popover-item-icon, .sym-gpt5 { color: #10a37f; }
+.popover-item[data-model="claude-opus-4.8"] .popover-item-icon, .sym-claude { color: #d97757; }
+.popover-item[data-model="kimi-k2.6"] .popover-item-icon, .sym-kimi { color: #818cf8; }
+.popover-item[data-model="gemini-3-pro"] .popover-item-icon, .sym-gemini-pro { color: #38bdf8; }
+.popover-item[data-model="gemini-3.1-pro"] .popover-item-icon, .sym-gemini-31 { color: #c084fc; }
+.popover-item[data-model="qwen3-max"] .popover-item-icon, .sym-qwen-max { color: #fbbf24; }
+.popover-item[data-model="r1"] .popover-item-icon, .sym-r1 { color: #0284c7; }
+.popover-item[data-model="qwen3b"] .popover-item-icon, .sym-qwen3b { color: #6366f1; }
+.popover-item[data-model="llama3b"] .popover-item-icon, .sym-llama3b { color: #3b82f6; }
+.popover-item[data-model="coder"] .popover-item-icon, .sym-coder { color: #10b981; }
+.popover-item[data-model="1.7b"] .popover-item-icon, .sym-17b { color: #94a3b8; }
+.popover-item[data-model="gemma"] .popover-item-icon, .sym-gemma { color: #f59e0b; }
+.popover-item[data-model="math"] .popover-item-icon, .sym-math { color: #f43f5e; }
+.popover-item[data-model="phi"] .popover-item-icon, .sym-phi { color: #0ea5e9; }
+.popover-item[data-model="smol"] .popover-item-icon, .sym-smol { color: #34d399; }
+.popover-item[data-model="1b"] .popover-item-icon, .sym-1b { color: #eab308; }
+.popover-item[data-model="0.5b"] .popover-item-icon, .sym-05b { color: #38bdf8; }
+.popover-item[data-model="image"] .popover-item-icon, .sym-image { color: #ec4899; }
 
 .popover-item-info {
   flex: 1;

@@ -44,6 +44,9 @@ const S62_MODELS = {
   "gpt-5": "https://apis.davidcyril.name.ng/ai/gpt-5",
   "kimi-k2.6": "https://apis.davidcyril.name.ng/ai/kimi-k2.6",
   "claude-opus-4.8": "https://apis.davidcyril.name.ng/ai/claude-opus-4.8",
+  "gemini-3-pro": "https://apis.davidcyril.name.ng/ai/gemini-3-pro",
+  "gemini-3.1-pro": "https://apis.davidcyril.name.ng/ai/gemini-3.1-pro",
+  "qwen3-max": "https://apis.davidcyril.name.ng/ai/qwen3-max",
 };
 
 let roundRobinIndex = 0;
@@ -64,6 +67,9 @@ function normalizeModel(rawModel) {
   if (m.includes("gpt-5") || m.includes("gpt5")) return "gpt-5";
   if (m.includes("kimi") || m.includes("k2.6")) return "kimi-k2.6";
   if (m.includes("claude") || m.includes("opus")) return "claude-opus-4.8";
+  if (m.includes("gemini-3.1") || m.includes("gemini 3.1") || m.includes("3.1-pro") || m.includes("3.1 pro") || m.includes("3.1")) return "gemini-3.1-pro";
+  if (m.includes("gemini-3") || m.includes("gemini 3") || m.includes("3-pro") || m.includes("3 pro") || m.includes("gemini")) return "gemini-3-pro";
+  if (m.includes("qwen3-max") || m.includes("qwen-max") || m.includes("qwen3 max") || m.includes("qwen max") || m.includes("max")) return "qwen3-max";
   if (m.includes("r1") || m.includes("deepseek")) return "r1";
   if (m.includes("coder") || m.includes("code")) return "coder";
   if (m.includes("llama3b") || m.includes("llama-3b") || m.includes("llama 3b") || m.includes("llama")) return "llama3b";
@@ -165,9 +171,18 @@ export default async function handler(req, res) {
   const lastUserMsg = messages[messages.length - 1]?.content || "";
   if (isGreeting(lastUserMsg)) {
     const isS62 = Boolean(S62_MODELS[modelKey]);
+    const s62Names = {
+      "gpt-5": "GPT-5",
+      "claude-opus-4.8": "Claude Opus 4.8",
+      "kimi-k2.6": "Kimi K2.6",
+      "gemini-3-pro": "Gemini 3 Pro",
+      "gemini-3.1-pro": "Gemini 3.1 Pro",
+      "qwen3-max": "Qwen 3 Max",
+    };
+    const displayName = s62Names[modelKey] || modelKey.toUpperCase();
     const replyText = isS62
-      ? `Hello! 👋 I'm **${modelKey.toUpperCase()}**, running on **AS Cloud (EXCLUSIVE S-62)**. How can I assist you today?`
-      : `Hello! 👋 I'm **AS Intelligence**, powered by **AS Cloud**. How can I help you today?`;
+      ? `Hello! I am **${displayName}**, running on **AS Cloud (EXCLUSIVE S-62)**. How can I assist you today?`
+      : `Hello! I am **AS Intelligence**, powered by **AS Cloud**. How can I assist you today?`;
 
     if (stream) {
       res.setHeader("Content-Type", "text/event-stream; charset=utf-8");

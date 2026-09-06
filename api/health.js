@@ -94,6 +94,9 @@ function normalizeKey(raw) {
   if (m.includes("gpt-5") || m.includes("gpt5")) return "gpt-5";
   if (m.includes("kimi") || m.includes("k2.6")) return "kimi-k2.6";
   if (m.includes("claude") || m.includes("opus")) return "claude-opus-4.8";
+  if (m.includes("gemini-3.1") || m.includes("gemini 3.1") || m.includes("3.1-pro") || m.includes("3.1 pro") || m.includes("3.1")) return "gemini-3.1-pro";
+  if (m.includes("gemini-3") || m.includes("gemini 3") || m.includes("3-pro") || m.includes("3 pro") || m.includes("gemini")) return "gemini-3-pro";
+  if (m.includes("qwen3-max") || m.includes("qwen-max") || m.includes("qwen3 max") || m.includes("qwen max") || m.includes("max")) return "qwen3-max";
   if (m.includes("r1") || m.includes("deepseek")) return "r1";
   if (m.includes("coder") || m.includes("code")) return "coder";
   if (m.includes("llama3b") || m.includes("llama-3b") || m.includes("llama 3b") || m.includes("llama")) return "llama3b";
@@ -119,12 +122,16 @@ export default async function handler(req, res) {
   const modelKey = normalizeKey(req.query.model || "1.7b");
 
   // Health status for EXCLUSIVE S-62 Flagship models
-  if (modelKey === "gpt-5" || modelKey === "kimi-k2.6" || modelKey === "claude-opus-4.8") {
-    const s62Labels = {
-      "gpt-5": "GPT-5 (EXCLUSIVE S-62)",
-      "kimi-k2.6": "Kimi K2.6 (EXCLUSIVE S-62)",
-      "claude-opus-4.8": "Claude Opus 4.8 (EXCLUSIVE S-62)",
-    };
+  const s62Labels = {
+    "gpt-5": "GPT-5 (EXCLUSIVE S-62)",
+    "claude-opus-4.8": "Claude Opus 4.8 (EXCLUSIVE S-62)",
+    "kimi-k2.6": "Kimi K2.6 (EXCLUSIVE S-62)",
+    "gemini-3-pro": "Gemini 3 Pro (EXCLUSIVE S-62)",
+    "gemini-3.1-pro": "Gemini 3.1 Pro (EXCLUSIVE S-62)",
+    "qwen3-max": "Qwen 3 Max (EXCLUSIVE S-62)",
+  };
+
+  if (s62Labels[modelKey]) {
     return res.status(200).json({
       status: "ok",
       model: s62Labels[modelKey],

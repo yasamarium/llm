@@ -152,40 +152,154 @@
   const MODEL_CONFIG = {
     "gpt-5": {
       name: "GPT-5",
-      glyph: "🔮",
       badge: "EXCLUSIVE S-62",
       title: "How can GPT-5 help you today?",
       placeholder: "Message GPT-5 (Runs on AS cloud EXCLUSIVE S-62)...",
       isExclusive: true,
+      symClass: "sym-gpt5",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l7.5 4.3v8.6L12 21.5l-7.5-6.1V6.8L12 2.5z" stroke-opacity="0.35"/><path d="M12 6.5l4.5 2.6v5.2L12 16.9l-4.5-2.6V9.1L12 6.5z" fill="currentColor" fill-opacity="0.18"/><path d="M12 6.5v10.4M7.5 9.1l9 5.2M7.5 14.3l9-5.2"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>`,
     },
     "claude-opus-4.8": {
       name: "Claude Opus 4.8",
-      glyph: "🎭",
       badge: "EXCLUSIVE S-62",
       title: "How can Claude Opus help you today?",
       placeholder: "Message Claude Opus 4.8 (Runs on AS cloud EXCLUSIVE S-62)...",
       isExclusive: true,
+      symClass: "sym-claude",
+      svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 6.2 6.1 1.9-6.1 1.9L12 22l-1.9-8-6.1-1.9 6.1-1.9L12 2z"/><path d="M6.3 6.3l3.7 1.8-1.8 3.7-3.7-1.8 1.8-3.7zM17.7 6.3l-1.8 3.7 3.7 1.8 1.8-3.7-3.7-1.8zM6.3 17.7l1.8-3.7-3.7-1.8-1.8 3.7 3.7 1.8zM17.7 17.7l-3.7-1.8 1.8-3.7 3.7 1.8-1.8 3.7z" opacity="0.6"/></svg>`,
     },
     "kimi-k2.6": {
       name: "Kimi K2.6",
-      glyph: "🌙",
       badge: "EXCLUSIVE S-62",
       title: "How can Kimi help you today?",
       placeholder: "Message Kimi K2.6 (Runs on AS cloud EXCLUSIVE S-62)...",
       isExclusive: true,
+      symClass: "sym-kimi",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" fill-opacity="0.2"/><circle cx="16.5" cy="7.5" r="2" fill="currentColor"/><path d="M16.5 3.5v1.8M16.5 9.7v1.8M12.5 7.5h1.8M18.7 7.5h1.8" stroke-width="1.5"/></svg>`,
     },
-    "1.7b": { name: "Qwen Medium", glyph: "✦", badge: "4 Nodes", title: "How can Qwen Medium help you?", placeholder: "Message Qwen Medium..." },
-    "r1": { name: "DeepSeek High", glyph: "🧠", badge: "3 Nodes", title: "DeepSeek High (Reasoning)", placeholder: "Ask a complex reasoning or logic problem..." },
-    "llama3b": { name: "Llama High", glyph: "🦙", badge: "2 Nodes", title: "Llama High (Meta)", placeholder: "Message Llama High..." },
-    "qwen3b": { name: "Qwen High", glyph: "✨", badge: "2 Nodes", title: "Qwen High (Flagship)", placeholder: "Message Qwen High..." },
-    "coder": { name: "Coder High", glyph: "💻", badge: "2 Nodes", title: "Coder High (Coding & Architecture)", placeholder: "Ask for code, architecture, or debugging..." },
-    "gemma": { name: "Gemma Medium", glyph: "💎", badge: "1 Node", title: "Gemma Medium (Google)", placeholder: "Message Gemma Medium..." },
-    "math": { name: "Math Medium", glyph: "📐", badge: "1 Node", title: "Math Medium (Calculations)", placeholder: "Enter a math problem or equation..." },
-    "phi": { name: "Phi Medium", glyph: "🔬", badge: "1 Node", title: "Phi Medium (Microsoft)", placeholder: "Message Phi Medium..." },
-    "1b": { name: "Llama Lightweight", glyph: "⚡", badge: "2 Nodes", title: "Llama Lightweight", placeholder: "Message Llama Lightweight..." },
-    "smol": { name: "SmolLM Medium", glyph: "🍃", badge: "1 Node", title: "SmolLM Medium", placeholder: "Message SmolLM Medium..." },
-    "0.5b": { name: "Qwen Lightweight", glyph: "🪶", badge: "2 Nodes", title: "Qwen Lightweight", placeholder: "Message Qwen Lightweight..." },
-    "image": { name: "Image Generator", glyph: "🎨", badge: "2 Nodes", title: "What would you like to imagine?", placeholder: "Describe an image to generate..." },
+    "gemini-3-pro": {
+      name: "Gemini 3 Pro",
+      badge: "EXCLUSIVE S-62",
+      title: "How can Gemini 3 Pro help you today?",
+      placeholder: "Message Gemini 3 Pro (Runs on AS cloud EXCLUSIVE S-62)...",
+      isExclusive: true,
+      symClass: "sym-gemini-pro",
+      svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 5.523 4.477 10 10 10-5.523 0-10 4.477-10 10 0-5.523-4.477-10-10-10 5.523 0 10-4.477 10-10z"/><circle cx="12" cy="12" r="2.2" fill="#ffffff" opacity="0.9"/></svg>`,
+    },
+    "gemini-3.1-pro": {
+      name: "Gemini 3.1 Pro",
+      badge: "EXCLUSIVE S-62",
+      title: "How can Gemini 3.1 Pro help you today?",
+      placeholder: "Message Gemini 3.1 Pro (Runs on AS cloud EXCLUSIVE S-62)...",
+      isExclusive: true,
+      symClass: "sym-gemini-31",
+      svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 2c0 4.418 3.582 8 8 8-4.418 0-8 3.582-8 8 0-4.418-3.582-8-8-8 4.418 0 8-3.582 8-8z"/><path d="M18.5 13.5c0 2.21 1.79 4 4 4-2.21 0-4 1.79-4 4 0-2.21-1.79-4-4-4 2.21 0 4-1.79 4-4z" opacity="0.85"/><circle cx="10" cy="10" r="1.8" fill="#ffffff" opacity="0.9"/><circle cx="18.5" cy="17.5" r="1" fill="#ffffff" opacity="0.9"/></svg>`,
+    },
+    "qwen3-max": {
+      name: "Qwen 3 Max",
+      badge: "EXCLUSIVE S-62",
+      title: "How can Qwen 3 Max help you today?",
+      placeholder: "Message Qwen 3 Max (Runs on AS cloud EXCLUSIVE S-62)...",
+      isExclusive: true,
+      symClass: "sym-qwen-max",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8.5 4.9v9.8L12 21.5 3.5 16.7V6.9L12 2z"/><path d="M12 2v9.8m0 0L3.5 6.9m8.5 4.9l8.5-4.9m-8.5 4.9v9.8"/><circle cx="12" cy="11.8" r="2.5" fill="currentColor"/><path d="M8 14.5l4-2.5 4 2.5" stroke-dasharray="1.5 1.5"/></svg>`,
+    },
+    "1.7b": {
+      name: "Qwen Medium",
+      badge: "4 Nodes",
+      title: "How can Qwen Medium help you?",
+      placeholder: "Message Qwen Medium...",
+      symClass: "sym-17b",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 12 12 22 2 12" fill="currentColor" fill-opacity="0.15"/><polygon points="12 6 18 12 12 18 6 12"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>`,
+    },
+    "r1": {
+      name: "DeepSeek High",
+      badge: "3 Nodes",
+      title: "DeepSeek High (Reasoning)",
+      placeholder: "Ask a complex reasoning or logic problem...",
+      symClass: "sym-r1",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5" fill="currentColor"/><circle cx="18" cy="6" r="2.5" fill="currentColor"/><circle cx="12" cy="12" r="3" fill="currentColor"/><circle cx="6" cy="18" r="2.5" fill="currentColor"/><circle cx="18" cy="18" r="2.5" fill="currentColor"/><path d="M6 6l6 6m0 0l6-6M6 18l6-6m0 0l6 6M6 6v12M18 6v12"/></svg>`,
+    },
+    "llama3b": {
+      name: "Llama High",
+      badge: "2 Nodes",
+      title: "Llama High (Meta)",
+      placeholder: "Message Llama High...",
+      symClass: "sym-llama3b",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.178 8c2.11 0 3.822 1.79 3.822 4s-1.712 4-3.822 4c-2.73 0-4.66-2.58-6.178-4 1.518-1.42 3.448-4 6.178-4z"/><path d="M5.822 8C3.712 8 2 9.79 2 12s1.712 4 3.822 4c2.73 0 4.66-2.58 6.178-4-1.518-1.42-3.448-4-6.178-4z"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>`,
+    },
+    "qwen3b": {
+      name: "Qwen High",
+      badge: "2 Nodes",
+      title: "Qwen High (Flagship)",
+      placeholder: "Message Qwen High...",
+      symClass: "sym-qwen3b",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(-30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(30 12 12)"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>`,
+    },
+    "coder": {
+      name: "Coder High",
+      badge: "2 Nodes",
+      title: "Coder High (Coding & Architecture)",
+      placeholder: "Ask for code, architecture, or debugging...",
+      symClass: "sym-coder",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="14" y1="4" x2="10" y2="20"/></svg>`,
+    },
+    "gemma": {
+      name: "Gemma Medium",
+      badge: "1 Node",
+      title: "Gemma Medium (Google)",
+      placeholder: "Message Gemma Medium...",
+      symClass: "sym-gemma",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 21 2 9" fill="currentColor" fill-opacity="0.12"/><line x1="2" y1="9" x2="22" y2="9"/><polyline points="6 3 12 9 18 3"/><polyline points="12 21 7 9 12 3 17 9 12 21"/></svg>`,
+    },
+    "math": {
+      name: "Math Medium",
+      badge: "1 Node",
+      title: "Math Medium (Calculations)",
+      placeholder: "Enter a math problem or equation...",
+      symClass: "sym-math",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4H5l7 8-7 8h14"/><circle cx="17" cy="12" r="1.8" fill="currentColor"/></svg>`,
+    },
+    "phi": {
+      name: "Phi Medium",
+      badge: "1 Node",
+      title: "Phi Medium (Microsoft)",
+      placeholder: "Message Phi Medium...",
+      symClass: "sym-phi",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7" fill="currentColor" fill-opacity="0.15"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="5" y1="12" x2="19" y2="12" stroke-opacity="0.3"/></svg>`,
+    },
+    "1b": {
+      name: "Llama Lightweight",
+      badge: "2 Nodes",
+      title: "Llama Lightweight",
+      placeholder: "Message Llama Lightweight...",
+      symClass: "sym-1b",
+      svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h8l-2 8 10-12h-8l2-8z"/></svg>`,
+    },
+    "smol": {
+      name: "SmolLM Medium",
+      badge: "1 Node",
+      title: "SmolLM Medium",
+      placeholder: "Message SmolLM Medium...",
+      symClass: "sym-smol",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C12 22 4 17 4 10a8 8 0 0 1 16 0c0 7-8 12-8 12z" fill="currentColor" fill-opacity="0.15"/><path d="M12 7v10M12 11l4-3M12 14l-3-2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg>`,
+    },
+    "0.5b": {
+      name: "Qwen Lightweight",
+      badge: "2 Nodes",
+      title: "Qwen Lightweight",
+      placeholder: "Message Qwen Lightweight...",
+      symClass: "sym-05b",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 4.76a6 6 0 0 0-8.49 0L3.5 13.01l-.5 7.49 7.49-.5 8.25-8.25a6 6 0 0 0 0-8.49z" fill="currentColor" fill-opacity="0.15"/><line x1="3" y1="21" x2="14" y2="10"/><path d="M10 7l3 3M7 10l3 3M4 13l3 3"/></svg>`,
+    },
+    "image": {
+      name: "Image Generator",
+      badge: "2 Nodes",
+      title: "What would you like to imagine?",
+      placeholder: "Describe an image to generate...",
+      symClass: "sym-image",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><line x1="14.31" y1="8" x2="20.05" y2="17.94"/><line x1="9.69" y1="8" x2="21.17" y2="8"/><line x1="7.38" y1="12" x2="13.12" y2="2.06"/><line x1="9.69" y1="16" x2="3.95" y2="6.06"/><line x1="14.31" y1="16" x2="2.83" y2="16"/><line x1="16.62" y1="12" x2="10.88" y2="21.94"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>`,
+    },
   };
 
   // ---------------------------------------------------------------------------
@@ -319,7 +433,10 @@
     const cfg = MODEL_CONFIG[model];
 
     // Update bottom trigger button UI
-    if (currentModelGlyph) currentModelGlyph.textContent = cfg.glyph;
+    if (currentModelGlyph) {
+      currentModelGlyph.innerHTML = cfg.svg || "";
+      currentModelGlyph.className = `model-picker-glyph ${cfg.symClass || ""}`;
+    }
     if (currentModelName) currentModelName.textContent = cfg.name;
     if (currentModelBadge) {
       currentModelBadge.textContent = cfg.badge;
@@ -682,22 +799,22 @@
           <div class="ios-save-dropdown-menu">
             <div class="save-menu-label">SAVE IMAGE AS</div>
             <button type="button" class="save-menu-item" data-action="png">
-              <span>📸</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span>PNG Image</span>
               <span class="ext-pill">.png</span>
             </button>
             <button type="button" class="save-menu-item" data-action="jpg">
-              <span>🖼️</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
               <span>JPEG Image</span>
               <span class="ext-pill">.jpg</span>
             </button>
             <button type="button" class="save-menu-item" data-action="webp">
-              <span>🌐</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               <span>WebP Image</span>
               <span class="ext-pill">.webp</span>
             </button>
             <button type="button" class="save-menu-item" data-action="pdf">
-              <span>📄</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               <span>PDF Document</span>
               <span class="ext-pill">.pdf</span>
             </button>
@@ -722,28 +839,28 @@
         <div class="ios-save-dropdown-menu">
           <div class="save-menu-label">EXPORT FORMAT</div>
           <button type="button" class="save-menu-item" data-action="doc">
-            <span>📝</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span>Word Document</span>
             <span class="ext-pill">.doc</span>
           </button>
           <button type="button" class="save-menu-item" data-action="pdf">
-            <span>📄</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="10 9 9 9 8 9"/></svg>
             <span>PDF Document</span>
             <span class="ext-pill">.pdf</span>
           </button>
           <button type="button" class="save-menu-item" data-action="md">
-            <span>📑</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="7 15 7 9 10 12 13 9 13 15"/><polyline points="18 12 18 15 16 15"/></svg>
             <span>Markdown</span>
             <span class="ext-pill">.md</span>
           </button>
           <button type="button" class="save-menu-item" data-action="txt">
-            <span>📃</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
             <span>Plain Text</span>
             <span class="ext-pill">.txt</span>
           </button>
           <div class="save-menu-divider"></div>
           <button type="button" class="save-menu-item" data-action="copy">
-            <span>📋</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             <span>Copy Text</span>
           </button>
         </div>
@@ -795,7 +912,7 @@
       html += `
         <div class="ios-thought-container ${isOpen ? "open" : ""}" id="thoughtBox">
           <button class="thought-toggle-btn" type="button">
-            <span class="thought-pulse-icon">💭</span>
+            <span class="thought-pulse-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.5-6.5l1.5-1.5M4 20l1.5-1.5m0-13L4 4m16 16l-1.5-1.5"/></svg></span>
             <span class="thought-label">${labelText}</span>
             <span class="thought-chevron">›</span>
           </button>
@@ -1613,18 +1730,18 @@
 
     if (cfg?.isExclusive) {
       const s62Replies = [
-        `Hello! 👋 I'm **${modelName}**, running on **AS Cloud (EXCLUSIVE S-62)**. How can I assist you today?`,
-        `Hey there! 👋 **${modelName}** is ready on **AS Cloud (EXCLUSIVE S-62)**. What would you like to explore or solve?`,
-        `Hi! 😊 **${modelName} (EXCLUSIVE S-62)** at your service. Feel free to ask any question, brainstorm ideas, or generate code!`,
+        `Hello! I am **${modelName}**, running on **AS Cloud (EXCLUSIVE S-62)**. How can I assist you today?`,
+        `Greetings! **${modelName}** is active on **AS Cloud (EXCLUSIVE S-62)**. What would you like to explore or solve?`,
+        `Welcome! **${modelName} (EXCLUSIVE S-62)** is ready. Ask any question, brainstorm ideas, or generate code.`,
       ];
       return s62Replies[Math.floor(Math.random() * s62Replies.length)];
     }
 
     const standardReplies = [
-      `Hello! 👋 I'm **${modelName}**, powered by **AS Cloud**. How can I help you today?`,
-      `Hey there! 👋 How can I assist you with your questions, coding, or projects today?`,
-      `Hi! 😊 I'm ready to help. Feel free to ask questions, explore ideas, or use our media tools!`,
-      `Hello! 👋 What would you like to work on today?`,
+      `Hello! I am **${modelName}**, powered by **AS Cloud**. How can I help you today?`,
+      `Greetings! How can I assist you with your questions, coding, or projects today?`,
+      `Welcome to AS Cloud. I am ready to help. Feel free to ask questions or explore our models.`,
+      `Hello! What would you like to work on today?`,
     ];
     return standardReplies[Math.floor(Math.random() * standardReplies.length)];
   }
