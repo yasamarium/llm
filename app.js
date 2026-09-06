@@ -198,8 +198,8 @@
     "qwen3-max": {
       name: "Qwen 3 Max",
       badge: "EXCLUSIVE S-62",
-      title: "How can Qwen 3 Max help you today?",
-      placeholder: "Message Qwen 3 Max (Runs on AS cloud EXCLUSIVE S-62)...",
+      title: "Qwen 3 Max (Deep Thinking & Reasoning)",
+      placeholder: "Ask complex reasoning, coding or analysis (Thinking Mode enabled)...",
       isExclusive: true,
       symClass: "sym-qwen-max",
       svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8.5 4.9v9.8L12 21.5 3.5 16.7V6.9L12 2z"/><path d="M12 2v9.8m0 0L3.5 6.9m8.5 4.9l8.5-4.9m-8.5 4.9v9.8"/><circle cx="12" cy="11.8" r="2.5" fill="currentColor"/><path d="M8 14.5l4-2.5 4 2.5" stroke-dasharray="1.5 1.5"/></svg>`,
@@ -534,12 +534,81 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Separate Thinking & Reply Parser (Supports both Qwen3 & DeepSeek R1)
+  // Separate Thinking & Reply Parser (Supports both Qwen 3 Max & DeepSeek R1)
   // ---------------------------------------------------------------------------
+  function extractQwenThinkingClient(raw) {
+    if (!raw || typeof raw !== "string") return { thinking: "", reply: raw || "" };
+    if (raw.includes("<think>")) {
+      const end = raw.indexOf("</think>");
+      if (end !== -1) {
+        return {
+          thinking: raw.substring(raw.indexOf("<think>") + 7, end).trim(),
+          reply: raw.substring(end + 8).trim(),
+        };
+      }
+      return { thinking: raw.substring(raw.indexOf("<think>") + 7).trim(), reply: "" };
+    }
+
+    const trimmed = raw.trim();
+    const isReasoning = /^(okay|alright|let'?s?\s+(see|examine|think|look|check)|first|hmm+|the user|i need to|i should|wait|so\b|we need to|to answer this|looking at)/i.test(trimmed);
+    if (!isReasoning) return { thinking: "", reply: raw };
+
+    const wrapRegex = /(?:clearly and concisely|explain the steps in the comments|confident the result is correct|put it all together and see|put it all together clearly|provide a straightforward answer|that should cover it|that should be \w+ words|that makes sense|that works|should be sufficient|time to put it all together|let me put it all together|ready to write|looks correct|seems to work|all cases correctly|the result is correct|the answer is correct|that's the answer|that is the answer|should handle all cases|(?:I'll|I will|Let's|let me) (?:present|write|provide|give|output|go with) (?:that|this|the answer|the code|it|the solution)[a-z0-9 -]*|stick to the (?:basic|standard) version|no mistakes(?: here)?|all methods (?:lead to|give|match)[a-z0-9 -]*|still the same answer)[.!?](?:\s*|\n*)/gi;
+
+    let bestSplitIdx = -1;
+    let m;
+    while ((m = wrapRegex.exec(trimmed)) !== null) {
+      const candidateIdx = m.index + m[0].length;
+      const remaining = trimmed.substring(candidateIdx).trim();
+      if (remaining.length > 0) bestSplitIdx = candidateIdx;
+    }
+
+    if (bestSplitIdx !== -1) {
+      return {
+        thinking: trimmed.substring(0, bestSplitIdx).trim(),
+        reply: trimmed.substring(bestSplitIdx).trim(),
+      };
+    }
+
+    const regex = /([.!?])(?=(?:\n\s*|[A-Z0-9*#`]))/g;
+    let lastCandidate = -1;
+    while ((m = regex.exec(trimmed)) !== null) {
+      const idx = m.index + 1;
+      const after = trimmed.substring(idx).trim();
+      if (after.length > 5 && (
+        after.startsWith("**") ||
+        after.startsWith("#") ||
+        after.startsWith("```") ||
+        /^\d+\.\s/.test(after) ||
+        /^(The|Here|To solve|This|In short|I am|As an|Yes|No|Answer|Step|Sure)/.test(after)
+      )) {
+        lastCandidate = idx;
+      }
+    }
+
+    if (lastCandidate !== -1) {
+      return {
+        thinking: trimmed.substring(0, lastCandidate).trim(),
+        reply: trimmed.substring(lastCandidate).trim(),
+      };
+    }
+
+    const mdMatch = trimmed.search(/\n\s*(?:#{1,6}\s|\d+\.\s|\*\*|```)/);
+    if (mdMatch > 50) {
+      return {
+        thinking: trimmed.substring(0, mdMatch).trim(),
+        reply: trimmed.substring(mdMatch).trim(),
+      };
+    }
+
+    return { thinking: "", reply: raw };
+  }
+
   function parseThinkingAndReply(raw, model = selectedModel) {
     if (!raw) return { thinking: null, reply: "", isThinkingDone: true };
 
     const isR1 = (model || "").toLowerCase().includes("r1") || (model || "").toLowerCase().includes("deepseek");
+    const isQwenMax = (model || "").toLowerCase().includes("qwen3-max") || (model || "").toLowerCase().includes("qwen-max");
     const thinkStart = raw.indexOf("<think>");
 
     if (thinkStart === -1) {
@@ -553,6 +622,15 @@
         // While streaming R1, before </think> arrives, all content is thinking
         return { thinking: raw.trimStart(), reply: "", isThinkingDone: false };
       }
+
+      // If Qwen 3 Max was passed raw unformatted text (fallback)
+      if (isQwenMax) {
+        const qExt = extractQwenThinkingClient(raw);
+        if (qExt.thinking) {
+          return { thinking: qExt.thinking, reply: qExt.reply, isThinkingDone: true };
+        }
+      }
+
       return { thinking: null, reply: raw, isThinkingDone: true };
     }
 

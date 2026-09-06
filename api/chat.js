@@ -83,6 +83,82 @@ function normalizeModel(rawModel) {
   return "1.7b";
 }
 
+function extractQwenThinking(raw) {
+  if (!raw || typeof raw !== "string") return { thinking: "", reply: raw || "" };
+
+  if (raw.includes("<think>")) {
+    const end = raw.indexOf("</think>");
+    if (end !== -1) {
+      return {
+        thinking: raw.substring(raw.indexOf("<think>") + 7, end).trim(),
+        reply: raw.substring(end + 8).trim(),
+      };
+    }
+    return { thinking: raw.substring(raw.indexOf("<think>") + 7).trim(), reply: "" };
+  }
+
+  const trimmed = raw.trim();
+  const isReasoning = /^(okay|alright|let'?s?\s+(see|examine|think|look|check)|first|hmm+|the user|i need to|i should|wait|so\b|we need to|to answer this|looking at)/i.test(trimmed);
+  if (!isReasoning) {
+    return { thinking: "", reply: raw };
+  }
+
+  // 1. Find all wrap-up match candidates and choose the one that maximizes thinking (last transition)
+  const wrapRegex = /(?:clearly and concisely|explain the steps in the comments|confident the result is correct|put it all together and see|put it all together clearly|provide a straightforward answer|that should cover it|that should be \w+ words|that makes sense|that works|should be sufficient|time to put it all together|let me put it all together|ready to write|looks correct|seems to work|all cases correctly|the result is correct|the answer is correct|that's the answer|that is the answer|should handle all cases|(?:I'll|I will|Let's|let me) (?:present|write|provide|give|output|go with) (?:that|this|the answer|the code|it|the solution)[a-z0-9 -]*|stick to the (?:basic|standard) version|no mistakes(?: here)?|all methods (?:lead to|give|match)[a-z0-9 -]*|still the same answer)[.!?](?:\s*|\n*)/gi;
+
+  let bestSplitIdx = -1;
+  let m;
+  while ((m = wrapRegex.exec(trimmed)) !== null) {
+    const candidateIdx = m.index + m[0].length;
+    const remaining = trimmed.substring(candidateIdx).trim();
+    if (remaining.length > 0) {
+      bestSplitIdx = candidateIdx;
+    }
+  }
+
+  if (bestSplitIdx !== -1) {
+    return {
+      thinking: trimmed.substring(0, bestSplitIdx).trim(),
+      reply: trimmed.substring(bestSplitIdx).trim(),
+    };
+  }
+
+  // 2. Scan for sentence boundary where monologue concludes and answer begins
+  const regex = /([.!?])(?=(?:\n\s*|[A-Z0-9*#`]))/g;
+  let lastCandidate = -1;
+  while ((m = regex.exec(trimmed)) !== null) {
+    const idx = m.index + 1;
+    const after = trimmed.substring(idx).trim();
+    if (after.length > 5 && (
+      after.startsWith("**") ||
+      after.startsWith("#") ||
+      after.startsWith("```") ||
+      /^\d+\.\s/.test(after) ||
+      /^(The|Here|To solve|This|In short|I am|As an|Yes|No|Answer|Step|Sure)/.test(after)
+    )) {
+      lastCandidate = idx;
+    }
+  }
+
+  if (lastCandidate !== -1) {
+    return {
+      thinking: trimmed.substring(0, lastCandidate).trim(),
+      reply: trimmed.substring(lastCandidate).trim(),
+    };
+  }
+
+  // 3. Fallback: double newline before structured text
+  const mdMatch = trimmed.search(/\n\s*(?:#{1,6}\s|\d+\.\s|\*\*|```)/);
+  if (mdMatch > 50) {
+    return {
+      thinking: trimmed.substring(0, mdMatch).trim(),
+      reply: trimmed.substring(mdMatch).trim(),
+    };
+  }
+
+  return { thinking: "", reply: raw };
+}
+
 async function getAvailableEndpoints(modelKey) {
   if (process.env.LLMSERVER_URL) {
     return [process.env.LLMSERVER_URL.replace(/\/+$/, "")];
@@ -233,6 +309,52 @@ export default async function handler(req, res) {
       let replyText = json.data || json.result || json.response || "";
       if (!replyText && typeof json === "string") replyText = json;
       if (!replyText) replyText = "No response output received from AS cloud (EXCLUSIVE S-62).";
+
+      // Qwen 3 Max Deep Reasoning & Thinking Mode
+      if (modelKey === "qwen3-max") {
+        const { thinking, reply } = extractQwenThinking(replyText);
+        if (thinking && thinking.length > 0) {
+          if (stream) {
+            res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+            res.setHeader("Cache-Control", "no-cache, no-transform");
+            res.setHeader("Connection", "keep-alive");
+            res.setHeader("X-Accel-Buffering", "no");
+
+            // 1. Send opening <think> tag
+            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "<think>" } }] })}\n\n`);
+
+            // 2. Stream thinking tokens smoothly
+            const thinkWords = thinking.split(" ");
+            for (let i = 0; i < thinkWords.length; i += 3) {
+              const chunk = (i > 0 ? " " : "") + thinkWords.slice(i, i + 3).join(" ");
+              res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`);
+              if (i + 3 < thinkWords.length) {
+                await new Promise((r) => setTimeout(r, 12));
+              }
+            }
+
+            // 3. Send closing </think> tag and spacing
+            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "</think>\n\n" } }] })}\n\n`);
+
+            // 4. Stream final reply tokens smoothly
+            const replyWords = reply.split(" ");
+            for (let i = 0; i < replyWords.length; i += 2) {
+              const chunk = (i > 0 ? " " : "") + replyWords.slice(i, i + 2).join(" ");
+              res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`);
+              if (i + 2 < replyWords.length) {
+                await new Promise((r) => setTimeout(r, 16));
+              }
+            }
+            res.write("data: [DONE]\n\n");
+            return res.end();
+          } else {
+            const formatted = `<think>${thinking}</think>\n\n${reply}`;
+            return res.status(200).json({
+              choices: [{ message: { role: "assistant", content: formatted } }],
+            });
+          }
+        }
+      }
 
       if (stream) {
         res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
