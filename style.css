@@ -616,7 +616,25 @@ html, body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* Floating Glass Popover Menu */
+/* Floating Glass Popover & Mobile Backdrop */
+.popover-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 95;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+.popover-backdrop.hidden {
+  display: none !important;
+}
+
+.sheet-drag-handle {
+  display: none;
+}
+
 .ios-model-popover {
   position: absolute;
   bottom: calc(100% + 10px);
@@ -650,11 +668,41 @@ html, body {
 }
 
 .popover-header {
-  padding: 13px 16px 9px 16px;
+  padding: 12px 16px 10px 16px;
   border-bottom: 0.5px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.popover-header-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.popover-close-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 0.5px solid var(--border-subtle);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+  flex-shrink: 0;
+}
+.popover-close-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+.popover-close-btn:active {
+  transform: scale(0.92);
 }
 
 .popover-title {
@@ -997,30 +1045,277 @@ html, body {
 }
 
 @media (max-width: 640px) {
+  html, body {
+    height: 100%;
+    position: fixed;
+    overflow: hidden;
+    overscroll-behavior-y: none;
+  }
+
+  .ios-app {
+    height: 100dvh;
+    height: 100vh;
+    max-width: 100%;
+  }
+
+  /* Mobile Navbar with Safe Area Support */
   .ios-navbar {
-    padding: 0 12px;
-    height: 56px;
+    padding: env(safe-area-inset-top, 0px) 12px 0 12px;
+    height: calc(52px + env(safe-area-inset-top, 0px));
+    gap: 8px;
   }
-  .segment-btn {
-    padding: 3px 8px;
-    font-size: 11px;
+
+  .brand-title {
+    font-size: 15px;
   }
+
+  .status-indicator {
+    max-width: 165px;
+    overflow: hidden;
+  }
+
   .ios-pill {
-    padding: 4px 8px;
+    padding: 3.5px 8px;
     font-size: 10px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+
+  .ios-circle-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* Mobile Chat Viewport */
   .ios-chat-viewport {
-    padding: 72px 14px 100px 14px;
+    padding-top: calc(58px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(125px + env(safe-area-inset-bottom, 0px));
+    padding-left: 12px;
+    padding-right: 12px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
-  .ios-bubble {
-    max-width: 86%;
-    font-size: 14.5px;
-    padding: 11px 15px;
-  }
+
   .welcome-heading {
     font-size: 24px;
+    margin-bottom: 20px;
   }
+
+  .suggestion-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .suggestion-chip {
+    width: 100%;
+    text-align: left;
+    padding: 11px 14px;
+    font-size: 13px;
+    border-radius: 14px;
+  }
+
+  /* Mobile Chat Bubbles */
+  .ios-row {
+    margin-bottom: 12px;
+  }
+
+  .ios-bubble {
+    max-width: 88%;
+    font-size: 15px;
+    line-height: 1.48;
+    padding: 10px 14px;
+    border-radius: 18px;
+  }
+
+  .ios-row.user .ios-bubble {
+    border-bottom-right-radius: 5px;
+  }
+
+  .ios-row.assistant .ios-bubble {
+    border-bottom-left-radius: 5px;
+  }
+
+  .ios-bubble pre {
+    padding: 11px 12px;
+    font-size: 12px;
+    margin: 8px 0;
+    border-radius: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .code-copy-btn {
+    font-size: 10px;
+    padding: 3px 7px;
+    top: 6px;
+    right: 6px;
+  }
+
+  .ios-thought-container {
+    margin-bottom: 8px;
+    border-radius: 10px;
+  }
+
+  .thought-body {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .ios-thought-container.open .thought-body {
+    max-height: 260px;
+    padding: 8px 10px;
+  }
+
+  /* Mobile Bottom Dock & Virtual Keyboard Support */
   .ios-input-dock {
-    padding: 10px 12px 18px 12px;
+    padding: 6px 10px calc(10px + env(safe-area-inset-bottom, 0px)) 10px;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.75) 25%, rgba(0, 0, 0, 0.98) 100%);
+  }
+
+  .composer-top-bar {
+    gap: 6px;
+    padding: 0 2px;
+  }
+
+  .model-picker-trigger {
+    padding: 4px 9px 4px 8px;
+    font-size: 11.5px;
+    gap: 5px;
+  }
+
+  .model-picker-name {
+    max-width: 82px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11.5px;
+  }
+
+  .model-picker-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+
+  .bottom-quick-pills {
+    max-width: calc(100% - 132px);
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .quick-pill {
+    scroll-snap-align: start;
+    padding: 4px 9px;
+    font-size: 11px;
+    min-height: 26px;
+  }
+
+  .input-capsule {
+    border-radius: 24px;
+    padding: 5px 6px 5px 14px;
+    gap: 8px;
+  }
+
+  /* CRITICAL: Enforce 16px font on inputs to prevent iOS Safari auto-zooming */
+  #messageInput {
+    font-size: 16px !important;
+    line-height: 1.38;
+    min-height: 24px;
+    max-height: 120px;
+    padding: 4px 0;
+  }
+
+  .send-capsule-btn,
+  .stop-capsule-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+  }
+
+  /* Native iOS 18 Bottom Sheet Modal for Model Selection */
+  .ios-model-popover {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 82vh;
+    border-radius: 26px 26px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.9);
+    z-index: 100;
+    transform-origin: bottom center;
+    animation: sheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .sheet-drag-handle {
+    display: block;
+    width: 38px;
+    height: 4.5px;
+    background: rgba(255, 255, 255, 0.28);
+    border-radius: 3px;
+    margin: 8px auto 4px auto;
+    flex-shrink: 0;
+  }
+
+  .popover-header {
+    padding: 6px 16px 10px 16px;
+  }
+
+  .popover-models-list {
+    padding: 4px 10px 10px 10px;
+    max-height: calc(82vh - 90px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .popover-item {
+    padding: 10px 12px;
+    min-height: 48px;
+    border-radius: 14px;
+  }
+
+  .popover-item-name {
+    font-size: 13.5px;
+  }
+
+  .popover-item-desc {
+    font-size: 11px;
+  }
+
+  .popover-node-count {
+    font-size: 9.5px;
+    padding: 2px 6px;
+  }
+
+  /* Generated Image Card on Mobile */
+  .ios-image-card {
+    max-width: 100%;
+    border-radius: 16px;
+  }
+
+  .ios-image-loading {
+    width: 100%;
+    max-width: 260px;
+    height: 260px;
+  }
+}
+
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }

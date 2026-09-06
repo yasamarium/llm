@@ -17,6 +17,8 @@
   // Bottom Composer Elements
   const modelPickerBtn = document.getElementById("modelPickerBtn");
   const modelPopover = document.getElementById("modelPopover");
+  const popoverBackdrop = document.getElementById("popoverBackdrop");
+  const closePopoverBtn = document.getElementById("closePopoverBtn");
   const currentModelGlyph = document.getElementById("currentModelGlyph");
   const currentModelName = document.getElementById("currentModelName");
   const currentModelBadge = document.getElementById("currentModelBadge");
@@ -27,6 +29,15 @@
   let conversation = [];
   let abortController = null;
   let isGenerating = false;
+
+  // Tactile Haptic Vibration for Mobile Devices
+  function triggerHaptic(type = "light") {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate(type === "medium" ? 15 : 8);
+      } catch (e) {}
+    }
+  }
 
   const MODEL_CONFIG = {
     "1.7b": { name: "Qwen 1.7B", glyph: "✦", badge: "4 Nodes", title: "How can 1.7B help you?", placeholder: "Message Qwen 1.7B..." },
@@ -44,7 +55,7 @@
   };
 
   // ---------------------------------------------------------------------------
-  // Claude / DeepSeek Style Bottom Model Switcher
+  // Claude / DeepSeek Style Bottom Model Switcher & Mobile Bottom Sheet
   // ---------------------------------------------------------------------------
   function togglePopover(forceState) {
     if (!modelPopover) return;
@@ -53,9 +64,12 @@
 
     if (shouldOpen) {
       modelPopover.classList.remove("hidden");
+      if (popoverBackdrop) popoverBackdrop.classList.remove("hidden");
       modelPickerBtn?.setAttribute("aria-expanded", "true");
+      triggerHaptic("light");
     } else {
       modelPopover.classList.add("hidden");
+      if (popoverBackdrop) popoverBackdrop.classList.add("hidden");
       modelPickerBtn?.setAttribute("aria-expanded", "false");
     }
   }
@@ -71,6 +85,17 @@
     });
   }
 
+  if (popoverBackdrop) {
+    popoverBackdrop.addEventListener("click", closePopover);
+  }
+
+  if (closePopoverBtn) {
+    closePopoverBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closePopover();
+    });
+  }
+
   document.addEventListener("click", (e) => {
     if (modelPopover && !modelPopover.contains(e.target) && !modelPickerBtn?.contains(e.target)) {
       closePopover();
@@ -81,8 +106,48 @@
     if (e.key === "Escape") closePopover();
   });
 
+  // Swipe-down-to-dismiss gesture on iOS bottom sheet
+  let sheetTouchStartY = 0;
+  let sheetTouchCurrentY = 0;
+  const sheetHandle = document.querySelector(".sheet-drag-handle");
+  const popoverHeader = document.querySelector(".popover-header");
+
+  function onSheetTouchStart(e) {
+    sheetTouchStartY = e.touches[0].clientY;
+  }
+  function onSheetTouchMove(e) {
+    sheetTouchCurrentY = e.touches[0].clientY;
+    const delta = sheetTouchCurrentY - sheetTouchStartY;
+    if (delta > 0 && modelPopover && window.innerWidth <= 640) {
+      modelPopover.style.transform = `translateY(${delta}px)`;
+    }
+  }
+  function onSheetTouchEnd() {
+    const delta = sheetTouchCurrentY - sheetTouchStartY;
+    if (delta > 60 && window.innerWidth <= 640) {
+      closePopover();
+    }
+    if (modelPopover) {
+      modelPopover.style.transform = "";
+    }
+    sheetTouchStartY = 0;
+    sheetTouchCurrentY = 0;
+  }
+
+  if (sheetHandle) {
+    sheetHandle.addEventListener("touchstart", onSheetTouchStart, { passive: true });
+    sheetHandle.addEventListener("touchmove", onSheetTouchMove, { passive: true });
+    sheetHandle.addEventListener("touchend", onSheetTouchEnd, { passive: true });
+  }
+  if (popoverHeader) {
+    popoverHeader.addEventListener("touchstart", onSheetTouchStart, { passive: true });
+    popoverHeader.addEventListener("touchmove", onSheetTouchMove, { passive: true });
+    popoverHeader.addEventListener("touchend", onSheetTouchEnd, { passive: true });
+  }
+
   function setModel(model) {
     if (!MODEL_CONFIG[model]) return;
+    triggerHaptic("light");
     selectedModel = model;
     const cfg = MODEL_CONFIG[model];
 
@@ -185,6 +250,7 @@
         const code = pre.querySelector("code")?.innerText || pre.innerText;
         navigator.clipboard.writeText(code).then(() => {
           btn.textContent = "Copied";
+          triggerHaptic("light");
           setTimeout(() => (btn.textContent = "Copy"), 2000);
         });
       };
@@ -457,6 +523,8 @@
     const text = messageInput.value.trim();
     if (!text || isGenerating) return;
 
+    triggerHaptic("medium");
+
     messageInput.value = "";
     autoResizeInput();
 
@@ -576,6 +644,26 @@
       abortController = null;
       autoResizeInput();
     }
+  }
+
+  // Virtual Viewport for mobile software keyboard alignment
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", () => {
+      smoothScrollToBottom();
+    });
+  }
+
+  // Dismiss keyboard when scrolling messages viewport on mobile
+  if (chatViewport) {
+    chatViewport.addEventListener(
+      "touchstart",
+      () => {
+        if (document.activeElement === messageInput) {
+          messageInput.blur();
+        }
+      },
+      { passive: true }
+    );
   }
 
   // Initialize

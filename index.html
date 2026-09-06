@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AS Cloud">
+  <meta name="theme-color" content="#000000">
   <title>AS Intelligence</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22black%22 stroke=%22white%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2220%22 fill=%22white%22/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,8 +19,11 @@
   <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 </head>
 <body>
+  <!-- Popover Backdrop for Mobile Bottom Sheet -->
+  <div id="popoverBackdrop" class="popover-backdrop hidden"></div>
+
   <div class="ios-app">
-    <!-- Clean Minimalist iOS Navigation Bar -->
+    <!-- Clean Minimalist iOS Navigation Bar with Safe Area Insets -->
     <header class="ios-navbar">
       <div class="nav-brand">
         <div class="brand-glyph">
@@ -81,12 +88,24 @@
     <!-- Claude / DeepSeek Style Bottom Dock -->
     <footer class="ios-input-dock">
       <div class="input-container">
-        <!-- Floating Glass Model Popover Menu -->
+        <!-- Floating Glass Model Popover / Mobile Native Bottom Sheet -->
         <div id="modelPopover" class="ios-model-popover hidden" role="menu">
+          <!-- Mobile Pull Handle -->
+          <div class="sheet-drag-handle"></div>
+
           <div class="popover-header">
-            <span class="popover-title">Select AS Cloud Model</span>
-            <span class="popover-subtitle">Multi-node load balanced</span>
+            <div class="popover-header-text">
+              <span class="popover-title">Select AS Cloud Model</span>
+              <span class="popover-subtitle">Multi-node load balanced</span>
+            </div>
+            <button id="closePopoverBtn" class="popover-close-btn" type="button" aria-label="Close Model Menu">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
+
           <div class="popover-models-list">
             <div class="popover-group-label">REASONING & HIGH CAPACITY</div>
             <button class="popover-item active" data-model="1.7b" role="menuitem">
