@@ -14,49 +14,67 @@
   const statusPill = document.getElementById("statusPill");
   const statusLabel = document.getElementById("statusLabel");
 
-  const btn17B = document.getElementById("btn17B");
-  const btn1B = document.getElementById("btn1B");
-  const btn05B = document.getElementById("btn05B");
-  const btnImage = document.getElementById("btnImage");
+  const modelSwitcher = document.getElementById("modelSwitcher");
+  const segmentBtns = document.querySelectorAll(".segment-btn");
 
   let selectedModel = "1.7b";
   let conversation = [];
   let abortController = null;
   let isGenerating = false;
 
+  const MODEL_TITLES = {
+    "1.7b": "How can 1.7B help you?",
+    "r1": "DeepSeek-R1 (Reasoning)",
+    "coder": "Qwen 2.5 Coder (Coding)",
+    "1b": "How can 1B help you?",
+    "0.5b": "How can 0.5B help you?",
+    "gemma": "Gemma 2 2B (Google)",
+    "smol": "SmolLM2 (Fast Assistant)",
+    "math": "Qwen Math (Calculations)",
+    "phi": "Phi-3.5 Mini (Microsoft)",
+    "image": "What would you like to imagine?",
+  };
+
   // ---------------------------------------------------------------------------
-  // Model Switcher (1.7B vs 1B vs 0.5B vs Image)
+  // Model Switcher (Dynamic Fleet Switching)
   // ---------------------------------------------------------------------------
   function setModel(model) {
     if (selectedModel === model) return;
     selectedModel = model;
 
-    btn17B.classList.toggle("active", model === "1.7b");
-    btn1B.classList.toggle("active", model === "1b");
-    btn05B.classList.toggle("active", model === "0.5b");
-    if (btnImage) btnImage.classList.toggle("active", model === "image");
+    segmentBtns.forEach((btn) => {
+      const isCurrent = btn.getAttribute("data-model") === model;
+      btn.classList.toggle("active", isCurrent);
+      if (isCurrent) {
+        btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      }
+    });
 
     if (model === "image") {
       messageInput.placeholder = "Describe an image to generate...";
-      if (welcomeHeading) welcomeHeading.textContent = "What would you like to imagine?";
-    } else if (model === "0.5b") {
-      messageInput.placeholder = "Message";
-      if (welcomeHeading) welcomeHeading.textContent = "How can 0.5B help you?";
-    } else if (model === "1b") {
-      messageInput.placeholder = "Message";
-      if (welcomeHeading) welcomeHeading.textContent = "How can 1B help you?";
+    } else if (model === "coder") {
+      messageInput.placeholder = "Ask for code, debugging, or script...";
+    } else if (model === "math") {
+      messageInput.placeholder = "Enter a math problem or equation...";
+    } else if (model === "r1") {
+      messageInput.placeholder = "Ask a complex reasoning prompt...";
     } else {
       messageInput.placeholder = "Message";
-      if (welcomeHeading) welcomeHeading.textContent = "How can I help you?";
+    }
+
+    if (welcomeHeading) {
+      welcomeHeading.textContent = MODEL_TITLES[model] || "How can I help you?";
     }
 
     checkConnection();
   }
 
-  btn17B.addEventListener("click", () => setModel("1.7b"));
-  btn1B.addEventListener("click", () => setModel("1b"));
-  btn05B.addEventListener("click", () => setModel("0.5b"));
-  if (btnImage) btnImage.addEventListener("click", () => setModel("image"));
+  segmentBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const model = btn.getAttribute("data-model");
+      if (model) setModel(model);
+    });
+  });
 
   // ---------------------------------------------------------------------------
   // Status Check: "Connecting to AS cloud" / "Connected to AS cloud"
@@ -67,8 +85,7 @@
       const data = await res.json();
 
       if (data.status === "ok") {
-        const label = selectedModel === "image" ? "SD-Turbo" : selectedModel.toUpperCase();
-        updateStatus("online", `Connected to AS cloud (${label})`);
+        updateStatus("online", `Connected to AS cloud (${data.model || selectedModel.toUpperCase()})`);
         return true;
       } else {
         updateStatus("checking", "Connecting to AS cloud...");

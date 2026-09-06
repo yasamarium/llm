@@ -101,6 +101,15 @@ html, body {
   border-radius: 18px;
   border: 0.5px solid var(--border-subtle);
   user-select: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: min(520px, calc(100vw - 175px));
+  gap: 2px;
+}
+
+.ios-segmented-control::-webkit-scrollbar {
+  display: none;
 }
 
 .segment-btn {
@@ -115,6 +124,8 @@ html, body {
   cursor: pointer;
   transition: all 0.2s var(--spring-easing);
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .segment-btn:hover {
