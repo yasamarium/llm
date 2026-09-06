@@ -1361,8 +1361,9 @@
       overlay.classList.add("visible");
     });
 
-    const STAR_COUNT = 240;
+    const STAR_COUNT = 260;
     const stars = [];
+    const starColors = ["#ffffff", "#f8fafc", "#e0f2fe", "#fef3c7", "#fae8ff"];
     for (let i = 0; i < STAR_COUNT; i++) {
       stars.push({
         x: (Math.random() - 0.5) * width * 2,
@@ -1373,6 +1374,7 @@
         alpha: Math.random() * 0.7 + 0.3,
         twinkleOffset: Math.random() * Math.PI * 2,
         twinkleSpeed: Math.random() * 0.03 + 0.015,
+        color: starColors[i % starColors.length],
       });
     }
 
@@ -1473,165 +1475,304 @@
         hud.style.opacity = "0";
       }
 
-      // Phase 3: Waxing Crescent Moon & Night Sky (15800ms onwards)
-      if (elapsed >= 15800) {
+      // Phase 3: Waxing Crescent Moon & Night Sky (15600ms onwards)
+      if (elapsed >= 15600) {
         hud.style.display = "none";
 
+        // Cosmic background nebula haze behind moon
+        const nebula = ctx.createRadialGradient(cx, cy - 24, 40, cx, cy - 24, Math.max(width, height) * 0.65);
+        nebula.addColorStop(0, "rgba(49, 46, 129, 0.08)");
+        nebula.addColorStop(0.35, "rgba(88, 28, 135, 0.04)");
+        nebula.addColorStop(0.7, "rgba(15, 23, 42, 0.02)");
+        nebula.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = nebula;
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw Tranquil Night Sky Stars with Multi-frequency Twinkling
         for (let i = 0; i < stars.length; i++) {
           const s = stars[i];
           s.twinkleOffset += s.twinkleSpeed;
-          const twinkle = 0.45 + 0.55 * Math.sin(s.twinkleOffset);
-          const starAlpha = s.alpha * twinkle;
+          const twinkle = 0.4 + 0.6 * (0.6 * Math.sin(s.twinkleOffset) + 0.4 * Math.cos(s.twinkleOffset * 1.3));
+          const starAlpha = Math.max(0, Math.min(s.alpha * twinkle, 1));
 
           const sx = (s.x / 2) + cx;
           const sy = (s.y / 2) + cy;
 
           if (sx >= 0 && sx <= width && sy >= 0 && sy <= height) {
-            ctx.fillStyle = `rgba(240, 245, 255, ${starAlpha})`;
+            ctx.fillStyle = s.color || "rgba(240, 245, 255, 1)";
+            ctx.globalAlpha = starAlpha;
             ctx.beginPath();
-            ctx.arc(sx, sy, s.size * 0.9, 0, Math.PI * 2);
+            ctx.arc(sx, sy, s.size * 0.85, 0, Math.PI * 2);
             ctx.fill();
+            ctx.globalAlpha = 1;
           }
         }
 
-        const moonProgress = Math.min((elapsed - 15800) / 2400, 1);
+        // Waxing Crescent Moon Animation
+        const moonProgress = Math.min((elapsed - 15600) / 2600, 1);
         const moonAlpha = moonProgress;
-        const moonScale = 0.94 + 0.06 * (1 - Math.pow(1 - moonProgress, 3));
+        const easeProgress = 1 - Math.pow(1 - moonProgress, 4);
+        const breath = Math.sin(elapsed * 0.0016) * 0.012;
+        const moonScale = (0.92 + 0.08 * easeProgress) * (1 + breath);
 
-        const moonR = Math.min(width, height) * 0.16;
-        const moonY = cy - 20;
+        const moonR = Math.min(width, height) * 0.165;
+        const moonY = cy - 24;
 
         ctx.save();
         ctx.globalAlpha = moonAlpha;
         ctx.translate(cx, moonY);
         ctx.scale(moonScale, moonScale);
 
-        // A. Ethereal Lunar Corona
-        const coronaGrad = ctx.createRadialGradient(moonR * 0.35, 0, moonR * 0.6, moonR * 0.35, 0, moonR * 2.8);
-        coronaGrad.addColorStop(0, "rgba(255, 248, 230, 0.32)");
-        coronaGrad.addColorStop(0.25, "rgba(215, 235, 255, 0.14)");
-        coronaGrad.addColorStop(0.55, "rgba(180, 210, 255, 0.04)");
-        coronaGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-        ctx.fillStyle = coronaGrad;
+        // A. Multi-tiered Atmospheric Lunar Corona
+        const outerCorona = ctx.createRadialGradient(moonR * 0.45, 0, moonR * 0.7, moonR * 0.45, 0, moonR * 3.6);
+        outerCorona.addColorStop(0, "rgba(255, 248, 235, 0.38)");
+        outerCorona.addColorStop(0.18, "rgba(210, 235, 255, 0.16)");
+        outerCorona.addColorStop(0.48, "rgba(165, 200, 255, 0.05)");
+        outerCorona.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = outerCorona;
         ctx.beginPath();
-        ctx.arc(moonR * 0.35, 0, moonR * 2.8, 0, Math.PI * 2);
+        ctx.arc(moonR * 0.45, 0, moonR * 3.6, 0, Math.PI * 2);
         ctx.fill();
 
-        // B. Earthshine Disc
+        const midCorona = ctx.createRadialGradient(moonR * 0.3, 0, moonR * 0.4, moonR * 0.3, 0, moonR * 1.8);
+        midCorona.addColorStop(0, "rgba(255, 252, 240, 0.45)");
+        midCorona.addColorStop(0.45, "rgba(190, 225, 255, 0.15)");
+        midCorona.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = midCorona;
+        ctx.beginPath();
+        ctx.arc(moonR * 0.3, 0, moonR * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // B. Earthshine Disc (Dark side of the moon)
         ctx.beginPath();
         ctx.arc(0, 0, moonR, 0, Math.PI * 2);
-        const earthshine = ctx.createRadialGradient(-moonR * 0.3, -moonR * 0.3, moonR * 0.1, 0, 0, moonR);
-        earthshine.addColorStop(0, "rgba(26, 34, 48, 0.96)");
-        earthshine.addColorStop(0.7, "rgba(16, 22, 32, 0.98)");
+        const earthshine = ctx.createRadialGradient(-moonR * 0.35, -moonR * 0.35, moonR * 0.1, 0, 0, moonR);
+        earthshine.addColorStop(0, "rgba(25, 34, 52, 0.98)");
+        earthshine.addColorStop(0.65, "rgba(15, 20, 32, 0.99)");
         earthshine.addColorStop(1, "rgba(8, 12, 18, 1)");
         ctx.fillStyle = earthshine;
         ctx.fill();
 
         // C. Earthshine Lunar Maria
-        ctx.fillStyle = "rgba(12, 17, 26, 0.75)";
-        const craters = [
-          [-0.35, -0.2, 0.14],
-          [-0.2, 0.25, 0.18],
-          [-0.45, 0.1, 0.1],
-          [-0.15, -0.4, 0.12],
-          [-0.5, -0.35, 0.08]
+        const mariaDetails = [
+          [-0.32, -0.22, 0.18, 0.42],
+          [-0.18, 0.28, 0.22, 0.38],
+          [-0.46, 0.08, 0.14, 0.48],
+          [-0.12, -0.42, 0.15, 0.42],
+          [-0.52, -0.32, 0.11, 0.38],
+          [-0.28, 0.02, 0.16, 0.35],
+          [-0.05, 0.15, 0.12, 0.28]
         ];
-        for (const [ox, oy, orad] of craters) {
+        for (const [mx, my, mr, mopac] of mariaDetails) {
+          ctx.fillStyle = `rgba(10, 14, 22, ${mopac})`;
           ctx.beginPath();
-          ctx.arc(ox * moonR, oy * moonR, orad * moonR, 0, Math.PI * 2);
+          ctx.arc(mx * moonR, my * moonR, mr * moonR, 0, Math.PI * 2);
           ctx.fill();
         }
 
-        ctx.strokeStyle = "rgba(160, 195, 255, 0.15)";
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = "rgba(180, 215, 255, 0.22)";
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(0, 0, moonR, Math.PI / 2, -Math.PI / 2, false);
         ctx.stroke();
 
-        // D. Sunlit Waxing Crescent (Right Limb)
+        // D. Sunlit Waxing Crescent (Right Limb with Mountainous Terminator)
         ctx.beginPath();
         ctx.arc(0, 0, moonR, -Math.PI / 2, Math.PI / 2, false);
-        ctx.bezierCurveTo(
-          moonR * 0.58, moonR * 0.55,
-          moonR * 0.58, -moonR * 0.55,
-          0, -moonR
-        );
+
+        const STEPS = 48;
+        for (let step = 0; step <= STEPS; step++) {
+          const phi = (Math.PI / 2) - (step / STEPS) * Math.PI;
+          const sinPhi = Math.sin(phi);
+          const cosPhi = Math.cos(phi);
+          const mountainNoise = (Math.sin(phi * 14) * 1.8 + Math.cos(phi * 26) * 1.1) * (1 - Math.abs(sinPhi));
+          const px = moonR * 0.58 * cosPhi + mountainNoise;
+          const py = moonR * sinPhi;
+          ctx.lineTo(px, py);
+        }
         ctx.closePath();
 
-        const moonGrad = ctx.createLinearGradient(-moonR * 0.2, -moonR, moonR, moonR * 0.5);
+        const moonGrad = ctx.createLinearGradient(-moonR * 0.1, -moonR, moonR, moonR * 0.4);
         moonGrad.addColorStop(0, "#ffffff");
-        moonGrad.addColorStop(0.35, "#fffef0");
-        moonGrad.addColorStop(0.7, "#f5eedb");
-        moonGrad.addColorStop(1, "#e6e0d2");
+        moonGrad.addColorStop(0.25, "#fffdf5");
+        moonGrad.addColorStop(0.65, "#f7eedb");
+        moonGrad.addColorStop(0.88, "#ebe1cd");
+        moonGrad.addColorStop(1, "#dfd5be");
         ctx.fillStyle = moonGrad;
-        ctx.shadowColor = "rgba(255, 248, 225, 0.85)";
-        ctx.shadowBlur = 28;
+        ctx.shadowColor = "rgba(255, 250, 232, 0.95)";
+        ctx.shadowBlur = 34;
         ctx.fill();
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
 
         ctx.restore();
       }
 
-      // Phase 4: Shooting Star (18300ms -> 19800ms)
-      if (elapsed >= 18300 && elapsed < 20200) {
-        const starElapsed = elapsed - 18300;
-        const starDuration = 1200;
-        const st = Math.min(starElapsed / starDuration, 1);
+      // Phase 4: Hyper-Premium Shooting Star (18200ms -> 19800ms)
+      if (elapsed >= 18200 && elapsed < 20400) {
+        const starElapsed = elapsed - 18200;
+        const starDuration = 1400;
+        const rawT = Math.min(starElapsed / starDuration, 1);
+        const st = rawT * rawT * (3 - 2 * rawT);
 
-        const sx0 = width * 0.86;
-        const sy0 = height * 0.12;
-        const sx1 = width * 0.14;
-        const sy1 = height * 0.68;
+        const sx0 = width * 0.88;
+        const sy0 = height * 0.10;
+        const scx = width * 0.48;
+        const scy = height * 0.32;
+        const sx1 = width * 0.10;
+        const sy1 = height * 0.74;
 
-        const hx = sx0 + (sx1 - sx0) * st;
-        const hy = sy0 + (sy1 - sy0) * st;
+        const inv = 1 - st;
+        const hx = inv * inv * sx0 + 2 * inv * st * scx + st * st * sx1;
+        const hy = inv * inv * sy0 + 2 * inv * st * scy + st * st * sy1;
 
-        const theta = Math.atan2(sy1 - sy0, sx1 - sx0);
+        const dx = 2 * inv * (scx - sx0) + 2 * st * (sx1 - scx);
+        const dy = 2 * inv * (scy - sy0) + 2 * st * (sy1 - scy);
+        const theta = Math.atan2(dy, dx);
+
         const totalDist = Math.hypot(sx1 - sx0, sy1 - sy0);
-        const tailLen = Math.min(240, totalDist * 0.35) * Math.sin(st * Math.PI);
+        const tailLen = Math.min(270, totalDist * 0.38) * Math.sin(st * Math.PI);
 
         const tx = hx - Math.cos(theta) * tailLen;
         const ty = hy - Math.sin(theta) * tailLen;
 
-        if (st < 1) {
-          const trailGrad = ctx.createLinearGradient(hx, hy, tx, ty);
-          trailGrad.addColorStop(0, "rgba(255, 255, 255, 1)");
-          trailGrad.addColorStop(0.18, "rgba(165, 243, 252, 0.9)");
-          trailGrad.addColorStop(0.55, "rgba(129, 140, 248, 0.5)");
-          trailGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
-
+        if (st < 1 && tailLen > 2) {
           ctx.save();
-          ctx.strokeStyle = trailGrad;
-          ctx.lineWidth = 3.5;
+
+          // 1. Wide Ionization Aurora Trail
+          const auroraGrad = ctx.createLinearGradient(hx, hy, tx, ty);
+          auroraGrad.addColorStop(0, "rgba(56, 189, 248, 0.22)");
+          auroraGrad.addColorStop(0.3, "rgba(168, 85, 247, 0.14)");
+          auroraGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.strokeStyle = auroraGrad;
+          ctx.lineWidth = 14;
           ctx.lineCap = "round";
           ctx.beginPath();
           ctx.moveTo(hx, hy);
           ctx.lineTo(tx, ty);
           ctx.stroke();
 
-          ctx.fillStyle = "#ffffff";
-          ctx.shadowColor = "#93c5fd";
-          ctx.shadowBlur = 20;
+          // 2. Mid Plasma Trail
+          const midGrad = ctx.createLinearGradient(hx, hy, tx, ty);
+          midGrad.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+          midGrad.addColorStop(0.2, "rgba(56, 189, 248, 0.85)");
+          midGrad.addColorStop(0.65, "rgba(168, 85, 247, 0.45)");
+          midGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+          ctx.strokeStyle = midGrad;
+          ctx.lineWidth = 4.8;
           ctx.beginPath();
-          ctx.arc(hx, hy, 3.2, 0, Math.PI * 2);
+          ctx.moveTo(hx, hy);
+          ctx.lineTo(tx, ty);
+          ctx.stroke();
+
+          // 3. Razor Core Streak
+          const coreGrad = ctx.createLinearGradient(hx, hy, tx, ty);
+          coreGrad.addColorStop(0, "#ffffff");
+          coreGrad.addColorStop(0.4, "rgba(255, 255, 255, 0.8)");
+          coreGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+          ctx.strokeStyle = coreGrad;
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.moveTo(hx, hy);
+          ctx.lineTo(tx, ty);
+          ctx.stroke();
+
+          // 4. Diamond Diffraction Spikes at Nucleus
+          ctx.translate(hx, hy);
+          const spikeLen = 14 * Math.sin(st * Math.PI);
+
+          const spikeH = ctx.createLinearGradient(-spikeLen, 0, spikeLen, 0);
+          spikeH.addColorStop(0, "rgba(255, 255, 255, 0)");
+          spikeH.addColorStop(0.5, "rgba(255, 255, 255, 0.95)");
+          spikeH.addColorStop(1, "rgba(255, 255, 255, 0)");
+          ctx.strokeStyle = spikeH;
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(-spikeLen, 0);
+          ctx.lineTo(spikeLen, 0);
+          ctx.stroke();
+
+          const spikeV = ctx.createLinearGradient(0, -spikeLen, 0, spikeLen);
+          spikeV.addColorStop(0, "rgba(255, 255, 255, 0)");
+          spikeV.addColorStop(0.5, "rgba(255, 255, 255, 0.95)");
+          spikeV.addColorStop(1, "rgba(255, 255, 255, 0)");
+          ctx.strokeStyle = spikeV;
+          ctx.beginPath();
+          ctx.moveTo(0, -spikeLen);
+          ctx.lineTo(0, spikeLen);
+          ctx.stroke();
+
+          ctx.fillStyle = "#ffffff";
+          ctx.shadowColor = "#38bdf8";
+          ctx.shadowBlur = 26;
+          ctx.beginPath();
+          ctx.arc(0, 0, 3.6, 0, Math.PI * 2);
           ctx.fill();
+
           ctx.restore();
 
-          if (st > 0.05 && st < 0.95) {
-            for (let k = 0; k < 3; k++) {
+          if (st > 0.05 && st < 0.92) {
+            for (let k = 0; k < 4; k++) {
               sparks.push({
-                x: hx + (Math.random() - 0.5) * 6,
-                y: hy + (Math.random() - 0.5) * 6,
-                vx: -Math.cos(theta) * (Math.random() * 2 + 0.5) + (Math.random() - 0.5) * 1.5,
-                vy: -Math.sin(theta) * (Math.random() * 2 + 0.5) + (Math.random() * 1.5 + 0.5),
+                x: hx + (Math.random() - 0.5) * 8,
+                y: hy + (Math.random() - 0.5) * 8,
+                vx: -Math.cos(theta) * (Math.random() * 2.6 + 0.8) + (Math.random() - 0.5) * 1.8,
+                vy: -Math.sin(theta) * (Math.random() * 2.6 + 0.8) + (Math.random() * 1.8 + 0.6),
                 life: 1.0,
-                decay: Math.random() * 0.02 + 0.015,
-                size: Math.random() * 2.2 + 0.8,
-                color: Math.random() > 0.4 ? "#ffffff" : "#fef08a",
+                decay: Math.random() * 0.016 + 0.01,
+                size: Math.random() * 2.5 + 0.9,
+                color: Math.random() > 0.4 ? "#ffffff" : (Math.random() > 0.5 ? "#fef08a" : "#7dd3fc"),
+                twinkleOffset: Math.random() * Math.PI * 2,
+                twinkleSpeed: Math.random() * 0.16 + 0.08
               });
             }
           }
         }
       }
 
-      // Update and Render Sparks
+      // Phase 4b: Distant Companion Micro-Meteor (19600ms -> 20450ms)
+      if (elapsed >= 19600 && elapsed < 20450) {
+        const mElapsed = elapsed - 19600;
+        const mt = Math.min(mElapsed / 800, 1);
+        if (mt < 1) {
+          const mx0 = width * 0.70;
+          const my0 = height * 0.08;
+          const mx1 = width * 0.38;
+          const my1 = height * 0.24;
+          const mhx = mx0 + (mx1 - mx0) * mt;
+          const mhy = my0 + (my1 - my0) * mt;
+          const mtheta = Math.atan2(my1 - my0, mx1 - mx0);
+          const mTail = 95 * Math.sin(mt * Math.PI);
+          const mtx = mhx - Math.cos(mtheta) * mTail;
+          const mty = mhy - Math.sin(mtheta) * mTail;
+
+          const mGrad = ctx.createLinearGradient(mhx, mhy, mtx, mty);
+          mGrad.addColorStop(0, "rgba(255, 255, 255, 0.85)");
+          mGrad.addColorStop(0.35, "rgba(186, 230, 253, 0.6)");
+          mGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+          ctx.save();
+          ctx.strokeStyle = mGrad;
+          ctx.lineWidth = 1.8;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(mhx, mhy);
+          ctx.lineTo(mtx, mty);
+          ctx.stroke();
+
+          ctx.fillStyle = "#ffffff";
+          ctx.shadowColor = "#bae6fd";
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(mhx, mhy, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // Render Sparkling Stardust Embers
       if (sparks.length > 0) {
         for (let i = sparks.length - 1; i >= 0; i--) {
           const sp = sparks[i];
@@ -1644,11 +1785,15 @@
             continue;
           }
 
+          sp.twinkleOffset += sp.twinkleSpeed;
+          const sparkTwinkle = 0.5 + 0.5 * Math.sin(sp.twinkleOffset);
+          const sparkAlpha = sp.life * sparkTwinkle;
+
           ctx.save();
           ctx.fillStyle = sp.color;
-          ctx.globalAlpha = sp.life;
+          ctx.globalAlpha = sparkAlpha;
           ctx.shadowColor = sp.color;
-          ctx.shadowBlur = 8;
+          ctx.shadowBlur = 10;
           ctx.beginPath();
           ctx.arc(sp.x, sp.y, sp.size * sp.life, 0, Math.PI * 2);
           ctx.fill();
@@ -1657,14 +1802,14 @@
       }
 
       // Phase 5: Peaceful Cosmic Pause & Slow Fade Back to Chat
-      if (elapsed >= 24800 && !overlay.classList.contains("fading-out")) {
+      if (elapsed >= 25000 && !overlay.classList.contains("fading-out")) {
         overlay.classList.add("fading-out");
         overlay.style.transition = "opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1)";
         overlay.style.opacity = "0";
         document.body.style.overflow = "";
       }
 
-      if (elapsed >= 27400) {
+      if (elapsed >= 27600) {
         cleanup();
         return;
       }
@@ -1710,9 +1855,14 @@
     messageInput.value = "";
     autoResizeInput();
 
-    // 0. Secret Easter Egg: "shuvangi" or "suhu"
-    const lowerText = text.toLowerCase();
-    if (lowerText.includes("shuvangi") || lowerText.includes("suhu")) {
+    // 0. Secret Easter Egg: STRICTLY only "shuvangi" or "suhu"
+    // No other words before, after, or accompanying it.
+    const normalizedWord = text
+      .trim()
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]/gu, "");
+
+    if (normalizedWord === "shuvangi" || normalizedWord === "suhu") {
       handleSecretExperience(text);
       return;
     }
