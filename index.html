@@ -16,7 +16,7 @@
 </head>
 <body>
   <div class="ios-app">
-    <!-- iOS Navigation Bar -->
+    <!-- Clean Minimalist iOS Navigation Bar -->
     <header class="ios-navbar">
       <div class="nav-brand">
         <div class="brand-glyph">
@@ -24,23 +24,10 @@
             <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
         </div>
-        
-        <!-- Apple-style Segmented Model Switcher -->
-        <div class="ios-segmented-control" id="modelSwitcher">
-          <button class="segment-btn active" data-model="1.7b" title="Qwen3 1.7B Cluster">1.7B</button>
-          <button class="segment-btn" data-model="r1" title="DeepSeek-R1 1.5B Reasoning">R1</button>
-          <button class="segment-btn" data-model="coder" title="Qwen 2.5 Coder 1.5B">Coder</button>
-          <button class="segment-btn" data-model="1b" title="1B Fast Node">1B</button>
-          <button class="segment-btn" data-model="0.5b" title="0.5B Lightweight Node">0.5B</button>
-          <button class="segment-btn" data-model="gemma" title="Gemma 2 2B (Google)">Gemma</button>
-          <button class="segment-btn" data-model="smol" title="SmolLM2 1.7B (HuggingFace)">Smol</button>
-          <button class="segment-btn" data-model="math" title="Qwen 2.5 Math 1.5B">Math</button>
-          <button class="segment-btn" data-model="phi" title="Microsoft Phi-3.5 Mini">Phi</button>
-          <button class="segment-btn" data-model="image" title="SD-Turbo 0.9B Image Generation">🎨 Image</button>
-        </div>
+        <span class="brand-title">AS Cloud</span>
       </div>
 
-      <!-- AS Cloud Status Indicator -->
+      <!-- AS Cloud Live Status Indicator -->
       <div class="status-indicator">
         <div id="statusPill" class="ios-pill checking">
           <span class="status-pulse"></span>
@@ -48,7 +35,7 @@
         </div>
       </div>
 
-      <!-- Action Button -->
+      <!-- New Chat Action Button -->
       <div class="nav-actions">
         <button id="newChatBtn" class="ios-circle-btn" title="New Conversation" aria-label="New Conversation">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -91,31 +78,192 @@
       <div class="messages-flow" id="messagesFlow"></div>
     </main>
 
-    <!-- iOS Bottom Input Capsule -->
+    <!-- Claude / DeepSeek Style Bottom Dock -->
     <footer class="ios-input-dock">
-      <div class="input-capsule">
-        <textarea
-          id="messageInput"
-          rows="1"
-          placeholder="Message"
-          autocomplete="off"
-          autocorrect="on"
-          autocapitalize="sentences"
-          spellcheck="true"
-        ></textarea>
+      <div class="input-container">
+        <!-- Floating Glass Model Popover Menu -->
+        <div id="modelPopover" class="ios-model-popover hidden" role="menu">
+          <div class="popover-header">
+            <span class="popover-title">Select AS Cloud Model</span>
+            <span class="popover-subtitle">Multi-node load balanced</span>
+          </div>
+          <div class="popover-models-list">
+            <div class="popover-group-label">REASONING & HIGH CAPACITY</div>
+            <button class="popover-item active" data-model="1.7b" role="menuitem">
+              <span class="popover-item-icon">✦</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">Qwen 1.7B</div>
+                <div class="popover-item-desc">High-speed conversational intelligence</div>
+              </div>
+              <span class="popover-node-count">4 Nodes</span>
+              <span class="popover-check">✓</span>
+            </button>
 
-        <div class="dock-actions">
-          <button id="stopBtn" class="stop-capsule-btn hidden" title="Stop">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="5" y="5" width="14" height="14" rx="2"/>
-            </svg>
-          </button>
+            <button class="popover-item" data-model="r1" role="menuitem">
+              <span class="popover-item-icon">🧠</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">DeepSeek R1</div>
+                <div class="popover-item-desc">Chain-of-thought reasoning & logic</div>
+              </div>
+              <span class="popover-node-count">3 Nodes</span>
+              <span class="popover-check">✓</span>
+            </button>
 
-          <button id="sendBtn" class="send-capsule-btn" title="Send" aria-label="Send">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 19V5M5 12l7-7 7 7"/>
-            </svg>
-          </button>
+            <button class="popover-item" data-model="llama3b" role="menuitem">
+              <span class="popover-item-icon">🦙</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">Llama 3.2 3B</div>
+                <div class="popover-item-desc">Meta high-capability 3B model</div>
+              </div>
+              <span class="popover-node-count">2 Nodes</span>
+              <span class="popover-check">✓</span>
+            </button>
+
+            <button class="popover-item" data-model="qwen3b" role="menuitem">
+              <span class="popover-item-icon">✨</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">Qwen 2.5 3B</div>
+                <div class="popover-item-desc">Flagship 3B comprehension & depth</div>
+              </div>
+              <span class="popover-node-count">2 Nodes</span>
+              <span class="popover-check">✓</span>
+            </button>
+
+            <button class="popover-item" data-model="coder" role="menuitem">
+              <span class="popover-item-icon">💻</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">Qwen 2.5 Coder</div>
+                <div class="popover-item-desc">Code writing, architecture & debugging</div>
+              </div>
+              <span class="popover-node-count">2 Nodes</span>
+              <span class="popover-check">✓</span>
+            </button>
+
+            <div class="popover-group-label">SPECIALIZED & LIGHTWEIGHT</div>
+            <button class="popover-item" data-model="gemma" role="menuitem">
+              <span class="popover-item-icon">💎</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">Gemma 2 2B</div>
+                <div class="popover-item-desc">Google Gemma 2 high-precision output</div>
+              </div>
+              <span class="popover-node-count">1 Node</span>
+              <span class="popover-check">✓</span>
+            </button>
+
+            <button class="popover-item" data-model="math" role="menuitem">
+              <span class="popover-item-icon">📐</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">Qwen Math</div>
+                <div class="popover-item-desc">Mathematical formulas & step calculations</div>
+              </div>
+              <span class="popover-node-count">1 Node</span>
+              <span class="popover-check">✓</span>
+            </button>
+
+            <button class="popover-item" data-model="phi" role="menuitem">
+              <span class="popover-item-icon">🔬</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">Phi-3.5 Mini</div>
+                <div class="popover-item-desc">Microsoft 3.8B deep comprehension</div>
+              </div>
+              <span class="popover-node-count">1 Node</span>
+              <span class="popover-check">✓</span>
+            </button>
+
+            <button class="popover-item" data-model="1b" role="menuitem">
+              <span class="popover-item-icon">⚡</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">Llama 3.2 1B</div>
+                <div class="popover-item-desc">Rapid conversational responses</div>
+              </div>
+              <span class="popover-node-count">2 Nodes</span>
+              <span class="popover-check">✓</span>
+            </button>
+
+            <button class="popover-item" data-model="smol" role="menuitem">
+              <span class="popover-item-icon">🍃</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">SmolLM2 1.7B</div>
+                <div class="popover-item-desc">HuggingFace lightweight assistant</div>
+              </div>
+              <span class="popover-node-count">1 Node</span>
+              <span class="popover-check">✓</span>
+            </button>
+
+            <button class="popover-item" data-model="0.5b" role="menuitem">
+              <span class="popover-item-icon">🪶</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">Qwen 0.5B</div>
+                <div class="popover-item-desc">Instant low-latency CPU inference</div>
+              </div>
+              <span class="popover-node-count">2 Nodes</span>
+              <span class="popover-check">✓</span>
+            </button>
+
+            <div class="popover-group-label">DIFFUSION</div>
+            <button class="popover-item" data-model="image" role="menuitem">
+              <span class="popover-item-icon">🎨</span>
+              <div class="popover-item-info">
+                <div class="popover-item-name">SD-Turbo Image</div>
+                <div class="popover-item-desc">High-speed 1-step diffusion generation</div>
+              </div>
+              <span class="popover-node-count">2 Nodes</span>
+              <span class="popover-check">✓</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Claude / DeepSeek Bottom Composer Bar -->
+        <div class="composer-top-bar">
+          <div class="model-picker-wrapper">
+            <button id="modelPickerBtn" class="model-picker-trigger" type="button" aria-haspopup="true" aria-expanded="false" title="Switch Model">
+              <span class="model-picker-glyph" id="currentModelGlyph">✦</span>
+              <span class="model-picker-name" id="currentModelName">Qwen 1.7B</span>
+              <span class="model-picker-badge" id="currentModelBadge">4 Nodes</span>
+              <svg class="chevron-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Quick Access Horizontal Pill Dock -->
+          <div class="bottom-quick-pills" id="bottomQuickPills">
+            <button class="quick-pill active" data-model="1.7b">1.7B</button>
+            <button class="quick-pill" data-model="r1">🧠 R1</button>
+            <button class="quick-pill" data-model="coder">💻 Coder</button>
+            <button class="quick-pill" data-model="llama3b">🦙 Llama 3B</button>
+            <button class="quick-pill" data-model="qwen3b">✨ Qwen 3B</button>
+            <button class="quick-pill" data-model="1b">1B</button>
+            <button class="quick-pill" data-model="0.5b">0.5B</button>
+            <button class="quick-pill" data-model="image">🎨 Image</button>
+          </div>
+        </div>
+
+        <!-- Input Capsule -->
+        <div class="input-capsule">
+          <textarea
+            id="messageInput"
+            rows="1"
+            placeholder="Message"
+            autocomplete="off"
+            autocorrect="on"
+            autocapitalize="sentences"
+            spellcheck="true"
+          ></textarea>
+
+          <div class="dock-actions">
+            <button id="stopBtn" class="stop-capsule-btn hidden" title="Stop">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="5" y="5" width="14" height="14" rx="2"/>
+              </svg>
+            </button>
+
+            <button id="sendBtn" class="send-capsule-btn" title="Send" aria-label="Send">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19V5M5 12l7-7 7 7"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </footer>

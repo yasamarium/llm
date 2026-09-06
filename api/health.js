@@ -1,27 +1,72 @@
-// api/health.js - Checks health of any AS Cloud fleet node
+// api/health.js - Checks health across multi-replica AS Cloud fleet
 
 const ENDPOINTS = {
-  "r1": { list: ["https://raw.githubusercontent.com/yasamarium/server9/main/endpoint.txt"], label: "DeepSeek-R1" },
-  "coder": { list: ["https://raw.githubusercontent.com/yasamarium/server10/main/endpoint.txt"], label: "Qwen-Coder" },
-  "gemma": { list: ["https://raw.githubusercontent.com/yasamarium/server11/main/endpoint.txt"], label: "Gemma-2" },
-  "smol": { list: ["https://raw.githubusercontent.com/yasamarium/server12/main/endpoint.txt"], label: "SmolLM2" },
-  "math": { list: ["https://raw.githubusercontent.com/yasamarium/server13/main/endpoint.txt"], label: "Qwen-Math" },
-  "phi": { list: ["https://raw.githubusercontent.com/yasamarium/server14/main/endpoint.txt"], label: "Phi-3.5" },
+  "r1": {
+    list: [
+      "https://raw.githubusercontent.com/yasamarium/server9/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server15/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server16/main/endpoint.txt",
+    ],
+    label: "DeepSeek-R1 (3 Nodes)",
+  },
+  "coder": {
+    list: [
+      "https://raw.githubusercontent.com/yasamarium/server10/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server17/main/endpoint.txt",
+    ],
+    label: "Qwen-Coder (2 Nodes)",
+  },
+  "llama3b": {
+    list: [
+      "https://raw.githubusercontent.com/yasamarium/server19/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server20/main/endpoint.txt",
+    ],
+    label: "Llama 3.2 3B (2 Nodes)",
+  },
+  "qwen3b": {
+    list: [
+      "https://raw.githubusercontent.com/yasamarium/server21/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server22/main/endpoint.txt",
+    ],
+    label: "Qwen 2.5 3B (2 Nodes)",
+  },
+  "gemma": {
+    list: ["https://raw.githubusercontent.com/yasamarium/server11/main/endpoint.txt"],
+    label: "Gemma-2 2B",
+  },
+  "smol": {
+    list: ["https://raw.githubusercontent.com/yasamarium/server12/main/endpoint.txt"],
+    label: "SmolLM2 1.7B",
+  },
+  "math": {
+    list: ["https://raw.githubusercontent.com/yasamarium/server13/main/endpoint.txt"],
+    label: "Qwen-Math",
+  },
+  "phi": {
+    list: ["https://raw.githubusercontent.com/yasamarium/server14/main/endpoint.txt"],
+    label: "Phi-3.5 Mini",
+  },
   "image": {
     list: [
       "https://raw.githubusercontent.com/yasamarium/server7/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/server8/main/endpoint.txt",
     ],
-    label: "SD-Turbo",
+    label: "SD-Turbo (2 Nodes)",
   },
   "0.5b": {
     list: [
       "https://raw.githubusercontent.com/yasamarium/server5/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/server6/main/endpoint.txt",
     ],
-    label: "0.5B",
+    label: "0.5B (2 Nodes)",
   },
-  "1b": { list: ["https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt"], label: "1B" },
+  "1b": {
+    list: [
+      "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server18/main/endpoint.txt",
+    ],
+    label: "1B (2 Nodes)",
+  },
   "1.7b": {
     list: [
       "https://raw.githubusercontent.com/yasamarium/server2/main/endpoint.txt",
@@ -29,7 +74,7 @@ const ENDPOINTS = {
       "https://raw.githubusercontent.com/yasamarium/server4/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt",
     ],
-    label: "1.7B",
+    label: "1.7B Cluster (4 Nodes)",
   },
 };
 
@@ -48,6 +93,8 @@ function normalizeKey(raw) {
   const m = (raw || "").toLowerCase();
   if (m.includes("r1") || m.includes("deepseek")) return "r1";
   if (m.includes("coder") || m.includes("code")) return "coder";
+  if (m.includes("llama3b") || m.includes("llama-3b") || m.includes("llama 3b") || m.includes("llama")) return "llama3b";
+  if (m.includes("qwen3b") || m.includes("qwen-3b") || m.includes("qwen 3b") || m.includes("3b")) return "qwen3b";
   if (m.includes("gemma")) return "gemma";
   if (m.includes("smol")) return "smol";
   if (m.includes("math")) return "math";
@@ -73,7 +120,7 @@ export default async function handler(req, res) {
 
   for (const endpointMeta of endpointsToCheck) {
     const targetUrl = await fetchEndpointUrl(endpointMeta);
-    if (!targetUrl) continue;
+    if (!targetUrl || targetUrl.includes("localhost") || targetUrl.includes("example.com")) continue;
 
     try {
       const controller = new AbortController();
@@ -99,6 +146,6 @@ export default async function handler(req, res) {
   return res.status(200).json({
     status: "offline",
     model: modelLabel,
-    message: "Nodes initializing",
+    message: "Nodes connecting",
   });
 }

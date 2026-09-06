@@ -1,4 +1,4 @@
-// app.js - 120fps Fluid iOS Client with Separated Thinking & Reply
+// app.js - 120fps Fluid iOS Client with Claude/DeepSeek Bottom Selector & Separated Thinking
 
 (function () {
   "use strict";
@@ -14,64 +14,113 @@
   const statusPill = document.getElementById("statusPill");
   const statusLabel = document.getElementById("statusLabel");
 
-  const modelSwitcher = document.getElementById("modelSwitcher");
-  const segmentBtns = document.querySelectorAll(".segment-btn");
+  // Bottom Composer Elements
+  const modelPickerBtn = document.getElementById("modelPickerBtn");
+  const modelPopover = document.getElementById("modelPopover");
+  const currentModelGlyph = document.getElementById("currentModelGlyph");
+  const currentModelName = document.getElementById("currentModelName");
+  const currentModelBadge = document.getElementById("currentModelBadge");
+  const popoverItems = document.querySelectorAll(".popover-item");
+  const quickPills = document.querySelectorAll(".quick-pill");
 
   let selectedModel = "1.7b";
   let conversation = [];
   let abortController = null;
   let isGenerating = false;
 
-  const MODEL_TITLES = {
-    "1.7b": "How can 1.7B help you?",
-    "r1": "DeepSeek-R1 (Reasoning)",
-    "coder": "Qwen 2.5 Coder (Coding)",
-    "1b": "How can 1B help you?",
-    "0.5b": "How can 0.5B help you?",
-    "gemma": "Gemma 2 2B (Google)",
-    "smol": "SmolLM2 (Fast Assistant)",
-    "math": "Qwen Math (Calculations)",
-    "phi": "Phi-3.5 Mini (Microsoft)",
-    "image": "What would you like to imagine?",
+  const MODEL_CONFIG = {
+    "1.7b": { name: "Qwen 1.7B", glyph: "✦", badge: "4 Nodes", title: "How can 1.7B help you?", placeholder: "Message Qwen 1.7B..." },
+    "r1": { name: "DeepSeek R1", glyph: "🧠", badge: "3 Nodes", title: "DeepSeek-R1 (Reasoning)", placeholder: "Ask a complex reasoning or logic problem..." },
+    "llama3b": { name: "Llama 3.2 3B", glyph: "🦙", badge: "2 Nodes", title: "Llama 3.2 3B (Meta)", placeholder: "Message Llama 3.2 3B..." },
+    "qwen3b": { name: "Qwen 2.5 3B", glyph: "✨", badge: "2 Nodes", title: "Qwen 2.5 3B (Alibaba)", placeholder: "Message Qwen 2.5 3B..." },
+    "coder": { name: "Qwen Coder", glyph: "💻", badge: "2 Nodes", title: "Qwen 2.5 Coder (Coding)", placeholder: "Ask for code, architecture, or debugging..." },
+    "gemma": { name: "Gemma 2 2B", glyph: "💎", badge: "1 Node", title: "Gemma 2 2B (Google)", placeholder: "Message Gemma 2..." },
+    "math": { name: "Qwen Math", glyph: "📐", badge: "1 Node", title: "Qwen Math (Calculations)", placeholder: "Enter a math problem or equation..." },
+    "phi": { name: "Phi-3.5 Mini", glyph: "🔬", badge: "1 Node", title: "Phi-3.5 Mini (Microsoft)", placeholder: "Message Phi-3.5..." },
+    "1b": { name: "Llama 3.2 1B", glyph: "⚡", badge: "2 Nodes", title: "How can 1B help you?", placeholder: "Message 1B..." },
+    "smol": { name: "SmolLM2", glyph: "🍃", badge: "1 Node", title: "SmolLM2 (Fast Assistant)", placeholder: "Message SmolLM2..." },
+    "0.5b": { name: "Qwen 0.5B", glyph: "🪶", badge: "2 Nodes", title: "How can 0.5B help you?", placeholder: "Message 0.5B..." },
+    "image": { name: "SD-Turbo Image", glyph: "🎨", badge: "2 Nodes", title: "What would you like to imagine?", placeholder: "Describe an image to generate..." },
   };
 
   // ---------------------------------------------------------------------------
-  // Model Switcher (Dynamic Fleet Switching)
+  // Claude / DeepSeek Style Bottom Model Switcher
   // ---------------------------------------------------------------------------
-  function setModel(model) {
-    if (selectedModel === model) return;
-    selectedModel = model;
+  function togglePopover(forceState) {
+    if (!modelPopover) return;
+    const isClosed = modelPopover.classList.contains("hidden");
+    const shouldOpen = forceState !== undefined ? forceState : isClosed;
 
-    segmentBtns.forEach((btn) => {
-      const isCurrent = btn.getAttribute("data-model") === model;
-      btn.classList.toggle("active", isCurrent);
-      if (isCurrent) {
-        btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-      }
+    if (shouldOpen) {
+      modelPopover.classList.remove("hidden");
+      modelPickerBtn?.setAttribute("aria-expanded", "true");
+    } else {
+      modelPopover.classList.add("hidden");
+      modelPickerBtn?.setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function closePopover() {
+    togglePopover(false);
+  }
+
+  if (modelPickerBtn) {
+    modelPickerBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      togglePopover();
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (modelPopover && !modelPopover.contains(e.target) && !modelPickerBtn?.contains(e.target)) {
+      closePopover();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closePopover();
+  });
+
+  function setModel(model) {
+    if (!MODEL_CONFIG[model]) return;
+    selectedModel = model;
+    const cfg = MODEL_CONFIG[model];
+
+    // Update bottom trigger button UI
+    if (currentModelGlyph) currentModelGlyph.textContent = cfg.glyph;
+    if (currentModelName) currentModelName.textContent = cfg.name;
+    if (currentModelBadge) currentModelBadge.textContent = cfg.badge;
+
+    // Update popover items active state
+    popoverItems.forEach((item) => {
+      item.classList.toggle("active", item.getAttribute("data-model") === model);
     });
 
-    if (model === "image") {
-      messageInput.placeholder = "Describe an image to generate...";
-    } else if (model === "coder") {
-      messageInput.placeholder = "Ask for code, debugging, or script...";
-    } else if (model === "math") {
-      messageInput.placeholder = "Enter a math problem or equation...";
-    } else if (model === "r1") {
-      messageInput.placeholder = "Ask a complex reasoning prompt...";
-    } else {
-      messageInput.placeholder = "Message";
-    }
+    // Update quick pills active state
+    quickPills.forEach((pill) => {
+      pill.classList.toggle("active", pill.getAttribute("data-model") === model);
+    });
 
+    // Update input placeholder & welcome heading
+    messageInput.placeholder = cfg.placeholder;
     if (welcomeHeading) {
-      welcomeHeading.textContent = MODEL_TITLES[model] || "How can I help you?";
+      welcomeHeading.textContent = cfg.title;
     }
 
+    closePopover();
     checkConnection();
   }
 
-  segmentBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const model = btn.getAttribute("data-model");
+  popoverItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const model = item.getAttribute("data-model");
+      if (model) setModel(model);
+    });
+  });
+
+  quickPills.forEach((pill) => {
+    pill.addEventListener("click", () => {
+      const model = pill.getAttribute("data-model");
       if (model) setModel(model);
     });
   });
@@ -144,12 +193,25 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Separate Thinking & Reply Parser
+  // Separate Thinking & Reply Parser (Supports both Qwen3 & DeepSeek R1)
   // ---------------------------------------------------------------------------
-  function parseThinkingAndReply(raw) {
+  function parseThinkingAndReply(raw, model = selectedModel) {
+    if (!raw) return { thinking: null, reply: "", isThinkingDone: true };
+
+    const isR1 = (model || "").toLowerCase().includes("r1") || (model || "").toLowerCase().includes("deepseek");
     const thinkStart = raw.indexOf("<think>");
+
     if (thinkStart === -1) {
-      // Check if raw starts with partial or leading tag
+      // DeepSeek R1 often starts generation directly inside the thinking block without leading <think>
+      if (raw.includes("</think>")) {
+        const thinkEnd = raw.indexOf("</think>");
+        const thinking = raw.substring(0, thinkEnd).trim();
+        const reply = raw.substring(thinkEnd + 8).trimStart();
+        return { thinking, reply, isThinkingDone: true };
+      } else if (isR1) {
+        // While streaming R1, before </think> arrives, all content is thinking
+        return { thinking: raw.trimStart(), reply: "", isThinkingDone: false };
+      }
       return { thinking: null, reply: raw, isThinkingDone: true };
     }
 
@@ -166,16 +228,13 @@
     return { thinking, reply, isThinkingDone: true };
   }
 
-  function renderAssistantBubble(bubbleElement, rawContent, isLive = false) {
-    const { thinking, reply, isThinkingDone } = parseThinkingAndReply(rawContent);
+  function renderAssistantBubble(bubbleElement, rawContent, isLive = false, model = selectedModel) {
+    const { thinking, reply, isThinkingDone } = parseThinkingAndReply(rawContent, model);
 
     let html = "";
 
-    if (thinking !== null) {
-      // Determine if thought container should be open
-      // During active thinking, keep open. Once thinking is finished, collapse automatically.
+    if (thinking !== null && thinking.length > 0) {
       const isOpen = isLive && !isThinkingDone;
-      const pulseClass = !isThinkingDone ? "thinking-active" : "";
       const labelText = !isThinkingDone ? "Thinking..." : "Thought Process";
 
       html += `
@@ -230,7 +289,7 @@
     if (role === "user") {
       bubble.textContent = content;
     } else {
-      renderAssistantBubble(bubble, content, false);
+      renderAssistantBubble(bubble, content, false, selectedModel);
     }
 
     row.appendChild(bubble);
@@ -414,6 +473,7 @@
     appendMessage("user", text);
     conversation.push({ role: "user", content: text });
 
+    const currentReqModel = selectedModel;
     const assistantBubble = appendMessage("assistant", "");
     setGenerating(true);
 
@@ -431,7 +491,7 @@
       if (!renderScheduled) {
         renderScheduled = true;
         requestAnimationFrame(() => {
-          renderAssistantBubble(assistantBubble, accumulatedText, true);
+          renderAssistantBubble(assistantBubble, accumulatedText, true, currentReqModel);
           smoothScrollToBottom();
           renderScheduled = false;
         });
@@ -445,7 +505,7 @@
         signal: abortController.signal,
         body: JSON.stringify({
           messages: fullMessages,
-          model: selectedModel,
+          model: currentReqModel,
           temperature: 0.7,
           max_tokens: 512,
           stream: true,
@@ -494,16 +554,16 @@
 
       // Final render without cursor
       requestAnimationFrame(() => {
-        renderAssistantBubble(assistantBubble, accumulatedText, false);
+        renderAssistantBubble(assistantBubble, accumulatedText, false, currentReqModel);
         smoothScrollToBottom();
       });
 
       // Save clean response to conversation history
-      const parsedFinal = parseThinkingAndReply(accumulatedText);
+      const parsedFinal = parseThinkingAndReply(accumulatedText, currentReqModel);
       conversation.push({ role: "assistant", content: parsedFinal.reply || accumulatedText });
     } catch (err) {
       if (err.name === "AbortError") {
-        renderAssistantBubble(assistantBubble, accumulatedText, false);
+        renderAssistantBubble(assistantBubble, accumulatedText, false, currentReqModel);
         const stopNotice = document.createElement("p");
         stopNotice.style.cssText = "color: var(--text-tertiary); font-style: italic; margin-top: 8px;";
         stopNotice.textContent = "(Stopped)";
