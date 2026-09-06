@@ -452,6 +452,337 @@
     return { thinking, reply, isThinkingDone: true };
   }
 
+  // ---------------------------------------------------------------------------
+  // Document & Response Export Suite (Word DOC, PDF, Markdown, Text, Image Formats)
+  // ---------------------------------------------------------------------------
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+  }
+
+  function slugifyFilename(title, ext) {
+    const safe = (title || "response")
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "_")
+      .slice(0, 32);
+    return `${safe || "response"}_${Date.now()}.${ext}`;
+  }
+
+  function exportTextDocument(format, rawText, htmlContent, docTitle = "AS Cloud Response") {
+    triggerHaptic("light");
+
+    if (format === "copy") {
+      copyTextToClipboard(rawText).then(() => {
+        triggerHaptic("medium");
+      });
+      return;
+    }
+
+    if (format === "txt") {
+      const header = `${docTitle}\nExported from AS Cloud Intelligence • ${new Date().toLocaleString()}\n${"-".repeat(60)}\n\n`;
+      const blob = new Blob([header + rawText], { type: "text/plain;charset=utf-8" });
+      downloadBlob(blob, slugifyFilename(docTitle, "txt"));
+      return;
+    }
+
+    if (format === "md") {
+      const header = `# ${docTitle}\n\n*Exported from AS Cloud Intelligence • ${new Date().toLocaleString()}*\n\n---\n\n`;
+      const blob = new Blob([header + rawText], { type: "text/markdown;charset=utf-8" });
+      downloadBlob(blob, slugifyFilename(docTitle, "md"));
+      return;
+    }
+
+    if (format === "doc") {
+      const docHtml = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office'
+              xmlns:w='urn:schemas-microsoft-com:office:word'
+              xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>${escapeHtml(docTitle)}</title>
+          <style>
+            body { font-family: -apple-system, 'Segoe UI', Calibri, Arial, sans-serif; font-size: 11.5pt; line-height: 1.6; color: #1e293b; margin: 36pt; }
+            h1, h2, h3 { color: #0f172a; margin-top: 18pt; margin-bottom: 6pt; }
+            p { margin: 0 0 10pt 0; }
+            code { font-family: Consolas, 'Courier New', monospace; background-color: #f1f5f9; padding: 2pt 4pt; font-size: 10pt; border-radius: 3pt; }
+            pre { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 10pt; font-family: Consolas, monospace; font-size: 9.5pt; border-radius: 4pt; overflow-x: auto; }
+            blockquote { border-left: 3pt solid #6366f1; margin: 10pt 0; padding-left: 10pt; color: #475569; }
+            hr { border: 0; border-top: 1px solid #e2e8f0; margin: 16pt 0; }
+            .doc-header { border-bottom: 2pt solid #6366f1; padding-bottom: 8pt; margin-bottom: 16pt; }
+            .doc-title { font-size: 16pt; font-weight: bold; color: #4338ca; }
+            .doc-meta { font-size: 9pt; color: #64748b; margin-top: 4pt; }
+          </style>
+        </head>
+        <body>
+          <div class="doc-header">
+            <div class="doc-title">${escapeHtml(docTitle)}</div>
+            <div class="doc-meta">AS Cloud Intelligence &bull; Exported on ${new Date().toLocaleString()}</div>
+          </div>
+          <div class="doc-content">
+            ${htmlContent || rawText.replace(/\n/g, "<br>")}
+          </div>
+        </body>
+        </html>
+      `;
+      const blob = new Blob([docHtml], { type: "application/msword;charset=utf-8" });
+      downloadBlob(blob, slugifyFilename(docTitle, "doc"));
+      return;
+    }
+
+    if (format === "pdf") {
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        alert("Please enable popups to export as PDF.");
+        return;
+      }
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${escapeHtml(docTitle)} - AS Cloud</title>
+          <style>
+            @page { size: A4; margin: 18mm 16mm; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 13.5px; line-height: 1.65; color: #0f172a; margin: 0; padding: 10px; }
+            .pdf-header { border-bottom: 2px solid #6366f1; padding-bottom: 8px; margin-bottom: 18px; }
+            .pdf-title { font-size: 20px; font-weight: 700; color: #312e81; margin: 0 0 4px 0; }
+            .pdf-meta { font-size: 11px; color: #64748b; }
+            p { margin: 0 0 10px 0; }
+            pre { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-family: Consolas, monospace; font-size: 11.5px; page-break-inside: avoid; }
+            code { background: #f1f5f9; padding: 2px 4px; border-radius: 3px; font-family: Consolas, monospace; font-size: 12px; }
+            blockquote { border-left: 3px solid #6366f1; margin: 10px 0; padding-left: 12px; color: #475569; }
+            table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+            th, td { border: 1px solid #cbd5e1; padding: 6px 10px; text-align: left; }
+            th { background: #f1f5f9; font-weight: 600; }
+          </style>
+        </head>
+        <body>
+          <div class="pdf-header">
+            <div class="pdf-title">${escapeHtml(docTitle)}</div>
+            <div class="pdf-meta">Generated by AS Cloud Intelligence &bull; ${new Date().toLocaleString()}</div>
+          </div>
+          <div class="pdf-body">
+            ${htmlContent || rawText.replace(/\n/g, "<br>")}
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 250);
+            };
+          </script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  }
+
+  async function exportImageDocument(format, imgSource, docTitle = "as_cloud_image") {
+    triggerHaptic("light");
+    const cleanName = slugifyFilename(docTitle, format).replace(`.${format}`, "");
+
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imgSource;
+      });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext("2d");
+
+      if (format === "jpg" || format === "jpeg") {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.drawImage(img, 0, 0);
+
+      if (format === "pdf") {
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) {
+          alert("Please enable popups to export as PDF.");
+          return;
+        }
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${escapeHtml(docTitle)} - AS Cloud</title>
+            <style>
+              @page { size: auto; margin: 15mm; }
+              body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: -apple-system, sans-serif; }
+              .meta { font-size: 12px; color: #64748b; margin-bottom: 12px; }
+              img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+            </style>
+          </head>
+          <body>
+            <div class="meta">${escapeHtml(docTitle)} &bull; AS Cloud &bull; ${new Date().toLocaleString()}</div>
+            <img src="${dataUrl}" onload="setTimeout(() => window.print(), 250);" />
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+        return;
+      }
+
+      const mime = format === "webp" ? "image/webp" : (format === "jpg" || format === "jpeg" ? "image/jpeg" : "image/png");
+      const ext = format === "webp" ? "webp" : (format === "jpg" || format === "jpeg" ? "jpg" : "png");
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          downloadBlob(blob, `${cleanName}.${ext}`);
+        } else {
+          const a = document.createElement("a");
+          a.href = canvas.toDataURL(mime, 0.95);
+          a.download = `${cleanName}.${ext}`;
+          a.click();
+        }
+      }, mime, 0.95);
+    } catch (err) {
+      const a = document.createElement("a");
+      a.href = imgSource;
+      a.download = `${cleanName}.${format}`;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+
+  function createSaveMenuHtml(type = "text") {
+    if (type === "image") {
+      return `
+        <div class="ios-save-dropdown-wrapper">
+          <button type="button" class="ios-bubble-save-btn" title="Save Image with Format Options">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Save</span>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="ios-save-dropdown-menu">
+            <div class="save-menu-label">SAVE IMAGE AS</div>
+            <button type="button" class="save-menu-item" data-action="png">
+              <span>📸</span>
+              <span>PNG Image</span>
+              <span class="ext-pill">.png</span>
+            </button>
+            <button type="button" class="save-menu-item" data-action="jpg">
+              <span>🖼️</span>
+              <span>JPEG Image</span>
+              <span class="ext-pill">.jpg</span>
+            </button>
+            <button type="button" class="save-menu-item" data-action="webp">
+              <span>🌐</span>
+              <span>WebP Image</span>
+              <span class="ext-pill">.webp</span>
+            </button>
+            <button type="button" class="save-menu-item" data-action="pdf">
+              <span>📄</span>
+              <span>PDF Document</span>
+              <span class="ext-pill">.pdf</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="ios-save-dropdown-wrapper">
+        <button type="button" class="ios-bubble-save-btn" title="Save / Export Response">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Save</span>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="ios-save-dropdown-menu">
+          <div class="save-menu-label">EXPORT FORMAT</div>
+          <button type="button" class="save-menu-item" data-action="doc">
+            <span>📝</span>
+            <span>Word Document</span>
+            <span class="ext-pill">.doc</span>
+          </button>
+          <button type="button" class="save-menu-item" data-action="pdf">
+            <span>📄</span>
+            <span>PDF Document</span>
+            <span class="ext-pill">.pdf</span>
+          </button>
+          <button type="button" class="save-menu-item" data-action="md">
+            <span>📑</span>
+            <span>Markdown</span>
+            <span class="ext-pill">.md</span>
+          </button>
+          <button type="button" class="save-menu-item" data-action="txt">
+            <span>📃</span>
+            <span>Plain Text</span>
+            <span class="ext-pill">.txt</span>
+          </button>
+          <div class="save-menu-divider"></div>
+          <button type="button" class="save-menu-item" data-action="copy">
+            <span>📋</span>
+            <span>Copy Text</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function bindSaveMenu(wrapper, onAction) {
+    if (!wrapper) return;
+    const trigger = wrapper.querySelector(".ios-bubble-save-btn");
+    const menu = wrapper.querySelector(".ios-save-dropdown-menu");
+    if (!trigger || !menu) return;
+
+    trigger.onclick = (e) => {
+      e.stopPropagation();
+      const wasOpen = menu.classList.contains("open");
+      document.querySelectorAll(".ios-save-dropdown-menu.open").forEach((m) => m.classList.remove("open"));
+      if (!wasOpen) {
+        menu.classList.add("open");
+        triggerHaptic("light");
+      }
+    };
+
+    menu.querySelectorAll(".save-menu-item").forEach((item) => {
+      item.onclick = (e) => {
+        e.stopPropagation();
+        menu.classList.remove("open");
+        const action = item.getAttribute("data-action");
+        if (action) onAction(action, item);
+      };
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".ios-save-dropdown-wrapper")) {
+      document.querySelectorAll(".ios-save-dropdown-menu.open").forEach((m) => m.classList.remove("open"));
+    }
+  });
+
   function renderAssistantBubble(bubbleElement, rawContent, isLive = false, model = selectedModel) {
     const { thinking, reply, isThinkingDone } = parseThinkingAndReply(rawContent, model);
 
@@ -479,7 +810,28 @@
 
     html += `<div class="ios-reply-body">${renderedReply}${cursor}</div>`;
 
+    if (!isLive && reply && reply.trim()) {
+      html += `<div class="ios-bubble-actions">${createSaveMenuHtml("text")}</div>`;
+    }
+
     bubbleElement.innerHTML = html;
+
+    if (!isLive && reply && reply.trim()) {
+      const saveWrap = bubbleElement.querySelector(".ios-save-dropdown-wrapper");
+      bindSaveMenu(saveWrap, (action, item) => {
+        const title = MODEL_CONFIG[model]?.name || "AS Cloud Response";
+        if (action === "copy") {
+          copyTextToClipboard(reply).then(() => {
+            triggerHaptic("medium");
+            const orig = item.innerHTML;
+            item.innerHTML = "<span>✅</span><span>Copied!</span>";
+            setTimeout(() => { item.innerHTML = orig; }, 1800);
+          });
+        } else {
+          exportTextDocument(action, reply, renderedReply, title);
+        }
+      });
+    }
 
     // Attach click toggle for the thought accordion
     const toggleBtn = bubbleElement.querySelector(".thought-toggle-btn");
@@ -720,7 +1072,7 @@
           </div>
           <div class="image-meta-bar">
             <span class="image-prompt-text">"${escapeHtml(prompt)}"</span>
-            <div style="display: flex; gap: 6px;">
+            <div style="display: flex; gap: 6px; align-items: center;">
               <button type="button" class="image-download-btn edit-generated-btn" style="background: rgba(255, 255, 255, 0.15); color: #ffffff;" title="Edit or Remove Background">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -728,18 +1080,16 @@
                 </svg>
                 <span>Edit / Remove BG</span>
               </button>
-              <a href="${dataUrl}" download="${downloadFileName}" class="image-download-btn" title="Save Image">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                <span>Save</span>
-              </a>
+              ${createSaveMenuHtml("image")}
             </div>
           </div>
         </div>
       `;
+
+      const saveWrap = assistantBubble.querySelector(".ios-save-dropdown-wrapper");
+      bindSaveMenu(saveWrap, (action) => {
+        exportImageDocument(action, dataUrl, prompt || "generated_image");
+      });
 
       const editBtn = assistantBubble.querySelector(".edit-generated-btn");
       if (editBtn) {
@@ -939,15 +1289,26 @@
         }
       } catch (e) {}
 
-      // 2. Direct client fallback
+      // 2. Direct client fallback (prioritize download/yt, then snapsaver)
       if (!data || !data.result) {
-        const directRes = await fetch(`https://apis.davidcyril.name.ng/download/snapsaver?url=${encodeURIComponent(ytUrl)}`, {
-          signal: abortController.signal,
-        });
-        if (!directRes.ok) {
-          throw new Error(`Video service returned HTTP ${directRes.status}`);
+        try {
+          const directYt = await fetch(`https://apis.davidcyril.name.ng/download/yt?url=${encodeURIComponent(ytUrl)}`, {
+            signal: abortController.signal,
+          });
+          if (directYt.ok) {
+            data = await directYt.json();
+          }
+        } catch (e) {}
+
+        if (!data || !data.result) {
+          const directRes = await fetch(`https://apis.davidcyril.name.ng/download/snapsaver?url=${encodeURIComponent(ytUrl)}`, {
+            signal: abortController.signal,
+          });
+          if (!directRes.ok) {
+            throw new Error(`Video service returned HTTP ${directRes.status}`);
+          }
+          data = await directRes.json();
         }
-        data = await directRes.json();
       }
 
       const res = data?.result || data;
@@ -955,13 +1316,25 @@
         throw new Error("Could not extract media data from this YouTube link.");
       }
 
+      const ytIdMatch = ytUrl.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
+      const ytVideoId = ytIdMatch ? ytIdMatch[1] : "";
+      const fallbackThumb = ytVideoId ? `https://i.ytimg.com/vi/${ytVideoId}/hqdefault.jpg` : "";
+
       const title = res.title || "YouTube Video";
       const author = res.author || "YouTube Creator";
-      const thumbnail = res.thumbnail || "";
+      const thumbnail = res.thumbnail || fallbackThumb;
       const duration = res.duration || "";
-      const viewsFormatted = formatViews(res.views);
-      const videos = Array.isArray(res.videos) ? res.videos : [];
-      const audios = Array.isArray(res.audios) ? res.audios : [];
+      const viewsFormatted = res.views ? formatViews(res.views) : "";
+      const videos = Array.isArray(res.videos) ? [...res.videos] : [];
+      const audios = Array.isArray(res.audios) ? [...res.audios] : [];
+
+      if (res.download_url && !videos.some((v) => v.url === res.download_url)) {
+        videos.unshift({
+          url: res.download_url,
+          quality: res.quality || "720p",
+          format: res.format || "mp4",
+        });
+      }
 
       // Find best playable MP4 stream for <video> tag
       const playableVideo =
@@ -1131,14 +1504,7 @@
           <div class="edit-card-body">
             <div class="edit-prompt-text">✨ "${escapeHtml(finalPrompt)}"</div>
             <div class="edit-actions-bar">
-              <a href="${escapeHtml(resultProxyUrl)}" download="as_edited_${Date.now()}.jpg" target="_blank" class="media-btn-primary" title="Save Edited Image">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                <span>Save Result</span>
-              </a>
+              ${createSaveMenuHtml("image")}
 
               <button type="button" class="media-btn-secondary copy-proxy-btn" data-url="${escapeHtml(resultProxyUrl)}" title="Copy Image Link">
                 <span>Copy URL</span>
@@ -1154,6 +1520,11 @@
           </div>
         </div>
       `;
+
+      const saveWrap = assistantBubble.querySelector(".ios-save-dropdown-wrapper");
+      bindSaveMenu(saveWrap, (action) => {
+        exportImageDocument(action, resultProxyUrl, finalPrompt || "edited_image");
+      });
 
       const origCol = assistantBubble.querySelector(".original-col");
       if (origCol) {
@@ -1576,36 +1947,35 @@
         ctx.arc(0, 0, moonR, Math.PI / 2, -Math.PI / 2, false);
         ctx.stroke();
 
-        // D. Sunlit Waxing Crescent (Right Limb with Mountainous Terminator)
+        // D. Sunlit Waxing Crescent (Right Limb - Silky Mathematical Perfection)
         ctx.beginPath();
         ctx.arc(0, 0, moonR, -Math.PI / 2, Math.PI / 2, false);
-
-        const STEPS = 48;
-        for (let step = 0; step <= STEPS; step++) {
-          const phi = (Math.PI / 2) - (step / STEPS) * Math.PI;
-          const sinPhi = Math.sin(phi);
-          const cosPhi = Math.cos(phi);
-          const mountainNoise = (Math.sin(phi * 14) * 1.8 + Math.cos(phi * 26) * 1.1) * (1 - Math.abs(sinPhi));
-          const px = moonR * 0.58 * cosPhi + mountainNoise;
-          const py = moonR * sinPhi;
-          ctx.lineTo(px, py);
-        }
+        ctx.ellipse(0, 0, moonR * 0.56, moonR, 0, Math.PI / 2, -Math.PI / 2, true);
         ctx.closePath();
 
-        const moonGrad = ctx.createLinearGradient(-moonR * 0.1, -moonR, moonR, moonR * 0.4);
+        const moonGrad = ctx.createLinearGradient(-moonR * 0.2, -moonR, moonR, moonR * 0.5);
         moonGrad.addColorStop(0, "#ffffff");
-        moonGrad.addColorStop(0.25, "#fffdf5");
-        moonGrad.addColorStop(0.65, "#f7eedb");
-        moonGrad.addColorStop(0.88, "#ebe1cd");
+        moonGrad.addColorStop(0.18, "#fffdf5");
+        moonGrad.addColorStop(0.55, "#f7eedb");
+        moonGrad.addColorStop(0.85, "#ebe1cd");
         moonGrad.addColorStop(1, "#dfd5be");
         ctx.fillStyle = moonGrad;
-        ctx.shadowColor = "rgba(255, 250, 232, 0.95)";
-        ctx.shadowBlur = 34;
+        ctx.shadowColor = "rgba(255, 250, 235, 0.95)";
+        ctx.shadowBlur = 38;
         ctx.fill();
 
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
-        ctx.lineWidth = 1.2;
+        // Delicate feathered inner terminator highlight
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(0, 0, moonR * 0.56, moonR, 0, Math.PI / 2, -Math.PI / 2, true);
+        const termGrad = ctx.createLinearGradient(0, -moonR, 0, moonR);
+        termGrad.addColorStop(0, "rgba(255, 255, 255, 0.25)");
+        termGrad.addColorStop(0.5, "rgba(255, 255, 255, 0.85)");
+        termGrad.addColorStop(1, "rgba(255, 255, 255, 0.25)");
+        ctx.strokeStyle = termGrad;
+        ctx.lineWidth = 1.4;
         ctx.stroke();
+        ctx.restore();
 
         ctx.restore();
       }
