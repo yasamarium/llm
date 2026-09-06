@@ -868,6 +868,38 @@
     `;
   }
 
+  function positionSaveMenu(trigger, menu) {
+    menu.style.left = "";
+    menu.style.right = "";
+    menu.style.top = "";
+    menu.style.bottom = "";
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const menuWidth = 185;
+    const padding = 12;
+
+    const isEditBar = Boolean(trigger.closest(".edit-actions-bar"));
+    const spaceToLeft = triggerRect.right;
+
+    // Anchor to left if inside edit-actions-bar or if left space is tight
+    if (isEditBar || spaceToLeft < menuWidth + padding) {
+      menu.style.left = "0";
+      menu.style.right = "auto";
+    } else {
+      menu.style.right = "0";
+      menu.style.left = "auto";
+    }
+
+    // Vertical positioning: open downwards if too close to viewport top
+    if (triggerRect.top < 210) {
+      menu.style.bottom = "auto";
+      menu.style.top = "calc(100% + 6px)";
+    } else {
+      menu.style.bottom = "calc(100% + 6px)";
+      menu.style.top = "auto";
+    }
+  }
+
   function bindSaveMenu(wrapper, onAction) {
     if (!wrapper) return;
     const trigger = wrapper.querySelector(".ios-bubble-save-btn");
@@ -878,7 +910,11 @@
       e.stopPropagation();
       const wasOpen = menu.classList.contains("open");
       document.querySelectorAll(".ios-save-dropdown-menu.open").forEach((m) => m.classList.remove("open"));
+      document.querySelectorAll(".ios-save-dropdown-wrapper.open").forEach((w) => w.classList.remove("open"));
+
       if (!wasOpen) {
+        positionSaveMenu(trigger, menu);
+        wrapper.classList.add("open");
         menu.classList.add("open");
         triggerHaptic("light");
       }
@@ -888,6 +924,7 @@
       item.onclick = (e) => {
         e.stopPropagation();
         menu.classList.remove("open");
+        wrapper.classList.remove("open");
         const action = item.getAttribute("data-action");
         if (action) onAction(action, item);
       };
@@ -897,6 +934,7 @@
   document.addEventListener("click", (e) => {
     if (!e.target.closest(".ios-save-dropdown-wrapper")) {
       document.querySelectorAll(".ios-save-dropdown-menu.open").forEach((m) => m.classList.remove("open"));
+      document.querySelectorAll(".ios-save-dropdown-wrapper.open").forEach((w) => w.classList.remove("open"));
     }
   });
 

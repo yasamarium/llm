@@ -1064,11 +1064,12 @@ html, body {
   width: 100%;
   max-width: 440px;
   border-radius: 18px;
-  overflow: hidden;
+  overflow: visible;
   background: rgba(255, 255, 255, 0.04);
   border: 0.5px solid var(--border-subtle);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   margin-top: 4px;
+  position: relative;
 }
 
 .image-frame {
@@ -1079,6 +1080,7 @@ html, body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: 18px 18px 0 0;
 }
 
 .generated-image {
@@ -1102,6 +1104,9 @@ html, body {
   background: rgba(18, 18, 20, 0.85);
   backdrop-filter: blur(16px);
   border-top: 0.5px solid var(--border-subtle);
+  border-radius: 0 0 18px 18px;
+  position: relative;
+  z-index: 15;
 }
 
 .image-prompt-text {
@@ -1534,11 +1539,12 @@ html, body {
   background: rgba(18, 18, 22, 0.94);
   border: 0.5px solid var(--border-subtle);
   border-radius: 20px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   margin-top: 4px;
+  position: relative;
 }
 
 .edit-card-grid {
@@ -1546,6 +1552,8 @@ html, body {
   grid-template-columns: 1fr 1fr;
   gap: 2px;
   background: rgba(0, 0, 0, 0.6);
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
 }
 
 .edit-col {
@@ -1591,6 +1599,9 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  border-radius: 0 0 20px 20px;
+  position: relative;
+  z-index: 15;
 }
 
 .edit-prompt-text {
@@ -1605,6 +1616,12 @@ html, body {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  position: relative;
+}
+
+.edit-actions-bar .ios-save-dropdown-menu {
+  left: 0;
+  right: auto;
 }
 
 @media (max-width: 640px) {
@@ -2286,6 +2303,10 @@ html, body {
   display: inline-block;
 }
 
+.ios-save-dropdown-wrapper.open {
+  z-index: 1000;
+}
+
 .ios-bubble-save-btn {
   display: inline-flex;
   align-items: center;
@@ -2321,15 +2342,15 @@ html, body {
   position: absolute;
   bottom: calc(100% + 6px);
   right: 0;
-  min-width: 175px;
-  background: rgba(24, 24, 30, 0.92);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 0.5px solid rgba(255, 255, 255, 0.16);
+  min-width: 180px;
+  background: rgba(20, 20, 26, 0.98);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 0.5px solid rgba(255, 255, 255, 0.22);
   border-radius: 14px;
   padding: 6px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  z-index: 1000;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  z-index: 10000;
   display: none;
   flex-direction: column;
   gap: 2px;
