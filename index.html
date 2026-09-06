@@ -19,10 +19,7 @@
   <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 </head>
 <body>
-  <!-- Popover Backdrop for Mobile Bottom Sheet -->
-  <div id="popoverBackdrop" class="popover-backdrop hidden"></div>
-
-  <div class="ios-app">
+  <div id="app" class="ios-app">
     <!-- Clean Minimalist iOS Navigation Bar with Safe Area Insets -->
     <header class="ios-navbar">
       <div class="nav-brand">
@@ -94,151 +91,6 @@
     <!-- Claude / DeepSeek Style Bottom Dock -->
     <footer class="ios-input-dock">
       <div class="input-container">
-        <!-- Floating Glass Model Popover / Mobile Native Bottom Sheet -->
-        <div id="modelPopover" class="ios-model-popover hidden" role="menu">
-          <!-- Mobile Pull Handle -->
-          <div class="sheet-drag-handle"></div>
-
-          <div class="popover-header">
-            <div class="popover-header-text">
-              <span class="popover-title">Select AS Cloud Model</span>
-              <span class="popover-subtitle">Multi-node load balanced</span>
-            </div>
-            <button id="closePopoverBtn" class="popover-close-btn" type="button" aria-label="Close Model Menu">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-
-          <div class="popover-models-list">
-            <div class="popover-group-label">HIGH CAPACITY & REASONING</div>
-            <button class="popover-item" data-model="r1" role="menuitem">
-              <span class="popover-item-icon">🧠</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">DeepSeek High</div>
-                <div class="popover-item-desc">Chain-of-thought deep reasoning & logic</div>
-              </div>
-              <span class="popover-node-count">3 Nodes</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <button class="popover-item" data-model="qwen3b" role="menuitem">
-              <span class="popover-item-icon">✨</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Qwen High</div>
-                <div class="popover-item-desc">Flagship deep comprehension & knowledge</div>
-              </div>
-              <span class="popover-node-count">2 Nodes</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <button class="popover-item" data-model="llama3b" role="menuitem">
-              <span class="popover-item-icon">🦙</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Llama High</div>
-                <div class="popover-item-desc">Meta advanced reasoning intelligence</div>
-              </div>
-              <span class="popover-node-count">2 Nodes</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <button class="popover-item" data-model="coder" role="menuitem">
-              <span class="popover-item-icon">💻</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Coder High</div>
-                <div class="popover-item-desc">Code writing, architecture & debugging</div>
-              </div>
-              <span class="popover-node-count">2 Nodes</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <div class="popover-group-label">MEDIUM CAPACITY</div>
-            <button class="popover-item active" data-model="1.7b" role="menuitem">
-              <span class="popover-item-icon">✦</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Qwen Medium</div>
-                <div class="popover-item-desc">Balanced high-speed conversational model</div>
-              </div>
-              <span class="popover-node-count">4 Nodes</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <button class="popover-item" data-model="gemma" role="menuitem">
-              <span class="popover-item-icon">💎</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Gemma Medium</div>
-                <div class="popover-item-desc">Google high-precision assistant</div>
-              </div>
-              <span class="popover-node-count">1 Node</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <button class="popover-item" data-model="math" role="menuitem">
-              <span class="popover-item-icon">📐</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Math Medium</div>
-                <div class="popover-item-desc">Mathematical formulas & step calculations</div>
-              </div>
-              <span class="popover-node-count">1 Node</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <button class="popover-item" data-model="phi" role="menuitem">
-              <span class="popover-item-icon">🔬</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Phi Medium</div>
-                <div class="popover-item-desc">Microsoft deep comprehension model</div>
-              </div>
-              <span class="popover-node-count">1 Node</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <button class="popover-item" data-model="smol" role="menuitem">
-              <span class="popover-item-icon">🍃</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">SmolLM Medium</div>
-                <div class="popover-item-desc">Compact conversational assistant</div>
-              </div>
-              <span class="popover-node-count">1 Node</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <div class="popover-group-label">LIGHTWEIGHT & FAST</div>
-            <button class="popover-item" data-model="1b" role="menuitem">
-              <span class="popover-item-icon">⚡</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Llama Lightweight</div>
-                <div class="popover-item-desc">Instant low-latency responses</div>
-              </div>
-              <span class="popover-node-count">2 Nodes</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <button class="popover-item" data-model="0.5b" role="menuitem">
-              <span class="popover-item-icon">🪶</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Qwen Lightweight</div>
-                <div class="popover-item-desc">Ultra-compact fast inference</div>
-              </div>
-              <span class="popover-node-count">2 Nodes</span>
-              <span class="popover-check">✓</span>
-            </button>
-
-            <div class="popover-group-label">CREATIVE & MULTIMODAL</div>
-            <button class="popover-item" data-model="image" role="menuitem">
-              <span class="popover-item-icon">🎨</span>
-              <div class="popover-item-info">
-                <div class="popover-item-name">Image Generator</div>
-                <div class="popover-item-desc">Real-time diffusion image generation</div>
-              </div>
-              <span class="popover-node-count">2 Nodes</span>
-              <span class="popover-check">✓</span>
-            </button>
-          </div>
-        </div>
-
         <!-- Claude / DeepSeek Bottom Composer Bar -->
         <div class="composer-top-bar">
           <div class="model-picker-wrapper">
@@ -306,6 +158,154 @@
         </div>
       </div>
     </footer>
+  </div>
+
+  <!-- iOS 18 Model Selector Modal / Native Bottom Sheet -->
+  <div id="modelModal" class="ios-model-modal hidden" aria-modal="true" role="dialog">
+    <div id="popoverBackdrop" class="popover-backdrop"></div>
+    <div id="modelPopover" class="ios-model-popover" role="menu">
+      <!-- Mobile Pull Handle -->
+      <div class="sheet-drag-handle"></div>
+
+      <div class="popover-header">
+        <div class="popover-header-text">
+          <span class="popover-title">Select AS Cloud Model</span>
+          <span class="popover-subtitle">Multi-node load balanced</span>
+        </div>
+        <button id="closePopoverBtn" class="popover-close-btn" type="button" aria-label="Close Model Menu">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="popover-models-list">
+        <div class="popover-group-label">HIGH CAPACITY & REASONING</div>
+        <button class="popover-item" data-model="r1" role="menuitem">
+          <span class="popover-item-icon">🧠</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">DeepSeek High</div>
+            <div class="popover-item-desc">Chain-of-thought deep reasoning & logic</div>
+          </div>
+          <span class="popover-node-count">3 Nodes</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item" data-model="qwen3b" role="menuitem">
+          <span class="popover-item-icon">✨</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Qwen High</div>
+            <div class="popover-item-desc">Flagship deep comprehension & knowledge</div>
+          </div>
+          <span class="popover-node-count">2 Nodes</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item" data-model="llama3b" role="menuitem">
+          <span class="popover-item-icon">🦙</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Llama High</div>
+            <div class="popover-item-desc">Meta advanced reasoning intelligence</div>
+          </div>
+          <span class="popover-node-count">2 Nodes</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item" data-model="coder" role="menuitem">
+          <span class="popover-item-icon">💻</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Coder High</div>
+            <div class="popover-item-desc">Code writing, architecture & debugging</div>
+          </div>
+          <span class="popover-node-count">2 Nodes</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <div class="popover-group-label">MEDIUM CAPACITY</div>
+        <button class="popover-item active" data-model="1.7b" role="menuitem">
+          <span class="popover-item-icon">✦</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Qwen Medium</div>
+            <div class="popover-item-desc">Balanced high-speed conversational model</div>
+          </div>
+          <span class="popover-node-count">4 Nodes</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item" data-model="gemma" role="menuitem">
+          <span class="popover-item-icon">💎</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Gemma Medium</div>
+            <div class="popover-item-desc">Google high-precision assistant</div>
+          </div>
+          <span class="popover-node-count">1 Node</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item" data-model="math" role="menuitem">
+          <span class="popover-item-icon">📐</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Math Medium</div>
+            <div class="popover-item-desc">Mathematical formulas & step calculations</div>
+          </div>
+          <span class="popover-node-count">1 Node</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item" data-model="phi" role="menuitem">
+          <span class="popover-item-icon">🔬</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Phi Medium</div>
+            <div class="popover-item-desc">Microsoft deep comprehension model</div>
+          </div>
+          <span class="popover-node-count">1 Node</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item" data-model="smol" role="menuitem">
+          <span class="popover-item-icon">🍃</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">SmolLM Medium</div>
+            <div class="popover-item-desc">Compact conversational assistant</div>
+          </div>
+          <span class="popover-node-count">1 Node</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <div class="popover-group-label">LIGHTWEIGHT & FAST</div>
+        <button class="popover-item" data-model="1b" role="menuitem">
+          <span class="popover-item-icon">⚡</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Llama Lightweight</div>
+            <div class="popover-item-desc">Instant low-latency responses</div>
+          </div>
+          <span class="popover-node-count">2 Nodes</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <button class="popover-item" data-model="0.5b" role="menuitem">
+          <span class="popover-item-icon">🪶</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Qwen Lightweight</div>
+            <div class="popover-item-desc">Ultra-compact fast inference</div>
+          </div>
+          <span class="popover-node-count">2 Nodes</span>
+          <span class="popover-check">✓</span>
+        </button>
+
+        <div class="popover-group-label">CREATIVE & MULTIMODAL</div>
+        <button class="popover-item" data-model="image" role="menuitem">
+          <span class="popover-item-icon">🎨</span>
+          <div class="popover-item-info">
+            <div class="popover-item-name">Image Generator</div>
+            <div class="popover-item-desc">Real-time diffusion image generation</div>
+          </div>
+          <span class="popover-node-count">2 Nodes</span>
+          <span class="popover-check">✓</span>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- iOS 18 Fullscreen Image Lightbox Modal -->

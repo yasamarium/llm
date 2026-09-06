@@ -624,29 +624,45 @@ html, body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* Floating Glass Popover & Mobile Backdrop */
-.popover-backdrop {
+/* Floating Glass Model Popover Modal */
+.ios-model-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.ios-model-modal.hidden {
   display: none !important;
 }
 
-.sheet-drag-handle {
+/* On Desktop: transparent backdrop catches clicks outside the menu */
+.ios-model-modal .popover-backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 1;
+  pointer-events: auto;
+  cursor: default;
+}
+
+.ios-model-modal .sheet-drag-handle {
   display: none;
 }
 
-.ios-model-popover {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 0;
+.ios-model-modal .ios-model-popover {
+  position: fixed;
   width: 380px;
-  max-width: calc(100vw - 36px);
-  max-height: 440px;
-  background: rgba(18, 18, 22, 0.92);
+  max-width: calc(100vw - 32px);
+  max-height: 460px;
+  background: rgba(18, 18, 22, 0.94);
   backdrop-filter: blur(40px) saturate(190%);
   -webkit-backdrop-filter: blur(40px) saturate(190%);
   border: 0.5px solid var(--border-strong);
   border-radius: 20px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  z-index: 100;
+  z-index: 2;
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1602,22 +1618,19 @@ html, body {
     max-width: 100vw;
     box-sizing: border-box;
     padding: 6px 10px calc(10px + env(safe-area-inset-bottom, 0px)) 10px;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.92) 25%, #000000 100%);
-    overflow: hidden;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.95) 20%, #000000 100%);
   }
 
   .input-container {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
   }
 
   .composer-top-bar {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
     gap: 6px;
     padding: 0 2px;
   }
@@ -1686,44 +1699,61 @@ html, body {
     min-width: 32px;
   }
 
-  /* Mobile Bottom Sheet Backdrop */
-  .popover-backdrop {
-    display: block !important;
+  /* Native iOS 18 Bottom Sheet Modal for Model Selection */
+  .ios-model-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: 92;
-    opacity: 1;
-    transition: opacity 0.25s ease;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    pointer-events: auto;
   }
-  .popover-backdrop.hidden {
+
+  .ios-model-modal.hidden {
     display: none !important;
   }
 
-  /* Native iOS 18 Bottom Sheet Modal for Model Selection */
-  .ios-model-popover {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: 100%;
-    max-height: 82vh;
-    border-radius: 26px 26px 0 0;
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
-    border-top: 0.5px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.9);
-    z-index: 100;
-    transform-origin: bottom center;
-    animation: sheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  /* Mobile Bottom Sheet Backdrop */
+  .ios-model-modal .popover-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 1;
+    pointer-events: auto;
+    cursor: pointer;
+    opacity: 1;
   }
 
-  .sheet-drag-handle {
+  /* Native iOS 18 Bottom Sheet */
+  .ios-model-modal .ios-model-popover {
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 80vh !important;
+    border-radius: 26px 26px 0 0 !important;
+    border: none !important;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.2) !important;
+    background: rgba(18, 18, 22, 0.96) !important;
+    backdrop-filter: blur(40px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(190%) !important;
+    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.9) !important;
+    z-index: 2 !important;
+    pointer-events: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .ios-model-modal .sheet-drag-handle {
     display: block;
     width: 38px;
     height: 4.5px;
@@ -1731,22 +1761,31 @@ html, body {
     border-radius: 3px;
     margin: 8px auto 4px auto;
     flex-shrink: 0;
+    cursor: grab;
   }
 
-  .popover-header {
+  .ios-model-modal .popover-header {
     padding: 6px 16px 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
   }
 
-  .popover-models-list {
+  .ios-model-modal .popover-models-list {
     padding: 4px 10px 10px 10px;
-    max-height: calc(82vh - 90px);
+    max-height: calc(80vh - 90px);
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
-  .popover-item {
+  .ios-model-modal .popover-item {
     padding: 10px 12px;
     min-height: 48px;
     border-radius: 14px;
+    cursor: pointer;
+    touch-action: manipulation;
   }
 
   .popover-item-name {

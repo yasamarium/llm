@@ -16,6 +16,7 @@
 
   // Bottom Composer Elements
   const modelPickerBtn = document.getElementById("modelPickerBtn");
+  const modelModal = document.getElementById("modelModal");
   const modelPopover = document.getElementById("modelPopover");
   const popoverBackdrop = document.getElementById("popoverBackdrop");
   const closePopoverBtn = document.getElementById("closePopoverBtn");
@@ -167,21 +168,41 @@
   // ---------------------------------------------------------------------------
   // Claude / DeepSeek Style Bottom Model Switcher & Mobile Bottom Sheet
   // ---------------------------------------------------------------------------
-  function togglePopover(forceState) {
+  function updatePopoverPosition() {
     if (!modelPopover) return;
-    const isClosed = modelPopover.classList.contains("hidden");
+    if (window.innerWidth > 640 && modelPickerBtn) {
+      const rect = modelPickerBtn.getBoundingClientRect();
+      const bottomDist = window.innerHeight - rect.top + 10;
+      const leftDist = Math.max(16, Math.min(rect.left, window.innerWidth - 396));
+      modelPopover.style.position = "fixed";
+      modelPopover.style.bottom = `${bottomDist}px`;
+      modelPopover.style.left = `${leftDist}px`;
+      modelPopover.style.right = "auto";
+      modelPopover.style.top = "auto";
+    } else {
+      modelPopover.style.position = "";
+      modelPopover.style.bottom = "";
+      modelPopover.style.left = "";
+      modelPopover.style.right = "";
+      modelPopover.style.top = "";
+    }
+  }
+
+  function togglePopover(forceState) {
+    if (!modelModal) return;
+    const isClosed = modelModal.classList.contains("hidden");
     const shouldOpen = forceState !== undefined ? forceState : isClosed;
 
     if (shouldOpen) {
-      modelPopover.classList.remove("hidden");
-      if (window.innerWidth <= 640 && popoverBackdrop) {
-        popoverBackdrop.classList.remove("hidden");
-      }
+      updatePopoverPosition();
+      modelModal.classList.remove("hidden");
       modelPickerBtn?.setAttribute("aria-expanded", "true");
       triggerHaptic("light");
     } else {
-      modelPopover.classList.add("hidden");
-      if (popoverBackdrop) popoverBackdrop.classList.add("hidden");
+      modelModal.classList.add("hidden");
+      if (modelPopover) {
+        modelPopover.style.transform = "";
+      }
       modelPickerBtn?.setAttribute("aria-expanded", "false");
     }
   }
@@ -212,10 +233,16 @@
   }
 
   document.addEventListener("click", (e) => {
-    if (modelPopover && !modelPopover.classList.contains("hidden")) {
-      if (!modelPopover.contains(e.target) && !modelPickerBtn?.contains(e.target) && !popoverBackdrop?.contains(e.target)) {
+    if (modelModal && !modelModal.classList.contains("hidden")) {
+      if (!modelPopover?.contains(e.target) && !modelPickerBtn?.contains(e.target)) {
         closePopover();
       }
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (modelModal && !modelModal.classList.contains("hidden")) {
+      updatePopoverPosition();
     }
   });
 
@@ -1363,14 +1390,21 @@
 
   // Dynamic Visual Viewport Synchronization for Mobile Phones
   function syncVisualViewport() {
-    if (!window.visualViewport) return;
-    const vh = window.visualViewport.height;
-    const offsetTop = window.visualViewport.offsetTop || 0;
-    const appEl = document.getElementById("app");
+    const appEl = document.getElementById("app") || document.querySelector(".ios-app");
+    if (!appEl) return;
 
-    if (appEl && window.innerWidth <= 768) {
-      appEl.style.height = `${vh}px`;
+    if (window.visualViewport && window.innerWidth <= 768) {
+      const vh = window.visualViewport.height;
+      const offsetTop = window.visualViewport.offsetTop || 0;
+      appEl.style.position = "fixed";
       appEl.style.top = `${offsetTop}px`;
+      appEl.style.height = `${vh}px`;
+      appEl.style.bottom = "auto";
+    } else {
+      appEl.style.position = "";
+      appEl.style.top = "";
+      appEl.style.height = "";
+      appEl.style.bottom = "";
     }
   }
 
@@ -1389,16 +1423,16 @@
       setTimeout(() => {
         syncVisualViewport();
         smoothScrollToBottom();
-      }, 120);
+      }, 100);
+      setTimeout(() => {
+        syncVisualViewport();
+        smoothScrollToBottom();
+      }, 300);
     });
     messageInput.addEventListener("blur", () => {
       setTimeout(() => {
-        const appEl = document.getElementById("app");
-        if (appEl && window.innerWidth <= 768) {
-          appEl.style.height = "100dvh";
-          appEl.style.top = "0px";
-        }
-      }, 150);
+        syncVisualViewport();
+      }, 100);
     });
   }
 
@@ -1416,6 +1450,7 @@
   }
 
   // Initialize
+  syncVisualViewport();
   autoResizeInput();
   checkConnection();
 })();
