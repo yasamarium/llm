@@ -150,18 +150,18 @@
   });
 
   const MODEL_CONFIG = {
-    "1.7b": { name: "Qwen 1.7B", glyph: "✦", badge: "4 Nodes", title: "How can 1.7B help you?", placeholder: "Message Qwen 1.7B..." },
-    "r1": { name: "DeepSeek R1", glyph: "🧠", badge: "3 Nodes", title: "DeepSeek-R1 (Reasoning)", placeholder: "Ask a complex reasoning or logic problem..." },
-    "llama3b": { name: "Llama 3.2 3B", glyph: "🦙", badge: "2 Nodes", title: "Llama 3.2 3B (Meta)", placeholder: "Message Llama 3.2 3B..." },
-    "qwen3b": { name: "Qwen 2.5 3B", glyph: "✨", badge: "2 Nodes", title: "Qwen 2.5 3B (Alibaba)", placeholder: "Message Qwen 2.5 3B..." },
-    "coder": { name: "Qwen Coder", glyph: "💻", badge: "2 Nodes", title: "Qwen 2.5 Coder (Coding)", placeholder: "Ask for code, architecture, or debugging..." },
-    "gemma": { name: "Gemma 2 2B", glyph: "💎", badge: "1 Node", title: "Gemma 2 2B (Google)", placeholder: "Message Gemma 2..." },
-    "math": { name: "Qwen Math", glyph: "📐", badge: "1 Node", title: "Qwen Math (Calculations)", placeholder: "Enter a math problem or equation..." },
-    "phi": { name: "Phi-3.5 Mini", glyph: "🔬", badge: "1 Node", title: "Phi-3.5 Mini (Microsoft)", placeholder: "Message Phi-3.5..." },
-    "1b": { name: "Llama 3.2 1B", glyph: "⚡", badge: "2 Nodes", title: "How can 1B help you?", placeholder: "Message 1B..." },
-    "smol": { name: "SmolLM2", glyph: "🍃", badge: "1 Node", title: "SmolLM2 (Fast Assistant)", placeholder: "Message SmolLM2..." },
-    "0.5b": { name: "Qwen 0.5B", glyph: "🪶", badge: "2 Nodes", title: "How can 0.5B help you?", placeholder: "Message 0.5B..." },
-    "image": { name: "SD-Turbo Image", glyph: "🎨", badge: "2 Nodes", title: "What would you like to imagine?", placeholder: "Describe an image to generate..." },
+    "1.7b": { name: "Qwen Medium", glyph: "✦", badge: "4 Nodes", title: "How can Qwen Medium help you?", placeholder: "Message Qwen Medium..." },
+    "r1": { name: "DeepSeek High", glyph: "🧠", badge: "3 Nodes", title: "DeepSeek High (Reasoning)", placeholder: "Ask a complex reasoning or logic problem..." },
+    "llama3b": { name: "Llama High", glyph: "🦙", badge: "2 Nodes", title: "Llama High (Meta)", placeholder: "Message Llama High..." },
+    "qwen3b": { name: "Qwen High", glyph: "✨", badge: "2 Nodes", title: "Qwen High (Flagship)", placeholder: "Message Qwen High..." },
+    "coder": { name: "Coder High", glyph: "💻", badge: "2 Nodes", title: "Coder High (Coding & Architecture)", placeholder: "Ask for code, architecture, or debugging..." },
+    "gemma": { name: "Gemma Medium", glyph: "💎", badge: "1 Node", title: "Gemma Medium (Google)", placeholder: "Message Gemma Medium..." },
+    "math": { name: "Math Medium", glyph: "📐", badge: "1 Node", title: "Math Medium (Calculations)", placeholder: "Enter a math problem or equation..." },
+    "phi": { name: "Phi Medium", glyph: "🔬", badge: "1 Node", title: "Phi Medium (Microsoft)", placeholder: "Message Phi Medium..." },
+    "1b": { name: "Llama Lightweight", glyph: "⚡", badge: "2 Nodes", title: "Llama Lightweight", placeholder: "Message Llama Lightweight..." },
+    "smol": { name: "SmolLM Medium", glyph: "🍃", badge: "1 Node", title: "SmolLM Medium", placeholder: "Message SmolLM Medium..." },
+    "0.5b": { name: "Qwen Lightweight", glyph: "🪶", badge: "2 Nodes", title: "Qwen Lightweight", placeholder: "Message Qwen Lightweight..." },
+    "image": { name: "Image Generator", glyph: "🎨", badge: "2 Nodes", title: "What would you like to imagine?", placeholder: "Describe an image to generate..." },
   };
 
   // ---------------------------------------------------------------------------
@@ -1361,10 +1361,44 @@
     }
   }
 
-  // Virtual Viewport for mobile software keyboard alignment
+  // Dynamic Visual Viewport Synchronization for Mobile Phones
+  function syncVisualViewport() {
+    if (!window.visualViewport) return;
+    const vh = window.visualViewport.height;
+    const offsetTop = window.visualViewport.offsetTop || 0;
+    const appEl = document.getElementById("app");
+
+    if (appEl && window.innerWidth <= 768) {
+      appEl.style.height = `${vh}px`;
+      appEl.style.top = `${offsetTop}px`;
+    }
+  }
+
   if (window.visualViewport) {
     window.visualViewport.addEventListener("resize", () => {
+      syncVisualViewport();
       smoothScrollToBottom();
+    });
+    window.visualViewport.addEventListener("scroll", () => {
+      syncVisualViewport();
+    });
+  }
+
+  if (messageInput) {
+    messageInput.addEventListener("focus", () => {
+      setTimeout(() => {
+        syncVisualViewport();
+        smoothScrollToBottom();
+      }, 120);
+    });
+    messageInput.addEventListener("blur", () => {
+      setTimeout(() => {
+        const appEl = document.getElementById("app");
+        if (appEl && window.innerWidth <= 768) {
+          appEl.style.height = "100dvh";
+          appEl.style.top = "0px";
+        }
+      }, 150);
     });
   }
 

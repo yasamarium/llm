@@ -21,30 +21,30 @@ const ENDPOINTS = {
       "https://raw.githubusercontent.com/yasamarium/server19/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/server20/main/endpoint.txt",
     ],
-    label: "Llama 3.2 3B (2 Nodes)",
+    label: "Llama High (2 Nodes)",
   },
   "qwen3b": {
     list: [
       "https://raw.githubusercontent.com/yasamarium/server21/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/server22/main/endpoint.txt",
     ],
-    label: "Qwen 2.5 3B (2 Nodes)",
+    label: "Qwen High (2 Nodes)",
   },
   "gemma": {
     list: ["https://raw.githubusercontent.com/yasamarium/server11/main/endpoint.txt"],
-    label: "Gemma-2 2B",
+    label: "Gemma Medium",
   },
   "smol": {
     list: ["https://raw.githubusercontent.com/yasamarium/server12/main/endpoint.txt"],
-    label: "SmolLM2 1.7B",
+    label: "SmolLM Medium",
   },
   "math": {
     list: ["https://raw.githubusercontent.com/yasamarium/server13/main/endpoint.txt"],
-    label: "Qwen-Math",
+    label: "Math Medium",
   },
   "phi": {
     list: ["https://raw.githubusercontent.com/yasamarium/server14/main/endpoint.txt"],
-    label: "Phi-3.5 Mini",
+    label: "Phi Medium",
   },
   "image": {
     list: [
@@ -58,14 +58,14 @@ const ENDPOINTS = {
       "https://raw.githubusercontent.com/yasamarium/server5/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/server6/main/endpoint.txt",
     ],
-    label: "0.5B (2 Nodes)",
+    label: "Qwen Lightweight (2 Nodes)",
   },
   "1b": {
     list: [
       "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/server18/main/endpoint.txt",
     ],
-    label: "1B (2 Nodes)",
+    label: "Llama Lightweight (2 Nodes)",
   },
   "1.7b": {
     list: [
@@ -74,7 +74,7 @@ const ENDPOINTS = {
       "https://raw.githubusercontent.com/yasamarium/server4/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt",
     ],
-    label: "1.7B Cluster (4 Nodes)",
+    label: "Qwen Medium Cluster (4 Nodes)",
   },
 };
 
