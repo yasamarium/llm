@@ -1044,6 +1044,262 @@ html, body {
   to { transform: rotate(360deg); }
 }
 
+/* ==========================================================================
+   iOS 18 Apple Music & YouTube Media Players
+   ========================================================================== */
+.ios-media-card {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(18, 18, 22, 0.94);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  margin-top: 4px;
+}
+
+/* Music Card Layout */
+.music-card-header {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  align-items: center;
+}
+
+.music-cover-art {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  background: #0d0d10;
+}
+
+.music-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.music-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 7px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+
+.music-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Audio Player Section */
+.music-player-section {
+  padding: 0 14px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ios-native-audio {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  outline: none;
+  filter: invert(1) hue-rotate(180deg);
+  opacity: 0.92;
+}
+
+.media-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.media-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #000000;
+  padding: 6px 14px;
+  border-radius: 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s var(--spring-easing);
+  border: none;
+  outline: none;
+}
+.media-btn-primary:hover {
+  transform: scale(1.03);
+  background: #e5e5ea;
+}
+
+.media-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 0.5px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 11.5px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s var(--spring-easing);
+}
+.media-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+/* YouTube Video Card */
+.yt-card-video-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000000;
+  position: relative;
+  overflow: hidden;
+}
+
+.yt-card-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.yt-card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yt-card-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.yt-card-author {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.yt-meta-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.yt-pill {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.yt-downloads-header {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.yt-quality-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.yt-dl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.yt-dl-chip:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+.yt-dl-chip.featured {
+  background: #ffffff;
+  color: #000000;
+  font-weight: 600;
+}
+.yt-dl-chip.featured:hover {
+  background: #e5e5ea;
+}
+
+/* Media Loading Card */
+.ios-media-loading {
+  width: 100%;
+  max-width: 440px;
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 18px;
+}
+
 @media (max-width: 640px) {
   html, body {
     height: 100%;
@@ -1306,6 +1562,26 @@ html, body {
     width: 100%;
     max-width: 260px;
     height: 260px;
+  }
+
+  /* Media Cards on Mobile */
+  .ios-media-card {
+    max-width: 100%;
+    border-radius: 16px;
+  }
+
+  .music-cover-art {
+    width: 60px;
+    height: 60px;
+  }
+
+  .music-title {
+    font-size: 13.5px;
+  }
+
+  .ios-media-loading {
+    max-width: 100%;
+    padding: 24px 14px;
   }
 }
 

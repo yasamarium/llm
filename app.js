@@ -517,6 +517,301 @@
   }
 
   // ---------------------------------------------------------------------------
+  // YouTube Detection & Formatting Helpers
+  // ---------------------------------------------------------------------------
+  const YT_REGEX = /(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v|shorts)\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+
+  function formatViews(views) {
+    if (!views) return "";
+    const n = Number(views);
+    if (isNaN(n)) return String(views);
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + "B views";
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M views";
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + "K views";
+    return n + " views";
+  }
+
+  // ---------------------------------------------------------------------------
+  // /play <music name> Handler (David Cyril Play API)
+  // ---------------------------------------------------------------------------
+  async function handlePlayMusicCommand(query) {
+    appendMessage("user", `/play ${query}`);
+
+    const assistantBubble = appendMessage("assistant", "");
+    assistantBubble.innerHTML = `
+      <div class="ios-media-loading">
+        <div class="image-shimmer"></div>
+        <div class="image-loading-content">
+          <span class="ios-spinner"></span>
+          <span>Searching & loading track "${escapeHtml(query)}" from AS Cloud...</span>
+        </div>
+      </div>
+    `;
+
+    setGenerating(true);
+    abortController = new AbortController();
+
+    try {
+      let data = null;
+
+      // 1. Try serverless proxy first
+      try {
+        const proxyRes = await fetch(`/api/play?query=${encodeURIComponent(query)}`, {
+          signal: abortController.signal,
+        });
+        if (proxyRes.ok) {
+          data = await proxyRes.json();
+        }
+      } catch (e) {}
+
+      // 2. Direct client fallback
+      if (!data || !data.result) {
+        const directRes = await fetch(`https://apis.davidcyril.name.ng/play?query=${encodeURIComponent(query)}`, {
+          signal: abortController.signal,
+        });
+        if (!directRes.ok) {
+          throw new Error(`Music service returned HTTP ${directRes.status}`);
+        }
+        data = await directRes.json();
+      }
+
+      const item = data?.result || data;
+      if (!item || !item.download_url) {
+        throw new Error(`Track "${query}" could not be found or has no stream available.`);
+      }
+
+      const title = item.title || query;
+      const thumbnail = item.thumbnail || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300";
+      const duration = item.duration || "";
+      const viewsFormatted = formatViews(item.views);
+      const published = item.published || "";
+      const streamUrl = item.download_url;
+      const videoUrl = item.video_url || `https://www.youtube.com/results?search_query=${encodeURIComponent(title)}`;
+      const safeFilename = `${title.replace(/[^a-zA-Z0-9_-]/g, "_")}.mp3`;
+
+      assistantBubble.innerHTML = `
+        <div class="ios-media-card">
+          <div class="music-card-header">
+            <img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(title)}" class="music-cover-art" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300'" />
+            <div class="music-info">
+              <span class="music-badge">🎵 AS Music</span>
+              <div class="music-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+              <div class="music-meta">
+                ${duration ? `<span>⏱ ${escapeHtml(duration)}</span>` : ""}
+                ${viewsFormatted ? `<span>• 👁 ${viewsFormatted}</span>` : ""}
+                ${published ? `<span>• 📅 ${escapeHtml(published)}</span>` : ""}
+              </div>
+            </div>
+          </div>
+
+          <div class="music-player-section">
+            <audio controls preload="metadata" class="ios-native-audio" src="${escapeHtml(streamUrl)}">
+              Your browser does not support audio playback.
+            </audio>
+
+            <div class="media-actions-bar">
+              <a href="${escapeHtml(streamUrl)}" download="${escapeHtml(safeFilename)}" target="_blank" class="media-btn-primary" title="Download Track MP3">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Download MP3</span>
+              </a>
+
+              <a href="${escapeHtml(videoUrl)}" target="_blank" rel="noopener noreferrer" class="media-btn-secondary" title="Watch on YouTube">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span>YouTube</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      conversation.push({ role: "assistant", content: `[Playing Track: "${title}"]` });
+      smoothScrollToBottom();
+    } catch (err) {
+      if (err.name === "AbortError") {
+        assistantBubble.innerHTML = `<div style="color: var(--text-tertiary); font-style: italic;">(Music request canceled)</div>`;
+      } else {
+        assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;">⚠️ ${escapeHtml(err.message)}</div>`;
+      }
+    } finally {
+      setGenerating(false);
+      abortController = null;
+      autoResizeInput();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // YouTube Link Detector & Downloader (David Cyril Snapsaver API)
+  // ---------------------------------------------------------------------------
+  async function handleYouTubeMedia(ytUrl, originalText) {
+    appendMessage("user", originalText);
+
+    const assistantBubble = appendMessage("assistant", "");
+    assistantBubble.innerHTML = `
+      <div class="ios-media-loading">
+        <div class="image-shimmer"></div>
+        <div class="image-loading-content">
+          <span class="ios-spinner"></span>
+          <span>Analyzing YouTube video & extracting streams...</span>
+        </div>
+      </div>
+    `;
+
+    setGenerating(true);
+    abortController = new AbortController();
+
+    try {
+      let data = null;
+
+      // 1. Try serverless proxy first
+      try {
+        const proxyRes = await fetch(`/api/youtube?url=${encodeURIComponent(ytUrl)}`, {
+          signal: abortController.signal,
+        });
+        if (proxyRes.ok) {
+          data = await proxyRes.json();
+        }
+      } catch (e) {}
+
+      // 2. Direct client fallback
+      if (!data || !data.result) {
+        const directRes = await fetch(`https://apis.davidcyril.name.ng/download/snapsaver?url=${encodeURIComponent(ytUrl)}`, {
+          signal: abortController.signal,
+        });
+        if (!directRes.ok) {
+          throw new Error(`Video service returned HTTP ${directRes.status}`);
+        }
+        data = await directRes.json();
+      }
+
+      const res = data?.result || data;
+      if (!res) {
+        throw new Error("Could not extract media data from this YouTube link.");
+      }
+
+      const title = res.title || "YouTube Video";
+      const author = res.author || "YouTube Creator";
+      const thumbnail = res.thumbnail || "";
+      const duration = res.duration || "";
+      const viewsFormatted = formatViews(res.views);
+      const videos = Array.isArray(res.videos) ? res.videos : [];
+      const audios = Array.isArray(res.audios) ? res.audios : [];
+
+      // Find best playable MP4 stream for <video> tag
+      const playableVideo =
+        videos.find((v) => v.format === "mp4" && v.quality && v.quality.includes("720")) ||
+        videos.find((v) => v.format === "mp4" && v.quality && v.quality.includes("360")) ||
+        videos.find((v) => v.format === "mp4") ||
+        videos[0];
+
+      const bestVideoUrl = playableVideo?.url || "";
+
+      // Quality & Download options
+      let chipsHtml = "";
+      const seenQualities = new Set();
+
+      videos.forEach((v) => {
+        if (!v.url || seenQualities.has(v.quality)) return;
+        seenQualities.add(v.quality);
+        const isFeatured = v.quality.includes("720") || seenQualities.size === 1;
+        const label = v.quality ? `${v.quality.replace(/x\d+/, "p")} ${v.format?.toUpperCase() || "MP4"}` : `${v.format?.toUpperCase() || "Video"}`;
+        chipsHtml += `
+          <a href="${escapeHtml(v.url)}" download="${escapeHtml(title)}_${escapeHtml(v.quality)}.${v.format || 'mp4'}" target="_blank" class="yt-dl-chip ${isFeatured ? 'featured' : ''}" title="Download ${escapeHtml(label)}">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>${escapeHtml(label)}</span>
+          </a>
+        `;
+      });
+
+      audios.forEach((a) => {
+        if (!a.url) return;
+        const label = `🎵 Audio (${a.quality || "HQ"} ${a.format?.toUpperCase() || "MP4"})`;
+        chipsHtml += `
+          <a href="${escapeHtml(a.url)}" download="${escapeHtml(title)}_audio.${a.format || 'mp3'}" target="_blank" class="yt-dl-chip" title="Download ${escapeHtml(label)}">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>${escapeHtml(label)}</span>
+          </a>
+        `;
+      });
+
+      assistantBubble.innerHTML = `
+        <div class="ios-media-card">
+          ${
+            bestVideoUrl
+              ? `
+              <div class="yt-card-video-wrap">
+                <video controls playsinline preload="metadata" poster="${escapeHtml(thumbnail)}" class="yt-card-video" src="${escapeHtml(bestVideoUrl)}">
+                  Your browser does not support HTML5 video.
+                </video>
+              </div>
+            `
+              : thumbnail
+              ? `
+              <div class="yt-card-video-wrap">
+                <img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(title)}" class="yt-card-video" style="object-fit: cover;" />
+              </div>
+            `
+              : ""
+          }
+
+          <div class="yt-card-body">
+            <div class="yt-card-title">${escapeHtml(title)}</div>
+            <div class="yt-card-author">
+              <span>👤 ${escapeHtml(author)}</span>
+            </div>
+
+            <div class="yt-meta-pills">
+              ${duration ? `<span class="yt-pill">⏱ ${escapeHtml(duration)}</span>` : ""}
+              ${viewsFormatted ? `<span class="yt-pill">👁 ${viewsFormatted}</span>` : ""}
+              <span class="yt-pill">▶ YouTube</span>
+            </div>
+
+            <div class="yt-downloads-header">Download Formats & Audio</div>
+            <div class="yt-quality-list">
+              ${chipsHtml || `<span style="color: var(--text-tertiary); font-size: 11px;">Direct links ready.</span>`}
+            </div>
+
+            <div style="margin-top: 6px;">
+              <a href="${escapeHtml(ytUrl)}" target="_blank" rel="noopener noreferrer" class="media-btn-secondary" style="display: inline-flex;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span>Open on YouTube</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      conversation.push({ role: "assistant", content: `[YouTube Media: "${title}"]` });
+      smoothScrollToBottom();
+    } catch (err) {
+      if (err.name === "AbortError") {
+        assistantBubble.innerHTML = `<div style="color: var(--text-tertiary); font-style: italic;">(YouTube processing canceled)</div>`;
+      } else {
+        assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;">⚠️ ${escapeHtml(err.message)}</div>`;
+      }
+    } finally {
+      setGenerating(false);
+      abortController = null;
+      autoResizeInput();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Message Transmission with Separated Thinking & 120fps Batching
   // ---------------------------------------------------------------------------
   async function sendMessage() {
@@ -528,7 +823,37 @@
     messageInput.value = "";
     autoResizeInput();
 
-    // Check if Image Mode or /image command
+    // 1. Check if Music /play command
+    const isPlayCommand = /^\/(play|music)\b/i.test(text);
+    if (isPlayCommand) {
+      const songQuery = text.replace(/^\/(play|music)\s*/i, "").trim();
+      if (songQuery) {
+        handlePlayMusicCommand(songQuery);
+        return;
+      } else {
+        appendMessage("user", text);
+        const guideBubble = appendMessage("assistant", "");
+        guideBubble.innerHTML = `
+          <div style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.5;">
+            🎵 <strong>Music Play Command:</strong><br>
+            Type <code>/play &lt;song name&gt;</code> to stream and download songs.<br>
+            <em>Example:</em> <code>/play Alan Walker - Faded</code>
+          </div>
+        `;
+        return;
+      }
+    }
+
+    // 2. Check if YouTube link is pasted/entered
+    const ytMatch = text.match(YT_REGEX);
+    if (ytMatch) {
+      const videoId = ytMatch[1];
+      const normalizedYtUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      handleYouTubeMedia(normalizedYtUrl, text);
+      return;
+    }
+
+    // 3. Check if Image Mode or /image command
     const isImageCommand = text.toLowerCase().startsWith("/image ") || text.toLowerCase().startsWith("/imagine ");
     if (selectedModel === "image" || isImageCommand) {
       const prompt = isImageCommand ? text.replace(/^\/(image|imagine)\s+/i, "").trim() : text;
