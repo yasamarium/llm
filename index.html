@@ -71,6 +71,9 @@
             <button class="suggestion-chip" data-prompt="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
               ▶️ YouTube Video Downloader
             </button>
+            <button class="suggestion-chip" data-prompt="/edit https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg Remove the background">
+              🎨 /edit Remove background
+            </button>
             <button class="suggestion-chip" data-prompt="Explain quantum computing in simple terms.">
               Explain quantum computing
             </button>
@@ -261,8 +264,22 @@
           </div>
         </div>
 
+        <!-- Attached Image Thumbnail Preview -->
+        <div id="attachedImagePreview" class="attached-image-preview hidden">
+          <img id="attachedThumb" class="attached-thumb" src="" alt="preview" />
+          <span id="attachedFileName" class="attached-filename">image.png</span>
+          <button id="removeAttachedBtn" type="button" class="remove-attached-btn" title="Remove attachment">✕</button>
+        </div>
+
         <!-- Input Capsule -->
         <div class="input-capsule">
+          <button id="attachBtn" type="button" class="attach-capsule-btn" title="Attach image to edit">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
+          <input type="file" id="imageFileInput" accept="image/*" class="hidden" />
+
           <textarea
             id="messageInput"
             rows="1"

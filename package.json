@@ -2,6 +2,7 @@
   "name": "yasamarium-llm",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Modern user-facing web chat interface for Qwen3 4B, deployed on Vercel",
   "scripts": {
     "dev": "npx serve .",

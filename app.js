@@ -25,6 +25,15 @@
   const popoverItems = document.querySelectorAll(".popover-item");
   const quickPills = document.querySelectorAll(".quick-pill");
 
+  // Image Attachment Elements
+  const attachBtn = document.getElementById("attachBtn");
+  const imageFileInput = document.getElementById("imageFileInput");
+  const attachedImagePreview = document.getElementById("attachedImagePreview");
+  const attachedThumb = document.getElementById("attachedThumb");
+  const attachedFileName = document.getElementById("attachedFileName");
+  const removeAttachedBtn = document.getElementById("removeAttachedBtn");
+
+  let attachedImage = null; // { data: base64/url, name: "file.jpg", type: "image/jpeg" }
   let selectedModel = "1.7b";
   let conversation = [];
   let abortController = null;
@@ -64,7 +73,9 @@
 
     if (shouldOpen) {
       modelPopover.classList.remove("hidden");
-      if (popoverBackdrop) popoverBackdrop.classList.remove("hidden");
+      if (window.innerWidth <= 640 && popoverBackdrop) {
+        popoverBackdrop.classList.remove("hidden");
+      }
       modelPickerBtn?.setAttribute("aria-expanded", "true");
       triggerHaptic("light");
     } else {
@@ -86,7 +97,10 @@
   }
 
   if (popoverBackdrop) {
-    popoverBackdrop.addEventListener("click", closePopover);
+    popoverBackdrop.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closePopover();
+    });
   }
 
   if (closePopoverBtn) {
@@ -97,8 +111,10 @@
   }
 
   document.addEventListener("click", (e) => {
-    if (modelPopover && !modelPopover.contains(e.target) && !modelPickerBtn?.contains(e.target)) {
-      closePopover();
+    if (modelPopover && !modelPopover.classList.contains("hidden")) {
+      if (!modelPopover.contains(e.target) && !modelPickerBtn?.contains(e.target) && !popoverBackdrop?.contains(e.target)) {
+        closePopover();
+      }
     }
   });
 
@@ -366,28 +382,99 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Input Handling
+  // ---------------------------------------------------------------------------
+  // Input Handling & Image Attachment
   // ---------------------------------------------------------------------------
   function autoResizeInput() {
     messageInput.style.height = "auto";
     const newHeight = Math.min(messageInput.scrollHeight, 140);
     messageInput.style.height = `${newHeight}px`;
-    sendBtn.disabled = !messageInput.value.trim() || isGenerating;
+    const hasContent = Boolean(messageInput.value.trim() || attachedImage);
+    sendBtn.disabled = !hasContent || isGenerating;
   }
+
+  function setAttachedImage(imgObj) {
+    attachedImage = imgObj;
+    if (imgObj) {
+      if (attachedThumb) attachedThumb.src = imgObj.data;
+      if (attachedFileName) attachedFileName.textContent = imgObj.name || "Attached Image";
+      attachedImagePreview?.classList.remove("hidden");
+      attachBtn?.classList.add("active");
+      messageInput.placeholder = "Describe edit (e.g. Remove the background)...";
+      messageInput.focus();
+    } else {
+      attachedImagePreview?.classList.add("hidden");
+      attachBtn?.classList.remove("active");
+      if (attachedThumb) attachedThumb.src = "";
+      messageInput.placeholder = MODEL_CONFIG[selectedModel]?.placeholder || "Message";
+    }
+    autoResizeInput();
+  }
+
+  if (attachBtn && imageFileInput) {
+    attachBtn.addEventListener("click", () => {
+      imageFileInput.click();
+    });
+
+    imageFileInput.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setAttachedImage({
+          data: ev.target.result,
+          name: file.name,
+          type: file.type || "image/jpeg",
+        });
+      };
+      reader.readAsDataURL(file);
+      imageFileInput.value = "";
+    });
+  }
+
+  if (removeAttachedBtn) {
+    removeAttachedBtn.addEventListener("click", () => {
+      setAttachedImage(null);
+    });
+  }
+
+  // Paste image directly from clipboard
+  messageInput.addEventListener("paste", (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.indexOf("image") !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            setAttachedImage({
+              data: ev.target.result,
+              name: file.name || `pasted_${Date.now()}.png`,
+              type: file.type || "image/png",
+            });
+          };
+          reader.readAsDataURL(file);
+          e.preventDefault();
+          break;
+        }
+      }
+    }
+  });
 
   messageInput.addEventListener("input", autoResizeInput);
 
   messageInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (!isGenerating && messageInput.value.trim()) {
+      if (!isGenerating && (messageInput.value.trim() || attachedImage)) {
         sendMessage();
       }
     }
   });
 
   sendBtn.addEventListener("click", () => {
-    if (!isGenerating && messageInput.value.trim()) {
+    if (!isGenerating && (messageInput.value.trim() || attachedImage)) {
       sendMessage();
     }
   });
@@ -407,6 +494,7 @@
     messagesFlow.innerHTML = "";
     if (welcomeView) welcomeView.style.display = "flex";
     setGenerating(false);
+    setAttachedImage(null);
     messageInput.value = "";
     autoResizeInput();
     messageInput.focus();
@@ -422,7 +510,8 @@
 
   function setGenerating(generating) {
     isGenerating = generating;
-    sendBtn.disabled = generating || !messageInput.value.trim();
+    const hasContent = Boolean(messageInput.value.trim() || attachedImage);
+    sendBtn.disabled = generating || !hasContent;
     stopBtn.classList.toggle("hidden", !generating);
     if (!generating) {
       messageInput.focus();
@@ -489,17 +578,40 @@
           </div>
           <div class="image-meta-bar">
             <span class="image-prompt-text">"${escapeHtml(prompt)}"</span>
-            <a href="${dataUrl}" download="${downloadFileName}" class="image-download-btn" title="Save Image">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              <span>Save</span>
-            </a>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="image-download-btn edit-generated-btn" style="background: rgba(255, 255, 255, 0.15); color: #ffffff;" title="Edit or Remove Background">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <span>Edit / Remove BG</span>
+              </button>
+              <a href="${dataUrl}" download="${downloadFileName}" class="image-download-btn" title="Save Image">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Save</span>
+              </a>
+            </div>
           </div>
         </div>
       `;
+
+      const editBtn = assistantBubble.querySelector(".edit-generated-btn");
+      if (editBtn) {
+        editBtn.addEventListener("click", () => {
+          setAttachedImage({
+            data: dataUrl,
+            name: `generated_${Date.now()}.png`,
+            type: "image/png",
+          });
+          messageInput.value = "Remove the background";
+          autoResizeInput();
+          messageInput.focus();
+        });
+      }
 
       conversation.push({ role: "assistant", content: `[Generated Image: "${prompt}"]` });
       smoothScrollToBottom();
@@ -812,16 +924,164 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Image-to-Image AI Editor Handler (Nanobanana + Release Database)
+  // ---------------------------------------------------------------------------
+  async function handleEditImage(imageSource, prompt, userMessageText) {
+    appendMessage("user", userMessageText || `/edit ${prompt}`);
+
+    const assistantBubble = appendMessage("assistant", "");
+    assistantBubble.innerHTML = `
+      <div class="ios-media-loading">
+        <div class="image-shimmer"></div>
+        <div class="image-loading-content">
+          <span class="ios-spinner"></span>
+          <span>Editing image with AS AI (Nanobanana)...</span>
+        </div>
+      </div>
+    `;
+
+    setGenerating(true);
+    abortController = new AbortController();
+
+    try {
+      const response = await fetch("/api/edit-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: abortController.signal,
+        body: JSON.stringify({
+          image: imageSource,
+          prompt: prompt || "Remove the background",
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Image editing failed (HTTP ${response.status}).`);
+      }
+
+      const resData = await response.json();
+      const originalProxyUrl = resData.original_proxy_url;
+      const resultProxyUrl = resData.result_proxy_url;
+      const originalStorageUrl = resData.original_storage_url;
+      const resultStorageUrl = resData.result_storage_url;
+      const finalPrompt = resData.prompt || prompt;
+
+      assistantBubble.innerHTML = `
+        <div class="ios-edit-card">
+          <div class="edit-card-grid">
+            <div class="edit-col">
+              <span class="edit-col-badge">Original</span>
+              <img src="${escapeHtml(originalProxyUrl)}" alt="Original Image" onerror="this.src='${escapeHtml(originalStorageUrl)}'" />
+            </div>
+            <div class="edit-col">
+              <span class="edit-col-badge" style="background: rgba(48, 209, 88, 0.75);">Edited</span>
+              <img src="${escapeHtml(resultProxyUrl)}" alt="Edited Image" onerror="this.src='${escapeHtml(resultStorageUrl)}'" />
+            </div>
+          </div>
+
+          <div class="edit-card-body">
+            <div class="edit-prompt-text">✨ "${escapeHtml(finalPrompt)}"</div>
+            <div class="edit-actions-bar">
+              <a href="${escapeHtml(resultProxyUrl)}" download="as_edited_${Date.now()}.jpg" target="_blank" class="media-btn-primary" title="Download Edited Image">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Save Result</span>
+              </a>
+
+              <button type="button" class="media-btn-secondary copy-proxy-btn" data-url="${escapeHtml(resultProxyUrl)}">
+                <span>Copy URL</span>
+              </button>
+
+              <a href="${escapeHtml(resultProxyUrl)}" target="_blank" rel="noopener noreferrer" class="media-btn-secondary" title="Open Fullscreen">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                </svg>
+                <span>View Full</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const copyBtn = assistantBubble.querySelector(".copy-proxy-btn");
+      if (copyBtn) {
+        copyBtn.addEventListener("click", () => {
+          const fullUrl = window.location.origin + copyBtn.getAttribute("data-url");
+          navigator.clipboard.writeText(fullUrl).then(() => {
+            copyBtn.innerHTML = "<span>Copied!</span>";
+            triggerHaptic("light");
+            setTimeout(() => { copyBtn.innerHTML = "<span>Copy URL</span>"; }, 2000);
+          });
+        });
+      }
+
+      conversation.push({ role: "assistant", content: `[Edited Image: "${finalPrompt}"]` });
+      smoothScrollToBottom();
+    } catch (err) {
+      if (err.name === "AbortError") {
+        assistantBubble.innerHTML = `<div style="color: var(--text-tertiary); font-style: italic;">(Image editing canceled)</div>`;
+      } else {
+        assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;">⚠️ ${escapeHtml(err.message)}</div>`;
+      }
+    } finally {
+      setGenerating(false);
+      abortController = null;
+      setAttachedImage(null);
+      autoResizeInput();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Message Transmission with Separated Thinking & 120fps Batching
   // ---------------------------------------------------------------------------
   async function sendMessage() {
     const text = messageInput.value.trim();
-    if (!text || isGenerating) return;
+    if ((!text && !attachedImage) || isGenerating) return;
 
     triggerHaptic("medium");
 
+    // Case A: User has attached an image to edit
+    if (attachedImage) {
+      const prompt = text || "Remove the background";
+      const userText = text ? `[Attached Image] ${text}` : `[Attached Image] Remove the background`;
+      const imgData = attachedImage.data;
+      setAttachedImage(null);
+      messageInput.value = "";
+      autoResizeInput();
+      handleEditImage(imgData, prompt, userText);
+      return;
+    }
+
     messageInput.value = "";
     autoResizeInput();
+
+    // Case B: Check if /edit or /rmbg command
+    const isEditCommand = /^\/(edit|rmbg|removebg)\b/i.test(text);
+    if (isEditCommand) {
+      const rest = text.replace(/^\/(edit|rmbg|removebg)\s*/i, "").trim();
+      const urlMatch = rest.match(/^(https?:\/\/[^\s]+)\s*(.*)$/i);
+      if (urlMatch) {
+        const imageUrl = urlMatch[1];
+        const prompt = urlMatch[2] || "Remove the background";
+        handleEditImage(imageUrl, prompt, text);
+        return;
+      } else if (rest) {
+        appendMessage("user", text);
+        const guideBubble = appendMessage("assistant", "");
+        guideBubble.innerHTML = `
+          <div style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.5;">
+            🎨 <strong>Image Editing Usage:</strong><br>
+            1. Attach an image using the 📎 button in the composer and type your edit prompt.<br>
+            2. Or type: <code>/edit &lt;image_url&gt; &lt;prompt&gt;</code><br>
+            <em>Example:</em> <code>/edit https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg Remove the background</code>
+          </div>
+        `;
+        return;
+      }
+    }
 
     // 1. Check if Music /play command
     const isPlayCommand = /^\/(play|music)\b/i.test(text);
