@@ -1259,6 +1259,434 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Secret Celestial Experience (Hidden Easter Egg)
+  // ---------------------------------------------------------------------------
+  const CHRONO_MONTHS = [
+    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+  ];
+
+  function formatChronoDate(d) {
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = CHRONO_MONTHS[d.getMonth()];
+    const year = d.getFullYear();
+    return `${day} ${month} ${year}`;
+  }
+
+  function formatChronoTime(d) {
+    const h = String(d.getHours()).padStart(2, "0");
+    const m = String(d.getMinutes()).padStart(2, "0");
+    const s = String(d.getSeconds()).padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  }
+
+  function chronoEase(t) {
+    if (t < 0.2) {
+      return 2.5 * t * t;
+    }
+    const p = (t - 0.2) / 0.8;
+    const easeOut = 1 - Math.pow(1 - p, 4);
+    return 0.1 + 0.9 * easeOut;
+  }
+
+  function handleSecretExperience(userText) {
+    appendMessage("user", userText);
+    conversation.push({ role: "user", content: userText });
+
+    const assistantBubble = appendMessage("assistant", "");
+    assistantBubble.classList.add("cherry-blossom-bubble");
+    assistantBubble.innerHTML = `
+      <div class="sakura-bubble-content">
+        <span class="sakura-icon left">🌸</span>
+        <span class="sakura-text">Aw? Wait wait!</span>
+        <span class="sakura-icon right">🌸</span>
+      </div>
+    `;
+    conversation.push({ role: "assistant", content: "Aw? Wait wait!" });
+
+    triggerHaptic("light");
+    smoothScrollToBottom();
+
+    setTimeout(() => {
+      startSecretCelestialJourney();
+    }, 1200);
+  }
+
+  function startSecretCelestialJourney() {
+    if (messageInput) messageInput.blur();
+    document.body.style.overflow = "hidden";
+
+    const overlay = document.createElement("div");
+    overlay.className = "secret-experience-overlay";
+    overlay.id = "secretExperienceOverlay";
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "secret-experience-canvas";
+    overlay.appendChild(canvas);
+
+    const hud = document.createElement("div");
+    hud.className = "chrono-hud";
+    hud.id = "chronoHud";
+    hud.innerHTML = `
+      <div class="chrono-stars-accent">✦ &nbsp; ✦ &nbsp; ✦</div>
+      <div class="chrono-time" id="chronoTime">--:--:--</div>
+      <div class="chrono-date" id="chronoDate">-- -- ----</div>
+      <div class="chrono-sub">RETROGRADE TEMPORAL FLOW</div>
+    `;
+    overlay.appendChild(hud);
+    document.body.appendChild(overlay);
+
+    const chronoTime = hud.querySelector("#chronoTime");
+    const chronoDate = hud.querySelector("#chronoDate");
+
+    const ctx = canvas.getContext("2d");
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    function resizeCanvas() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    requestAnimationFrame(() => {
+      overlay.classList.add("visible");
+    });
+
+    const STAR_COUNT = 240;
+    const stars = [];
+    for (let i = 0; i < STAR_COUNT; i++) {
+      stars.push({
+        x: (Math.random() - 0.5) * width * 2,
+        y: (Math.random() - 0.5) * height * 2,
+        z: Math.random() * width + 10,
+        origZ: Math.random() * width + 10,
+        size: Math.random() * 1.8 + 0.6,
+        alpha: Math.random() * 0.7 + 0.3,
+        twinkleOffset: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.03 + 0.015,
+      });
+    }
+
+    const sparks = [];
+
+    const startDate = new Date();
+    const startMs = startDate.getTime();
+    const targetDate = new Date(1990, 1, 27, 0, 0, 0);
+    const targetMs = targetDate.getTime();
+    const REWIND_DURATION = 11200;
+
+    chronoTime.textContent = formatChronoTime(startDate);
+    chronoDate.textContent = formatChronoDate(startDate);
+
+    const journeyStartTime = performance.now();
+    let animId = null;
+    let isCleanedUp = false;
+
+    function renderFrame(now) {
+      if (isCleanedUp) return;
+      const elapsed = now - journeyStartTime;
+      const cx = width / 2;
+      const cy = height / 2;
+
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, width, height);
+
+      // Phase 1: Time Travel Rewind (1400ms -> 12600ms)
+      if (elapsed < 14400) {
+        let warpSpeed = 0.5;
+
+        if (elapsed >= 1400 && elapsed < 12600) {
+          const rewindElapsed = elapsed - 1400;
+          const p = Math.min(rewindElapsed / REWIND_DURATION, 1);
+          const eased = chronoEase(p);
+          const currentMs = startMs + (targetMs - startMs) * eased;
+          const curDate = new Date(currentMs);
+
+          chronoDate.textContent = formatChronoDate(curDate);
+          chronoTime.textContent = formatChronoTime(curDate);
+
+          if (p < 0.2) {
+            warpSpeed = 0.5 + (p / 0.2) * 26;
+          } else if (p < 0.85) {
+            warpSpeed = 26.5;
+          } else {
+            const decel = (p - 0.85) / 0.15;
+            warpSpeed = 26.5 * (1 - decel) + 0.5;
+          }
+        } else if (elapsed >= 12600) {
+          chronoDate.textContent = "27 FEBRUARY 1990";
+          chronoTime.textContent = "00:00:00";
+          hud.classList.add("chrono-settled");
+          warpSpeed = 0.3;
+        }
+
+        for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          s.z -= warpSpeed;
+          if (s.z <= 0) {
+            s.z = width;
+            s.x = (Math.random() - 0.5) * width * 2;
+            s.y = (Math.random() - 0.5) * height * 2;
+          }
+
+          const k = 260 / s.z;
+          const px = cx + s.x * k;
+          const py = cy + s.y * k;
+
+          if (px >= 0 && px <= width && py >= 0 && py <= height) {
+            const starAlpha = Math.min((1 - s.z / width) * 1.2, 1) * s.alpha;
+            const starRadius = Math.max(0.6, s.size * (1 - s.z / width) * 1.5);
+
+            if (warpSpeed > 5) {
+              const prevZ = s.z + warpSpeed * 1.8;
+              const prevK = 260 / prevZ;
+              const prevPx = cx + s.x * prevK;
+              const prevPy = cy + s.y * prevK;
+
+              ctx.strokeStyle = `rgba(215, 230, 255, ${starAlpha * 0.75})`;
+              ctx.lineWidth = Math.max(1, starRadius * 0.8);
+              ctx.beginPath();
+              ctx.moveTo(px, py);
+              ctx.lineTo(prevPx, prevPy);
+              ctx.stroke();
+            } else {
+              ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha})`;
+              ctx.beginPath();
+              ctx.arc(px, py, starRadius, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+      }
+
+      // Phase 2: Fade to Black (14400ms -> 15800ms)
+      if (elapsed >= 14400 && elapsed < 15800) {
+        hud.style.opacity = "0";
+      }
+
+      // Phase 3: Waxing Crescent Moon & Night Sky (15800ms onwards)
+      if (elapsed >= 15800) {
+        hud.style.display = "none";
+
+        for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          s.twinkleOffset += s.twinkleSpeed;
+          const twinkle = 0.45 + 0.55 * Math.sin(s.twinkleOffset);
+          const starAlpha = s.alpha * twinkle;
+
+          const sx = (s.x / 2) + cx;
+          const sy = (s.y / 2) + cy;
+
+          if (sx >= 0 && sx <= width && sy >= 0 && sy <= height) {
+            ctx.fillStyle = `rgba(240, 245, 255, ${starAlpha})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, s.size * 0.9, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        const moonProgress = Math.min((elapsed - 15800) / 2400, 1);
+        const moonAlpha = moonProgress;
+        const moonScale = 0.94 + 0.06 * (1 - Math.pow(1 - moonProgress, 3));
+
+        const moonR = Math.min(width, height) * 0.16;
+        const moonY = cy - 20;
+
+        ctx.save();
+        ctx.globalAlpha = moonAlpha;
+        ctx.translate(cx, moonY);
+        ctx.scale(moonScale, moonScale);
+
+        // A. Ethereal Lunar Corona
+        const coronaGrad = ctx.createRadialGradient(moonR * 0.35, 0, moonR * 0.6, moonR * 0.35, 0, moonR * 2.8);
+        coronaGrad.addColorStop(0, "rgba(255, 248, 230, 0.32)");
+        coronaGrad.addColorStop(0.25, "rgba(215, 235, 255, 0.14)");
+        coronaGrad.addColorStop(0.55, "rgba(180, 210, 255, 0.04)");
+        coronaGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = coronaGrad;
+        ctx.beginPath();
+        ctx.arc(moonR * 0.35, 0, moonR * 2.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // B. Earthshine Disc
+        ctx.beginPath();
+        ctx.arc(0, 0, moonR, 0, Math.PI * 2);
+        const earthshine = ctx.createRadialGradient(-moonR * 0.3, -moonR * 0.3, moonR * 0.1, 0, 0, moonR);
+        earthshine.addColorStop(0, "rgba(26, 34, 48, 0.96)");
+        earthshine.addColorStop(0.7, "rgba(16, 22, 32, 0.98)");
+        earthshine.addColorStop(1, "rgba(8, 12, 18, 1)");
+        ctx.fillStyle = earthshine;
+        ctx.fill();
+
+        // C. Earthshine Lunar Maria
+        ctx.fillStyle = "rgba(12, 17, 26, 0.75)";
+        const craters = [
+          [-0.35, -0.2, 0.14],
+          [-0.2, 0.25, 0.18],
+          [-0.45, 0.1, 0.1],
+          [-0.15, -0.4, 0.12],
+          [-0.5, -0.35, 0.08]
+        ];
+        for (const [ox, oy, orad] of craters) {
+          ctx.beginPath();
+          ctx.arc(ox * moonR, oy * moonR, orad * moonR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.strokeStyle = "rgba(160, 195, 255, 0.15)";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // D. Sunlit Waxing Crescent (Right Limb)
+        ctx.beginPath();
+        ctx.arc(0, 0, moonR, -Math.PI / 2, Math.PI / 2, false);
+        ctx.bezierCurveTo(
+          moonR * 0.58, moonR * 0.55,
+          moonR * 0.58, -moonR * 0.55,
+          0, -moonR
+        );
+        ctx.closePath();
+
+        const moonGrad = ctx.createLinearGradient(-moonR * 0.2, -moonR, moonR, moonR * 0.5);
+        moonGrad.addColorStop(0, "#ffffff");
+        moonGrad.addColorStop(0.35, "#fffef0");
+        moonGrad.addColorStop(0.7, "#f5eedb");
+        moonGrad.addColorStop(1, "#e6e0d2");
+        ctx.fillStyle = moonGrad;
+        ctx.shadowColor = "rgba(255, 248, 225, 0.85)";
+        ctx.shadowBlur = 28;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // Phase 4: Shooting Star (18300ms -> 19800ms)
+      if (elapsed >= 18300 && elapsed < 20200) {
+        const starElapsed = elapsed - 18300;
+        const starDuration = 1200;
+        const st = Math.min(starElapsed / starDuration, 1);
+
+        const sx0 = width * 0.86;
+        const sy0 = height * 0.12;
+        const sx1 = width * 0.14;
+        const sy1 = height * 0.68;
+
+        const hx = sx0 + (sx1 - sx0) * st;
+        const hy = sy0 + (sy1 - sy0) * st;
+
+        const theta = Math.atan2(sy1 - sy0, sx1 - sx0);
+        const totalDist = Math.hypot(sx1 - sx0, sy1 - sy0);
+        const tailLen = Math.min(240, totalDist * 0.35) * Math.sin(st * Math.PI);
+
+        const tx = hx - Math.cos(theta) * tailLen;
+        const ty = hy - Math.sin(theta) * tailLen;
+
+        if (st < 1) {
+          const trailGrad = ctx.createLinearGradient(hx, hy, tx, ty);
+          trailGrad.addColorStop(0, "rgba(255, 255, 255, 1)");
+          trailGrad.addColorStop(0.18, "rgba(165, 243, 252, 0.9)");
+          trailGrad.addColorStop(0.55, "rgba(129, 140, 248, 0.5)");
+          trailGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+          ctx.save();
+          ctx.strokeStyle = trailGrad;
+          ctx.lineWidth = 3.5;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(hx, hy);
+          ctx.lineTo(tx, ty);
+          ctx.stroke();
+
+          ctx.fillStyle = "#ffffff";
+          ctx.shadowColor = "#93c5fd";
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.arc(hx, hy, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          if (st > 0.05 && st < 0.95) {
+            for (let k = 0; k < 3; k++) {
+              sparks.push({
+                x: hx + (Math.random() - 0.5) * 6,
+                y: hy + (Math.random() - 0.5) * 6,
+                vx: -Math.cos(theta) * (Math.random() * 2 + 0.5) + (Math.random() - 0.5) * 1.5,
+                vy: -Math.sin(theta) * (Math.random() * 2 + 0.5) + (Math.random() * 1.5 + 0.5),
+                life: 1.0,
+                decay: Math.random() * 0.02 + 0.015,
+                size: Math.random() * 2.2 + 0.8,
+                color: Math.random() > 0.4 ? "#ffffff" : "#fef08a",
+              });
+            }
+          }
+        }
+      }
+
+      // Update and Render Sparks
+      if (sparks.length > 0) {
+        for (let i = sparks.length - 1; i >= 0; i--) {
+          const sp = sparks[i];
+          sp.x += sp.vx;
+          sp.y += sp.vy;
+          sp.life -= sp.decay;
+
+          if (sp.life <= 0) {
+            sparks.splice(i, 1);
+            continue;
+          }
+
+          ctx.save();
+          ctx.fillStyle = sp.color;
+          ctx.globalAlpha = sp.life;
+          ctx.shadowColor = sp.color;
+          ctx.shadowBlur = 8;
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, sp.size * sp.life, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // Phase 5: Peaceful Cosmic Pause & Slow Fade Back to Chat
+      if (elapsed >= 24800 && !overlay.classList.contains("fading-out")) {
+        overlay.classList.add("fading-out");
+        overlay.style.transition = "opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1)";
+        overlay.style.opacity = "0";
+        document.body.style.overflow = "";
+      }
+
+      if (elapsed >= 27400) {
+        cleanup();
+        return;
+      }
+
+      animId = requestAnimationFrame(renderFrame);
+    }
+
+    function cleanup() {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+      if (animId) cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resizeCanvas);
+      document.body.style.overflow = "";
+      if (overlay && overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    }
+
+    animId = requestAnimationFrame(renderFrame);
+  }
+
+  // ---------------------------------------------------------------------------
   // Message Transmission with Separated Thinking & 120fps Batching
   // ---------------------------------------------------------------------------
   async function sendMessage() {
@@ -1281,6 +1709,13 @@
 
     messageInput.value = "";
     autoResizeInput();
+
+    // 0. Secret Easter Egg: "shuvangi" or "suhu"
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes("shuvangi") || lowerText.includes("suhu")) {
+      handleSecretExperience(text);
+      return;
+    }
 
     // Case B: Check if /edit or /rmbg command
     const isEditCommand = /^\/(edit|rmbg|removebg)\b/i.test(text);
