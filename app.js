@@ -1376,6 +1376,341 @@
   }
 
   // ---------------------------------------------------------------------------
+  // iOS 18 Custom Media Player Controller (Audio & Video, Scrubber, Speed, Zero Emojis)
+  // ---------------------------------------------------------------------------
+  function formatMediaTime(seconds) {
+    if (!seconds || isNaN(seconds) || seconds < 0) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  }
+
+  function bindCustomMediaPlayer(card) {
+    if (!card) return;
+    const media = card.querySelector(".ios-media-element");
+    if (!media) return;
+
+    const playPauseBtn = card.querySelector(".ios-btn-play-pause");
+    const centerPlayBtn = card.querySelector(".ios-video-center-btn");
+    const rewindBtn = card.querySelector(".ios-btn-rewind");
+    const forwardBtn = card.querySelector(".ios-btn-forward");
+    const speedBtn = card.querySelector(".ios-btn-speed");
+    const speedMenu = card.querySelector(".ios-speed-menu");
+    const volumeBtn = card.querySelector(".ios-btn-volume");
+    const volumeSlider = card.querySelector(".ios-volume-slider");
+    const fullscreenBtn = card.querySelector(".ios-btn-fullscreen");
+    const scrubberTrack = card.querySelector(".ios-scrubber-track");
+    const scrubberFill = card.querySelector(".ios-scrubber-fill");
+    const scrubberThumb = card.querySelector(".ios-scrubber-thumb");
+    const scrubberBuffered = card.querySelector(".ios-scrubber-buffered");
+    const curTimeEl = card.querySelector(".ios-time-cur");
+    const durTimeEl = card.querySelector(".ios-time-dur");
+    const videoWrap = card.querySelector(".yt-card-video-wrap");
+
+    let isDragging = false;
+    let hideControlsTimeout = null;
+
+    function updatePlayState(isPlaying) {
+      if (isPlaying) {
+        card.classList.add("playing");
+        if (videoWrap) videoWrap.classList.add("playing");
+        if (playPauseBtn) {
+          const playIcon = playPauseBtn.querySelector(".icon-play");
+          const pauseIcon = playPauseBtn.querySelector(".icon-pause");
+          if (playIcon) playIcon.style.display = "none";
+          if (pauseIcon) pauseIcon.style.display = "block";
+          playPauseBtn.title = "Pause";
+        }
+        if (centerPlayBtn) {
+          const cPlay = centerPlayBtn.querySelector(".center-icon-play");
+          const cPause = centerPlayBtn.querySelector(".center-icon-pause");
+          if (cPlay) cPlay.style.display = "none";
+          if (cPause) cPause.style.display = "block";
+        }
+        resetHideTimer();
+      } else {
+        card.classList.remove("playing");
+        if (videoWrap) videoWrap.classList.remove("playing");
+        if (playPauseBtn) {
+          const playIcon = playPauseBtn.querySelector(".icon-play");
+          const pauseIcon = playPauseBtn.querySelector(".icon-pause");
+          if (playIcon) playIcon.style.display = "block";
+          if (pauseIcon) pauseIcon.style.display = "none";
+          playPauseBtn.title = "Play";
+        }
+        if (centerPlayBtn) {
+          const cPlay = centerPlayBtn.querySelector(".center-icon-play");
+          const cPause = centerPlayBtn.querySelector(".center-icon-pause");
+          if (cPlay) cPlay.style.display = "block";
+          if (cPause) cPause.style.display = "none";
+        }
+        showControls();
+      }
+    }
+
+    // Single active media playback: pause any other playing media in chat
+    media.addEventListener("play", () => {
+      document.querySelectorAll(".ios-media-element").forEach((other) => {
+        if (other !== media && !other.paused) {
+          other.pause();
+        }
+      });
+      updatePlayState(true);
+      triggerHaptic("light");
+    });
+
+    media.addEventListener("pause", () => {
+      updatePlayState(false);
+      triggerHaptic("light");
+    });
+
+    media.addEventListener("ended", () => {
+      updatePlayState(false);
+      if (scrubberFill) scrubberFill.style.width = "0%";
+      if (scrubberThumb) scrubberThumb.style.left = "0%";
+      if (curTimeEl) curTimeEl.textContent = "0:00";
+    });
+
+    // Time & Scrubber updates
+    media.addEventListener("timeupdate", () => {
+      if (isDragging) return;
+      const cur = media.currentTime || 0;
+      const dur = media.duration || 0;
+      if (curTimeEl) curTimeEl.textContent = formatMediaTime(cur);
+      if (dur && durTimeEl && (durTimeEl.textContent === "0:00" || !durTimeEl.textContent.trim())) {
+        durTimeEl.textContent = formatMediaTime(dur);
+      }
+      if (dur > 0) {
+        const pct = (cur / dur) * 100;
+        if (scrubberFill) scrubberFill.style.width = `${pct}%`;
+        if (scrubberThumb) scrubberThumb.style.left = `${pct}%`;
+      }
+    });
+
+    // Buffered range update
+    media.addEventListener("progress", () => {
+      if (!media.duration || media.buffered.length === 0) return;
+      try {
+        const bufferedEnd = media.buffered.end(media.buffered.length - 1);
+        const pct = (bufferedEnd / media.duration) * 100;
+        if (scrubberBuffered) scrubberBuffered.style.width = `${Math.min(100, pct)}%`;
+      } catch (e) {}
+    });
+
+    media.addEventListener("loadedmetadata", () => {
+      if (media.duration && durTimeEl) {
+        durTimeEl.textContent = formatMediaTime(media.duration);
+      }
+    });
+
+    function togglePlay() {
+      if (media.paused || media.ended) {
+        media.play().catch(() => {});
+      } else {
+        media.pause();
+      }
+    }
+
+    if (playPauseBtn) playPauseBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePlay(); });
+    if (centerPlayBtn) centerPlayBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePlay(); });
+
+    // Video click to toggle play / auto-hiding controls
+    function resetHideTimer() {
+      if (videoWrap && !media.paused) {
+        clearTimeout(hideControlsTimeout);
+        videoWrap.classList.remove("controls-hidden");
+        hideControlsTimeout = setTimeout(() => {
+          if (!media.paused && !card.querySelector(".ios-speed-menu.open")) {
+            videoWrap.classList.add("controls-hidden");
+          }
+        }, 2600);
+      }
+    }
+
+    function showControls() {
+      if (videoWrap) {
+        clearTimeout(hideControlsTimeout);
+        videoWrap.classList.remove("controls-hidden");
+      }
+    }
+
+    if (videoWrap) {
+      videoWrap.addEventListener("click", (e) => {
+        if (e.target.closest(".ios-video-controls-overlay") || e.target.closest(".ios-video-center-btn")) return;
+        togglePlay();
+      });
+      videoWrap.addEventListener("mousemove", resetHideTimer);
+      videoWrap.addEventListener("touchstart", resetHideTimer, { passive: true });
+    }
+
+    // Rewind 10s & Forward 10s
+    if (rewindBtn) {
+      rewindBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        media.currentTime = Math.max(0, (media.currentTime || 0) - 10);
+        triggerHaptic("light");
+      });
+    }
+    if (forwardBtn) {
+      forwardBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        media.currentTime = Math.min(media.duration || 0, (media.currentTime || 0) + 10);
+        triggerHaptic("light");
+      });
+    }
+
+    // Scrubber Dragging / Seeking (Mouse + Touch)
+    if (scrubberTrack) {
+      function seekAtPosition(clientX) {
+        const rect = scrubberTrack.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        if (scrubberFill) scrubberFill.style.width = `${ratio * 100}%`;
+        if (scrubberThumb) scrubberThumb.style.left = `${ratio * 100}%`;
+        if (media.duration && curTimeEl) {
+          curTimeEl.textContent = formatMediaTime(ratio * media.duration);
+        }
+        return ratio;
+      }
+
+      function onScrubStart(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging = true;
+        scrubberTrack.classList.add("dragging");
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        seekAtPosition(clientX);
+
+        function onScrubMove(moveEvent) {
+          const x = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX;
+          seekAtPosition(x);
+        }
+
+        function onScrubEnd(endEvent) {
+          isDragging = false;
+          scrubberTrack.classList.remove("dragging");
+          const x = endEvent.changedTouches ? endEvent.changedTouches[0].clientX : endEvent.clientX;
+          const ratio = seekAtPosition(x);
+          if (media.duration) {
+            media.currentTime = ratio * media.duration;
+          }
+          triggerHaptic("light");
+          document.removeEventListener("mousemove", onScrubMove);
+          document.removeEventListener("mouseup", onScrubEnd);
+          document.removeEventListener("touchmove", onScrubMove);
+          document.removeEventListener("touchend", onScrubEnd);
+        }
+
+        document.addEventListener("mousemove", onScrubMove);
+        document.addEventListener("mouseup", onScrubEnd);
+        document.addEventListener("touchmove", onScrubMove, { passive: false });
+        document.addEventListener("touchend", onScrubEnd);
+      }
+
+      scrubberTrack.addEventListener("mousedown", onScrubStart);
+      scrubberTrack.addEventListener("touchstart", onScrubStart, { passive: false });
+    }
+
+    // Speed Controller
+    if (speedBtn && speedMenu) {
+      speedBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const wasOpen = speedMenu.classList.contains("open");
+        document.querySelectorAll(".ios-speed-menu.open").forEach((m) => m.classList.remove("open"));
+        if (!wasOpen) {
+          speedMenu.classList.add("open");
+          triggerHaptic("light");
+        }
+      });
+
+      speedMenu.querySelectorAll(".speed-option").forEach((opt) => {
+        opt.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const rate = parseFloat(opt.dataset.speed);
+          media.playbackRate = rate;
+          const valEl = speedBtn.querySelector(".speed-val");
+          if (valEl) valEl.textContent = `${rate}x`;
+          speedMenu.querySelectorAll(".speed-option").forEach((o) => o.classList.remove("active"));
+          opt.classList.add("active");
+          speedMenu.classList.remove("open");
+          triggerHaptic("medium");
+        });
+      });
+    }
+
+    // Volume Controller
+    if (volumeBtn && volumeSlider) {
+      volumeSlider.addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value);
+        media.volume = val;
+        media.muted = (val === 0);
+        updateVolumeIcon(media.muted ? 0 : val);
+      });
+
+      volumeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (media.muted || media.volume === 0) {
+          media.muted = false;
+          media.volume = 1;
+          volumeSlider.value = 1;
+          updateVolumeIcon(1);
+        } else {
+          media.muted = true;
+          volumeSlider.value = 0;
+          updateVolumeIcon(0);
+        }
+        triggerHaptic("light");
+      });
+
+      function updateVolumeIcon(vol) {
+        const highIcon = volumeBtn.querySelector(".icon-vol-high");
+        const muteIcon = volumeBtn.querySelector(".icon-vol-mute");
+        if (vol === 0) {
+          if (highIcon) highIcon.style.display = "none";
+          if (muteIcon) muteIcon.style.display = "block";
+        } else {
+          if (highIcon) highIcon.style.display = "block";
+          if (muteIcon) muteIcon.style.display = "none";
+        }
+      }
+    }
+
+    // Fullscreen Controller (Video)
+    if (fullscreenBtn && videoWrap) {
+      fullscreenBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        triggerHaptic("medium");
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        } else if (videoWrap.requestFullscreen) {
+          videoWrap.requestFullscreen().catch(() => {});
+        } else if (media.webkitEnterFullscreen) {
+          media.webkitEnterFullscreen();
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        const isFs = Boolean(document.fullscreenElement);
+        const enterIcon = fullscreenBtn.querySelector(".icon-fs-enter");
+        const exitIcon = fullscreenBtn.querySelector(".icon-fs-exit");
+        if (isFs) {
+          if (enterIcon) enterIcon.style.display = "none";
+          if (exitIcon) exitIcon.style.display = "block";
+        } else {
+          if (enterIcon) enterIcon.style.display = "block";
+          if (exitIcon) exitIcon.style.display = "none";
+        }
+      });
+    }
+  }
+
+  // Global dismissal for open speed menus
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".ios-speed-wrapper")) {
+      document.querySelectorAll(".ios-speed-menu.open").forEach((m) => m.classList.remove("open"));
+    }
+  });
+
+  // ---------------------------------------------------------------------------
   // /play <music name> Handler (David Cyril Play API)
   // ---------------------------------------------------------------------------
   async function handlePlayMusicCommand(query) {
@@ -1434,24 +1769,107 @@
       const safeFilename = `${title.replace(/[^a-zA-Z0-9_-]/g, "_")}.mp3`;
 
       assistantBubble.innerHTML = `
-        <div class="ios-media-card">
+        <div class="ios-media-card ios-music-card">
           <div class="music-card-header">
-            <img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(title)}" class="music-cover-art" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300'" />
+            <div class="music-cover-wrap">
+              <img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(title)}" class="music-cover-art" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300'" />
+            </div>
             <div class="music-info">
-              <span class="music-badge">🎵 AS Music</span>
+              <div class="music-badge">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <span>AS Music</span>
+              </div>
               <div class="music-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
               <div class="music-meta">
-                ${duration ? `<span>⏱ ${escapeHtml(duration)}</span>` : ""}
-                ${viewsFormatted ? `<span>• 👁 ${viewsFormatted}</span>` : ""}
-                ${published ? `<span>• 📅 ${escapeHtml(published)}</span>` : ""}
+                ${duration ? `<span><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${escapeHtml(duration)}</span>` : ""}
+                ${viewsFormatted ? `<span>• <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> ${viewsFormatted}</span>` : ""}
+                ${published ? `<span>• <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${escapeHtml(published)}</span>` : ""}
               </div>
             </div>
           </div>
 
           <div class="music-player-section">
-            <audio controls preload="metadata" class="ios-native-audio" src="${escapeHtml(streamUrl)}">
-              Your browser does not support audio playback.
-            </audio>
+            <audio preload="metadata" class="ios-media-element" src="${escapeHtml(streamUrl)}"></audio>
+
+            <div class="ios-player-widget">
+              <div class="ios-scrubber-container">
+                <div class="ios-scrubber-track">
+                  <div class="ios-scrubber-buffered"></div>
+                  <div class="ios-scrubber-fill"></div>
+                  <div class="ios-scrubber-thumb"></div>
+                </div>
+                <div class="ios-time-row">
+                  <span class="ios-time-cur">0:00</span>
+                  <span class="ios-time-dur">${duration || "0:00"}</span>
+                </div>
+              </div>
+
+              <div class="ios-controls-bar">
+                <div class="ios-ctrl-group ios-ctrl-left">
+                  <button class="ios-player-btn ios-btn-rewind" type="button" title="Rewind 10s">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                      <polyline points="3 3 3 8 8 8"/>
+                      <text x="12" y="15" text-anchor="middle" font-size="7.5" font-family="system-ui, -apple-system" font-weight="700" stroke="none" fill="currentColor">10</text>
+                    </svg>
+                  </button>
+
+                  <button class="ios-player-btn ios-btn-play-pause" type="button" title="Play">
+                    <svg class="icon-play" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                    <svg class="icon-pause" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
+                  </button>
+
+                  <button class="ios-player-btn ios-btn-forward" type="button" title="Forward 10s">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                      <polyline points="21 3 21 8 16 8"/>
+                      <text x="12" y="15" text-anchor="middle" font-size="7.5" font-family="system-ui, -apple-system" font-weight="700" stroke="none" fill="currentColor">10</text>
+                    </svg>
+                  </button>
+
+                  <div class="ios-audio-eq" title="Audio Activity">
+                    <span class="eq-bar bar-1"></span>
+                    <span class="eq-bar bar-2"></span>
+                    <span class="eq-bar bar-3"></span>
+                    <span class="eq-bar bar-4"></span>
+                  </div>
+                </div>
+
+                <div class="ios-ctrl-group ios-ctrl-right">
+                  <div class="ios-speed-wrapper">
+                    <button class="ios-player-btn ios-btn-speed" type="button" title="Playback Speed">
+                      <span class="speed-val">1x</span>
+                    </button>
+                    <div class="ios-speed-menu">
+                      <button type="button" class="speed-option" data-speed="0.5">0.5x</button>
+                      <button type="button" class="speed-option" data-speed="0.75">0.75x</button>
+                      <button type="button" class="speed-option active" data-speed="1">1x</button>
+                      <button type="button" class="speed-option" data-speed="1.25">1.25x</button>
+                      <button type="button" class="speed-option" data-speed="1.5">1.5x</button>
+                      <button type="button" class="speed-option" data-speed="2">2x</button>
+                    </div>
+                  </div>
+
+                  <div class="ios-volume-wrapper">
+                    <button class="ios-player-btn ios-btn-volume" type="button" title="Mute/Unmute">
+                      <svg class="icon-vol-high" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                      </svg>
+                      <svg class="icon-vol-mute" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <line x1="23" y1="9" x2="17" y2="15"/>
+                        <line x1="17" y1="9" x2="23" y2="15"/>
+                      </svg>
+                    </button>
+                    <div class="ios-volume-slider-bar">
+                      <input type="range" class="ios-volume-slider" min="0" max="1" step="0.05" value="1" title="Volume" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <div class="media-actions-bar">
               <a href="${escapeHtml(streamUrl)}" download="${escapeHtml(safeFilename)}" target="_blank" class="media-btn-primary" title="Download Track MP3">
@@ -1473,6 +1891,8 @@
           </div>
         </div>
       `;
+
+      bindCustomMediaPlayer(assistantBubble.querySelector(".ios-media-card"));
 
       conversation.push({ role: "assistant", content: `[Playing Track: "${title}"]` });
       smoothScrollToBottom();
@@ -1601,13 +2021,11 @@
 
       audios.forEach((a) => {
         if (!a.url) return;
-        const label = `🎵 Audio (${a.quality || "HQ"} ${a.format?.toUpperCase() || "MP4"})`;
+        const label = `Audio (${a.quality || "HQ"} ${a.format?.toUpperCase() || "MP4"})`;
         chipsHtml += `
           <a href="${escapeHtml(a.url)}" download="${escapeHtml(title)}_audio.${a.format || 'mp3'}" target="_blank" class="yt-dl-chip" title="Download ${escapeHtml(label)}">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
             </svg>
             <span>${escapeHtml(label)}</span>
           </a>
@@ -1615,14 +2033,103 @@
       });
 
       assistantBubble.innerHTML = `
-        <div class="ios-media-card">
+        <div class="ios-media-card ios-video-card">
           ${
             bestVideoUrl
               ? `
               <div class="yt-card-video-wrap">
-                <video controls playsinline preload="metadata" poster="${escapeHtml(thumbnail)}" class="yt-card-video" src="${escapeHtml(bestVideoUrl)}">
+                <video playsinline preload="metadata" poster="${escapeHtml(thumbnail)}" class="yt-card-video ios-media-element" src="${escapeHtml(bestVideoUrl)}">
                   Your browser does not support HTML5 video.
                 </video>
+
+                <button class="ios-video-center-btn" type="button" title="Play / Pause">
+                  <svg class="center-icon-play" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                  <svg class="center-icon-pause" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
+                </button>
+
+                <div class="ios-video-controls-overlay">
+                  <div class="ios-scrubber-container">
+                    <div class="ios-scrubber-track">
+                      <div class="ios-scrubber-buffered"></div>
+                      <div class="ios-scrubber-fill"></div>
+                      <div class="ios-scrubber-thumb"></div>
+                    </div>
+                  </div>
+
+                  <div class="ios-controls-bar">
+                    <div class="ios-ctrl-group ios-ctrl-left">
+                      <button class="ios-player-btn ios-btn-play-pause" type="button" title="Play">
+                        <svg class="icon-play" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                        <svg class="icon-pause" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
+                      </button>
+
+                      <button class="ios-player-btn ios-btn-rewind" type="button" title="Rewind 10s">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                          <polyline points="3 3 3 8 8 8"/>
+                          <text x="12" y="15" text-anchor="middle" font-size="7.5" font-family="system-ui, -apple-system" font-weight="700" stroke="none" fill="currentColor">10</text>
+                        </svg>
+                      </button>
+
+                      <button class="ios-player-btn ios-btn-forward" type="button" title="Forward 10s">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                          <polyline points="21 3 21 8 16 8"/>
+                          <text x="12" y="15" text-anchor="middle" font-size="7.5" font-family="system-ui, -apple-system" font-weight="700" stroke="none" fill="currentColor">10</text>
+                        </svg>
+                      </button>
+
+                      <div class="ios-time-inline">
+                        <span class="ios-time-cur">0:00</span>
+                        <span class="ios-time-sep">/</span>
+                        <span class="ios-time-dur">${duration || "0:00"}</span>
+                      </div>
+                    </div>
+
+                    <div class="ios-ctrl-group ios-ctrl-right">
+                      <div class="ios-speed-wrapper">
+                        <button class="ios-player-btn ios-btn-speed" type="button" title="Playback Speed">
+                          <span class="speed-val">1x</span>
+                        </button>
+                        <div class="ios-speed-menu">
+                          <button type="button" class="speed-option" data-speed="0.5">0.5x</button>
+                          <button type="button" class="speed-option" data-speed="0.75">0.75x</button>
+                          <button type="button" class="speed-option active" data-speed="1">1x</button>
+                          <button type="button" class="speed-option" data-speed="1.25">1.25x</button>
+                          <button type="button" class="speed-option" data-speed="1.5">1.5x</button>
+                          <button type="button" class="speed-option" data-speed="2">2x</button>
+                        </div>
+                      </div>
+
+                      <div class="ios-volume-wrapper">
+                        <button class="ios-player-btn ios-btn-volume" type="button" title="Mute/Unmute">
+                          <svg class="icon-vol-high" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                          </svg>
+                          <svg class="icon-vol-mute" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                            <line x1="23" y1="9" x2="17" y2="15"/>
+                            <line x1="17" y1="9" x2="23" y2="15"/>
+                          </svg>
+                        </button>
+                        <div class="ios-volume-slider-bar">
+                          <input type="range" class="ios-volume-slider" min="0" max="1" step="0.05" value="1" title="Volume" />
+                        </div>
+                      </div>
+
+                      <button class="ios-player-btn ios-btn-fullscreen" type="button" title="Fullscreen">
+                        <svg class="icon-fs-enter" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                        </svg>
+                        <svg class="icon-fs-exit" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             `
               : thumbnail
@@ -1637,13 +2144,14 @@
           <div class="yt-card-body">
             <div class="yt-card-title">${escapeHtml(title)}</div>
             <div class="yt-card-author">
-              <span>👤 ${escapeHtml(author)}</span>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>${escapeHtml(author)}</span>
             </div>
 
             <div class="yt-meta-pills">
-              ${duration ? `<span class="yt-pill">⏱ ${escapeHtml(duration)}</span>` : ""}
-              ${viewsFormatted ? `<span class="yt-pill">👁 ${viewsFormatted}</span>` : ""}
-              <span class="yt-pill">▶ YouTube</span>
+              ${duration ? `<span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${escapeHtml(duration)}</span>` : ""}
+              ${viewsFormatted ? `<span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> ${viewsFormatted}</span>` : ""}
+              <span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YouTube</span>
             </div>
 
             <div class="yt-downloads-header">Download Formats & Audio</div>
@@ -1662,6 +2170,8 @@
           </div>
         </div>
       `;
+
+      bindCustomMediaPlayer(assistantBubble.querySelector(".ios-media-card"));
 
       conversation.push({ role: "assistant", content: `[YouTube Media: "${title}"]` });
       smoothScrollToBottom();
@@ -2507,7 +3017,10 @@
         const guideBubble = appendMessage("assistant", "");
         guideBubble.innerHTML = `
           <div style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.5;">
-            🎵 <strong>Music Play Command:</strong><br>
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #ffffff;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <span>Music Play Command:</span>
+            </span><br>
             Type <code>/play &lt;song name&gt;</code> to stream and download songs.<br>
             <em>Example:</em> <code>/play Alan Walker - Faded</code>
           </div>
