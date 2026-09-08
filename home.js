@@ -636,6 +636,39 @@
     return `${hours}:${minutes} ${ampm}`;
   }
 
+  function formatWhatsAppDate(timestamp) {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    const now = new Date();
+
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) {
+      let hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
+      return `${hours}:${minutes} ${ampm}`;
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    }
+
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 7) {
+      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      return days[date.getDay()];
+    }
+
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
   function escapeHtml(str) {
     if (!str) return "";
     return str
@@ -692,7 +725,7 @@
         else previewText = lastMsg.text || "";
       }
 
-      const timeStr = lastMsg?.time ? formatTime(lastMsg.time) : "";
+      const timeStr = lastMsg?.time ? formatWhatsAppDate(lastMsg.time) : "";
       const isUnread = (c.unread || 0) > 0;
 
       return `
@@ -1346,18 +1379,23 @@
   }
 
   if (openNewChatBtn) openNewChatBtn.addEventListener("click", openNewChatModal);
-  if (closeNewChatModalBtn) closeNewChatModalBtn.addEventListener("click", closeNewChatModal);
+  const sidebarMenuBtn = document.getElementById("sidebarMenuBtn");
+  if (sidebarMenuBtn) {
+    sidebarMenuBtn.addEventListener("click", openProfileModal);
+  }
 
-  // Filter tabs
-  document.querySelectorAll(".filter-tab").forEach((tab) => {
+  // Filter tabs (WhatsApp All, Unread, Favourites, Groups)
+  document.querySelectorAll(".filter-tab, .wa-filter-chip").forEach((tab) => {
     tab.addEventListener("click", () => {
-      document.querySelectorAll(".filter-tab").forEach((t) => t.classList.remove("active"));
+      document.querySelectorAll(".filter-tab, .wa-filter-chip").forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
       const filter = tab.getAttribute("data-filter");
-      document.querySelectorAll(".convo-item").forEach((item) => {
+      document.querySelectorAll(".convo-item, .conversation-item").forEach((item) => {
         const id = item.getAttribute("data-id");
+        const isUnread = item.classList.contains("unread");
         if (filter === "all") item.style.display = "flex";
-        else if (filter === "direct") item.style.display = id.startsWith("dm_") ? "flex" : "none";
+        else if (filter === "unread") item.style.display = isUnread ? "flex" : "none";
+        else if (filter === "direct" || filter === "favourites") item.style.display = id.startsWith("dm_") ? "flex" : "none";
         else if (filter === "channels") item.style.display = !id.startsWith("dm_") ? "flex" : "none";
       });
     });
