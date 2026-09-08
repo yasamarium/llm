@@ -1,9 +1,10 @@
-// home.js - AS Messages Live Cloud Messaging Engine
+// home.js - AS Messages Real-Time Cloud Messaging Client
+// Connected to yasamarium/msg-db-users, msg-db-messages, msg-db-rooms & msg-media-storage
 (function () {
   "use strict";
 
   // ---------------------------------------------------------------------------
-  // Vector SVG Icons Registry (Zero Emojis Enforced)
+  // Vector SVG Icons Registry (Strictly Zero Emojis)
   // ---------------------------------------------------------------------------
   const ICONS = {
     checkSingle: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
@@ -11,10 +12,11 @@
     play: `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`,
     pause: `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,
     verified: `<svg width="13" height="13" viewBox="0 0 24 24" fill="#0a84ff"><path d="M12 2l2.4 2.8 3.7-.4 1.2 3.5 3.4 1.6-1.1 3.5 1.1 3.5-3.4 1.6-1.2 3.5-3.7-.4L12 22l-2.4-2.8-3.7.4-1.2-3.5-3.4-1.6 1.1-3.5-1.1-3.5 3.4-1.6 1.2-3.5 3.7.4L12 2z"/><path d="m9 12 2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+    userPlus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>`,
   };
 
   // ---------------------------------------------------------------------------
-  // Web Audio Synthesized Chimes (Zero External Assets)
+  // Web Audio Synthesized Chimes (Sent / Received)
   // ---------------------------------------------------------------------------
   let audioCtx = null;
   function getAudioContext() {
@@ -39,7 +41,6 @@
 
       const now = ctx.currentTime;
       if (type === "sent") {
-        // Crisp gentle rising blip
         osc.type = "sine";
         osc.frequency.setValueAtTime(640, now);
         osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
@@ -48,11 +49,10 @@
         osc.start(now);
         osc.stop(now + 0.09);
       } else {
-        // Soft double received pop
         osc.type = "sine";
         osc.frequency.setValueAtTime(820, now);
         osc.frequency.setValueAtTime(940, now + 0.06);
-        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.setValueAtTime(0.08, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         osc.start(now);
         osc.stop(now + 0.12);
@@ -61,15 +61,8 @@
   }
 
   // ---------------------------------------------------------------------------
-  // User Profile State & Storage
+  // Current User Profile State
   // ---------------------------------------------------------------------------
-  const DEFAULT_USER = {
-    username: "cloud_pilot",
-    displayName: "Cloud Pilot",
-    bio: "Building on AS Cloud Intelligence",
-    pfp: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-  };
-
   const PRESET_AVATARS = [
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
     "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
@@ -78,173 +71,59 @@
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
   ];
 
-  let currentUser = { ...DEFAULT_USER };
+  let currentUser = null;
   try {
     const saved = localStorage.getItem("as_msg_current_user");
-    if (saved) currentUser = { ...DEFAULT_USER, ...JSON.parse(saved) };
+    if (saved) {
+      currentUser = JSON.parse(saved);
+      if (currentUser.username === "cloud_pilot") {
+        currentUser = null;
+        localStorage.removeItem("as_msg_current_user");
+      }
+    }
   } catch (_) {}
 
-  function saveCurrentUser() {
-    try {
-      localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
-    } catch (_) {}
-    renderNavProfile();
-  }
-
   // ---------------------------------------------------------------------------
-  // Seeded Network Contacts & Conversations
-  // ---------------------------------------------------------------------------
-  const INITIAL_CONVERSATIONS = [
-    {
-      id: "cloud_fleet",
-      type: "channel",
-      handle: "cloud_fleet",
-      name: "AS Cloud Fleet",
-      pfp: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=150",
-      verified: true,
-      status: "Cluster Online • 22 Nodes",
-      lastSeen: "Online",
-      unread: 1,
-      messages: [
-        {
-          id: "m1",
-          sender: "cloud_fleet",
-          text: "Welcome to AS Messages. All 22 cluster nodes are synchronized and ready for live message routing.",
-          time: "10:00 AM",
-          status: "read",
-        },
-      ],
-    },
-    {
-      id: "elon_ai",
-      type: "direct",
-      handle: "elon_ai",
-      name: "Elon Musk AI",
-      pfp: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150",
-      verified: true,
-      status: "Building multiplanetary comms",
-      lastSeen: "Active now",
-      unread: 0,
-      messages: [
-        {
-          id: "m2",
-          sender: "elon_ai",
-          text: "Supersonic live messaging looks great. What are you building next on AS Cloud?",
-          time: "10:14 AM",
-          status: "read",
-        },
-      ],
-    },
-    {
-      id: "sama_core",
-      type: "direct",
-      handle: "sama_core",
-      name: "Sam Altman",
-      pfp: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-      verified: true,
-      status: "Frontiers of Intelligence",
-      lastSeen: "Active 5m ago",
-      unread: 0,
-      messages: [
-        {
-          id: "m3",
-          sender: "sama_core",
-          text: "Low latency live messaging is super clean. The iOS 18 glass design is crisp.",
-          time: "9:42 AM",
-          status: "read",
-        },
-      ],
-    },
-    {
-      id: "linus_dev",
-      type: "direct",
-      handle: "linus_dev",
-      name: "Linus Torvalds",
-      pfp: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
-      verified: true,
-      status: "Talk is cheap. Show me the code.",
-      lastSeen: "Online",
-      unread: 0,
-      messages: [
-        {
-          id: "m4",
-          sender: "linus_dev",
-          text: "Good to see 0 lag and hardware acceleration. Keep it lightweight.",
-          time: "Yesterday",
-          status: "read",
-        },
-      ],
-    },
-    {
-      id: "general_chat",
-      type: "channel",
-      handle: "general",
-      name: "Global Lounge",
-      pfp: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150",
-      verified: false,
-      status: "Public Channel • 142 online",
-      lastSeen: "Active now",
-      unread: 0,
-      messages: [
-        {
-          id: "m5",
-          sender: "system",
-          text: "Welcome to the Global Lounge channel. Connect with anyone via @username.",
-          time: "Yesterday",
-          status: "read",
-        },
-      ],
-    },
-  ];
-
-  let conversations = [];
-  try {
-    const saved = localStorage.getItem("as_msg_conversations_v2");
-    if (saved) {
-      conversations = JSON.parse(saved);
-    } else {
-      conversations = INITIAL_CONVERSATIONS;
-    }
-  } catch (_) {
-    conversations = INITIAL_CONVERSATIONS;
-  }
-
-  function saveConversations() {
-    try {
-      localStorage.setItem("as_msg_conversations_v2", JSON.stringify(conversations));
-    } catch (_) {}
-  }
-
-  let activeConvoId = conversations[0]?.id || "cloud_fleet";
-  let activeFilter = "all";
-
-  // ---------------------------------------------------------------------------
-  // DOM Elements
+  // DOM Element References
   // ---------------------------------------------------------------------------
   const msgWorkspace = document.getElementById("msgWorkspace");
-  const conversationListEl = document.getElementById("conversationList");
+  const msgSidebar = document.getElementById("msgSidebar");
+  const msgChatPane = document.getElementById("msgChatPane");
+  const conversationList = document.getElementById("conversationList");
+  const chatSearchInput = document.getElementById("chatSearchInput");
+  const openNewChatBtn = document.getElementById("openNewChatBtn");
+  const mobileBackBtn = document.getElementById("mobileBackBtn");
+
+  // Top Bar Profile
+  const userProfileChip = document.getElementById("userProfileChip");
+  const navUserPfp = document.getElementById("navUserPfp");
+  const navDisplayName = document.getElementById("navDisplayName");
+  const navUsername = document.getElementById("navUsername");
+  const relayStatusText = document.getElementById("relayStatusText");
+
+  // Chat Header Elements
+  const activeContactPfp = document.getElementById("activeContactPfp");
+  const activeContactStatusDot = document.getElementById("activeContactStatusDot");
+  const activeContactName = document.getElementById("activeContactName");
+  const activeContactHandle = document.getElementById("activeContactHandle");
+  const activeContactStatus = document.getElementById("activeContactStatus");
+  const activeVerifiedBadge = document.getElementById("activeVerifiedBadge");
+
+  // Message Container
   const chatMessagesContainer = document.getElementById("chatMessagesContainer");
   const messagesFlow = document.getElementById("messagesFlow");
   const scrollBottomBtn = document.getElementById("scrollBottomBtn");
+
+  // Composer Elements
   const messageTextInput = document.getElementById("messageTextInput");
   const sendMessageBtn = document.getElementById("sendMessageBtn");
   const attachMediaBtn = document.getElementById("attachMediaBtn");
   const mediaFileInput = document.getElementById("mediaFileInput");
   const voiceRecordBtn = document.getElementById("voiceRecordBtn");
   const recordingLiveBar = document.getElementById("recordingLiveBar");
-  const recordingTimeEl = document.getElementById("recordingTime");
+  const recordingTime = document.getElementById("recordingTime");
   const cancelRecordBtn = document.getElementById("cancelRecordBtn");
   const sendRecordBtn = document.getElementById("sendRecordBtn");
-  const chatSearchInput = document.getElementById("chatSearchInput");
-  const mobileBackBtn = document.getElementById("mobileBackBtn");
-  const remoteTypingIndicator = document.getElementById("remoteTypingIndicator");
-  const remoteTypingText = document.getElementById("remoteTypingText");
-
-  // Profile Navbar Elements
-  const userProfileChip = document.getElementById("userProfileChip");
-  const navUserPfp = document.getElementById("navUserPfp");
-  const navDisplayName = document.getElementById("navDisplayName");
-  const navUsername = document.getElementById("navUsername");
 
   // Profile Modal Elements
   const profileModal = document.getElementById("profileModal");
@@ -260,76 +139,111 @@
 
   // New Chat Modal Elements
   const newChatModal = document.getElementById("newChatModal");
-  const openNewChatBtn = document.getElementById("openNewChatBtn");
   const closeNewChatModalBtn = document.getElementById("closeNewChatModalBtn");
   const newChatHandleInput = document.getElementById("newChatHandleInput");
-  const startChatByHandleBtn = document.getElementById("startChatByHandleBtn");
   const quickContactsList = document.getElementById("quickContactsList");
+  const startChatByHandleBtn = document.getElementById("startChatByHandleBtn");
 
-  // Media Lightbox
+  // Media Lightbox Elements
   const mediaLightbox = document.getElementById("mediaLightbox");
+  const closeLightboxBtn = document.getElementById("closeLightboxBtn");
   const lightboxImage = document.getElementById("lightboxImage");
   const lightboxCaption = document.getElementById("lightboxCaption");
-  const closeLightboxBtn = document.getElementById("closeLightboxBtn");
 
   // ---------------------------------------------------------------------------
-  // Profile UI Rendering & Management
+  // State Management
   // ---------------------------------------------------------------------------
-  function renderNavProfile() {
-    if (navUserPfp) navUserPfp.src = currentUser.pfp;
-    if (navDisplayName) navDisplayName.textContent = currentUser.displayName;
-    if (navUsername) navUsername.textContent = `@${currentUser.username}`;
-  }
+  let activeConvoId = "general";
+  let activeConvoMeta = {
+    id: "general",
+    type: "channel",
+    handle: "general",
+    name: "Global Lounge",
+    pfp: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=150",
+    status: "Active Community",
+    verified: true,
+  };
+  let conversations = [];
+  let loadedMessageIds = new Set();
+  let lastMessageTimestamp = 0;
+  let syncInterval = null;
 
-  function openProfileModal() {
+  // ---------------------------------------------------------------------------
+  // Profile Modal & Authentication Setup
+  // ---------------------------------------------------------------------------
+  function openProfileModal(isForcedOnboarding = false) {
     if (!profileModal) return;
-    editPfpPreview.src = currentUser.pfp;
-    inputUsername.value = currentUser.username;
-    inputDisplayName.value = currentUser.displayName;
-    inputBio.value = currentUser.bio;
-
-    // Render preset avatar chips
-    presetAvatarChips.innerHTML = PRESET_AVATARS.map(
-      (src) => `<img src="${src}" class="${src === currentUser.pfp ? "selected" : ""}" alt="Avatar">`
-    ).join("");
-
-    presetAvatarChips.querySelectorAll("img").forEach((img) => {
-      img.addEventListener("click", () => {
-        presetAvatarChips.querySelectorAll("img").forEach((i) => i.classList.remove("selected"));
-        img.classList.add("selected");
-        editPfpPreview.src = img.src;
-      });
-    });
-
     profileModal.style.display = "flex";
+
+    const modalTitle = profileModal.querySelector(".modal-title");
+    const modalSub = profileModal.querySelector(".modal-sub");
+    if (isForcedOnboarding) {
+      if (modalTitle) modalTitle.textContent = "Welcome to AS Messages";
+      if (modalSub) modalSub.textContent = "Create your unique @username and profile to start chatting";
+      if (closeProfileModalBtn) closeProfileModalBtn.style.display = "none";
+    } else {
+      if (modalTitle) modalTitle.textContent = "Edit Profile";
+      if (modalSub) modalSub.textContent = "Manage your username, display name, and photo";
+      if (closeProfileModalBtn) closeProfileModalBtn.style.display = "flex";
+    }
+
+    const currentPfp = currentUser?.pfp || PRESET_AVATARS[0];
+    if (editPfpPreview) editPfpPreview.src = currentPfp;
+    if (inputUsername) inputUsername.value = currentUser?.username || "";
+    if (inputDisplayName) inputDisplayName.value = currentUser?.displayName || "";
+    if (inputBio) inputBio.value = currentUser?.bio || "";
+
+    renderPresetAvatarChips(currentPfp);
   }
 
   function closeProfileModal() {
     if (profileModal) profileModal.style.display = "none";
   }
 
-  if (userProfileChip) userProfileChip.addEventListener("click", openProfileModal);
-  if (closeProfileModalBtn) closeProfileModalBtn.addEventListener("click", closeProfileModal);
+  function renderPresetAvatarChips(selectedUrl) {
+    if (!presetAvatarChips) return;
+    presetAvatarChips.innerHTML = PRESET_AVATARS.map((url) => `
+      <button class="avatar-chip ${url === selectedUrl ? "selected" : ""}" type="button" data-url="${url}">
+        <img src="${url}" alt="Avatar">
+      </button>
+    `).join("");
+
+    presetAvatarChips.querySelectorAll(".avatar-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const url = btn.getAttribute("data-url");
+        if (editPfpPreview) editPfpPreview.src = url;
+        renderPresetAvatarChips(url);
+      });
+    });
+  }
 
   if (uploadPfpTrigger && pfpFileInput) {
     uploadPfpTrigger.addEventListener("click", () => pfpFileInput.click());
     pfpFileInput.addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
+
       const reader = new FileReader();
       reader.onload = async (ev) => {
         const base64 = ev.target.result;
-        editPfpPreview.src = base64;
+        if (editPfpPreview) editPfpPreview.src = base64;
+
         try {
-          // Attempt upload to release storage
           const res = await fetch("/api/upload", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: base64, filename: `pfp_${Date.now()}.jpg` }),
+            body: JSON.stringify({
+              image: base64,
+              filename: `pfp_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`,
+              contentType: file.type,
+              target: "msg-media-storage",
+            }),
           });
           if (res.ok) {
             const data = await res.json();
-            if (data.proxyUrl) editPfpPreview.src = data.proxyUrl;
+            if (data.proxyUrl) {
+              if (editPfpPreview) editPfpPreview.src = data.proxyUrl;
+            }
           }
         } catch (_) {}
       };
@@ -337,266 +251,274 @@
     });
   }
 
-  if (saveProfileBtn) {
-    saveProfileBtn.addEventListener("click", () => {
-      const cleanHandle = inputUsername.value.trim().replace(/^@+/, "").replace(/[^a-zA-Z0-9_]/g, "");
-      if (!cleanHandle) {
-        alert("Please enter a valid username (letters, numbers, underscore).");
-        return;
-      }
-      currentUser.username = cleanHandle;
-      currentUser.displayName = inputDisplayName.value.trim() || cleanHandle;
-      currentUser.bio = inputBio.value.trim() || "Available on AS Cloud";
-      currentUser.pfp = editPfpPreview.src;
-      saveCurrentUser();
-      closeProfileModal();
-      renderActiveChat();
-    });
-  }
+  async function handleSaveProfile() {
+    const handle = (inputUsername?.value || "").toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+    const displayName = (inputDisplayName?.value || "").trim() || handle;
+    const bio = (inputBio?.value || "").trim();
+    const pfp = editPfpPreview?.src || PRESET_AVATARS[0];
 
-  // ---------------------------------------------------------------------------
-  // New Chat Modal & User Discovery
-  // ---------------------------------------------------------------------------
-  function openNewChatModal() {
-    if (!newChatModal) return;
-    newChatHandleInput.value = "";
-    renderQuickContacts();
-    newChatModal.style.display = "flex";
-    setTimeout(() => newChatHandleInput.focus(), 50);
-  }
+    if (!handle || handle.length < 2) {
+      alert("Please enter a valid username (at least 2 letters, numbers, or underscore).");
+      return;
+    }
 
-  function closeNewChatModal() {
-    if (newChatModal) newChatModal.style.display = "none";
-  }
+    saveProfileBtn.disabled = true;
+    saveProfileBtn.textContent = "Saving...";
 
-  function renderQuickContacts() {
-    if (!quickContactsList) return;
-    const suggestions = [
-      { handle: "elon_ai", name: "Elon Musk AI", pfp: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100" },
-      { handle: "sama_core", name: "Sam Altman", pfp: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" },
-      { handle: "linus_dev", name: "Linus Torvalds", pfp: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" },
-      { handle: "cloud_support", name: "AS Cloud Team", pfp: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=100" },
-    ];
-
-    quickContactsList.innerHTML = suggestions.map((c) => `
-      <div class="quick-contact-item" data-handle="${c.handle}" data-name="${c.name}" data-pfp="${c.pfp}">
-        <img src="${c.pfp}" alt="${c.name}">
-        <div>
-          <div class="quick-contact-name">${escapeHtml(c.name)}</div>
-          <div class="quick-contact-handle">@${escapeHtml(c.handle)}</div>
-        </div>
-      </div>
-    `).join("");
-
-    quickContactsList.querySelectorAll(".quick-contact-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        const handle = item.getAttribute("data-handle");
-        const name = item.getAttribute("data-name");
-        const pfp = item.getAttribute("data-pfp");
-        initiateChatWithUser(handle, name, pfp);
-        closeNewChatModal();
+    try {
+      const res = await fetch("/api/msg?action=register_or_login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "register_or_login",
+          username: handle,
+          displayName,
+          bio,
+          pfp,
+        }),
       });
-    });
-  }
 
-  function initiateChatWithUser(rawHandle, optName = null, optPfp = null) {
-    const handle = rawHandle.trim().replace(/^@+/, "").toLowerCase();
-    if (!handle) return;
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save profile");
+      }
 
-    // Check if already in conversations
-    let convo = conversations.find((c) => c.handle.toLowerCase() === handle);
-    if (!convo) {
-      // Create new DM thread with this username
-      const randomSeed = Math.floor(Math.random() * 1000);
-      convo = {
-        id: `dm_${handle}_${Date.now()}`,
-        type: "direct",
-        handle: handle,
-        name: optName || handle.charAt(0).toUpperCase() + handle.slice(1),
-        pfp: optPfp || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&seed=${randomSeed}`,
-        verified: false,
-        status: "Active now",
-        lastSeen: "Online",
-        unread: 0,
-        messages: [
-          {
-            id: `msg_${Date.now()}`,
-            sender: handle,
-            text: `Hey @${currentUser.username}! You started a conversation with @${handle}.`,
-            time: formatTime(new Date()),
-            status: "read",
-          },
-        ],
-      };
-      conversations.unshift(convo);
-      saveConversations();
-    }
+      const data = await res.json();
+      currentUser = data.user;
+      localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
 
-    activeConvoId = convo.id;
-    renderConversationList();
-    renderActiveChat();
+      renderNavProfile();
+      closeProfileModal();
 
-    // On mobile viewports, transition to chat view
-    if (window.innerWidth <= 768 && msgWorkspace) {
-      msgWorkspace.classList.add("chat-open");
+      await loadConversations();
+      await openChat(activeConvoId);
+    } catch (err) {
+      alert("Could not register username: " + err.message);
+    } finally {
+      saveProfileBtn.disabled = false;
+      saveProfileBtn.textContent = "Save Changes";
     }
   }
 
-  if (openNewChatBtn) openNewChatBtn.addEventListener("click", openNewChatModal);
-  if (closeNewChatModalBtn) closeNewChatModalBtn.addEventListener("click", closeNewChatModal);
-  if (startChatByHandleBtn && newChatHandleInput) {
-    startChatByHandleBtn.addEventListener("click", () => {
-      const val = newChatHandleInput.value.trim();
-      if (val) {
-        initiateChatWithUser(val);
-        closeNewChatModal();
-      }
-    });
-    newChatHandleInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        startChatByHandleBtn.click();
-      }
-    });
+  if (saveProfileBtn) saveProfileBtn.addEventListener("click", handleSaveProfile);
+  if (closeProfileModalBtn) closeProfileModalBtn.addEventListener("click", closeProfileModal);
+  if (userProfileChip) userProfileChip.addEventListener("click", () => openProfileModal(false));
+
+  function renderNavProfile() {
+    if (!currentUser) return;
+    if (navUserPfp) navUserPfp.src = currentUser.pfp || PRESET_AVATARS[0];
+    if (navDisplayName) navDisplayName.textContent = currentUser.displayName || currentUser.username;
+    if (navUsername) navUsername.textContent = `@${currentUser.username}`;
   }
 
   // ---------------------------------------------------------------------------
-  // Conversation List Rendering
+  // Date & Format Helpers
   // ---------------------------------------------------------------------------
+  function formatTime(timestamp) {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    return `${hours}:${minutes} ${ampm}`;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Load Conversations List from Real Database
+  // ---------------------------------------------------------------------------
+  async function loadConversations() {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`/api/msg?action=get_conversations&username=${encodeURIComponent(currentUser.username)}`);
+      if (res.ok) {
+        const data = await res.json();
+        conversations = data.conversations || [];
+        renderConversationList();
+      }
+    } catch (err) {
+      console.error("Error loading conversations:", err);
+    }
+  }
+
   function renderConversationList() {
-    if (!conversationListEl) return;
-    const query = chatSearchInput ? chatSearchInput.value.toLowerCase().trim() : "";
+    if (!conversationList) return;
 
-    const filtered = conversations.filter((c) => {
-      if (activeFilter === "direct" && c.type !== "direct") return false;
-      if (activeFilter === "channels" && c.type !== "channel") return false;
-      if (query) {
-        return (
-          c.name.toLowerCase().includes(query) ||
-          c.handle.toLowerCase().includes(query) ||
-          (c.messages.length && c.messages[c.messages.length - 1].text.toLowerCase().includes(query))
-        );
-      }
-      return true;
-    });
+    if (conversations.length === 0) {
+      conversationList.innerHTML = `
+        <div class="empty-state-card" style="padding: 30px 20px; text-align: center; color: var(--text-secondary);">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: var(--accent-cyan);">
+            ${ICONS.userPlus}
+          </div>
+          <div style="font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 6px;">No chats yet</div>
+          <div style="font-size: 12px; line-height: 1.4; margin-bottom: 16px;">Search any @username to start a direct message or join Global Lounge.</div>
+          <button class="modal-primary-btn" id="emptyStartChatBtn" type="button" style="padding: 8px 16px; font-size: 12px;">Start New Chat</button>
+        </div>
+      `;
+      const btn = document.getElementById("emptyStartChatBtn");
+      if (btn) btn.addEventListener("click", () => openNewChatModal());
+      return;
+    }
 
-    conversationListEl.innerHTML = filtered.map((c) => {
-      const lastMsg = c.messages.length ? c.messages[c.messages.length - 1] : null;
-      const lastText = lastMsg ? (lastMsg.mediaType ? `[${lastMsg.mediaType.toUpperCase()}]` : lastMsg.text) : "No messages yet";
-      const lastTime = lastMsg ? lastMsg.time : "";
+    conversationList.innerHTML = conversations.map((c) => {
       const isActive = c.id === activeConvoId;
-      const statusClass = c.lastSeen === "Online" || c.lastSeen.includes("Active") ? "online" : "away";
+      const lastMsg = c.lastMessage;
+      let previewText = "No messages yet";
+      if (lastMsg) {
+        if (lastMsg.mediaType === "image") previewText = "Photo attachment";
+        else if (lastMsg.mediaType === "audio") previewText = "Voice note";
+        else previewText = lastMsg.text || "";
+      }
+
+      const timeStr = lastMsg?.time ? formatTime(lastMsg.time) : "";
+      const isUnread = (c.unread || 0) > 0;
 
       return `
-        <div class="conversation-item ${isActive ? "active" : ""}" data-id="${c.id}">
-          <div class="convo-pfp-box">
-            <img src="${c.pfp}" alt="${escapeHtml(c.name)}" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">
-            <div class="convo-status-dot ${statusClass}"></div>
+        <div class="convo-item ${isActive ? "active" : ""} ${isUnread ? "unread" : ""}" data-id="${c.id}">
+          <div class="convo-pfp-wrap">
+            <img class="convo-pfp" src="${c.pfp || PRESET_AVATARS[0]}" alt="Avatar" onerror="this.src='${PRESET_AVATARS[0]}'">
+            ${c.isOnline ? '<div class="convo-online-dot"></div>' : ""}
           </div>
-          <div class="convo-info">
-            <div class="convo-top-row">
-              <span class="convo-name">${escapeHtml(c.name)}</span>
-              <span class="convo-time">${escapeHtml(lastTime)}</span>
+          <div class="convo-meta">
+            <div class="convo-row-top">
+              <span class="convo-name">${escapeHtml(c.name || c.handle)}</span>
+              ${c.verified ? `<span class="verified-glyph">${ICONS.verified}</span>` : ""}
+              <span class="convo-time">${timeStr}</span>
             </div>
-            <div class="convo-bottom-row">
-              <span class="convo-last-msg">${escapeHtml(lastText)}</span>
-              ${c.unread > 0 ? `<span class="convo-unread-badge">${c.unread}</span>` : ""}
+            <div class="convo-row-bot">
+              <span class="convo-snippet">${escapeHtml(previewText)}</span>
+              ${isUnread ? `<span class="convo-unread-pill">${c.unread}</span>` : ""}
             </div>
           </div>
         </div>
       `;
     }).join("");
 
-    conversationListEl.querySelectorAll(".conversation-item").forEach((el) => {
+    conversationList.querySelectorAll(".convo-item").forEach((el) => {
       el.addEventListener("click", () => {
-        activeConvoId = el.getAttribute("data-id");
-        const activeConvo = conversations.find((c) => c.id === activeConvoId);
-        if (activeConvo) activeConvo.unread = 0;
-        saveConversations();
-        renderConversationList();
-        renderActiveChat();
-        if (window.innerWidth <= 768 && msgWorkspace) {
-          msgWorkspace.classList.add("chat-open");
-        }
+        const id = el.getAttribute("data-id");
+        openChat(id);
       });
     });
   }
 
-  // Filter tabs handler
-  document.querySelectorAll(".filter-tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".filter-tab").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeFilter = btn.getAttribute("data-filter") || "all";
-      renderConversationList();
-    });
-  });
-
-  if (chatSearchInput) {
-    chatSearchInput.addEventListener("input", renderConversationList);
-  }
-
-  if (mobileBackBtn) {
-    mobileBackBtn.addEventListener("click", () => {
-      if (msgWorkspace) msgWorkspace.classList.remove("chat-open");
-    });
-  }
-
   // ---------------------------------------------------------------------------
-  // Active Chat Workspace Rendering
+  // Open and Switch Active Chat
   // ---------------------------------------------------------------------------
-  function getActiveConvo() {
-    return conversations.find((c) => c.id === activeConvoId) || conversations[0];
-  }
+  async function openChat(chatId, newContactMeta = null) {
+    activeConvoId = chatId;
 
-  function renderActiveChat() {
-    const convo = getActiveConvo();
-    if (!convo) return;
+    let meta = conversations.find((c) => c.id === chatId) || newContactMeta;
+    if (!meta && chatId === "general") {
+      meta = {
+        id: "general",
+        type: "channel",
+        handle: "general",
+        name: "Global Lounge",
+        pfp: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=150",
+        status: "Active Community",
+        verified: true,
+      };
+    } else if (!meta) {
+      meta = {
+        id: chatId,
+        type: "direct",
+        handle: chatId.replace("dm_", "").replace("__", " & "),
+        name: chatId,
+        pfp: PRESET_AVATARS[0],
+        status: "Online",
+      };
+    }
+    activeConvoMeta = meta;
 
-    // Header updates
-    const activeContactPfp = document.getElementById("activeContactPfp");
-    const activeContactName = document.getElementById("activeContactName");
-    const activeContactHandle = document.getElementById("activeContactHandle");
-    const activeContactStatus = document.getElementById("activeContactStatus");
-    const activeVerifiedBadge = document.getElementById("activeVerifiedBadge");
+    if (activeContactPfp) activeContactPfp.src = meta.pfp || PRESET_AVATARS[0];
+    if (activeContactName) activeContactName.textContent = meta.name || meta.handle;
+    if (activeContactHandle) activeContactHandle.textContent = `@${meta.handle || meta.id}`;
+    if (activeContactStatus) activeContactStatus.textContent = meta.status || "Active now";
+    if (activeVerifiedBadge) activeVerifiedBadge.style.display = meta.verified ? "inline-flex" : "none";
 
-    if (activeContactPfp) activeContactPfp.src = convo.pfp;
-    if (activeContactName) activeContactName.textContent = convo.name;
-    if (activeContactHandle) activeContactHandle.textContent = `@${convo.handle}`;
-    if (activeContactStatus) activeContactStatus.textContent = convo.status;
-    if (activeVerifiedBadge) activeVerifiedBadge.style.display = convo.verified ? "inline-flex" : "none";
-
-    // Allow clicking active contact PFP to inspect
-    if (activeContactPfp) {
-      activeContactPfp.onclick = () => openLightbox(convo.pfp, `@${convo.handle} (${convo.name})`);
+    if (window.innerWidth <= 768 && msgWorkspace) {
+      msgWorkspace.classList.add("mobile-chat-open");
     }
 
-    // Render Messages Stream
-    if (!messagesFlow) return;
-    messagesFlow.innerHTML = convo.messages.map((m) => renderMessageHtml(m, convo)).join("");
+    renderConversationList();
 
-    // Bind media clicks and voice player events
-    bindMessageInteractions();
+    loadedMessageIds.clear();
+    lastMessageTimestamp = 0;
+    if (messagesFlow) messagesFlow.innerHTML = '<div style="text-align:center; padding: 30px; color: var(--text-secondary); font-size: 13px;">Loading messages...</div>';
 
-    scrollToBottom();
+    await loadChatHistory(chatId);
+
+    if (messageTextInput) messageTextInput.focus();
+
+    if (currentUser) {
+      try {
+        fetch("/api/msg?action=mark_read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chatId, username: currentUser.username }),
+        });
+      } catch (_) {}
+    }
   }
 
-  function renderMessageHtml(m, convo) {
-    const isOut = m.sender === currentUser.username || m.sender === "you";
-    const senderPfp = isOut ? currentUser.pfp : convo.pfp;
-    const senderName = isOut ? currentUser.displayName : convo.name;
+  // ---------------------------------------------------------------------------
+  // Load Messages for Active Chat
+  // ---------------------------------------------------------------------------
+  async function loadChatHistory(chatId) {
+    try {
+      const res = await fetch(`/api/msg?action=get_messages&chatId=${encodeURIComponent(chatId)}`);
+      if (!res.ok) throw new Error("Failed to load messages");
+      const data = await res.json();
+      const messages = data.messages || [];
 
-    // Status glyph
-    let statusIcon = "";
-    if (isOut) {
-      if (m.status === "read") {
-        statusIcon = `<span class="msg-receipt-icon read" title="Read">${ICONS.checkDouble}</span>`;
-      } else if (m.status === "delivered") {
-        statusIcon = `<span class="msg-receipt-icon" title="Delivered">${ICONS.checkDouble}</span>`;
+      if (messagesFlow) messagesFlow.innerHTML = "";
+      loadedMessageIds.clear();
+
+      if (messages.length === 0) {
+        messagesFlow.innerHTML = `
+          <div style="text-align:center; padding: 40px 20px; color: var(--text-secondary);">
+            <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">No messages here yet</div>
+            <div style="font-size: 12px;">Say hello to start the conversation over AS Cloud!</div>
+          </div>
+        `;
       } else {
-        statusIcon = `<span class="msg-receipt-icon" title="Sent">${ICONS.checkSingle}</span>`;
+        messages.forEach((msg) => {
+          renderMessage(msg, false);
+        });
       }
+
+      scrollToBottom();
+    } catch (err) {
+      console.error("Error loading chat history:", err);
+      if (messagesFlow) messagesFlow.innerHTML = '<div style="text-align:center; padding: 20px; color: #ff453a; font-size: 12px;">Failed to load messages. Please try again.</div>';
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render Individual Message
+  // ---------------------------------------------------------------------------
+  function renderMessage(m, animate = true) {
+    if (!messagesFlow || loadedMessageIds.has(m.id)) return;
+    loadedMessageIds.add(m.id);
+
+    if (m.timestamp > lastMessageTimestamp) {
+      lastMessageTimestamp = m.timestamp;
+    }
+
+    const isOut = currentUser && m.sender.toLowerCase() === currentUser.username.toLowerCase();
+    const senderPfp = m.senderPfp || PRESET_AVATARS[0];
+    const senderName = m.senderName || m.sender;
 
     let bodyContent = "";
 
@@ -628,69 +550,97 @@
       `;
     }
 
-    if (m.text && m.mediaType !== "audio") {
+    if (m.text) {
       bodyContent += `<div>${escapeHtml(m.text)}</div>`;
     }
 
-    return `
-      <div class="msg-row ${isOut ? "outgoing" : "incoming"}" id="${m.id}">
-        <img class="msg-bubble-pfp" src="${senderPfp}" alt="Avatar" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">
+    const timeStr = formatTime(m.timestamp || Date.now());
+
+    let receiptHtml = "";
+    if (isOut) {
+      if (m.status === "read") {
+        receiptHtml = `<span class="msg-receipt-icon read" title="Read">${ICONS.checkDouble}</span>`;
+      } else if (m.status === "delivered") {
+        receiptHtml = `<span class="msg-receipt-icon" title="Delivered">${ICONS.checkDouble}</span>`;
+      } else {
+        receiptHtml = `<span class="msg-receipt-icon" title="Sent">${ICONS.checkSingle}</span>`;
+      }
+    }
+
+    const html = `
+      <div class="msg-row ${isOut ? "outgoing" : "incoming"} ${animate ? "animate-in" : ""}" id="${m.id}">
+        <img class="msg-bubble-pfp" src="${senderPfp}" alt="Avatar" onerror="this.src='${PRESET_AVATARS[0]}'">
         <div class="msg-bubble-content">
-          ${!isOut && convo.type === "channel" ? `<span class="msg-sender-name">${escapeHtml(senderName)}</span>` : ""}
+          ${!isOut && activeConvoMeta.type === "channel" ? `<span class="msg-sender-name">${escapeHtml(senderName)}</span>` : ""}
           <div class="msg-bubble">
-            ${bodyContent}
-            <div class="msg-meta-row">
-              <span class="msg-time">${escapeHtml(m.time)}</span>
-              ${statusIcon}
+            <div class="msg-text">${bodyContent}</div>
+            <div class="msg-footer">
+              <span class="msg-timestamp">${timeStr}</span>
+              ${receiptHtml}
             </div>
           </div>
         </div>
       </div>
     `;
+
+    messagesFlow.insertAdjacentHTML("beforeend", html);
+    bindMessageInteractions();
   }
 
   function bindMessageInteractions() {
-    // Media photo click -> lightbox
-    messagesFlow.querySelectorAll(".msg-media-photo").forEach((box) => {
-      box.onclick = () => {
-        const url = box.getAttribute("data-url");
-        const cap = box.getAttribute("data-caption");
-        openLightbox(url, cap);
-      };
+    // Media Photo Lightbox
+    document.querySelectorAll(".msg-media-photo:not([data-bound])").forEach((el) => {
+      el.setAttribute("data-bound", "true");
+      el.addEventListener("click", () => {
+        const url = el.getAttribute("data-url");
+        const caption = el.getAttribute("data-caption");
+        if (lightboxImage) lightboxImage.src = url;
+        if (lightboxCaption) lightboxCaption.textContent = caption || "";
+        if (mediaLightbox) mediaLightbox.style.display = "flex";
+      });
     });
 
-    // Voice Note Player bind
-    messagesFlow.querySelectorAll(".voice-note-card").forEach((card) => {
+    // Voice Note Player
+    document.querySelectorAll(".voice-note-card:not([data-bound])").forEach((card) => {
+      card.setAttribute("data-bound", "true");
+      const btn = card.querySelector(".vn-play-btn");
       const audio = card.querySelector("audio");
-      const playBtn = card.querySelector(".vn-play-btn");
-      if (!audio || !playBtn) return;
+      const bars = card.querySelectorAll(".vn-bar");
+      const timeSpan = card.querySelector(".vn-time");
 
-      playBtn.onclick = () => {
+      if (!btn || !audio) return;
+
+      btn.addEventListener("click", () => {
         if (audio.paused) {
-          // Pause any other playing voice notes
           document.querySelectorAll("audio").forEach((a) => {
             if (a !== audio) {
               a.pause();
               a.currentTime = 0;
             }
           });
-          document.querySelectorAll(".voice-note-card").forEach((c) => c.classList.remove("playing"));
-          document.querySelectorAll(".vn-play-btn").forEach((b) => (b.innerHTML = ICONS.play));
-
-          audio.play().catch(() => {});
-          playBtn.innerHTML = ICONS.pause;
-          card.classList.add("playing");
+          audio.play();
+          btn.innerHTML = ICONS.pause;
+          bars.forEach((b) => b.classList.add("playing"));
         } else {
           audio.pause();
-          playBtn.innerHTML = ICONS.play;
-          card.classList.remove("playing");
+          btn.innerHTML = ICONS.play;
+          bars.forEach((b) => b.classList.remove("playing"));
         }
-      };
+      });
 
-      audio.onended = () => {
-        playBtn.innerHTML = ICONS.play;
-        card.classList.remove("playing");
-      };
+      audio.addEventListener("ended", () => {
+        btn.innerHTML = ICONS.play;
+        bars.forEach((b) => b.classList.remove("playing"));
+      });
+
+      audio.addEventListener("timeupdate", () => {
+        if (audio.duration) {
+          const rem = Math.max(0, audio.duration - audio.currentTime);
+          const mins = Math.floor(rem / 60);
+          const secs = Math.floor(rem % 60).toString().padStart(2, "0");
+          if (timeSpan) timeSpan.textContent = `${mins}:${secs}`;
+        }
+      });
     });
   }
 
@@ -701,7 +651,7 @@
     });
   }
 
-  if (chatMessagesContainer && scrollBottomBtn) {
+  if (scrollBottomBtn && chatMessagesContainer) {
     chatMessagesContainer.addEventListener("scroll", () => {
       const distFromBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight;
       scrollBottomBtn.style.display = distFromBottom > 160 ? "flex" : "none";
@@ -710,125 +660,80 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Sending Messages & Natural Interaction Pipeline
+  // Send Message (Real Live Network Operation)
   // ---------------------------------------------------------------------------
-  function sendOutgoingMessage(text = "", media = null) {
+  async function handleSendMessage(text = "", media = null) {
     if (!text.trim() && !media) return;
+    if (!currentUser) {
+      openProfileModal(true);
+      return;
+    }
 
-    const convo = getActiveConvo();
-    if (!convo) return;
-
-    const msgId = `m_${Date.now()}`;
-    const newMsg = {
-      id: msgId,
-      sender: currentUser.username,
-      text: text.trim(),
-      time: formatTime(new Date()),
-      status: "sent",
-      mediaType: media ? media.type : null,
-      mediaUrl: media ? media.url : null,
-      duration: media ? media.duration : null,
-    };
-
-    convo.messages.push(newMsg);
-    saveConversations();
-
-    // Optimistic UI Append
-    messagesFlow.insertAdjacentHTML("beforeend", renderMessageHtml(newMsg, convo));
-    bindMessageInteractions();
-    scrollToBottom();
-    renderConversationList();
-
-    // Play local sent chime
-    playChime("sent");
-
-    // Clear input
+    const cleanText = text.trim();
     if (messageTextInput) {
       messageTextInput.value = "";
       autoResizeTextarea();
     }
 
-    // Step 1: Delivered Transition after 550ms
-    setTimeout(() => {
-      newMsg.status = "delivered";
-      saveConversations();
-      const el = document.getElementById(msgId);
-      if (el) {
-        const receipt = el.querySelector(".msg-receipt-icon");
-        if (receipt) receipt.innerHTML = ICONS.checkDouble;
-      }
-    }, 550);
+    const optimisticMsg = {
+      id: `temp_${Date.now()}`,
+      chatId: activeConvoId,
+      sender: currentUser.username,
+      senderName: currentUser.displayName || currentUser.username,
+      senderPfp: currentUser.pfp,
+      recipient: activeConvoMeta.type === "direct" ? activeConvoMeta.handle : null,
+      text: cleanText,
+      mediaType: media ? media.type : null,
+      mediaUrl: media ? media.url : null,
+      duration: media ? media.duration : null,
+      timestamp: Date.now(),
+      status: "sent",
+    };
 
-    // Step 2: Read Receipt Transition after 1400ms
-    setTimeout(() => {
-      newMsg.status = "read";
-      saveConversations();
-      const el = document.getElementById(msgId);
-      if (el) {
-        const receipt = el.querySelector(".msg-receipt-icon");
-        if (receipt) {
-          receipt.className = "msg-receipt-icon read";
-          receipt.innerHTML = ICONS.checkDouble;
+    renderMessage(optimisticMsg, true);
+    scrollToBottom();
+    playChime("sent");
+
+    try {
+      const res = await fetch("/api/msg?action=send_message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "send_message",
+          chatId: activeConvoId,
+          sender: currentUser.username,
+          recipient: activeConvoMeta.type === "direct" ? activeConvoMeta.handle : null,
+          text: cleanText,
+          mediaType: media ? media.type : null,
+          mediaUrl: media ? media.url : null,
+          duration: media ? media.duration : null,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const serverMsg = data.message;
+        const row = document.getElementById(optimisticMsg.id);
+        if (row && serverMsg) {
+          row.id = serverMsg.id;
+          loadedMessageIds.delete(optimisticMsg.id);
+          loadedMessageIds.add(serverMsg.id);
+          const receipt = row.querySelector(".msg-receipt-icon");
+          if (receipt) receipt.innerHTML = ICONS.checkDouble;
         }
       }
-    }, 1400);
-
-    // Step 3: Natural Contact Reply Simulation (if direct message)
-    if (convo.type === "direct") {
-      triggerSimulatedReply(convo, text);
+      loadConversations();
+    } catch (err) {
+      console.error("Error sending message:", err);
     }
   }
 
-  function triggerSimulatedReply(convo, userText) {
-    setTimeout(() => {
-      if (remoteTypingIndicator && remoteTypingText) {
-        remoteTypingText.textContent = `@${convo.handle} is typing...`;
-        remoteTypingIndicator.style.display = "flex";
-        scrollToBottom();
-      }
-
-      setTimeout(() => {
-        if (remoteTypingIndicator) remoteTypingIndicator.style.display = "none";
-
-        let replyText = `Received! Messaging @${currentUser.username} over AS Cloud relay.`;
-        if (convo.handle === "elon_ai") {
-          replyText = `Starlink optical relays confirmed. The latency here is almost zero.`;
-        } else if (convo.handle === "sama_core") {
-          replyText = `The UI fluidity is great. Keep scaling the cluster nodes.`;
-        } else if (convo.handle === "linus_dev") {
-          replyText = `Zero emojis and clean vector SVGs — exactly the way efficient code should look.`;
-        }
-
-        const replyMsg = {
-          id: `reply_${Date.now()}`,
-          sender: convo.handle,
-          text: replyText,
-          time: formatTime(new Date()),
-          status: "read",
-        };
-
-        convo.messages.push(replyMsg);
-        saveConversations();
-
-        if (convo.id === activeConvoId) {
-          messagesFlow.insertAdjacentHTML("beforeend", renderMessageHtml(replyMsg, convo));
-          bindMessageInteractions();
-          scrollToBottom();
-          playChime("received");
-        } else {
-          convo.unread = (convo.unread || 0) + 1;
-        }
-        renderConversationList();
-      }, 1600);
-    }, 900);
-  }
-
   if (sendMessageBtn && messageTextInput) {
-    sendMessageBtn.addEventListener("click", () => sendOutgoingMessage(messageTextInput.value));
+    sendMessageBtn.addEventListener("click", () => handleSendMessage(messageTextInput.value));
     messageTextInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        sendOutgoingMessage(messageTextInput.value);
+        handleSendMessage(messageTextInput.value);
       }
     });
   }
@@ -838,12 +743,10 @@
     messageTextInput.style.height = "auto";
     messageTextInput.style.height = `${Math.min(messageTextInput.scrollHeight, 140)}px`;
   }
-  if (messageTextInput) {
-    messageTextInput.addEventListener("input", autoResizeTextarea);
-  }
+  if (messageTextInput) messageTextInput.addEventListener("input", autoResizeTextarea);
 
   // ---------------------------------------------------------------------------
-  // Media Attachments & GitHub Release Upload Pipeline
+  // Media Attachments & GitHub Releases CDN Upload
   // ---------------------------------------------------------------------------
   if (attachMediaBtn && mediaFileInput) {
     attachMediaBtn.addEventListener("click", () => mediaFileInput.click());
@@ -856,10 +759,9 @@
 
       reader.onload = async (ev) => {
         const base64 = ev.target.result;
-        let cdnUrl = base64; // Instant fallback
+        let cdnUrl = base64;
 
         try {
-          // Attempt upload to AS Cloud / GitHub Release Storage
           const res = await fetch("/api/upload", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -867,6 +769,7 @@
               image: base64,
               filename: `msg_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`,
               contentType: file.type,
+              target: "msg-media-storage",
             }),
           });
           if (res.ok) {
@@ -875,7 +778,7 @@
           }
         } catch (_) {}
 
-        sendOutgoingMessage("", {
+        handleSendMessage("", {
           type: isImg ? "image" : "file",
           url: cdnUrl,
         });
@@ -899,99 +802,286 @@
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioChunks = [];
         mediaRecorder = new MediaRecorder(stream);
+
         mediaRecorder.ondataavailable = (e) => {
           if (e.data.size > 0) audioChunks.push(e.data);
         };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          const mins = Math.floor(recordSeconds / 60);
+          const secs = (recordSeconds % 60).toString().padStart(2, "0");
+          const durStr = `${mins}:${secs}`;
+
+          const reader = new FileReader();
+          reader.onload = async () => {
+            const base64Audio = reader.result;
+            handleSendMessage("", {
+              type: "audio",
+              url: base64Audio,
+              duration: durStr,
+            });
+          };
+          reader.readAsDataURL(audioBlob);
+          stream.getTracks().forEach((t) => t.stop());
+        };
+
         mediaRecorder.start();
-
-        recordSeconds = 0;
-        recordingTimeEl.textContent = "0:00";
         recordingLiveBar.style.display = "flex";
-
+        recordSeconds = 0;
+        if (recordingTime) recordingTime.textContent = "0:00";
         recordTimer = setInterval(() => {
           recordSeconds++;
           const mins = Math.floor(recordSeconds / 60);
-          const secs = recordSeconds % 60;
-          recordingTimeEl.textContent = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+          const secs = (recordSeconds % 60).toString().padStart(2, "0");
+          if (recordingTime) recordingTime.textContent = `${mins}:${secs}`;
         }, 1000);
       } catch (err) {
-        alert("Microphone access is required to record voice notes.");
+        alert("Microphone access denied or unavailable.");
       }
     });
 
-    cancelRecordBtn.addEventListener("click", () => {
-      stopRecording(false);
-    });
-
-    sendRecordBtn.addEventListener("click", () => {
-      stopRecording(true);
-    });
-  }
-
-  function stopRecording(shouldSend) {
-    if (recordTimer) clearInterval(recordTimer);
-    recordingLiveBar.style.display = "none";
-
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      mediaRecorder.onstop = () => {
-        if (shouldSend && audioChunks.length > 0) {
-          const blob = new Blob(audioChunks, { type: "audio/webm" });
-          const audioUrl = URL.createObjectURL(blob);
-          const durationStr = recordingTimeEl.textContent;
-          sendOutgoingMessage("", {
-            type: "audio",
-            url: audioUrl,
-            duration: durationStr,
-          });
+    if (cancelRecordBtn) {
+      cancelRecordBtn.addEventListener("click", () => {
+        clearInterval(recordTimer);
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+          mediaRecorder.onstop = null;
+          mediaRecorder.stop();
         }
-        audioChunks = [];
-      };
-      mediaRecorder.stop();
-      mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+        recordingLiveBar.style.display = "none";
+      });
+    }
+
+    if (sendRecordBtn) {
+      sendRecordBtn.addEventListener("click", () => {
+        clearInterval(recordTimer);
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+          mediaRecorder.stop();
+        }
+        recordingLiveBar.style.display = "none";
+      });
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Fullscreen Lightbox
+  // Real-Time Polling Engine (Every 1.5s - Live Sync)
   // ---------------------------------------------------------------------------
-  function openLightbox(url, caption = "") {
-    if (!mediaLightbox || !lightboxImage) return;
-    lightboxImage.src = url;
-    if (lightboxCaption) lightboxCaption.textContent = caption || "";
-    mediaLightbox.style.display = "flex";
+  async function syncLiveMessages() {
+    if (!currentUser) return;
+    try {
+      const url = `/api/msg?action=sync&username=${encodeURIComponent(currentUser.username)}&chatId=${encodeURIComponent(activeConvoId)}&since=${lastMessageTimestamp}`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      const newMsgs = data.newMessages || [];
+
+      if (newMsgs.length > 0) {
+        let hasIncoming = false;
+        newMsgs.forEach((m) => {
+          if (!loadedMessageIds.has(m.id)) {
+            renderMessage(m, true);
+            if (m.sender.toLowerCase() !== currentUser.username.toLowerCase()) {
+              hasIncoming = true;
+            }
+          }
+        });
+        if (hasIncoming) {
+          playChime("received");
+          scrollToBottom();
+          fetch("/api/msg?action=mark_read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chatId: activeConvoId, username: currentUser.username }),
+          });
+        }
+      }
+    } catch (_) {}
   }
 
-  function closeLightbox() {
-    if (mediaLightbox) mediaLightbox.style.display = "none";
+  syncInterval = setInterval(syncLiveMessages, 1500);
+
+  setInterval(() => {
+    if (currentUser) loadConversations();
+  }, 6000);
+
+  // ---------------------------------------------------------------------------
+  // New Chat & Real User Search
+  // ---------------------------------------------------------------------------
+  function openNewChatModal() {
+    if (!newChatModal) return;
+    newChatModal.style.display = "flex";
+    if (newChatHandleInput) {
+      newChatHandleInput.value = "";
+      newChatHandleInput.focus();
+    }
+    searchAndRenderUsers("");
   }
-  if (closeLightboxBtn) closeLightboxBtn.addEventListener("click", closeLightbox);
-  if (mediaLightbox) {
-    mediaLightbox.addEventListener("click", (e) => {
-      if (e.target === mediaLightbox) closeLightbox();
+
+  function closeNewChatModal() {
+    if (newChatModal) newChatModal.style.display = "none";
+  }
+
+  async function searchAndRenderUsers(query = "") {
+    if (!quickContactsList) return;
+    quickContactsList.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-secondary); font-size: 12px;">Searching network...</div>';
+
+    try {
+      const current = currentUser ? currentUser.username : "";
+      const res = await fetch(`/api/msg?action=search_users&q=${encodeURIComponent(query)}&exclude=${encodeURIComponent(current)}`);
+      if (!res.ok) throw new Error("Search failed");
+
+      const data = await res.json();
+      const users = data.users || [];
+
+      if (users.length === 0) {
+        quickContactsList.innerHTML = `
+          <div style="padding: 20px 10px; text-align: center; color: var(--text-secondary); font-size: 12px;">
+            No users found matching "${escapeHtml(query)}".
+          </div>
+        `;
+        return;
+      }
+
+      quickContactsList.innerHTML = users.map((u) => `
+        <div class="quick-contact-card" data-username="${u.username}" data-name="${escapeHtml(u.displayName)}" data-pfp="${u.pfp}">
+          <div style="position: relative;">
+            <img class="quick-contact-pfp" src="${u.pfp || PRESET_AVATARS[0]}" alt="Avatar" onerror="this.src='${PRESET_AVATARS[0]}'">
+            ${u.isOnline ? '<div class="convo-online-dot"></div>' : ""}
+          </div>
+          <div class="quick-contact-info">
+            <div class="quick-contact-name">
+              ${escapeHtml(u.displayName || u.username)}
+              ${u.verified ? `<span class="verified-glyph">${ICONS.verified}</span>` : ""}
+            </div>
+            <div class="quick-contact-handle">@${u.username} ${u.isOnline ? '• Online' : ''}</div>
+          </div>
+          <button class="quick-chat-action-btn" type="button">Chat</button>
+        </div>
+      `).join("");
+
+      quickContactsList.querySelectorAll(".quick-contact-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          const handle = card.getAttribute("data-username");
+          const name = card.getAttribute("data-name");
+          const pfp = card.getAttribute("data-pfp");
+          startDirectChat(handle, name, pfp);
+          closeNewChatModal();
+        });
+      });
+    } catch (err) {
+      quickContactsList.innerHTML = '<div style="padding: 12px; color: #ff453a; font-size: 12px;">Failed to search network users.</div>';
+    }
+  }
+
+  let searchDebounce = null;
+  if (newChatHandleInput) {
+    newChatHandleInput.addEventListener("input", () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        searchAndRenderUsers(newChatHandleInput.value.trim());
+      }, 250);
+    });
+  }
+
+  function startDirectChat(targetHandle, targetName = null, targetPfp = null) {
+    if (!currentUser) {
+      openProfileModal(true);
+      return;
+    }
+    const cleanTarget = targetHandle.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+    if (!cleanTarget || cleanTarget === currentUser.username.toLowerCase()) {
+      alert("Please choose a different user to message.");
+      return;
+    }
+
+    const sorted = [currentUser.username.toLowerCase(), cleanTarget].sort();
+    const dmId = `dm_${sorted[0]}__${sorted[1]}`;
+
+    const meta = {
+      id: dmId,
+      type: "direct",
+      handle: cleanTarget,
+      name: targetName || cleanTarget,
+      pfp: targetPfp || PRESET_AVATARS[0],
+      status: "Active now",
+    };
+
+    openChat(dmId, meta);
+  }
+
+  if (startChatByHandleBtn && newChatHandleInput) {
+    startChatByHandleBtn.addEventListener("click", () => {
+      const handle = newChatHandleInput.value.trim();
+      if (handle) {
+        startDirectChat(handle);
+        closeNewChatModal();
+      }
+    });
+  }
+
+  if (openNewChatBtn) openNewChatBtn.addEventListener("click", openNewChatModal);
+  if (closeNewChatModalBtn) closeNewChatModalBtn.addEventListener("click", closeNewChatModal);
+
+  // Filter tabs (All / Direct / Channels)
+  document.querySelectorAll(".filter-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".filter-tab").forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      const filter = tab.getAttribute("data-filter");
+      document.querySelectorAll(".convo-item").forEach((item) => {
+        const id = item.getAttribute("data-id");
+        if (filter === "all") item.style.display = "flex";
+        else if (filter === "direct") item.style.display = id.startsWith("dm_") ? "flex" : "none";
+        else if (filter === "channels") item.style.display = !id.startsWith("dm_") ? "flex" : "none";
+      });
+    });
+  });
+
+  // Sidebar Filter Search
+  if (chatSearchInput) {
+    chatSearchInput.addEventListener("input", () => {
+      const q = chatSearchInput.value.toLowerCase().trim();
+      document.querySelectorAll(".convo-item").forEach((item) => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(q) ? "flex" : "none";
+      });
+    });
+  }
+
+  // Mobile Back Button
+  if (mobileBackBtn && msgWorkspace) {
+    mobileBackBtn.addEventListener("click", () => {
+      msgWorkspace.classList.remove("mobile-chat-open");
+    });
+  }
+
+  // Lightbox Close
+  if (closeLightboxBtn && mediaLightbox) {
+    closeLightboxBtn.addEventListener("click", () => {
+      mediaLightbox.style.display = "none";
     });
   }
 
   // ---------------------------------------------------------------------------
-  // Helpers
+  // Initialization Routine
   // ---------------------------------------------------------------------------
-  function formatTime(date) {
-    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
+  async function init() {
+    if (!currentUser) {
+      openProfileModal(true);
+    } else {
+      renderNavProfile();
+    }
+
+    if (relayStatusText) relayStatusText.textContent = "AS Cloud • 5 Relay Nodes Active";
+
+    await loadConversations();
+    await openChat(activeConvoId);
   }
 
-  function escapeHtml(str) {
-    if (!str) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
   }
-
-  // ---------------------------------------------------------------------------
-  // Initialize
-  // ---------------------------------------------------------------------------
-  renderNavProfile();
-  renderConversationList();
-  renderActiveChat();
 })();

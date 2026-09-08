@@ -8,7 +8,8 @@
     "api/edit-image.js": { "maxDuration": 60 },
     "api/proxy-image.js": { "maxDuration": 60 },
     "api/i.js": { "maxDuration": 60 },
-    "api/s.js": { "maxDuration": 60 }
+    "api/s.js": { "maxDuration": 60 },
+    "api/msg.js": { "maxDuration": 60 }
   },
   "rewrites": [
     { "source": "/home", "destination": "/home.html" },

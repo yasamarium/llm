@@ -273,17 +273,17 @@
 
         <div class="modal-body">
           <div class="form-group">
-            <label for="newChatHandleInput">Recipient Username</label>
+            <label for="newChatHandleInput">Search Users by Name or @username</label>
             <div class="input-with-prefix">
               <span class="input-prefix">@</span>
-              <input type="text" id="newChatHandleInput" placeholder="username" autocomplete="off">
+              <input type="text" id="newChatHandleInput" placeholder="Type name or username..." autocomplete="off">
             </div>
           </div>
 
           <div class="quick-contacts-section">
-            <span class="quick-contacts-label">Suggested Cloud Contacts:</span>
+            <span class="quick-contacts-label">Registered Network Users:</span>
             <div class="quick-contacts-list" id="quickContactsList">
-              <!-- Rendered by home.js -->
+              <!-- Live users rendered from msg-db-users via /api/msg -->
             </div>
           </div>
         </div>

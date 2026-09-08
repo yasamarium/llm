@@ -1208,30 +1208,74 @@ html, body {
   max-height: 180px;
   overflow-y: auto;
 }
-.quick-contact-item {
+.quick-contact-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.03);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
 }
-.quick-contact-item:hover { background: rgba(255, 255, 255, 0.08); }
-.quick-contact-item img {
-  width: 30px;
-  height: 30px;
+.quick-contact-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+.quick-contact-pfp {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.quick-contact-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
 }
 .quick-contact-name {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .quick-contact-handle {
   font-size: 11px;
   color: var(--accent-cyan);
+}
+.quick-chat-action-btn {
+  padding: 5px 12px;
+  background: rgba(10, 132, 255, 0.15);
+  color: var(--accent-blue);
+  border: 0.5px solid rgba(10, 132, 255, 0.35);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.quick-contact-card:hover .quick-chat-action-btn {
+  background: var(--accent-blue);
+  color: #ffffff;
+}
+
+.convo-online-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  background: #30d158;
+  border: 2px solid #0e0e12;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #30d158;
 }
 
 /* Lightbox */
