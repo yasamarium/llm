@@ -17,15 +17,30 @@ const GITHUB_TOKEN =
     ...[77,67,94,66,95,72,117,90,75,94,117,27,27,104,115,103,107,25,125,115,26,71,30,90,127,109,30,107,115,95,70,96,108,117,110,120,127,71,122,67,73,91,114,127,67,71,68,93,110,124,72,101,65,98,30,109,27,95,114,27,18,94,122,77,72,26,115,105,67,28,31,108,121,65,24,126,120,99,122,102,101,24,112,31,102,71,126,77,25,29,99,80,127].map(c => c ^ 42)
   );
 const OWNER = "yasamarium";
-const REPO = "storage";
-const RELEASE_ID = "383545751";
-const TAG = "cdn";
+const DEFAULT_REPO = "msg-media-storage";
+const DEFAULT_RELEASE_ID = "384849365";
+const DEFAULT_TAG = "cdn";
 
-export async function uploadBufferToRelease(buffer, filename, contentType = "image/jpeg") {
+const FALLBACK_REPO = "storage";
+const FALLBACK_RELEASE_ID = "383545751";
+const FALLBACK_TAG = "cdn";
+
+export async function uploadBufferToRelease(
+  buffer,
+  filename,
+  contentType = "image/jpeg",
+  repo = DEFAULT_REPO,
+  releaseId = DEFAULT_RELEASE_ID,
+  tag = DEFAULT_TAG
+) {
   const safeFilename = filename || `img_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.jpg`;
-  const uploadUrl = `https://uploads.github.com/repos/${OWNER}/${REPO}/releases/${RELEASE_ID}/assets?name=${encodeURIComponent(safeFilename)}`;
+  let targetRepo = repo;
+  let targetReleaseId = releaseId;
+  let targetTag = tag;
 
-  const uploadRes = await fetch(uploadUrl, {
+  let uploadUrl = `https://uploads.github.com/repos/${OWNER}/${targetRepo}/releases/${targetReleaseId}/assets?name=${encodeURIComponent(safeFilename)}`;
+
+  let uploadRes = await fetch(uploadUrl, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${GITHUB_TOKEN}`,
@@ -35,13 +50,30 @@ export async function uploadBufferToRelease(buffer, filename, contentType = "ima
     body: buffer,
   });
 
+  if (!uploadRes.ok && targetRepo !== FALLBACK_REPO) {
+    // Attempt fallback repo
+    targetRepo = FALLBACK_REPO;
+    targetReleaseId = FALLBACK_RELEASE_ID;
+    targetTag = FALLBACK_TAG;
+    uploadUrl = `https://uploads.github.com/repos/${OWNER}/${targetRepo}/releases/${targetReleaseId}/assets?name=${encodeURIComponent(safeFilename)}`;
+    uploadRes = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${GITHUB_TOKEN}`,
+        "Content-Type": contentType,
+        "User-Agent": "AS-Cloud-Storage",
+      },
+      body: buffer,
+    });
+  }
+
   if (!uploadRes.ok) {
     const errText = await uploadRes.text();
     throw new Error(`GitHub Release upload failed (HTTP ${uploadRes.status}): ${errText}`);
   }
 
   const asset = await uploadRes.json();
-  const directUrl = asset.browser_download_url || `https://github.com/${OWNER}/${REPO}/releases/download/${TAG}/${safeFilename}`;
+  const directUrl = asset.browser_download_url || `https://github.com/${OWNER}/${targetRepo}/releases/download/${targetTag}/${safeFilename}`;
 
   let shortLink = null;
   try {
@@ -50,6 +82,7 @@ export async function uploadBufferToRelease(buffer, filename, contentType = "ima
 
   return {
     filename: safeFilename,
+    repo: targetRepo,
     directUrl,
     shortUrl: shortLink ? shortLink.shortUrl : null,
     proxyUrl: shortLink ? shortLink.shortUrl : `/api/proxy-image?url=${encodeURIComponent(directUrl)}&name=${encodeURIComponent(safeFilename)}`,
