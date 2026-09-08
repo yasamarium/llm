@@ -461,13 +461,17 @@ export default async function handler(req, res) {
       const q = (url.searchParams.get("q") || "").toLowerCase().trim();
       const current = (url.searchParams.get("exclude") || "").toLowerCase().trim();
       const users = await loadUsers();
+      const EXCLUDED_USERNAMES = new Set(["as_support", "support", "system", "general", "admin", "general_support", "generalsupport"]);
 
       const matched = users
         .filter(u => {
-          if (current && u.username.toLowerCase() === current) return false;
+          const uname = (u.username || "").toLowerCase();
+          if (EXCLUDED_USERNAMES.has(uname)) return false;
+          if (u.displayName && (u.displayName.toLowerCase().includes("support") || u.displayName.toLowerCase().includes("general support"))) return false;
+          if (current && uname === current) return false;
           if (!q) return true;
           return (
-            u.username.toLowerCase().includes(q) ||
+            uname.includes(q) ||
             (u.displayName && u.displayName.toLowerCase().includes(q))
           );
         })
@@ -502,6 +506,7 @@ export default async function handler(req, res) {
       }
 
       const [rooms, users] = await Promise.all([loadRooms(), loadUsers()]);
+      const EXCLUDED_USERNAMES = new Set(["as_support", "support", "system", "general", "admin", "general_support", "generalsupport"]);
 
       const convos = [];
       for (const room of rooms) {
@@ -527,7 +532,9 @@ export default async function handler(req, res) {
       }
 
       for (const other of users) {
-        if (other.username.toLowerCase() === username) continue;
+        const otherUname = (other.username || "").toLowerCase();
+        if (otherUname === username || EXCLUDED_USERNAMES.has(otherUname)) continue;
+        if (other.displayName && (other.displayName.toLowerCase().includes("support") || other.displayName.toLowerCase().includes("general support"))) continue;
         const dmId = getDmChatId(username, other.username);
         const msgs = await loadChatMessages(dmId);
 

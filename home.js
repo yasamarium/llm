@@ -73,6 +73,31 @@
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
   ];
 
+  // Telegram-style distinctive username colors for group/channel bubbles
+  const SENDER_COLORS = [
+    "#29b6f6", // Sky Blue
+    "#ab47bc", // Purple
+    "#26a69a", // Teal
+    "#ff7043", // Coral / Orange
+    "#ec407a", // Pink
+    "#7e57c2", // Deep Violet
+    "#42a5f5", // Blue
+    "#26c6da", // Cyan
+    "#9ccc65", // Lime Green
+    "#ffa726", // Amber
+    "#ef5350", // Coral Red
+    "#8d6e63", // Mocha
+  ];
+
+  function getSenderColor(name) {
+    if (!name) return SENDER_COLORS[0];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+    }
+    return SENDER_COLORS[hash % SENDER_COLORS.length];
+  }
+
   let currentUser = null;
   let sessionToken = null;
 
@@ -804,8 +829,12 @@
     }
 
     const isOut = currentUser && m.sender.toLowerCase() === currentUser.username.toLowerCase();
+    const isChannel = activeConvoMeta && activeConvoMeta.type === "channel";
+    const showAvatar = !isOut && isChannel;
+    const showSenderName = !isOut && isChannel;
     const senderPfp = m.senderPfp || PRESET_AVATARS[0];
     const senderName = m.senderName || m.sender;
+    const senderColor = getSenderColor(m.sender);
 
     let bodyContent = "";
 
@@ -838,7 +867,7 @@
     }
 
     if (m.text) {
-      bodyContent += `<div>${escapeHtml(m.text)}</div>`;
+      bodyContent += `<div class="msg-text-content">${escapeHtml(m.text)}</div>`;
     }
 
     const timeStr = formatTime(m.timestamp || Date.now());
@@ -855,11 +884,11 @@
     }
 
     const html = `
-      <div class="msg-row ${isOut ? "outgoing" : "incoming"} ${animate ? "animate-in" : ""}" id="${m.id}">
-        <img class="msg-bubble-pfp" src="${senderPfp}" alt="Avatar" onerror="this.src='${PRESET_AVATARS[0]}'">
+      <div class="msg-row ${isOut ? "outgoing" : "incoming"} ${isChannel ? "channel-row" : "direct-row"} ${animate ? "animate-in" : ""}" id="${m.id}">
+        ${showAvatar ? `<img class="msg-bubble-pfp" src="${senderPfp}" alt="Avatar" onerror="this.src='${PRESET_AVATARS[0]}'">` : ""}
         <div class="msg-bubble-content">
-          ${!isOut && activeConvoMeta.type === "channel" ? `<span class="msg-sender-name">${escapeHtml(senderName)}</span>` : ""}
           <div class="msg-bubble">
+            ${showSenderName ? `<div class="msg-sender-name" style="color: ${senderColor};">${escapeHtml(senderName)}</div>` : ""}
             <div class="msg-text">${bodyContent}</div>
             <div class="msg-footer">
               <span class="msg-timestamp">${timeStr}</span>
@@ -1220,7 +1249,15 @@
       if (!res.ok) throw new Error("Search failed");
 
       const data = await res.json();
-      const users = data.users || [];
+      const EXCLUDED_USERNAMES = new Set(["as_support", "support", "system", "general", "admin", "cloud_pilot", "general_support", "generalsupport"]);
+      const rawUsers = data.users || [];
+      const users = rawUsers.filter((u) => {
+        const uname = (u.username || "").toLowerCase();
+        const dname = (u.displayName || "").toLowerCase();
+        if (EXCLUDED_USERNAMES.has(uname)) return false;
+        if (dname.includes("support") || dname.includes("general support")) return false;
+        return true;
+      });
 
       if (users.length === 0) {
         quickContactsList.innerHTML = `
