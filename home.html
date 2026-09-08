@@ -250,9 +250,23 @@
             <label for="inputBio">Bio / Status</label>
             <input type="text" id="inputBio" class="form-input" placeholder="Available on AS Cloud" maxlength="60" autocomplete="off">
           </div>
+
+          <div class="form-divider"></div>
+
+          <div class="form-group">
+            <label>Change Password (Optional)</label>
+            <input type="password" id="inputOldPassword" class="form-input" placeholder="Current Password" autocomplete="current-password" style="margin-bottom: 6px;">
+            <input type="password" id="inputNewPassword" class="form-input" placeholder="New Password (at least 6 characters)" autocomplete="new-password">
+          </div>
         </div>
 
-        <div class="modal-footer">
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+          <button id="logoutBtn" class="modal-danger-btn" type="button" title="Log out from this device">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Log Out</span>
+          </button>
           <button id="saveProfileBtn" class="modal-primary-btn" type="button">Save Changes</button>
         </div>
       </div>
@@ -305,6 +319,120 @@
       </div>
     </div>
   </div>
+
+
+    <!-- Modal 0: Instagram-Style Authentication (Log In / Sign Up with Password) -->
+    <div class="auth-overlay" id="authOverlay" style="display: none;">
+      <div class="auth-card">
+        <div class="auth-brand">
+          <div class="auth-glyph">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <h2 class="auth-title">AS Messages</h2>
+          <p class="auth-sub">Connect with friends on AS Cloud</p>
+        </div>
+
+        <!-- Auth Tabs (Instagram Style) -->
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabLogin" type="button">Log In</button>
+          <button class="auth-tab" id="tabSignup" type="button">Sign Up</button>
+        </div>
+
+        <!-- Error Banner -->
+        <div class="auth-error-banner" id="authErrorBanner" style="display: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="authErrorText">Invalid credentials</span>
+        </div>
+
+        <!-- Log In Form -->
+        <form id="loginForm" class="auth-form" onsubmit="return false;">
+          <div class="form-group">
+            <label for="loginUsername">Username</label>
+            <div class="input-with-prefix">
+              <span class="input-prefix">@</span>
+              <input type="text" id="loginUsername" placeholder="your_username" autocomplete="username" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <div class="input-with-action">
+              <input type="password" id="loginPassword" class="form-input" placeholder="Enter password" autocomplete="current-password" required>
+              <button type="button" class="input-action-btn toggle-password-btn" data-target="loginPassword" aria-label="Toggle Password Visibility">
+                <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button id="loginSubmitBtn" class="auth-primary-btn" type="submit">Log In</button>
+
+          <div class="auth-switch-row">
+            <span>Don't have an account?</span>
+            <button type="button" class="auth-link-btn" id="switchToSignupBtn">Sign Up</button>
+          </div>
+        </form>
+
+        <!-- Sign Up Form -->
+        <form id="signupForm" class="auth-form" style="display: none;" onsubmit="return false;">
+          <div class="auth-avatar-row">
+            <div class="auth-avatar-wrap">
+              <img id="signupAvatarPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Avatar">
+              <button type="button" id="signupAvatarUploadBtn" class="auth-avatar-camera" title="Upload Photo">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+                </svg>
+              </button>
+            </div>
+            <input type="file" id="signupAvatarFileInput" accept="image/*" style="display: none;">
+            <div class="auth-avatar-chips" id="signupAvatarChips"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="signupUsername">Choose @username</label>
+            <div class="input-with-prefix">
+              <span class="input-prefix">@</span>
+              <input type="text" id="signupUsername" placeholder="choose_handle" maxlength="24" autocomplete="username" required>
+            </div>
+            <span class="input-tip">Letters, numbers, underscores (3-24 characters)</span>
+          </div>
+
+          <div class="form-group">
+            <label for="signupDisplayName">Display Name</label>
+            <input type="text" id="signupDisplayName" class="form-input" placeholder="Your Name" maxlength="32" autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label for="signupPassword">Password</label>
+            <div class="input-with-action">
+              <input type="password" id="signupPassword" class="form-input" placeholder="At least 6 characters" autocomplete="new-password" required minlength="6">
+              <button type="button" class="input-action-btn toggle-password-btn" data-target="signupPassword" aria-label="Toggle Password Visibility">
+                <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="signupBio">Bio / Status</label>
+            <input type="text" id="signupBio" class="form-input" placeholder="Available on AS Cloud" maxlength="60">
+          </div>
+
+          <button id="signupSubmitBtn" class="auth-primary-btn" type="submit">Create Account</button>
+
+          <div class="auth-switch-row">
+            <span>Already have an account?</span>
+            <button type="button" class="auth-link-btn" id="switchToLoginBtn">Log In</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
   <script src="home.js"></script>
 </body>

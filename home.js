@@ -1,4 +1,4 @@
-// home.js - AS Messages Real-Time Cloud Messaging Client
+// home.js - AS Messages Real-Time Cloud Messaging Client with Instagram-Style Auth
 // Connected to yasamarium/msg-db-users, msg-db-messages, msg-db-rooms & msg-media-storage
 (function () {
   "use strict";
@@ -13,6 +13,8 @@
     pause: `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,
     verified: `<svg width="13" height="13" viewBox="0 0 24 24" fill="#0a84ff"><path d="M12 2l2.4 2.8 3.7-.4 1.2 3.5 3.4 1.6-1.1 3.5 1.1 3.5-3.4 1.6-1.2 3.5-3.7-.4L12 22l-2.4-2.8-3.7.4-1.2-3.5-3.4-1.6 1.1-3.5-1.1-3.5 3.4-1.6 1.2-3.5 3.7.4L12 2z"/><path d="m9 12 2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
     userPlus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>`,
+    eyeOpen: `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    eyeOff: `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`,
   };
 
   // ---------------------------------------------------------------------------
@@ -61,7 +63,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Current User Profile State
+  // Current User Session State
   // ---------------------------------------------------------------------------
   const PRESET_AVATARS = [
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
@@ -72,19 +74,25 @@
   ];
 
   let currentUser = null;
+  let sessionToken = null;
+
   try {
-    const saved = localStorage.getItem("as_msg_current_user");
-    if (saved) {
-      currentUser = JSON.parse(saved);
+    const savedUser = localStorage.getItem("as_msg_current_user");
+    const savedToken = localStorage.getItem("as_msg_token");
+    if (savedUser && savedToken) {
+      currentUser = JSON.parse(savedUser);
+      sessionToken = savedToken;
       if (currentUser.username === "cloud_pilot") {
         currentUser = null;
+        sessionToken = null;
         localStorage.removeItem("as_msg_current_user");
+        localStorage.removeItem("as_msg_token");
       }
     }
   } catch (_) {}
 
   // ---------------------------------------------------------------------------
-  // DOM Element References
+  // DOM References
   // ---------------------------------------------------------------------------
   const msgWorkspace = document.getElementById("msgWorkspace");
   const msgSidebar = document.getElementById("msgSidebar");
@@ -125,6 +133,31 @@
   const cancelRecordBtn = document.getElementById("cancelRecordBtn");
   const sendRecordBtn = document.getElementById("sendRecordBtn");
 
+  // Instagram-Style Auth Elements
+  const authOverlay = document.getElementById("authOverlay");
+  const tabLogin = document.getElementById("tabLogin");
+  const tabSignup = document.getElementById("tabSignup");
+  const loginForm = document.getElementById("loginForm");
+  const signupForm = document.getElementById("signupForm");
+  const authErrorBanner = document.getElementById("authErrorBanner");
+  const authErrorText = document.getElementById("authErrorText");
+
+  const loginUsername = document.getElementById("loginUsername");
+  const loginPassword = document.getElementById("loginPassword");
+  const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+  const switchToSignupBtn = document.getElementById("switchToSignupBtn");
+
+  const signupAvatarPreview = document.getElementById("signupAvatarPreview");
+  const signupAvatarUploadBtn = document.getElementById("signupAvatarUploadBtn");
+  const signupAvatarFileInput = document.getElementById("signupAvatarFileInput");
+  const signupAvatarChips = document.getElementById("signupAvatarChips");
+  const signupUsername = document.getElementById("signupUsername");
+  const signupDisplayName = document.getElementById("signupDisplayName");
+  const signupPassword = document.getElementById("signupPassword");
+  const signupBio = document.getElementById("signupBio");
+  const signupSubmitBtn = document.getElementById("signupSubmitBtn");
+  const switchToLoginBtn = document.getElementById("switchToLoginBtn");
+
   // Profile Modal Elements
   const profileModal = document.getElementById("profileModal");
   const closeProfileModalBtn = document.getElementById("closeProfileModalBtn");
@@ -135,7 +168,10 @@
   const inputUsername = document.getElementById("inputUsername");
   const inputDisplayName = document.getElementById("inputDisplayName");
   const inputBio = document.getElementById("inputBio");
+  const inputOldPassword = document.getElementById("inputOldPassword");
+  const inputNewPassword = document.getElementById("inputNewPassword");
   const saveProfileBtn = document.getElementById("saveProfileBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
   // New Chat Modal Elements
   const newChatModal = document.getElementById("newChatModal");
@@ -151,7 +187,7 @@
   const lightboxCaption = document.getElementById("lightboxCaption");
 
   // ---------------------------------------------------------------------------
-  // State Management
+  // State Variables
   // ---------------------------------------------------------------------------
   let activeConvoId = "general";
   let activeConvoMeta = {
@@ -169,31 +205,277 @@
   let syncInterval = null;
 
   // ---------------------------------------------------------------------------
-  // Profile Modal & Authentication Setup
+  // Instagram-Style Authentication Handlers
   // ---------------------------------------------------------------------------
-  function openProfileModal(isForcedOnboarding = false) {
-    if (!profileModal) return;
-    profileModal.style.display = "flex";
+  function showAuthOverlay(mode = "login") {
+    if (!authOverlay) return;
+    authOverlay.style.display = "flex";
+    hideAuthError();
 
-    const modalTitle = profileModal.querySelector(".modal-title");
-    const modalSub = profileModal.querySelector(".modal-sub");
-    if (isForcedOnboarding) {
-      if (modalTitle) modalTitle.textContent = "Welcome to AS Messages";
-      if (modalSub) modalSub.textContent = "Create your unique @username and profile to start chatting";
-      if (closeProfileModalBtn) closeProfileModalBtn.style.display = "none";
+    if (mode === "login") {
+      tabLogin.classList.add("active");
+      tabSignup.classList.remove("active");
+      loginForm.style.display = "flex";
+      signupForm.style.display = "none";
+      if (loginUsername) loginUsername.focus();
     } else {
-      if (modalTitle) modalTitle.textContent = "Edit Profile";
-      if (modalSub) modalSub.textContent = "Manage your username, display name, and photo";
-      if (closeProfileModalBtn) closeProfileModalBtn.style.display = "flex";
+      tabSignup.classList.add("active");
+      tabLogin.classList.remove("active");
+      loginForm.style.display = "none";
+      signupForm.style.display = "flex";
+      renderSignupAvatarChips(PRESET_AVATARS[0]);
+      if (signupUsername) signupUsername.focus();
+    }
+  }
+
+  function hideAuthOverlay() {
+    if (authOverlay) authOverlay.style.display = "none";
+  }
+
+  function showAuthError(msg) {
+    if (authErrorBanner && authErrorText) {
+      authErrorText.textContent = msg;
+      authErrorBanner.style.display = "flex";
+    }
+  }
+
+  function hideAuthError() {
+    if (authErrorBanner) authErrorBanner.style.display = "none";
+  }
+
+  if (tabLogin) tabLogin.addEventListener("click", () => showAuthOverlay("login"));
+  if (tabSignup) tabSignup.addEventListener("click", () => showAuthOverlay("signup"));
+  if (switchToSignupBtn) switchToSignupBtn.addEventListener("click", () => showAuthOverlay("signup"));
+  if (switchToLoginBtn) switchToLoginBtn.addEventListener("click", () => showAuthOverlay("login"));
+
+  // Password Visibility Toggle (Show / Hide Eye)
+  document.querySelectorAll(".toggle-password-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
+      const input = document.getElementById(targetId);
+      if (!input) return;
+      if (input.type === "password") {
+        input.type = "text";
+        btn.innerHTML = ICONS.eyeOff;
+      } else {
+        input.type = "password";
+        btn.innerHTML = ICONS.eyeOpen;
+      }
+    });
+  });
+
+  // Signup Avatar Picker & Upload
+  function renderSignupAvatarChips(selectedUrl) {
+    if (!signupAvatarChips) return;
+    signupAvatarChips.innerHTML = PRESET_AVATARS.map((url) => `
+      <img src="${url}" class="${url === selectedUrl ? "selected" : ""}" data-url="${url}" alt="Avatar">
+    `).join("");
+
+    signupAvatarChips.querySelectorAll("img").forEach((img) => {
+      img.addEventListener("click", () => {
+        const url = img.getAttribute("data-url");
+        if (signupAvatarPreview) signupAvatarPreview.src = url;
+        renderSignupAvatarChips(url);
+      });
+    });
+  }
+
+  if (signupAvatarUploadBtn && signupAvatarFileInput) {
+    signupAvatarUploadBtn.addEventListener("click", () => signupAvatarFileInput.click());
+    signupAvatarFileInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const base64 = ev.target.result;
+        if (signupAvatarPreview) signupAvatarPreview.src = base64;
+
+        try {
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image: base64,
+              filename: `pfp_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`,
+              contentType: file.type,
+              target: "msg-media-storage",
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.proxyUrl && signupAvatarPreview) {
+              signupAvatarPreview.src = data.proxyUrl;
+            }
+          }
+        } catch (_) {}
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Handle Log In
+  async function handleLogin() {
+    const handle = (loginUsername?.value || "").toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+    const pass = loginPassword?.value || "";
+
+    if (!handle) {
+      showAuthError("Please enter your username.");
+      return;
+    }
+    if (!pass) {
+      showAuthError("Please enter your password.");
+      return;
     }
 
-    const currentPfp = currentUser?.pfp || PRESET_AVATARS[0];
-    if (editPfpPreview) editPfpPreview.src = currentPfp;
-    if (inputUsername) inputUsername.value = currentUser?.username || "";
-    if (inputDisplayName) inputDisplayName.value = currentUser?.displayName || "";
-    if (inputBio) inputBio.value = currentUser?.bio || "";
+    loginSubmitBtn.disabled = true;
+    loginSubmitBtn.textContent = "Logging In...";
+    hideAuthError();
 
-    renderPresetAvatarChips(currentPfp);
+    try {
+      const res = await fetch("/api/msg?action=login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login", username: handle, password: pass }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      currentUser = data.user;
+      sessionToken = data.token;
+      localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
+      localStorage.setItem("as_msg_token", sessionToken);
+
+      hideAuthOverlay();
+      renderNavProfile();
+
+      await loadConversations();
+      await openChat(activeConvoId);
+      startSyncEngine();
+    } catch (err) {
+      showAuthError(err.message);
+    } finally {
+      loginSubmitBtn.disabled = false;
+      loginSubmitBtn.textContent = "Log In";
+    }
+  }
+
+  if (loginSubmitBtn) loginSubmitBtn.addEventListener("click", handleLogin);
+  if (loginPassword) {
+    loginPassword.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleLogin();
+    });
+  }
+
+  // Handle Sign Up
+  async function handleSignup() {
+    const handle = (signupUsername?.value || "").toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+    const displayName = (signupDisplayName?.value || "").trim() || handle;
+    const pass = signupPassword?.value || "";
+    const bio = (signupBio?.value || "").trim();
+    const pfp = signupAvatarPreview?.src || PRESET_AVATARS[0];
+
+    if (!handle || handle.length < 3) {
+      showAuthError("Username must be at least 3 characters (letters, numbers, underscores).");
+      return;
+    }
+    if (!pass || pass.length < 6) {
+      showAuthError("Password must be at least 6 characters.");
+      return;
+    }
+
+    signupSubmitBtn.disabled = true;
+    signupSubmitBtn.textContent = "Creating Account...";
+    hideAuthError();
+
+    try {
+      const res = await fetch("/api/msg?action=register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "register",
+          username: handle,
+          password: pass,
+          displayName,
+          bio,
+          pfp,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+
+      currentUser = data.user;
+      sessionToken = data.token;
+      localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
+      localStorage.setItem("as_msg_token", sessionToken);
+
+      hideAuthOverlay();
+      renderNavProfile();
+
+      await loadConversations();
+      await openChat(activeConvoId);
+      startSyncEngine();
+    } catch (err) {
+      showAuthError(err.message);
+    } finally {
+      signupSubmitBtn.disabled = false;
+      signupSubmitBtn.textContent = "Create Account";
+    }
+  }
+
+  if (signupSubmitBtn) signupSubmitBtn.addEventListener("click", handleSignup);
+  if (signupPassword) {
+    signupPassword.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleSignup();
+    });
+  }
+
+  // Handle Log Out
+  function handleLogout() {
+    if (!confirm("Are you sure you want to log out of AS Messages?")) return;
+
+    currentUser = null;
+    sessionToken = null;
+    localStorage.removeItem("as_msg_current_user");
+    localStorage.removeItem("as_msg_token");
+
+    if (syncInterval) {
+      clearInterval(syncInterval);
+      syncInterval = null;
+    }
+
+    if (conversationList) conversationList.innerHTML = "";
+    if (messagesFlow) messagesFlow.innerHTML = "";
+    closeProfileModal();
+    showAuthOverlay("login");
+  }
+
+  if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
+
+  // ---------------------------------------------------------------------------
+  // Profile Settings Modal Handlers
+  // ---------------------------------------------------------------------------
+  function openProfileModal() {
+    if (!profileModal || !currentUser) return;
+    profileModal.style.display = "flex";
+
+    if (editPfpPreview) editPfpPreview.src = currentUser.pfp || PRESET_AVATARS[0];
+    if (inputUsername) {
+      inputUsername.value = currentUser.username;
+      inputUsername.disabled = true; // Username is permanent unique ID like Instagram
+    }
+    if (inputDisplayName) inputDisplayName.value = currentUser.displayName || "";
+    if (inputBio) inputBio.value = currentUser.bio || "";
+    if (inputOldPassword) inputOldPassword.value = "";
+    if (inputNewPassword) inputNewPassword.value = "";
+
+    renderPresetAvatarChips(currentUser.pfp || PRESET_AVATARS[0]);
   }
 
   function closeProfileModal() {
@@ -252,13 +534,16 @@
   }
 
   async function handleSaveProfile() {
-    const handle = (inputUsername?.value || "").toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
-    const displayName = (inputDisplayName?.value || "").trim() || handle;
-    const bio = (inputBio?.value || "").trim();
-    const pfp = editPfpPreview?.src || PRESET_AVATARS[0];
+    if (!currentUser || !sessionToken) return;
 
-    if (!handle || handle.length < 2) {
-      alert("Please enter a valid username (at least 2 letters, numbers, or underscore).");
+    const displayName = (inputDisplayName?.value || "").trim() || currentUser.username;
+    const bio = (inputBio?.value || "").trim();
+    const pfp = editPfpPreview?.src || currentUser.pfp;
+    const oldPassword = inputOldPassword?.value || "";
+    const newPassword = inputNewPassword?.value || "";
+
+    if (newPassword && newPassword.length < 6) {
+      alert("New password must be at least 6 characters.");
       return;
     }
 
@@ -266,34 +551,36 @@
     saveProfileBtn.textContent = "Saving...";
 
     try {
-      const res = await fetch("/api/msg?action=register_or_login", {
+      const res = await fetch("/api/msg?action=update_profile", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${sessionToken}`,
+        },
         body: JSON.stringify({
-          action: "register_or_login",
-          username: handle,
+          action: "update_profile",
+          token: sessionToken,
           displayName,
           bio,
           pfp,
+          oldPassword: oldPassword || undefined,
+          newPassword: newPassword || undefined,
         }),
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to save profile");
+        throw new Error(data.error || "Failed to update profile");
       }
 
-      const data = await res.json();
       currentUser = data.user;
       localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
 
       renderNavProfile();
       closeProfileModal();
-
-      await loadConversations();
-      await openChat(activeConvoId);
+      alert("Profile updated successfully!");
     } catch (err) {
-      alert("Could not register username: " + err.message);
+      alert("Could not update profile: " + err.message);
     } finally {
       saveProfileBtn.disabled = false;
       saveProfileBtn.textContent = "Save Changes";
@@ -302,7 +589,7 @@
 
   if (saveProfileBtn) saveProfileBtn.addEventListener("click", handleSaveProfile);
   if (closeProfileModalBtn) closeProfileModalBtn.addEventListener("click", closeProfileModal);
-  if (userProfileChip) userProfileChip.addEventListener("click", () => openProfileModal(false));
+  if (userProfileChip) userProfileChip.addEventListener("click", openProfileModal);
 
   function renderNavProfile() {
     if (!currentUser) return;
@@ -335,7 +622,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Load Conversations List from Real Database
+  // Load Conversations List
   // ---------------------------------------------------------------------------
   async function loadConversations() {
     if (!currentUser) return;
@@ -366,7 +653,7 @@
         </div>
       `;
       const btn = document.getElementById("emptyStartChatBtn");
-      if (btn) btn.addEventListener("click", () => openNewChatModal());
+      if (btn) btn.addEventListener("click", openNewChatModal);
       return;
     }
 
@@ -588,7 +875,6 @@
   }
 
   function bindMessageInteractions() {
-    // Media Photo Lightbox
     document.querySelectorAll(".msg-media-photo:not([data-bound])").forEach((el) => {
       el.setAttribute("data-bound", "true");
       el.addEventListener("click", () => {
@@ -600,7 +886,6 @@
       });
     });
 
-    // Voice Note Player
     document.querySelectorAll(".voice-note-card:not([data-bound])").forEach((card) => {
       card.setAttribute("data-bound", "true");
       const btn = card.querySelector(".vn-play-btn");
@@ -660,12 +945,12 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Send Message (Real Live Network Operation)
+  // Send Message
   // ---------------------------------------------------------------------------
   async function handleSendMessage(text = "", media = null) {
     if (!text.trim() && !media) return;
     if (!currentUser) {
-      openProfileModal(true);
+      showAuthOverlay("login");
       return;
     }
 
@@ -746,7 +1031,7 @@
   if (messageTextInput) messageTextInput.addEventListener("input", autoResizeTextarea);
 
   // ---------------------------------------------------------------------------
-  // Media Attachments & GitHub Releases CDN Upload
+  // Media Attachments
   // ---------------------------------------------------------------------------
   if (attachMediaBtn && mediaFileInput) {
     attachMediaBtn.addEventListener("click", () => mediaFileInput.click());
@@ -789,7 +1074,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Voice Note Recorder (MediaRecorder API)
+  // Voice Note Recorder
   // ---------------------------------------------------------------------------
   let mediaRecorder = null;
   let audioChunks = [];
@@ -864,8 +1149,13 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Real-Time Polling Engine (Every 1.5s - Live Sync)
+  // Real-Time Polling Engine
   // ---------------------------------------------------------------------------
+  function startSyncEngine() {
+    if (syncInterval) clearInterval(syncInterval);
+    syncInterval = setInterval(syncLiveMessages, 1500);
+  }
+
   async function syncLiveMessages() {
     if (!currentUser) return;
     try {
@@ -898,8 +1188,6 @@
       }
     } catch (_) {}
   }
-
-  syncInterval = setInterval(syncLiveMessages, 1500);
 
   setInterval(() => {
     if (currentUser) loadConversations();
@@ -986,7 +1274,7 @@
 
   function startDirectChat(targetHandle, targetName = null, targetPfp = null) {
     if (!currentUser) {
-      openProfileModal(true);
+      showAuthOverlay("login");
       return;
     }
     const cleanTarget = targetHandle.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
@@ -1023,7 +1311,7 @@
   if (openNewChatBtn) openNewChatBtn.addEventListener("click", openNewChatModal);
   if (closeNewChatModalBtn) closeNewChatModalBtn.addEventListener("click", closeNewChatModal);
 
-  // Filter tabs (All / Direct / Channels)
+  // Filter tabs
   document.querySelectorAll(".filter-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".filter-tab").forEach((t) => t.classList.remove("active"));
@@ -1064,19 +1352,37 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Initialization Routine
+  // App Initialization & Session Verification
   // ---------------------------------------------------------------------------
   async function init() {
-    if (!currentUser) {
-      openProfileModal(true);
-    } else {
-      renderNavProfile();
-    }
-
     if (relayStatusText) relayStatusText.textContent = "AS Cloud • 5 Relay Nodes Active";
 
-    await loadConversations();
-    await openChat(activeConvoId);
+    if (currentUser && sessionToken) {
+      // Verify session with server
+      try {
+        const res = await fetch(`/api/msg?action=verify_session&token=${encodeURIComponent(sessionToken)}`);
+        if (res.ok) {
+          const data = await res.json();
+          currentUser = data.user;
+          localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
+          renderNavProfile();
+          hideAuthOverlay();
+          await loadConversations();
+          await openChat(activeConvoId);
+          startSyncEngine();
+          return;
+        }
+      } catch (_) {}
+
+      // Session invalid or expired
+      currentUser = null;
+      sessionToken = null;
+      localStorage.removeItem("as_msg_current_user");
+      localStorage.removeItem("as_msg_token");
+    }
+
+    // Not authenticated -> show Instagram-style auth screen
+    showAuthOverlay("login");
   }
 
   if (document.readyState === "loading") {
