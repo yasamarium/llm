@@ -506,13 +506,17 @@
   // 120fps Rendering & Scroll Helpers
   // ---------------------------------------------------------------------------
   let scrollRafId = null;
-  function smoothScrollToBottom() {
+  function smoothScrollToBottom(isSmooth = false) {
     if (scrollRafId) cancelAnimationFrame(scrollRafId);
     scrollRafId = requestAnimationFrame(() => {
-      chatViewport.scrollTo({
-        top: chatViewport.scrollHeight,
-        behavior: "smooth",
-      });
+      if (isSmooth) {
+        chatViewport.scrollTo({
+          top: chatViewport.scrollHeight,
+          behavior: "smooth",
+        });
+      } else {
+        chatViewport.scrollTop = chatViewport.scrollHeight;
+      }
     });
   }
 
@@ -1111,9 +1115,11 @@
       };
     }
 
-    attachCodeCopy(bubbleElement);
-    if (typeof hljs !== "undefined") {
-      bubbleElement.querySelectorAll("pre code").forEach(hljs.highlightElement);
+    if (!isLive) {
+      attachCodeCopy(bubbleElement);
+      if (typeof hljs !== "undefined") {
+        bubbleElement.querySelectorAll("pre code").forEach(hljs.highlightElement);
+      }
     }
   }
 
@@ -3129,38 +3135,17 @@
       ...conversation,
     ];
 
-    let targetText = "";
-    let displayedText = "";
-    let isStreamActive = true;
-    let animRafId = null;
+    let accumulatedText = "";
+    let renderScheduled = false;
 
-    function stepStreamAnimation() {
-      if (displayedText.length < targetText.length) {
-        const diff = targetText.length - displayedText.length;
-        let step = 1;
-        if (diff > 120) step = Math.ceil(diff / 4);
-        else if (diff > 45) step = Math.ceil(diff / 8);
-        else if (diff > 18) step = 3;
-        else if (diff > 6) step = 2;
-        else step = 1;
-
-        displayedText = targetText.slice(0, displayedText.length + step);
-        renderAssistantBubble(assistantBubble, displayedText, true, currentReqModel);
-        smoothScrollToBottom();
-      }
-
-      if (isStreamActive || displayedText.length < targetText.length) {
-        animRafId = requestAnimationFrame(stepStreamAnimation);
-      } else {
-        renderAssistantBubble(assistantBubble, targetText, false, currentReqModel);
-        smoothScrollToBottom();
-      }
-    }
-
-    function pushStreamDelta(delta) {
-      targetText += delta;
-      if (!animRafId) {
-        animRafId = requestAnimationFrame(stepStreamAnimation);
+    function scheduleRender() {
+      if (!renderScheduled) {
+        renderScheduled = true;
+        requestAnimationFrame(() => {
+          renderAssistantBubble(assistantBubble, accumulatedText, true, currentReqModel);
+          smoothScrollToBottom(false);
+          renderScheduled = false;
+        });
       }
     }
 
@@ -3211,40 +3196,25 @@
               parsed.choices?.[0]?.text ||
               "";
             if (delta) {
-              pushStreamDelta(delta);
+              accumulatedText += delta;
+              scheduleRender();
             }
           } catch (e) {}
         }
       }
 
-      isStreamActive = false;
-
-      // Wait until fluid displayedText finishes smoothly gliding to targetText
-      await new Promise((resolve) => {
-        const checkBufferCaughtUp = () => {
-          if (displayedText.length >= targetText.length) {
-            resolve();
-          } else {
-            requestAnimationFrame(checkBufferCaughtUp);
-          }
-        };
-        checkBufferCaughtUp();
-      });
-
-      // Final render without cursor
+      // Final render without cursor & enable code highlight + save menus
       requestAnimationFrame(() => {
-        renderAssistantBubble(assistantBubble, targetText, false, currentReqModel);
-        smoothScrollToBottom();
+        renderAssistantBubble(assistantBubble, accumulatedText, false, currentReqModel);
+        smoothScrollToBottom(true);
       });
 
       // Save clean response to conversation history
-      const parsedFinal = parseThinkingAndReply(targetText, currentReqModel);
-      conversation.push({ role: "assistant", content: parsedFinal.reply || targetText });
+      const parsedFinal = parseThinkingAndReply(accumulatedText, currentReqModel);
+      conversation.push({ role: "assistant", content: parsedFinal.reply || accumulatedText });
     } catch (err) {
-      isStreamActive = false;
-      if (animRafId) cancelAnimationFrame(animRafId);
       if (err.name === "AbortError") {
-        renderAssistantBubble(assistantBubble, targetText || displayedText, false, currentReqModel);
+        renderAssistantBubble(assistantBubble, accumulatedText, false, currentReqModel);
         const stopNotice = document.createElement("p");
         stopNotice.style.cssText = "color: var(--text-tertiary); font-style: italic; margin-top: 8px;";
         stopNotice.textContent = "(Stopped)";
@@ -3253,8 +3223,6 @@
         assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;">⚠️ ${err.message}</div>`;
       }
     } finally {
-      isStreamActive = false;
-      if (animRafId) cancelAnimationFrame(animRafId);
       setGenerating(false);
       abortController = null;
       autoResizeInput();
