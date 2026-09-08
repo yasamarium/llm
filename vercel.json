@@ -11,6 +11,7 @@
     "api/s.js": { "maxDuration": 60 }
   },
   "rewrites": [
+    { "source": "/home", "destination": "/home.html" },
     { "source": "/i/:id*", "destination": "/api/i?id=:id*" },
     { "source": "/s/:id*", "destination": "/api/s?id=:id*" }
   ]

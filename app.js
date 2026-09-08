@@ -503,221 +503,6 @@
   setInterval(checkConnection, 15000);
 
   // ---------------------------------------------------------------------------
-  // Converging Particle Text Assembly Engine (Inward Gravitational Stream)
-  // ---------------------------------------------------------------------------
-  const particleCanvas = document.getElementById("streamParticleCanvas");
-  let pCtx = particleCanvas ? particleCanvas.getContext("2d") : null;
-  let particles = [];
-  let particleRafId = null;
-
-  function resizeParticleCanvas() {
-    if (!particleCanvas) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    particleCanvas.width = window.innerWidth * dpr;
-    particleCanvas.height = window.innerHeight * dpr;
-    if (pCtx) pCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  window.addEventListener("resize", resizeParticleCanvas);
-  resizeParticleCanvas();
-
-  const PARTICLE_PALETTE = [
-    { r: 0, g: 210, b: 255 },   // Cyber Cyan
-    { r: 10, g: 132, b: 255 },  // iOS Electric Blue
-    { r: 175, g: 82, b: 222 },  // Cosmic Violet
-    { r: 255, g: 255, b: 255 }, // Pure Starlight White
-    { r: 255, g: 195, b: 60 },  // Warm Stellar Gold
-  ];
-
-  function spawnConvergingParticles(targetX, targetY, count = 4) {
-    if (!particleCanvas || !pCtx) return;
-    if (particles.length >= 140) return;
-
-    for (let i = 0; i < count; i++) {
-      if (particles.length >= 140) break;
-      const color = PARTICLE_PALETTE[Math.floor(Math.random() * PARTICLE_PALETTE.length)];
-      // Spawn in perimeter radius: 55px to 135px away in surrounding ambient space
-      const spawnDist = 55 + Math.random() * 80;
-      const angle = Math.random() * Math.PI * 2;
-      const originX = targetX + Math.cos(angle) * spawnDist;
-      const originY = targetY + Math.sin(angle) * spawnDist;
-
-      // Text formation target: slight spread along recent word/cursor zone
-      const spreadX = targetX - Math.random() * 26;
-      const spreadY = targetY + (Math.random() - 0.5) * 10;
-
-      // Initial sweeping tangential momentum (gives a beautiful spiral inward arc)
-      const tangent = angle + (Math.PI * 0.5) * (Math.random() > 0.5 ? 1 : -1);
-      const initialSpeed = 0.9 + Math.random() * 1.8;
-
-      particles.push({
-        x: originX,
-        y: originY,
-        vx: Math.cos(tangent) * initialSpeed,
-        vy: Math.sin(tangent) * initialSpeed,
-        targetX: spreadX,
-        targetY: spreadY,
-        size: 1.3 + Math.random() * 1.5,
-        color,
-        alpha: 0.08,
-        maxAlpha: 0.85 + Math.random() * 0.15,
-        life: 0,
-        maxLife: 48,
-        arrived: false,
-        burstProgress: 0,
-        swirlDir: Math.random() > 0.5 ? 1 : -1,
-        swirlFreq: 0.14 + Math.random() * 0.08,
-      });
-    }
-
-    if (!particleRafId) {
-      particleRafId = requestAnimationFrame(renderParticleFrame);
-    }
-  }
-
-  function renderParticleFrame() {
-    if (!pCtx || !particleCanvas) {
-      particleRafId = null;
-      return;
-    }
-
-    pCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-    if (particles.length === 0) {
-      particleRafId = null;
-      return;
-    }
-
-    pCtx.save();
-    pCtx.globalCompositeOperation = "lighter";
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      const { r, g, b } = p.color;
-
-      if (p.arrived) {
-        // Coalescence & Crystallization into the text letter!
-        p.burstProgress += 0.20;
-        if (p.burstProgress >= 1) {
-          particles.splice(i, 1);
-          continue;
-        }
-
-        const ringRadius = p.size + p.burstProgress * 5.5;
-        const ringAlpha = (1 - p.burstProgress) * 0.9;
-
-        // Expanding micro energy ring dissolving into text glyph
-        pCtx.beginPath();
-        pCtx.arc(p.x, p.y, ringRadius, 0, Math.PI * 2);
-        pCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${ringAlpha})`;
-        pCtx.lineWidth = 1;
-        pCtx.stroke();
-
-        // 4-point micro crystal sparkle at arrival point
-        const sparkLen = (1 - p.burstProgress) * 3.5;
-        pCtx.fillStyle = `rgba(255, 255, 255, ${ringAlpha})`;
-        pCtx.fillRect(p.x - sparkLen, p.y - 0.5, sparkLen * 2, 1);
-        pCtx.fillRect(p.x - 0.5, p.y - sparkLen, 1, sparkLen * 2);
-        continue;
-      }
-
-      p.life++;
-
-      const dx = p.targetX - p.x;
-      const dy = p.targetY - p.y;
-      const dist = Math.hypot(dx, dy);
-
-      // Arrival threshold: locks into text coordinate
-      if (dist < 6.5 || p.life >= p.maxLife) {
-        p.arrived = true;
-        p.x = p.targetX;
-        p.y = p.targetY;
-        p.burstProgress = 0.05;
-        continue;
-      }
-
-      // Gravitational attraction inward towards the active text/letter
-      const pull = Math.min(2.5, Math.max(0.65, 30 / (dist + 6)));
-      const nx = dx / dist;
-      const ny = dy / dist;
-
-      // Gentle decaying vortex swirl for fluid, organic incoming path
-      const swirl = (Math.sin(p.life * p.swirlFreq) * 0.45 * p.swirlDir) * Math.min(1.2, dist / 60);
-      const tx = -ny * swirl;
-      const ty = nx * swirl;
-
-      p.vx = (p.vx + nx * pull + tx) * 0.88;
-      p.vy = (p.vy + ny * pull + ty) * 0.88;
-
-      p.x += p.vx;
-      p.y += p.vy;
-
-      if (p.alpha < p.maxAlpha) {
-        p.alpha = Math.min(p.maxAlpha, p.alpha + 0.16);
-      }
-
-      // Draw incoming motion trail / comet streak pointing backwards along velocity
-      pCtx.beginPath();
-      pCtx.moveTo(p.x, p.y);
-      pCtx.lineTo(p.x - p.vx * 2.3, p.y - p.vy * 2.3);
-      pCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.85})`;
-      pCtx.lineWidth = p.size;
-      pCtx.lineCap = "round";
-      pCtx.stroke();
-
-      // Glowing leading head dot
-      pCtx.shadowBlur = 6;
-      pCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.9})`;
-      pCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha})`;
-      pCtx.beginPath();
-      pCtx.arc(p.x, p.y, p.size * 0.75, 0, Math.PI * 2);
-      pCtx.fill();
-    }
-
-    pCtx.restore();
-
-    if (particles.length > 0) {
-      particleRafId = requestAnimationFrame(renderParticleFrame);
-    } else {
-      pCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      particleRafId = null;
-    }
-  }
-
-  function emitCursorParticles(containerEl, count = 4) {
-    if (!containerEl) return;
-    const cursor = containerEl.querySelector(".ios-cursor");
-    if (cursor) {
-      const rect = cursor.getBoundingClientRect();
-      if (rect.top >= -30 && rect.bottom <= window.innerHeight + 30) {
-        spawnConvergingParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, count);
-      }
-    }
-  }
-
-  function emitTypingDotParticles(containerEl, count = 2) {
-    if (!containerEl) return;
-    const dots = containerEl.querySelector(".ios-typing-dots");
-    if (dots) {
-      const rect = dots.getBoundingClientRect();
-      if (rect.top >= -30 && rect.bottom <= window.innerHeight + 30) {
-        spawnConvergingParticles(rect.left + Math.random() * rect.width, rect.top + rect.height / 2, count);
-      }
-    }
-  }
-
-  function clearParticles() {
-    particles = [];
-    if (particleRafId) {
-      cancelAnimationFrame(particleRafId);
-      particleRafId = null;
-    }
-    if (pCtx && particleCanvas) {
-      pCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
   // 120fps Rendering & Scroll Helpers
   // ---------------------------------------------------------------------------
   let scrollRafId = null;
@@ -1475,7 +1260,6 @@
     if (isGenerating && abortController) {
       abortController.abort();
     }
-    clearParticles();
     conversation = [];
     messagesFlow.innerHTML = "";
     if (welcomeView) welcomeView.style.display = "flex";
@@ -3333,7 +3117,6 @@
           const currentSlice = reply.slice(0, charIndex);
           renderAssistantBubble(assistantBubble, currentSlice, charIndex < reply.length, selectedModel);
           smoothScrollToBottom();
-          emitCursorParticles(assistantBubble, 3);
           if (charIndex >= reply.length) {
             clearInterval(timer);
             renderAssistantBubble(assistantBubble, reply, false, selectedModel);
@@ -3353,19 +3136,6 @@
 
     abortController = new AbortController();
 
-    // Inward particle convergence stream while waiting or generating
-    const streamParticleTimer = setInterval(() => {
-      if (isGenerating && assistantBubble) {
-        if (!accumulatedText) {
-          emitTypingDotParticles(assistantBubble, 2);
-        } else {
-          emitCursorParticles(assistantBubble, 2);
-        }
-      } else {
-        clearInterval(streamParticleTimer);
-      }
-    }, 110);
-
     const fullMessages = [
       { role: "system", content: "You are a helpful, concise, and polite AI assistant." },
       ...conversation,
@@ -3380,7 +3150,6 @@
         requestAnimationFrame(() => {
           renderAssistantBubble(assistantBubble, accumulatedText, true, currentReqModel);
           smoothScrollToBottom(false);
-          emitCursorParticles(assistantBubble, 4);
           renderScheduled = false;
         });
       }
@@ -3460,7 +3229,6 @@
         assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 5px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${escapeHtml(err.message)}</div>`;
       }
     } finally {
-      clearInterval(streamParticleTimer);
       setGenerating(false);
       abortController = null;
       autoResizeInput();

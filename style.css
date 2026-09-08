@@ -61,17 +61,6 @@ html, body {
   background-color: var(--bg-pure);
 }
 
-/* Magical Particle Stream Canvas Overlay */
-.stream-particle-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 85;
-}
-
 /* iOS Navigation Bar */
 .ios-navbar {
   position: absolute;
@@ -180,7 +169,13 @@ html, body {
   50% { opacity: 1; transform: scale(1.2); }
 }
 
-/* Action Button */
+/* Action Buttons Container */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .ios-circle-btn {
   width: 34px;
   height: 34px;
@@ -188,10 +183,11 @@ html, body {
   background: rgba(255, 255, 255, 0.06);
   border: 0.5px solid var(--border-subtle);
   color: #ffffff;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  text-decoration: none;
   transition: all 0.2s var(--spring-easing);
 }
 .ios-circle-btn:hover {

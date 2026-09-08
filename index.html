@@ -20,9 +20,6 @@
 </head>
 <body>
   <div id="app" class="ios-app">
-    <!-- Magical Particle Stream Canvas Overlay -->
-    <canvas id="streamParticleCanvas" class="stream-particle-canvas"></canvas>
-
     <!-- Clean Minimalist iOS Navigation Bar with Safe Area Insets -->
     <header class="ios-navbar">
       <div class="nav-brand">
@@ -42,8 +39,13 @@
         </div>
       </div>
 
-      <!-- New Chat Action Button -->
+      <!-- Navigation Actions -->
       <div class="nav-actions">
+        <a href="/home" id="liveMsgBtn" class="ios-circle-btn" title="Live Messaging (/home)" aria-label="Live Messaging System">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </a>
         <button id="newChatBtn" class="ios-circle-btn" title="New Conversation" aria-label="New Conversation">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <path d="M12 5v14M5 12h14"/>
