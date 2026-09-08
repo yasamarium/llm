@@ -47,6 +47,7 @@ const S62_MODELS = {
   "gemini-3-pro": "https://apis.davidcyril.name.ng/ai/gemini-3-pro",
   "gemini-3.1-pro": "https://apis.davidcyril.name.ng/ai/gemini-3.1-pro",
   "qwen3-max": "https://apis.davidcyril.name.ng/ai/qwen3-max",
+  "deepseek-v4-flash": "https://apis.davidcyril.name.ng/ai/deepseek-v4-flash",
 };
 
 let roundRobinIndex = 0;
@@ -70,6 +71,7 @@ function normalizeModel(rawModel) {
   if (m.includes("gemini-3.1") || m.includes("gemini 3.1") || m.includes("3.1-pro") || m.includes("3.1 pro") || m.includes("3.1")) return "gemini-3.1-pro";
   if (m.includes("gemini-3") || m.includes("gemini 3") || m.includes("3-pro") || m.includes("3 pro") || m.includes("gemini")) return "gemini-3-pro";
   if (m.includes("qwen3-max") || m.includes("qwen-max") || m.includes("qwen3 max") || m.includes("qwen max") || m.includes("max")) return "qwen3-max";
+  if (m.includes("deepseek-v4-flash") || m.includes("deepseek-v4") || m.includes("deepseek v4") || m.includes("v4-flash") || m.includes("v4 flash") || m.includes("deepseek flash") || m.includes("v4")) return "deepseek-v4-flash";
   if (m.includes("r1") || m.includes("deepseek")) return "r1";
   if (m.includes("coder") || m.includes("code")) return "coder";
   if (m.includes("llama3b") || m.includes("llama-3b") || m.includes("llama 3b") || m.includes("llama")) return "llama3b";
@@ -98,13 +100,13 @@ function extractQwenThinking(raw) {
   }
 
   const trimmed = raw.trim();
-  const isReasoning = /^(okay|alright|let'?s?\s+(see|examine|think|look|check)|first|hmm+|the user|i need to|i should|wait|so\b|we need to|to answer this|looking at)/i.test(trimmed);
+  const isReasoning = /^(okay|alright|let'?s?\s+(see|examine|think|look|check)|first|hmm+|the user|i need to|i should|wait|so\b|we need to|to answer this|looking at|our goal|this is a)/i.test(trimmed);
   if (!isReasoning) {
     return { thinking: "", reply: raw };
   }
 
   // 1. Find all wrap-up match candidates and choose the one that maximizes thinking (last transition)
-  const wrapRegex = /(?:clearly and concisely|explain the steps in the comments|confident the result is correct|put it all together and see|put it all together clearly|provide a straightforward answer|that should cover it|that should be \w+ words|that makes sense|that works|should be sufficient|time to put it all together|let me put it all together|ready to write|looks correct|seems to work|all cases correctly|the result is correct|the answer is correct|that's the answer|that is the answer|should handle all cases|(?:I'll|I will|Let's|let me) (?:present|write|provide|give|output|go with) (?:that|this|the answer|the code|it|the solution)[a-z0-9 -]*|stick to the (?:basic|standard) version|no mistakes(?: here)?|all methods (?:lead to|give|match)[a-z0-9 -]*|still the same answer)[.!?](?:\s*|\n*)/gi;
+  const wrapRegex = /(?:clearly and concisely|explain the steps in the comments|confident the result is correct|put it all together and see|put it all together clearly|provide a straightforward answer|provide (?:a )?friendly,?\s*(?:and )?helpful answer|respond helpfully[a-z0-9 ,-]*|answer directly|under \d+ tokens|that should cover it|that should be \w+ words|that makes sense|that works|should be sufficient|time to put it all together|let me put it all together|ready to write|looks correct|seems to work|all cases correctly|the result is correct|the answer is correct|that's the answer|that is the answer|should handle all cases|(?:I'll|I will|Let's|let me) (?:present|write|provide|give|output|go with) (?:that|this|the answer|the code|it|the solution)[a-z0-9 -]*|stick to the (?:basic|standard) version|no mistakes(?: here)?|all methods (?:lead to|give|match)[a-z0-9 -]*|still the same answer)[.!?](?:\s*|\n*)/gi;
 
   let bestSplitIdx = -1;
   let m;
@@ -254,6 +256,7 @@ export default async function handler(req, res) {
       "gemini-3-pro": "Gemini 3 Pro",
       "gemini-3.1-pro": "Gemini 3.1 Pro",
       "qwen3-max": "Qwen 3 Max",
+      "deepseek-v4-flash": "DeepSeek V4 Flash",
     };
     const displayName = s62Names[modelKey] || modelKey.toUpperCase();
     const replyText = isS62
@@ -310,8 +313,8 @@ export default async function handler(req, res) {
       if (!replyText && typeof json === "string") replyText = json;
       if (!replyText) replyText = "No response output received from AS cloud (EXCLUSIVE S-62).";
 
-      // Qwen 3 Max Deep Reasoning & Thinking Mode
-      if (modelKey === "qwen3-max") {
+      // Qwen 3 Max & DeepSeek V4 Flash Deep Reasoning & Thinking Mode
+      if (modelKey === "qwen3-max" || modelKey === "deepseek-v4-flash") {
         const { thinking, reply } = extractQwenThinking(replyText);
         if (thinking && thinking.length > 0) {
           if (stream) {

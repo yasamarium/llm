@@ -204,6 +204,15 @@
       symClass: "sym-qwen-max",
       svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8.5 4.9v9.8L12 21.5 3.5 16.7V6.9L12 2z"/><path d="M12 2v9.8m0 0L3.5 6.9m8.5 4.9l8.5-4.9m-8.5 4.9v9.8"/><circle cx="12" cy="11.8" r="2.5" fill="currentColor"/><path d="M8 14.5l4-2.5 4 2.5" stroke-dasharray="1.5 1.5"/></svg>`,
     },
+    "deepseek-v4-flash": {
+      name: "DeepSeek V4 Flash",
+      badge: "EXCLUSIVE S-62",
+      title: "DeepSeek V4 Flash (Ultra Fast & Reasoning)",
+      placeholder: "Message DeepSeek V4 Flash (Runs on AS cloud EXCLUSIVE S-62)...",
+      isExclusive: true,
+      symClass: "sym-deepseek-flash",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" fill-opacity="0.2"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M7 4.5L4 8m13 8l3 3.5" stroke-width="1.4" opacity="0.6"/></svg>`,
+    },
     "1.7b": {
       name: "Qwen Medium",
       badge: "4 Nodes",
@@ -550,10 +559,10 @@
     }
 
     const trimmed = raw.trim();
-    const isReasoning = /^(okay|alright|let'?s?\s+(see|examine|think|look|check)|first|hmm+|the user|i need to|i should|wait|so\b|we need to|to answer this|looking at)/i.test(trimmed);
+    const isReasoning = /^(okay|alright|let'?s?\s+(see|examine|think|look|check)|first|hmm+|the user|i need to|i should|wait|so\b|we need to|to answer this|looking at|our goal|this is a)/i.test(trimmed);
     if (!isReasoning) return { thinking: "", reply: raw };
 
-    const wrapRegex = /(?:clearly and concisely|explain the steps in the comments|confident the result is correct|put it all together and see|put it all together clearly|provide a straightforward answer|that should cover it|that should be \w+ words|that makes sense|that works|should be sufficient|time to put it all together|let me put it all together|ready to write|looks correct|seems to work|all cases correctly|the result is correct|the answer is correct|that's the answer|that is the answer|should handle all cases|(?:I'll|I will|Let's|let me) (?:present|write|provide|give|output|go with) (?:that|this|the answer|the code|it|the solution)[a-z0-9 -]*|stick to the (?:basic|standard) version|no mistakes(?: here)?|all methods (?:lead to|give|match)[a-z0-9 -]*|still the same answer)[.!?](?:\s*|\n*)/gi;
+    const wrapRegex = /(?:clearly and concisely|explain the steps in the comments|confident the result is correct|put it all together and see|put it all together clearly|provide a straightforward answer|provide (?:a )?friendly,?\s*(?:and )?helpful answer|respond helpfully[a-z0-9 ,-]*|answer directly|under \d+ tokens|that should cover it|that should be \w+ words|that makes sense|that works|should be sufficient|time to put it all together|let me put it all together|ready to write|looks correct|seems to work|all cases correctly|the result is correct|the answer is correct|that's the answer|that is the answer|should handle all cases|(?:I'll|I will|Let's|let me) (?:present|write|provide|give|output|go with) (?:that|this|the answer|the code|it|the solution)[a-z0-9 -]*|stick to the (?:basic|standard) version|no mistakes(?: here)?|all methods (?:lead to|give|match)[a-z0-9 -]*|still the same answer)[.!?](?:\s*|\n*)/gi;
 
     let bestSplitIdx = -1;
     let m;
@@ -607,8 +616,10 @@
   function parseThinkingAndReply(raw, model = selectedModel) {
     if (!raw) return { thinking: null, reply: "", isThinkingDone: true };
 
-    const isR1 = (model || "").toLowerCase().includes("r1") || (model || "").toLowerCase().includes("deepseek");
+    const isFlash = (model || "").toLowerCase().includes("deepseek-v4-flash") || (model || "").toLowerCase().includes("v4-flash");
+    const isR1 = !isFlash && ((model || "").toLowerCase().includes("r1") || (model || "").toLowerCase().includes("deepseek"));
     const isQwenMax = (model || "").toLowerCase().includes("qwen3-max") || (model || "").toLowerCase().includes("qwen-max");
+    const isReasoningModel = isQwenMax || isFlash;
     const thinkStart = raw.indexOf("<think>");
 
     if (thinkStart === -1) {
@@ -623,8 +634,8 @@
         return { thinking: raw.trimStart(), reply: "", isThinkingDone: false };
       }
 
-      // If Qwen 3 Max was passed raw unformatted text (fallback)
-      if (isQwenMax) {
+      // If Qwen 3 Max or DeepSeek V4 Flash was passed raw unformatted text (fallback)
+      if (isReasoningModel) {
         const qExt = extractQwenThinkingClient(raw);
         if (qExt.thinking) {
           return { thinking: qExt.thinking, reply: qExt.reply, isThinkingDone: true };
@@ -1016,7 +1027,29 @@
     }
   });
 
+  function renderTypingIndicator(bubbleElement) {
+    bubbleElement.innerHTML = `
+      <div class="ios-typing-indicator" aria-label="Thinking">
+        <div class="ios-typing-dots">
+          <span class="ios-typing-dot"></span>
+          <span class="ios-typing-dot"></span>
+          <span class="ios-typing-dot"></span>
+        </div>
+        <span class="ios-typing-label">Thinking...</span>
+      </div>
+    `;
+  }
+
   function renderAssistantBubble(bubbleElement, rawContent, isLive = false, model = selectedModel) {
+    if (!rawContent || !rawContent.trim()) {
+      if (isLive) {
+        renderTypingIndicator(bubbleElement);
+      } else {
+        bubbleElement.innerHTML = `<div class="ios-reply-body"></div>`;
+      }
+      return;
+    }
+
     const { thinking, reply, isThinkingDone } = parseThinkingAndReply(rawContent, model);
 
     let html = "";
@@ -1098,7 +1131,11 @@
     if (role === "user") {
       bubble.textContent = content;
     } else {
-      renderAssistantBubble(bubble, content, false, selectedModel);
+      if (!content) {
+        renderTypingIndicator(bubble);
+      } else {
+        renderAssistantBubble(bubble, content, false, selectedModel);
+      }
     }
 
     row.appendChild(bubble);
@@ -3054,23 +3091,26 @@
       conversation.push({ role: "user", content: text });
 
       const assistantBubble = appendMessage("assistant", "");
+      renderTypingIndicator(assistantBubble);
       const reply = getPresetGreetingReply(selectedModel);
       conversation.push({ role: "assistant", content: reply });
 
       triggerHaptic("light");
 
-      let charIndex = 0;
-      const step = 3;
-      const timer = setInterval(() => {
-        charIndex += step;
-        const currentSlice = reply.slice(0, charIndex);
-        renderAssistantBubble(assistantBubble, currentSlice, charIndex < reply.length, selectedModel);
-        smoothScrollToBottom();
-        if (charIndex >= reply.length) {
-          clearInterval(timer);
-          renderAssistantBubble(assistantBubble, reply, false, selectedModel);
-        }
-      }, 14);
+      setTimeout(() => {
+        let charIndex = 0;
+        const step = 2;
+        const timer = setInterval(() => {
+          charIndex += step;
+          const currentSlice = reply.slice(0, charIndex);
+          renderAssistantBubble(assistantBubble, currentSlice, charIndex < reply.length, selectedModel);
+          smoothScrollToBottom();
+          if (charIndex >= reply.length) {
+            clearInterval(timer);
+            renderAssistantBubble(assistantBubble, reply, false, selectedModel);
+          }
+        }, 15);
+      }, 240);
       return;
     }
 
@@ -3079,6 +3119,7 @@
 
     const currentReqModel = selectedModel;
     const assistantBubble = appendMessage("assistant", "");
+    renderTypingIndicator(assistantBubble);
     setGenerating(true);
 
     abortController = new AbortController();
@@ -3088,17 +3129,38 @@
       ...conversation,
     ];
 
-    let accumulatedText = "";
-    let renderScheduled = false;
+    let targetText = "";
+    let displayedText = "";
+    let isStreamActive = true;
+    let animRafId = null;
 
-    function scheduleRender() {
-      if (!renderScheduled) {
-        renderScheduled = true;
-        requestAnimationFrame(() => {
-          renderAssistantBubble(assistantBubble, accumulatedText, true, currentReqModel);
-          smoothScrollToBottom();
-          renderScheduled = false;
-        });
+    function stepStreamAnimation() {
+      if (displayedText.length < targetText.length) {
+        const diff = targetText.length - displayedText.length;
+        let step = 1;
+        if (diff > 120) step = Math.ceil(diff / 4);
+        else if (diff > 45) step = Math.ceil(diff / 8);
+        else if (diff > 18) step = 3;
+        else if (diff > 6) step = 2;
+        else step = 1;
+
+        displayedText = targetText.slice(0, displayedText.length + step);
+        renderAssistantBubble(assistantBubble, displayedText, true, currentReqModel);
+        smoothScrollToBottom();
+      }
+
+      if (isStreamActive || displayedText.length < targetText.length) {
+        animRafId = requestAnimationFrame(stepStreamAnimation);
+      } else {
+        renderAssistantBubble(assistantBubble, targetText, false, currentReqModel);
+        smoothScrollToBottom();
+      }
+    }
+
+    function pushStreamDelta(delta) {
+      targetText += delta;
+      if (!animRafId) {
+        animRafId = requestAnimationFrame(stepStreamAnimation);
       }
     }
 
@@ -3149,25 +3211,40 @@
               parsed.choices?.[0]?.text ||
               "";
             if (delta) {
-              accumulatedText += delta;
-              scheduleRender();
+              pushStreamDelta(delta);
             }
           } catch (e) {}
         }
       }
 
+      isStreamActive = false;
+
+      // Wait until fluid displayedText finishes smoothly gliding to targetText
+      await new Promise((resolve) => {
+        const checkBufferCaughtUp = () => {
+          if (displayedText.length >= targetText.length) {
+            resolve();
+          } else {
+            requestAnimationFrame(checkBufferCaughtUp);
+          }
+        };
+        checkBufferCaughtUp();
+      });
+
       // Final render without cursor
       requestAnimationFrame(() => {
-        renderAssistantBubble(assistantBubble, accumulatedText, false, currentReqModel);
+        renderAssistantBubble(assistantBubble, targetText, false, currentReqModel);
         smoothScrollToBottom();
       });
 
       // Save clean response to conversation history
-      const parsedFinal = parseThinkingAndReply(accumulatedText, currentReqModel);
-      conversation.push({ role: "assistant", content: parsedFinal.reply || accumulatedText });
+      const parsedFinal = parseThinkingAndReply(targetText, currentReqModel);
+      conversation.push({ role: "assistant", content: parsedFinal.reply || targetText });
     } catch (err) {
+      isStreamActive = false;
+      if (animRafId) cancelAnimationFrame(animRafId);
       if (err.name === "AbortError") {
-        renderAssistantBubble(assistantBubble, accumulatedText, false, currentReqModel);
+        renderAssistantBubble(assistantBubble, targetText || displayedText, false, currentReqModel);
         const stopNotice = document.createElement("p");
         stopNotice.style.cssText = "color: var(--text-tertiary); font-style: italic; margin-top: 8px;";
         stopNotice.textContent = "(Stopped)";
@@ -3176,6 +3253,8 @@
         assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;">⚠️ ${err.message}</div>`;
       }
     } finally {
+      isStreamActive = false;
+      if (animRafId) cancelAnimationFrame(animRafId);
       setGenerating(false);
       abortController = null;
       autoResizeInput();

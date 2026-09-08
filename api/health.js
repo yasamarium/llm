@@ -97,6 +97,7 @@ function normalizeKey(raw) {
   if (m.includes("gemini-3.1") || m.includes("gemini 3.1") || m.includes("3.1-pro") || m.includes("3.1 pro") || m.includes("3.1")) return "gemini-3.1-pro";
   if (m.includes("gemini-3") || m.includes("gemini 3") || m.includes("3-pro") || m.includes("3 pro") || m.includes("gemini")) return "gemini-3-pro";
   if (m.includes("qwen3-max") || m.includes("qwen-max") || m.includes("qwen3 max") || m.includes("qwen max") || m.includes("max")) return "qwen3-max";
+  if (m.includes("deepseek-v4-flash") || m.includes("deepseek-v4") || m.includes("deepseek v4") || m.includes("v4-flash") || m.includes("v4 flash") || m.includes("deepseek flash") || m.includes("v4")) return "deepseek-v4-flash";
   if (m.includes("r1") || m.includes("deepseek")) return "r1";
   if (m.includes("coder") || m.includes("code")) return "coder";
   if (m.includes("llama3b") || m.includes("llama-3b") || m.includes("llama 3b") || m.includes("llama")) return "llama3b";
@@ -129,6 +130,7 @@ export default async function handler(req, res) {
     "gemini-3-pro": "Gemini 3 Pro (EXCLUSIVE S-62)",
     "gemini-3.1-pro": "Gemini 3.1 Pro (EXCLUSIVE S-62)",
     "qwen3-max": "Qwen 3 Max (EXCLUSIVE S-62)",
+    "deepseek-v4-flash": "DeepSeek V4 Flash (EXCLUSIVE S-62)",
   };
 
   if (s62Labels[modelKey]) {

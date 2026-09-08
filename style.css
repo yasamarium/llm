@@ -475,19 +475,117 @@ html, body {
   color: #ffffff;
 }
 
+/* Apple Intelligence Inspired Glowing Gradient Cursor */
 .ios-cursor {
   display: inline-block;
-  width: 2px;
-  height: 16px;
-  background: #ffffff;
+  width: 2.5px;
+  height: 1.15em;
+  background: linear-gradient(180deg, #0a84ff 0%, #5e5ce6 55%, #af52de 100%);
   margin-left: 3px;
-  vertical-align: -2px;
-  animation: iosCursorPulse 0.8s infinite ease;
+  vertical-align: -0.15em;
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(10, 132, 255, 0.9), 0 0 4px #af52de;
+  animation: iosCursorPulse 0.75s ease-in-out infinite alternate;
 }
 
 @keyframes iosCursorPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0% {
+    opacity: 1;
+    transform: scaleY(1);
+    box-shadow: 0 0 12px rgba(10, 132, 255, 0.95), 0 0 6px #af52de;
+  }
+  100% {
+    opacity: 0.25;
+    transform: scaleY(0.92);
+    box-shadow: 0 0 2px rgba(10, 132, 255, 0.2);
+  }
+}
+
+/* Smooth AI Text Animations & Appearance */
+.ios-reply-body p,
+.ios-reply-body li,
+.ios-reply-body pre,
+.ios-reply-body blockquote,
+.ios-reply-body table {
+  animation: iosTextReveal 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes iosTextReveal {
+  from {
+    opacity: 0.25;
+    transform: translateY(3px);
+    filter: blur(1.5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* iOS 18 Glassmorphic Typing Animation Indicator */
+.ios-typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 2px;
+  animation: typingFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  user-select: none;
+}
+
+.ios-typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ios-typing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0a84ff, #5e5ce6);
+  box-shadow: 0 0 10px rgba(10, 132, 255, 0.7);
+  animation: iosTypingBounce 1.35s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
+}
+
+.ios-typing-dot:nth-child(1) { animation-delay: 0s; }
+.ios-typing-dot:nth-child(2) { animation-delay: 0.18s; }
+.ios-typing-dot:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes iosTypingBounce {
+  0%, 60%, 100% {
+    transform: translateY(0) scale(0.88);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-5.5px) scale(1.18);
+    opacity: 1;
+    box-shadow: 0 0 14px rgba(10, 132, 255, 0.95), 0 0 6px #af52de;
+  }
+}
+
+.ios-typing-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  letter-spacing: 0.15px;
+  animation: iosShimmerPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes iosShimmerPulse {
+  0% { opacity: 0.45; }
+  100% { opacity: 0.95; color: #ffffff; }
+}
+
+@keyframes typingFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* Bottom Input Capsule & Claude/DeepSeek Style Dock */
@@ -804,6 +902,7 @@ html, body {
 .popover-item[data-model="gemini-3-pro"] .popover-item-icon, .sym-gemini-pro { color: #38bdf8; }
 .popover-item[data-model="gemini-3.1-pro"] .popover-item-icon, .sym-gemini-31 { color: #c084fc; }
 .popover-item[data-model="qwen3-max"] .popover-item-icon, .sym-qwen-max { color: #fbbf24; }
+.popover-item[data-model="deepseek-v4-flash"] .popover-item-icon, .sym-deepseek-flash { color: #00d2ff; }
 .popover-item[data-model="r1"] .popover-item-icon, .sym-r1 { color: #0284c7; }
 .popover-item[data-model="qwen3b"] .popover-item-icon, .sym-qwen3b { color: #6366f1; }
 .popover-item[data-model="llama3b"] .popover-item-icon, .sym-llama3b { color: #3b82f6; }
