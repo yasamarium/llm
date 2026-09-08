@@ -503,6 +503,162 @@
   setInterval(checkConnection, 15000);
 
   // ---------------------------------------------------------------------------
+  // Magical Particle Stream Engine (Luminous Stardust & Micro Twinkles)
+  // ---------------------------------------------------------------------------
+  const particleCanvas = document.getElementById("streamParticleCanvas");
+  let pCtx = particleCanvas ? particleCanvas.getContext("2d") : null;
+  let particles = [];
+  let particleRafId = null;
+
+  function resizeParticleCanvas() {
+    if (!particleCanvas) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    particleCanvas.width = window.innerWidth * dpr;
+    particleCanvas.height = window.innerHeight * dpr;
+    if (pCtx) pCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  window.addEventListener("resize", resizeParticleCanvas);
+  resizeParticleCanvas();
+
+  const PARTICLE_PALETTE = [
+    { r: 10, g: 132, b: 255 },  // iOS Neon Blue
+    { r: 94, g: 92, b: 230 },   // Deep Indigo
+    { r: 175, g: 82, b: 222 },  // Cosmic Purple
+    { r: 0, g: 229, b: 255 },   // Electric Cyan
+    { r: 255, g: 255, b: 255 }, // Starlight White
+    { r: 251, g: 191, b: 36 },  // Warm Gold
+  ];
+
+  function spawnParticle(x, y, count = 2) {
+    if (!particleCanvas || !pCtx) return;
+    for (let i = 0; i < count; i++) {
+      if (particles.length >= 100) break;
+      const color = PARTICLE_PALETTE[Math.floor(Math.random() * PARTICLE_PALETTE.length)];
+      const size = 1.2 + Math.random() * 2.0;
+      const angle = (Math.random() * Math.PI) - (Math.PI * 0.85);
+      const speed = 0.4 + Math.random() * 1.5;
+      particles.push({
+        x: x + (Math.random() - 0.5) * 6,
+        y: y + (Math.random() - 0.5) * 6,
+        vx: Math.cos(angle) * speed,
+        vy: -Math.abs(Math.sin(angle) * speed) - 0.4,
+        size,
+        baseSize: size,
+        color,
+        alpha: 0.9,
+        decay: 0.018 + Math.random() * 0.018,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.08 + Math.random() * 0.1,
+        isSpark: Math.random() > 0.7,
+      });
+    }
+    if (!particleRafId) {
+      particleRafId = requestAnimationFrame(renderParticleFrame);
+    }
+  }
+
+  function renderParticleFrame() {
+    if (!pCtx || !particleCanvas) {
+      particleRafId = null;
+      return;
+    }
+
+    pCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+    if (particles.length === 0) {
+      particleRafId = null;
+      return;
+    }
+
+    pCtx.save();
+    pCtx.globalCompositeOperation = "lighter";
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx + Math.sin(p.wobble) * 0.35;
+      p.y += p.vy;
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+      p.wobble += p.wobbleSpeed;
+      p.alpha -= p.decay;
+      p.size = p.baseSize * Math.max(0.1, p.alpha);
+
+      if (p.alpha <= 0.02 || p.size <= 0.2) {
+        particles.splice(i, 1);
+        continue;
+      }
+
+      const { r, g, b } = p.color;
+
+      if (p.isSpark) {
+        // Draw 4-pointed micro diamond sparkle star
+        pCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha})`;
+        pCtx.shadowBlur = 6;
+        pCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.8})`;
+        const s = p.size * 1.6;
+        pCtx.beginPath();
+        pCtx.moveTo(p.x, p.y - s);
+        pCtx.lineTo(p.x + s * 0.4, p.y);
+        pCtx.lineTo(p.x, p.y + s);
+        pCtx.lineTo(p.x - s * 0.4, p.y);
+        pCtx.closePath();
+        pCtx.fill();
+      } else {
+        // Draw glowing circular stardust mote
+        pCtx.shadowBlur = 7;
+        pCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.85})`;
+        pCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha})`;
+        pCtx.beginPath();
+        pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        pCtx.fill();
+      }
+    }
+
+    pCtx.restore();
+
+    if (particles.length > 0) {
+      particleRafId = requestAnimationFrame(renderParticleFrame);
+    } else {
+      pCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      particleRafId = null;
+    }
+  }
+
+  function emitCursorParticles(containerEl, count = 2) {
+    if (!containerEl) return;
+    const cursor = containerEl.querySelector(".ios-cursor");
+    if (cursor) {
+      const rect = cursor.getBoundingClientRect();
+      if (rect.top >= -20 && rect.bottom <= window.innerHeight + 20) {
+        spawnParticle(rect.left + rect.width / 2, rect.top + rect.height / 2, count);
+      }
+    }
+  }
+
+  function emitTypingDotParticles(containerEl, count = 1) {
+    if (!containerEl) return;
+    const dots = containerEl.querySelector(".ios-typing-dots");
+    if (dots) {
+      const rect = dots.getBoundingClientRect();
+      if (rect.top >= -20 && rect.bottom <= window.innerHeight + 20) {
+        spawnParticle(rect.left + Math.random() * rect.width, rect.top + rect.height / 2, count);
+      }
+    }
+  }
+
+  function clearParticles() {
+    particles = [];
+    if (particleRafId) {
+      cancelAnimationFrame(particleRafId);
+      particleRafId = null;
+    }
+    if (pCtx && particleCanvas) {
+      pCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // 120fps Rendering & Scroll Helpers
   // ---------------------------------------------------------------------------
   let scrollRafId = null;
@@ -1260,6 +1416,7 @@
     if (isGenerating && abortController) {
       abortController.abort();
     }
+    clearParticles();
     conversation = [];
     messagesFlow.innerHTML = "";
     if (welcomeView) welcomeView.style.display = "flex";
@@ -3111,6 +3268,7 @@
           const currentSlice = reply.slice(0, charIndex);
           renderAssistantBubble(assistantBubble, currentSlice, charIndex < reply.length, selectedModel);
           smoothScrollToBottom();
+          emitCursorParticles(assistantBubble, 2);
           if (charIndex >= reply.length) {
             clearInterval(timer);
             renderAssistantBubble(assistantBubble, reply, false, selectedModel);
@@ -3130,6 +3288,15 @@
 
     abortController = new AbortController();
 
+    // Ambient stardust while typing indicator is waiting for server
+    const typingParticleTimer = setInterval(() => {
+      if (isGenerating && !accumulatedText) {
+        emitTypingDotParticles(assistantBubble, 1);
+      } else {
+        clearInterval(typingParticleTimer);
+      }
+    }, 180);
+
     const fullMessages = [
       { role: "system", content: "You are a helpful, concise, and polite AI assistant." },
       ...conversation,
@@ -3144,6 +3311,7 @@
         requestAnimationFrame(() => {
           renderAssistantBubble(assistantBubble, accumulatedText, true, currentReqModel);
           smoothScrollToBottom(false);
+          emitCursorParticles(assistantBubble, 3);
           renderScheduled = false;
         });
       }

@@ -61,6 +61,17 @@ html, body {
   background-color: var(--bg-pure);
 }
 
+/* Magical Particle Stream Canvas Overlay */
+.stream-particle-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 85;
+}
+
 /* iOS Navigation Bar */
 .ios-navbar {
   position: absolute;
