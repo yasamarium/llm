@@ -526,7 +526,7 @@ html, body {
 }
 
 .convo-item.unread .convo-time {
-  color: #00a884;
+  color: var(--accent-pink, #ff375f);
   font-weight: 600;
 }
 
@@ -547,14 +547,14 @@ html, body {
 }
 
 .convo-item.unread .convo-snippet {
-  color: #d1d7db;
+  color: #ffffff;
   font-weight: 500;
 }
 
 .convo-unread-pill, .convo-unread-badge {
-  background: #25d366;
-  color: #111b21;
-  font-size: 11.5px;
+  background: linear-gradient(135deg, #ff375f 0%, #d81b60 100%);
+  color: #ffffff;
+  font-size: 11px;
   font-weight: 700;
   padding: 0 6px;
   height: 19px;
@@ -564,6 +564,7 @@ html, body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(255, 55, 95, 0.45);
 }
 
 /* Right Chat Pane */
@@ -788,22 +789,23 @@ html, body {
   clear: both;
 }
 
-/* WhatsApp Dark Mode Outgoing Bubble */
+/* iOS Themed Outgoing Message Bubble (Signature iOS Blue) */
 .msg-row.outgoing .msg-bubble {
-  background: #005c4b;
-  background: linear-gradient(135deg, #005c4b 0%, #026b57 100%);
+  background: linear-gradient(135deg, #0a84ff 0%, #0066d6 100%);
   color: #ffffff;
-  border-bottom-right-radius: 3px;
-  box-shadow: 0 1.5px 6px rgba(0, 0, 0, 0.35);
+  border-radius: 18px;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 2px 10px rgba(10, 132, 255, 0.28);
 }
 
-/* WhatsApp Dark Mode Incoming Bubble */
+/* iOS Themed Incoming Message Bubble (Sleek Frosted Dark) */
 .msg-row.incoming .msg-bubble {
-  background: #202c33;
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  background: #1c1c24;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  border-bottom-left-radius: 3px;
-  box-shadow: 0 1.5px 6px rgba(0, 0, 0, 0.28);
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 /* Telegram / WhatsApp Group Sender Name (Prominent, Bold & Colored) */
@@ -1813,3 +1815,352 @@ html, body {
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(255, 69, 58, 0.4);
 }
+
+/* ---------------------------------------------------------------------------
+   iOS Initial Avatars & Dynamic Accent Themes (Blue, Pink, Purple, Red)
+   --------------------------------------------------------------------------- */
+.initial-avatar {
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  user-select: none;
+  text-transform: uppercase;
+  color: #ffffff;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: -0.01em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.user-avatar-img {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* 4 Signature iOS Accent Colors: Blue, Pink, Purple, Red */
+.init-blue {
+  background: linear-gradient(135deg, #0a84ff 0%, #0056b3 100%) !important;
+  color: #ffffff !important;
+}
+
+.init-pink {
+  background: linear-gradient(135deg, #ff375f 0%, #c4183c 100%) !important;
+  color: #ffffff !important;
+}
+
+.init-purple {
+  background: linear-gradient(135deg, #bf5af2 0%, #7b2cbf 100%) !important;
+  color: #ffffff !important;
+}
+
+.init-red {
+  background: linear-gradient(135deg, #ff453a 0%, #b81d13 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Sizing Tokens */
+.avatar-xs {
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 11.5px !important;
+}
+
+.avatar-sm {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 13.5px !important;
+}
+
+.avatar-md {
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 16px !important;
+}
+
+.avatar-lg {
+  width: 49px !important;
+  height: 49px !important;
+  font-size: 19px !important;
+}
+
+.avatar-xl {
+  width: 80px !important;
+  height: 80px !important;
+  font-size: 32px !important;
+}
+
+/* Profile Photo Uploader */
+.pfp-controls-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.pfp-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent-red, #ff453a);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.pfp-remove-btn:hover {
+  background: rgba(255, 69, 58, 0.12);
+  text-decoration: underline;
+}
+
+.auth-avatar-hint {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  text-align: center;
+  max-width: 200px;
+  line-height: 1.35;
+}
+
+/* ---------------------------------------------------------------------------
+   iOS Contact Info & Profile Sheet Modal
+   --------------------------------------------------------------------------- */
+.ios-sheet-card {
+  max-width: 400px;
+  width: 92%;
+  border-radius: 24px;
+  background: rgba(20, 20, 26, 0.88);
+  backdrop-filter: blur(40px) saturate(190%);
+  -webkit-backdrop-filter: blur(40px) saturate(190%);
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  animation: sheetPop 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes sheetPop {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.contact-sheet-body {
+  padding: 16px 20px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contact-sheet-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+.contact-sheet-avatar-wrap {
+  position: relative;
+  margin: 0 auto;
+}
+
+.sheet-status-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #30d158;
+  border: 2.5px solid #14141a;
+  box-shadow: 0 0 10px rgba(48, 209, 88, 0.6);
+}
+
+.sheet-status-dot.offline {
+  background: #8e8e93;
+  box-shadow: none;
+}
+
+.contact-sheet-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.contact-sheet-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.contact-sheet-handle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contact-sheet-handle {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--accent-blue, #0a84ff);
+}
+
+.copy-handle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.copy-handle-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.contact-sheet-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(48, 209, 88, 0.12);
+  border: 0.5px solid rgba(48, 209, 88, 0.28);
+  font-size: 11px;
+  font-weight: 600;
+  color: #30d158;
+}
+
+.contact-sheet-status-pill.offline {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+.contact-sheet-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sheet-meta-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  transition: background 0.15s ease;
+}
+
+.sheet-meta-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sheet-meta-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sheet-meta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.sheet-meta-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.sheet-meta-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-sheet-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.contact-sheet-actions .modal-primary-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #0a84ff 0%, #0066d6 100%);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(10, 132, 255, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.contact-sheet-actions .modal-primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(10, 132, 255, 0.45);
+}
+
+.contact-sheet-actions .modal-secondary-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.contact-sheet-actions .modal-secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+

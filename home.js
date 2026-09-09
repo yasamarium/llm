@@ -1,4 +1,4 @@
-// home.js - AS Messages Real-Time Cloud Messaging Client with Instagram-Style Auth
+// home.js - AS Messages Real-Time Cloud Messaging Client (iOS Themed)
 // Connected to yasamarium/msg-db-users, msg-db-messages, msg-db-rooms & msg-media-storage
 (function () {
   "use strict";
@@ -15,7 +15,63 @@
     userPlus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>`,
     eyeOpen: `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
     eyeOff: `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`,
+    copy: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`,
   };
+
+  // ---------------------------------------------------------------------------
+  // iOS Initial Avatar & Palette System (Blue, Pink, Purple, Red)
+  // ---------------------------------------------------------------------------
+  const IOS_ACCENT_COLORS = ["init-blue", "init-pink", "init-purple", "init-red"];
+
+  function getAvatarColorClass(str) {
+    if (!str) return IOS_ACCENT_COLORS[0];
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+    }
+    return IOS_ACCENT_COLORS[hash % IOS_ACCENT_COLORS.length];
+  }
+
+  function getInitialLetter(name, fallback = "U") {
+    const clean = (name || fallback).replace(/^@+/, "").trim();
+    return (clean[0] || fallback).toUpperCase();
+  }
+
+  function renderAvatarHtml(name, pfp, sizeClass = "avatar-md", extraClasses = "") {
+    const safeName = escapeHtml(name || "User");
+    const initial = getInitialLetter(name);
+    const colorClass = getAvatarColorClass(name);
+
+    if (pfp && typeof pfp === "string" && !pfp.includes("unsplash.com") && pfp.trim().length > 0) {
+      const safeUrl = escapeHtml(pfp.trim());
+      return `<img class="user-avatar-img ${sizeClass} ${extraClasses}" src="${safeUrl}" alt="${safeName}" onerror="this.onerror=null; this.outerHTML='<div class=\\'initial-avatar ${sizeClass} ${colorClass} ${extraClasses}\\'>${initial}</div>'">`;
+    }
+
+    return `<div class="initial-avatar ${sizeClass} ${colorClass} ${extraClasses}">${initial}</div>`;
+  }
+
+  // Telegram/WhatsApp group chat distinctive sender colors
+  const SENDER_COLORS = [
+    "#0a84ff", // iOS Blue
+    "#ff375f", // iOS Pink
+    "#bf5af2", // iOS Purple
+    "#ff453a", // iOS Red
+    "#30d158", // iOS Green
+    "#5e5ce6", // iOS Indigo
+    "#64d2ff", // iOS Cyan
+    "#ffd60a", // iOS Yellow
+    "#ff9f0a", // iOS Orange
+    "#ac8e68", // iOS Brown
+  ];
+
+  function getSenderColor(name) {
+    if (!name) return SENDER_COLORS[0];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+    }
+    return SENDER_COLORS[hash % SENDER_COLORS.length];
+  }
 
   // ---------------------------------------------------------------------------
   // Web Audio Synthesized Chimes (Sent / Received)
@@ -63,41 +119,8 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Current User Session State
+  // Session State
   // ---------------------------------------------------------------------------
-  const PRESET_AVATARS = [
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
-    "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150",
-    "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150",
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-  ];
-
-  // Telegram-style distinctive username colors for group/channel bubbles
-  const SENDER_COLORS = [
-    "#29b6f6", // Sky Blue
-    "#ab47bc", // Purple
-    "#26a69a", // Teal
-    "#ff7043", // Coral / Orange
-    "#ec407a", // Pink
-    "#7e57c2", // Deep Violet
-    "#42a5f5", // Blue
-    "#26c6da", // Cyan
-    "#9ccc65", // Lime Green
-    "#ffa726", // Amber
-    "#ef5350", // Coral Red
-    "#8d6e63", // Mocha
-  ];
-
-  function getSenderColor(name) {
-    if (!name) return SENDER_COLORS[0];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-    }
-    return SENDER_COLORS[hash % SENDER_COLORS.length];
-  }
-
   let currentUser = null;
   let sessionToken = null;
 
@@ -127,20 +150,22 @@
   const openNewChatBtn = document.getElementById("openNewChatBtn");
   const mobileBackBtn = document.getElementById("mobileBackBtn");
 
-  // Top Bar Profile
+  // Navigation Left Rail Profile
   const userProfileChip = document.getElementById("userProfileChip");
-  const navUserPfp = document.getElementById("navUserPfp");
+  const navUserAvatarSlot = document.getElementById("navUserAvatarSlot");
   const navDisplayName = document.getElementById("navDisplayName");
   const navUsername = document.getElementById("navUsername");
   const relayStatusText = document.getElementById("relayStatusText");
 
   // Chat Header Elements
-  const activeContactPfp = document.getElementById("activeContactPfp");
+  const chatHeaderProfile = document.getElementById("chatHeaderProfile");
+  const activeContactAvatarSlot = document.getElementById("activeContactAvatarSlot");
   const activeContactStatusDot = document.getElementById("activeContactStatusDot");
   const activeContactName = document.getElementById("activeContactName");
   const activeContactHandle = document.getElementById("activeContactHandle");
   const activeContactStatus = document.getElementById("activeContactStatus");
   const activeVerifiedBadge = document.getElementById("activeVerifiedBadge");
+  const openContactInfoBtn = document.getElementById("openContactInfoBtn");
 
   // Message Container
   const chatMessagesContainer = document.getElementById("chatMessagesContainer");
@@ -172,10 +197,9 @@
   const loginSubmitBtn = document.getElementById("loginSubmitBtn");
   const switchToSignupBtn = document.getElementById("switchToSignupBtn");
 
-  const signupAvatarPreview = document.getElementById("signupAvatarPreview");
+  const signupAvatarSlot = document.getElementById("signupAvatarSlot");
   const signupAvatarUploadBtn = document.getElementById("signupAvatarUploadBtn");
   const signupAvatarFileInput = document.getElementById("signupAvatarFileInput");
-  const signupAvatarChips = document.getElementById("signupAvatarChips");
   const signupUsername = document.getElementById("signupUsername");
   const signupDisplayName = document.getElementById("signupDisplayName");
   const signupPassword = document.getElementById("signupPassword");
@@ -183,13 +207,15 @@
   const signupSubmitBtn = document.getElementById("signupSubmitBtn");
   const switchToLoginBtn = document.getElementById("switchToLoginBtn");
 
+  let signupUploadedPfp = null;
+
   // Profile Modal Elements
   const profileModal = document.getElementById("profileModal");
   const closeProfileModalBtn = document.getElementById("closeProfileModalBtn");
-  const editPfpPreview = document.getElementById("editPfpPreview");
+  const editPfpSlot = document.getElementById("editPfpSlot");
   const uploadPfpTrigger = document.getElementById("uploadPfpTrigger");
   const pfpFileInput = document.getElementById("pfpFileInput");
-  const presetAvatarChips = document.getElementById("presetAvatarChips");
+  const removePfpBtn = document.getElementById("removePfpBtn");
   const inputUsername = document.getElementById("inputUsername");
   const inputDisplayName = document.getElementById("inputDisplayName");
   const inputBio = document.getElementById("inputBio");
@@ -197,6 +223,23 @@
   const inputNewPassword = document.getElementById("inputNewPassword");
   const saveProfileBtn = document.getElementById("saveProfileBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+
+  let profileEditUploadedPfp = undefined; // undefined = keep, null = remove, string = new url
+
+  // Contact Info Sheet Modal Elements
+  const contactInfoModal = document.getElementById("contactInfoModal");
+  const closeContactInfoBtn = document.getElementById("closeContactInfoBtn");
+  const contactSheetAvatarSlot = document.getElementById("contactSheetAvatarSlot");
+  const contactSheetStatusDot = document.getElementById("contactSheetStatusDot");
+  const contactSheetName = document.getElementById("contactSheetName");
+  const contactSheetHandle = document.getElementById("contactSheetHandle");
+  const contactSheetVerified = document.getElementById("contactSheetVerified");
+  const copyContactHandleBtn = document.getElementById("copyContactHandleBtn");
+  const copyHandleText = document.getElementById("copyHandleText");
+  const contactSheetStatusPill = document.getElementById("contactSheetStatusPill");
+  const contactSheetJoinDate = document.getElementById("contactSheetJoinDate");
+  const contactSheetBio = document.getElementById("contactSheetBio");
+  const contactSheetActions = document.getElementById("contactSheetActions");
 
   // New Chat Modal Elements
   const newChatModal = document.getElementById("newChatModal");
@@ -212,7 +255,7 @@
   const lightboxCaption = document.getElementById("lightboxCaption");
 
   // ---------------------------------------------------------------------------
-  // State Variables
+  // Conversation & Sync State
   // ---------------------------------------------------------------------------
   let activeConvoId = "general";
   let activeConvoMeta = {
@@ -220,17 +263,90 @@
     type: "channel",
     handle: "general",
     name: "Global Lounge",
-    pfp: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=150",
+    pfp: null,
     status: "Active Community",
     verified: true,
+    createdAt: 1788880000000,
+    bio: "The public lounge for all AS Cloud community members.",
   };
   let conversations = [];
   let loadedMessageIds = new Set();
   let lastMessageTimestamp = 0;
   let syncInterval = null;
+  let isPolling = false;
 
   // ---------------------------------------------------------------------------
-  // Instagram-Style Authentication Handlers
+  // Date & Format Helpers
+  // ---------------------------------------------------------------------------
+  function formatTime(timestamp) {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    return `${hours}:${minutes} ${ampm}`;
+  }
+
+  function formatWhatsAppDate(timestamp) {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    const now = new Date();
+
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) {
+      let hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
+      return `${hours}:${minutes} ${ampm}`;
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    }
+
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 7) {
+      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      return days[date.getDay()];
+    }
+
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  function formatJoinDate(timestamp) {
+    if (!timestamp) return "September 2026";
+    const d = new Date(timestamp);
+    if (isNaN(d.getTime())) return "September 2026";
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    const day = d.getDate();
+    return `Joined ${day} ${month} ${year}`;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Authentication Handlers
   // ---------------------------------------------------------------------------
   function showAuthOverlay(mode = "login") {
     if (!authOverlay) return;
@@ -248,7 +364,8 @@
       tabLogin.classList.remove("active");
       loginForm.style.display = "none";
       signupForm.style.display = "flex";
-      renderSignupAvatarChips(PRESET_AVATARS[0]);
+      signupUploadedPfp = null;
+      updateSignupAvatarPreview();
       if (signupUsername) signupUsername.focus();
     }
   }
@@ -273,7 +390,7 @@
   if (switchToSignupBtn) switchToSignupBtn.addEventListener("click", () => showAuthOverlay("signup"));
   if (switchToLoginBtn) switchToLoginBtn.addEventListener("click", () => showAuthOverlay("login"));
 
-  // Password Visibility Toggle (Show / Hide Eye)
+  // Password Visibility Toggle
   document.querySelectorAll(".toggle-password-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-target");
@@ -289,19 +406,25 @@
     });
   });
 
-  // Signup Avatar Picker & Upload
-  function renderSignupAvatarChips(selectedUrl) {
-    if (!signupAvatarChips) return;
-    signupAvatarChips.innerHTML = PRESET_AVATARS.map((url) => `
-      <img src="${url}" class="${url === selectedUrl ? "selected" : ""}" data-url="${url}" alt="Avatar">
-    `).join("");
+  // Dynamic Signup Avatar Initial Update
+  function updateSignupAvatarPreview() {
+    if (!signupAvatarSlot) return;
+    if (signupUploadedPfp) {
+      signupAvatarSlot.innerHTML = `<img class="user-avatar-img avatar-xl" src="${escapeHtml(signupUploadedPfp)}" alt="Avatar">`;
+      return;
+    }
+    const name = (signupDisplayName?.value || signupUsername?.value || "?").trim();
+    signupAvatarSlot.innerHTML = renderAvatarHtml(name, null, "avatar-xl");
+  }
 
-    signupAvatarChips.querySelectorAll("img").forEach((img) => {
-      img.addEventListener("click", () => {
-        const url = img.getAttribute("data-url");
-        if (signupAvatarPreview) signupAvatarPreview.src = url;
-        renderSignupAvatarChips(url);
-      });
+  if (signupUsername) {
+    signupUsername.addEventListener("input", () => {
+      if (!signupUploadedPfp) updateSignupAvatarPreview();
+    });
+  }
+  if (signupDisplayName) {
+    signupDisplayName.addEventListener("input", () => {
+      if (!signupUploadedPfp) updateSignupAvatarPreview();
     });
   }
 
@@ -314,7 +437,8 @@
       const reader = new FileReader();
       reader.onload = async (ev) => {
         const base64 = ev.target.result;
-        if (signupAvatarPreview) signupAvatarPreview.src = base64;
+        signupUploadedPfp = base64;
+        updateSignupAvatarPreview();
 
         try {
           const res = await fetch("/api/upload", {
@@ -329,8 +453,9 @@
           });
           if (res.ok) {
             const data = await res.json();
-            if (data.proxyUrl && signupAvatarPreview) {
-              signupAvatarPreview.src = data.proxyUrl;
+            if (data.proxyUrl) {
+              signupUploadedPfp = data.proxyUrl;
+              updateSignupAvatarPreview();
             }
           }
         } catch (_) {}
@@ -395,13 +520,13 @@
     });
   }
 
-  // Handle Sign Up
+  // Handle Sign Up (No preset avatars)
   async function handleSignup() {
     const handle = (signupUsername?.value || "").toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
     const displayName = (signupDisplayName?.value || "").trim() || handle;
     const pass = signupPassword?.value || "";
     const bio = (signupBio?.value || "").trim();
-    const pfp = signupAvatarPreview?.src || PRESET_AVATARS[0];
+    const pfp = signupUploadedPfp || null; // Null so name's initial avatar shows!
 
     if (!handle || handle.length < 3) {
       showAuthError("Username must be at least 3 characters (letters, numbers, underscores).");
@@ -478,6 +603,7 @@
     if (conversationList) conversationList.innerHTML = "";
     if (messagesFlow) messagesFlow.innerHTML = "";
     closeProfileModal();
+    closeContactInfo();
     showAuthOverlay("login");
   }
 
@@ -489,38 +615,39 @@
   function openProfileModal() {
     if (!profileModal || !currentUser) return;
     profileModal.style.display = "flex";
+    profileEditUploadedPfp = undefined;
 
-    if (editPfpPreview) editPfpPreview.src = currentUser.pfp || PRESET_AVATARS[0];
+    renderProfileEditAvatar();
+
     if (inputUsername) {
       inputUsername.value = currentUser.username;
-      inputUsername.disabled = true; // Username is permanent unique ID like Instagram
+      inputUsername.disabled = true;
     }
     if (inputDisplayName) inputDisplayName.value = currentUser.displayName || "";
     if (inputBio) inputBio.value = currentUser.bio || "";
     if (inputOldPassword) inputOldPassword.value = "";
     if (inputNewPassword) inputNewPassword.value = "";
-
-    renderPresetAvatarChips(currentUser.pfp || PRESET_AVATARS[0]);
   }
 
   function closeProfileModal() {
     if (profileModal) profileModal.style.display = "none";
   }
 
-  function renderPresetAvatarChips(selectedUrl) {
-    if (!presetAvatarChips) return;
-    presetAvatarChips.innerHTML = PRESET_AVATARS.map((url) => `
-      <button class="avatar-chip ${url === selectedUrl ? "selected" : ""}" type="button" data-url="${url}">
-        <img src="${url}" alt="Avatar">
-      </button>
-    `).join("");
+  function renderProfileEditAvatar() {
+    if (!editPfpSlot || !currentUser) return;
+    const currentPfp = profileEditUploadedPfp !== undefined ? profileEditUploadedPfp : currentUser.pfp;
+    const name = currentUser.displayName || currentUser.username;
+    editPfpSlot.innerHTML = renderAvatarHtml(name, currentPfp, "avatar-xl");
 
-    presetAvatarChips.querySelectorAll(".avatar-chip").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const url = btn.getAttribute("data-url");
-        if (editPfpPreview) editPfpPreview.src = url;
-        renderPresetAvatarChips(url);
-      });
+    if (removePfpBtn) {
+      removePfpBtn.style.display = currentPfp ? "inline-block" : "none";
+    }
+  }
+
+  if (removePfpBtn) {
+    removePfpBtn.addEventListener("click", () => {
+      profileEditUploadedPfp = null;
+      renderProfileEditAvatar();
     });
   }
 
@@ -533,7 +660,8 @@
       const reader = new FileReader();
       reader.onload = async (ev) => {
         const base64 = ev.target.result;
-        if (editPfpPreview) editPfpPreview.src = base64;
+        profileEditUploadedPfp = base64;
+        renderProfileEditAvatar();
 
         try {
           const res = await fetch("/api/upload", {
@@ -549,7 +677,8 @@
           if (res.ok) {
             const data = await res.json();
             if (data.proxyUrl) {
-              if (editPfpPreview) editPfpPreview.src = data.proxyUrl;
+              profileEditUploadedPfp = data.proxyUrl;
+              renderProfileEditAvatar();
             }
           }
         } catch (_) {}
@@ -563,7 +692,6 @@
 
     const displayName = (inputDisplayName?.value || "").trim() || currentUser.username;
     const bio = (inputBio?.value || "").trim();
-    const pfp = editPfpPreview?.src || currentUser.pfp;
     const oldPassword = inputOldPassword?.value || "";
     const newPassword = inputNewPassword?.value || "";
 
@@ -574,6 +702,11 @@
 
     saveProfileBtn.disabled = true;
     saveProfileBtn.textContent = "Saving...";
+
+    let finalPfp = currentUser.pfp;
+    if (profileEditUploadedPfp !== undefined) {
+      finalPfp = profileEditUploadedPfp === null ? "remove" : profileEditUploadedPfp;
+    }
 
     try {
       const res = await fetch("/api/msg?action=update_profile", {
@@ -587,7 +720,7 @@
           token: sessionToken,
           displayName,
           bio,
-          pfp,
+          pfp: finalPfp,
           oldPassword: oldPassword || undefined,
           newPassword: newPassword || undefined,
         }),
@@ -603,7 +736,7 @@
 
       renderNavProfile();
       closeProfileModal();
-      alert("Profile updated successfully!");
+      loadConversations();
     } catch (err) {
       alert("Could not update profile: " + err.message);
     } finally {
@@ -618,66 +751,141 @@
 
   function renderNavProfile() {
     if (!currentUser) return;
-    if (navUserPfp) navUserPfp.src = currentUser.pfp || PRESET_AVATARS[0];
+    if (navUserAvatarSlot) {
+      const name = currentUser.displayName || currentUser.username;
+      navUserAvatarSlot.innerHTML = renderAvatarHtml(name, currentUser.pfp, "avatar-sm");
+    }
     if (navDisplayName) navDisplayName.textContent = currentUser.displayName || currentUser.username;
     if (navUsername) navUsername.textContent = `@${currentUser.username}`;
   }
 
   // ---------------------------------------------------------------------------
-  // Date & Format Helpers
+  // Contact Info & Profile Sheet Modal (iOS Style with Joining Date)
   // ---------------------------------------------------------------------------
-  function formatTime(timestamp) {
-    if (!timestamp) return "";
-    const date = new Date(timestamp);
-    let hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    return `${hours}:${minutes} ${ampm}`;
+  async function openContactInfo(contactMeta) {
+    if (!contactInfoModal) return;
+
+    let target = contactMeta || activeConvoMeta;
+    if (!target) return;
+
+    contactInfoModal.style.display = "flex";
+
+    // Immediate optimistic populate
+    populateContactSheetData(target);
+
+    // Fetch fresh user profile if direct chat to guarantee live createdAt & bio
+    if (target.type === "direct" && target.handle) {
+      try {
+        const res = await fetch(`/api/msg?action=get_user&username=${encodeURIComponent(target.handle)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            target = {
+              ...target,
+              ...data.user,
+              handle: data.user.username,
+              name: data.user.displayName || data.user.username,
+            };
+            populateContactSheetData(target);
+          }
+        }
+      } catch (_) {}
+    }
   }
 
-  function formatWhatsAppDate(timestamp) {
-    if (!timestamp) return "";
-    const date = new Date(timestamp);
-    const now = new Date();
+  function populateContactSheetData(target) {
+    const isChannel = target.type === "channel" || target.id === "general";
+    const name = target.name || target.handle || "User";
+    const handle = target.handle || target.id || "username";
+    const isSelf = currentUser && handle.toLowerCase() === currentUser.username.toLowerCase();
 
-    const isToday = date.toDateString() === now.toDateString();
-    if (isToday) {
-      let hours = date.getHours();
-      const minutes = date.getMinutes().toString().padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
-      return `${hours}:${minutes} ${ampm}`;
+    // Render Avatar / Initial
+    if (contactSheetAvatarSlot) {
+      contactSheetAvatarSlot.innerHTML = renderAvatarHtml(name, target.pfp, "avatar-xl");
     }
 
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) {
-      return "Yesterday";
+    // Status dot
+    if (contactSheetStatusDot) {
+      const isOnline = !!target.isOnline;
+      contactSheetStatusDot.className = `sheet-status-dot ${isOnline ? "" : "offline"}`;
     }
 
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays < 7) {
-      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      return days[date.getDay()];
+    // Name & Verified
+    if (contactSheetName) contactSheetName.textContent = name;
+    if (contactSheetVerified) contactSheetVerified.style.display = target.verified ? "inline-flex" : "none";
+
+    // Handle
+    if (contactSheetHandle) contactSheetHandle.textContent = `@${handle}`;
+    if (copyContactHandleBtn) {
+      copyContactHandleBtn.onclick = () => {
+        navigator.clipboard.writeText(`@${handle}`);
+        if (copyHandleText) copyHandleText.textContent = "Copied!";
+        setTimeout(() => {
+          if (copyHandleText) copyHandleText.textContent = "Copy";
+        }, 1800);
+      };
     }
 
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    // Status Pill
+    if (contactSheetStatusPill) {
+      if (isChannel) {
+        contactSheetStatusPill.textContent = "Public Community Channel";
+        contactSheetStatusPill.className = "contact-sheet-status-pill";
+      } else if (target.isOnline) {
+        contactSheetStatusPill.textContent = "Active now";
+        contactSheetStatusPill.className = "contact-sheet-status-pill";
+      } else {
+        contactSheetStatusPill.textContent = "Offline";
+        contactSheetStatusPill.className = "contact-sheet-status-pill offline";
+      }
+    }
+
+    // Joining Date
+    if (contactSheetJoinDate) {
+      contactSheetJoinDate.textContent = formatJoinDate(target.createdAt);
+    }
+
+    // About / Bio
+    if (contactSheetBio) {
+      contactSheetBio.textContent = target.bio || (isChannel ? "AS Cloud Public Community Room" : "Available on AS Messages");
+    }
+
+    // Action buttons
+    if (contactSheetActions) {
+      if (isSelf) {
+        contactSheetActions.innerHTML = `
+          <button class="modal-primary-btn" id="sheetEditProfileBtn" type="button">Edit Profile</button>
+          <button class="modal-secondary-btn" id="sheetLogoutBtn" type="button">Log Out</button>
+        `;
+        const editBtn = document.getElementById("sheetEditProfileBtn");
+        const outBtn = document.getElementById("sheetLogoutBtn");
+        if (editBtn) editBtn.onclick = () => { closeContactInfo(); openProfileModal(); };
+        if (outBtn) outBtn.onclick = () => { closeContactInfo(); handleLogout(); };
+      } else {
+        contactSheetActions.innerHTML = `
+          <button class="modal-primary-btn" id="sheetDirectMsgBtn" type="button">Message</button>
+          <button class="modal-secondary-btn" id="sheetCloseBtn" type="button">Done</button>
+        `;
+        const msgBtn = document.getElementById("sheetDirectMsgBtn");
+        const doneBtn = document.getElementById("sheetCloseBtn");
+        if (msgBtn) msgBtn.onclick = () => {
+          closeContactInfo();
+          if (activeConvoId !== target.id) {
+            startDirectChat(handle, name, target.pfp);
+          }
+        };
+        if (doneBtn) doneBtn.onclick = closeContactInfo;
+      }
+    }
   }
 
-  function escapeHtml(str) {
-    if (!str) return "";
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  function closeContactInfo() {
+    if (contactInfoModal) contactInfoModal.style.display = "none";
   }
+
+  if (closeContactInfoBtn) closeContactInfoBtn.addEventListener("click", closeContactInfo);
+  if (chatHeaderProfile) chatHeaderProfile.addEventListener("click", () => openContactInfo(activeConvoMeta));
+  if (openContactInfoBtn) openContactInfoBtn.addEventListener("click", () => openContactInfo(activeConvoMeta));
 
   // ---------------------------------------------------------------------------
   // Load Conversations List
@@ -702,7 +910,7 @@
     if (conversations.length === 0) {
       conversationList.innerHTML = `
         <div class="empty-state-card" style="padding: 30px 20px; text-align: center; color: var(--text-secondary);">
-          <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: var(--accent-cyan);">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: var(--accent-blue);">
             ${ICONS.userPlus}
           </div>
           <div style="font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 6px;">No chats yet</div>
@@ -727,11 +935,12 @@
 
       const timeStr = lastMsg?.time ? formatWhatsAppDate(lastMsg.time) : "";
       const isUnread = (c.unread || 0) > 0;
+      const avatarHtml = renderAvatarHtml(c.name || c.handle, c.pfp, "avatar-lg");
 
       return `
         <div class="convo-item ${isActive ? "active" : ""} ${isUnread ? "unread" : ""}" data-id="${c.id}">
           <div class="convo-pfp-wrap">
-            <img class="convo-pfp" src="${c.pfp || PRESET_AVATARS[0]}" alt="Avatar" onerror="this.src='${PRESET_AVATARS[0]}'">
+            ${avatarHtml}
             ${c.isOnline ? '<div class="convo-online-dot"></div>' : ""}
           </div>
           <div class="convo-meta">
@@ -770,9 +979,11 @@
         type: "channel",
         handle: "general",
         name: "Global Lounge",
-        pfp: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=150",
+        pfp: null,
         status: "Active Community",
         verified: true,
+        createdAt: 1788880000000,
+        bio: "The public lounge for all AS Cloud community members.",
       };
     } else if (!meta) {
       meta = {
@@ -780,13 +991,18 @@
         type: "direct",
         handle: chatId.replace("dm_", "").replace("__", " & "),
         name: chatId,
-        pfp: PRESET_AVATARS[0],
+        pfp: null,
         status: "Online",
+        createdAt: Date.now(),
+        bio: "Available on AS Messages",
       };
     }
     activeConvoMeta = meta;
 
-    if (activeContactPfp) activeContactPfp.src = meta.pfp || PRESET_AVATARS[0];
+    // Render active contact avatar in header
+    if (activeContactAvatarSlot) {
+      activeContactAvatarSlot.innerHTML = renderAvatarHtml(meta.name || meta.handle, meta.pfp, "avatar-md");
+    }
     if (activeContactName) activeContactName.textContent = meta.name || meta.handle;
     if (activeContactHandle) activeContactHandle.textContent = `@${meta.handle || meta.id}`;
     if (activeContactStatus) activeContactStatus.textContent = meta.status || "Active now";
@@ -865,7 +1081,6 @@
     const isChannel = activeConvoMeta && activeConvoMeta.type === "channel";
     const showAvatar = !isOut && isChannel;
     const showSenderName = !isOut && isChannel;
-    const senderPfp = m.senderPfp || PRESET_AVATARS[0];
     const senderName = m.senderName || m.sender;
     const senderColor = getSenderColor(m.sender);
 
@@ -908,7 +1123,7 @@
     let receiptHtml = "";
     if (isOut) {
       if (m.status === "read") {
-        receiptHtml = `<span class="msg-receipt-icon read" title="Read">${ICONS.checkDouble}</span>`;
+        receiptHtml = `<span class="msg-receipt-icon read" title="Read" style="color: #00d2ff;">${ICONS.checkDouble}</span>`;
       } else if (m.status === "delivered") {
         receiptHtml = `<span class="msg-receipt-icon" title="Delivered">${ICONS.checkDouble}</span>`;
       } else {
@@ -916,9 +1131,11 @@
       }
     }
 
+    const avatarHtml = showAvatar ? renderAvatarHtml(senderName, m.senderPfp, "avatar-xs", "msg-bubble-avatar") : "";
+
     const html = `
       <div class="msg-row ${isOut ? "outgoing" : "incoming"} ${isChannel ? "channel-row" : "direct-row"} ${animate ? "animate-in" : ""}" id="${m.id}">
-        ${showAvatar ? `<img class="msg-bubble-pfp" src="${senderPfp}" alt="Avatar" onerror="this.src='${PRESET_AVATARS[0]}'">` : ""}
+        ${avatarHtml}
         <div class="msg-bubble-content">
           <div class="msg-bubble">
             ${showSenderName ? `<div class="msg-sender-name" style="color: ${senderColor};">${escapeHtml(senderName)}</div>` : ""}
@@ -1007,7 +1224,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Send Message
+  // Send Message (Optimistic Instant Delivery)
   // ---------------------------------------------------------------------------
   async function handleSendMessage(text = "", media = null) {
     if (!text.trim() && !media) return;
@@ -1022,8 +1239,9 @@
       autoResizeTextarea();
     }
 
+    const tempId = `temp_${Date.now()}`;
     const optimisticMsg = {
-      id: `temp_${Date.now()}`,
+      id: tempId,
       chatId: activeConvoId,
       sender: currentUser.username,
       senderName: currentUser.displayName || currentUser.username,
@@ -1060,10 +1278,10 @@
       if (res.ok) {
         const data = await res.json();
         const serverMsg = data.message;
-        const row = document.getElementById(optimisticMsg.id);
+        const row = document.getElementById(tempId);
         if (row && serverMsg) {
           row.id = serverMsg.id;
-          loadedMessageIds.delete(optimisticMsg.id);
+          loadedMessageIds.delete(tempId);
           loadedMessageIds.add(serverMsg.id);
           const receipt = row.querySelector(".msg-receipt-icon");
           if (receipt) receipt.innerHTML = ICONS.checkDouble;
@@ -1211,15 +1429,30 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Real-Time Polling Engine
+  // Real-Time Adaptive Low-Latency Polling Engine
   // ---------------------------------------------------------------------------
   function startSyncEngine() {
     if (syncInterval) clearInterval(syncInterval);
-    syncInterval = setInterval(syncLiveMessages, 1500);
+    // Active polling: 900ms for smooth live updates without jank
+    syncInterval = setInterval(syncLiveMessages, 900);
   }
 
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = setInterval(syncLiveMessages, 3000);
+      }
+    } else {
+      syncLiveMessages();
+      startSyncEngine();
+    }
+  });
+
   async function syncLiveMessages() {
-    if (!currentUser) return;
+    if (!currentUser || isPolling) return;
+    isPolling = true;
+
     try {
       const url = `/api/msg?action=sync&username=${encodeURIComponent(currentUser.username)}&chatId=${encodeURIComponent(activeConvoId)}&since=${lastMessageTimestamp}`;
       const res = await fetch(url);
@@ -1238,9 +1471,16 @@
             }
           }
         });
+
         if (hasIncoming) {
           playChime("received");
-          scrollToBottom();
+          // Only scroll if user is already near bottom to avoid jarring jumps
+          if (chatMessagesContainer) {
+            const distFromBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight;
+            if (distFromBottom < 180) {
+              scrollToBottom();
+            }
+          }
           fetch("/api/msg?action=mark_read", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1248,12 +1488,15 @@
           });
         }
       }
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      isPolling = false;
+    }
   }
 
   setInterval(() => {
     if (currentUser) loadConversations();
-  }, 6000);
+  }, 5000);
 
   // ---------------------------------------------------------------------------
   // New Chat & Real User Search
@@ -1301,28 +1544,31 @@
         return;
       }
 
-      quickContactsList.innerHTML = users.map((u) => `
-        <div class="quick-contact-card" data-username="${u.username}" data-name="${escapeHtml(u.displayName)}" data-pfp="${u.pfp}">
-          <div style="position: relative;">
-            <img class="quick-contact-pfp" src="${u.pfp || PRESET_AVATARS[0]}" alt="Avatar" onerror="this.src='${PRESET_AVATARS[0]}'">
-            ${u.isOnline ? '<div class="convo-online-dot"></div>' : ""}
-          </div>
-          <div class="quick-contact-info">
-            <div class="quick-contact-name">
-              ${escapeHtml(u.displayName || u.username)}
-              ${u.verified ? `<span class="verified-glyph">${ICONS.verified}</span>` : ""}
+      quickContactsList.innerHTML = users.map((u) => {
+        const avatarHtml = renderAvatarHtml(u.displayName || u.username, u.pfp, "avatar-md");
+        return `
+          <div class="quick-contact-card" data-username="${u.username}" data-name="${escapeHtml(u.displayName || u.username)}" data-pfp="${escapeHtml(u.pfp || "")}" data-created="${u.createdAt || 0}" data-bio="${escapeHtml(u.bio || "")}">
+            <div style="position: relative;">
+              ${avatarHtml}
+              ${u.isOnline ? '<div class="convo-online-dot"></div>' : ""}
             </div>
-            <div class="quick-contact-handle">@${u.username} ${u.isOnline ? '• Online' : ''}</div>
+            <div class="quick-contact-info">
+              <div class="quick-contact-name">
+                ${escapeHtml(u.displayName || u.username)}
+                ${u.verified ? `<span class="verified-glyph">${ICONS.verified}</span>` : ""}
+              </div>
+              <div class="quick-contact-handle">@${u.username} ${u.isOnline ? '• Online' : ''}</div>
+            </div>
+            <button class="quick-chat-action-btn" type="button">Chat</button>
           </div>
-          <button class="quick-chat-action-btn" type="button">Chat</button>
-        </div>
-      `).join("");
+        `;
+      }).join("");
 
       quickContactsList.querySelectorAll(".quick-contact-card").forEach((card) => {
         card.addEventListener("click", () => {
           const handle = card.getAttribute("data-username");
           const name = card.getAttribute("data-name");
-          const pfp = card.getAttribute("data-pfp");
+          const pfp = card.getAttribute("data-pfp") || null;
           startDirectChat(handle, name, pfp);
           closeNewChatModal();
         });
@@ -1361,8 +1607,10 @@
       type: "direct",
       handle: cleanTarget,
       name: targetName || cleanTarget,
-      pfp: targetPfp || PRESET_AVATARS[0],
+      pfp: targetPfp || null,
       status: "Active now",
+      createdAt: Date.now(),
+      bio: "Available on AS Messages",
     };
 
     openChat(dmId, meta);
@@ -1379,12 +1627,14 @@
   }
 
   if (openNewChatBtn) openNewChatBtn.addEventListener("click", openNewChatModal);
+  if (closeNewChatModalBtn) closeNewChatModalBtn.addEventListener("click", closeNewChatModal);
+
   const sidebarMenuBtn = document.getElementById("sidebarMenuBtn");
   if (sidebarMenuBtn) {
     sidebarMenuBtn.addEventListener("click", openProfileModal);
   }
 
-  // Filter tabs (WhatsApp All, Unread, Favourites, Groups)
+  // WhatsApp Filter Chips
   document.querySelectorAll(".filter-tab, .wa-filter-chip").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".filter-tab, .wa-filter-chip").forEach((t) => t.classList.remove("active"));
@@ -1433,7 +1683,6 @@
     if (relayStatusText) relayStatusText.textContent = "AS Cloud • 5 Relay Nodes Active";
 
     if (currentUser && sessionToken) {
-      // Verify session with server
       try {
         const res = await fetch(`/api/msg?action=verify_session&token=${encodeURIComponent(sessionToken)}`);
         if (res.ok) {
@@ -1449,14 +1698,12 @@
         }
       } catch (_) {}
 
-      // Session invalid or expired
       currentUser = null;
       sessionToken = null;
       localStorage.removeItem("as_msg_current_user");
       localStorage.removeItem("as_msg_token");
     }
 
-    // Not authenticated -> show Instagram-style auth screen
     showAuthOverlay("login");
   }
 

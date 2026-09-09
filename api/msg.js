@@ -155,12 +155,19 @@ async function writeRepoFile(repo, path, contentObj, commitMsg, knownSha = null)
 // ---------------------------------------------------------------------------
 async function loadUsers(force = false) {
   const now = Date.now();
-  if (!force && MEM_USERS.list.length > 0 && now - MEM_USERS.updatedAt < 5000) {
+  if (!force && MEM_USERS.list.length > 0 && now - MEM_USERS.updatedAt < 30000) {
     return MEM_USERS.list;
   }
   const file = await fetchRepoFile(REPO_USERS, "data/users.json");
   if (file && Array.isArray(file.content)) {
-    MEM_USERS = { list: file.content, sha: file.sha, updatedAt: now };
+    const githubUsers = file.content;
+    const githubUsernames = new Set(githubUsers.map(u => u.username.toLowerCase()));
+    for (const memUser of MEM_USERS.list) {
+      if (!githubUsernames.has(memUser.username.toLowerCase())) {
+        githubUsers.push(memUser);
+      }
+    }
+    MEM_USERS = { list: githubUsers, sha: file.sha, updatedAt: now };
     return MEM_USERS.list;
   }
   return MEM_USERS.list;
@@ -320,10 +327,11 @@ export default async function handler(req, res) {
       }
 
       const { hash, salt } = hashPassword(password);
+      const cleanPfp = (pfp && typeof pfp === "string" && !pfp.includes("unsplash.com") && pfp.trim().length > 0) ? pfp.trim() : null;
       const newUser = {
         username: cleanHandle,
         displayName: displayName?.trim() || cleanHandle,
-        pfp: pfp || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        pfp: cleanPfp,
         bio: bio?.trim() || "Available on AS Messages",
         passwordHash: hash,
         salt,
@@ -442,7 +450,13 @@ export default async function handler(req, res) {
       }
 
       if (displayName) user.displayName = displayName.trim();
-      if (pfp) user.pfp = pfp;
+      if (pfp !== undefined) {
+        if (!pfp || (typeof pfp === "string" && (pfp.includes("unsplash.com") || pfp === "remove"))) {
+          user.pfp = null;
+        } else {
+          user.pfp = pfp;
+        }
+      }
       if (bio !== undefined) user.bio = bio.trim();
       user.lastSeen = Date.now();
 
@@ -478,9 +492,10 @@ export default async function handler(req, res) {
         .map(u => ({
           username: u.username,
           displayName: u.displayName || u.username,
-          pfp: u.pfp,
+          pfp: u.pfp || null,
           bio: u.bio || "",
           verified: !!u.verified,
+          createdAt: u.createdAt || u.lastSeen || Date.now(),
           lastSeen: u.lastSeen,
           isOnline: u.lastSeen ? (Date.now() - u.lastSeen < 120000) : false,
         }));
@@ -517,7 +532,7 @@ export default async function handler(req, res) {
           type: "channel",
           handle: room.id,
           name: room.name,
-          pfp: room.pfp || "https://images.unsplash.com/photo-1518770660439-4636190af475?w=150",
+          pfp: room.pfp || null,
           verified: true,
           status: `${msgs.length} messages`,
           lastMessage: lastMsg ? {
@@ -548,7 +563,9 @@ export default async function handler(req, res) {
             type: "direct",
             handle: other.username,
             name: other.displayName || other.username,
-            pfp: other.pfp || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+            pfp: other.pfp || null,
+            bio: other.bio || "",
+            createdAt: other.createdAt || other.lastSeen || Date.now(),
             verified: !!other.verified,
             status: isOnline ? "Active now" : "Offline",
             isOnline,
@@ -572,6 +589,36 @@ export default async function handler(req, res) {
       });
 
       return res.status(200).json({ status: "ok", conversations: convos });
+    }
+
+    // -------------------------------------------------------------------------
+    // 8.5 Get User Profile Details (for Contact Info Sheet)
+    // -------------------------------------------------------------------------
+    if (action === "get_user" || action === "get_profile") {
+      const target = (url.searchParams.get("username") || req.body?.username || "").toLowerCase().trim();
+      if (!target) {
+        return res.status(400).json({ error: "Username is required." });
+      }
+
+      const users = await loadUsers();
+      const u = users.find(x => x.username.toLowerCase() === target);
+      if (!u) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        user: {
+          username: u.username,
+          displayName: u.displayName || u.username,
+          pfp: u.pfp || null,
+          bio: u.bio || "",
+          verified: !!u.verified,
+          createdAt: u.createdAt || u.lastSeen || Date.now(),
+          lastSeen: u.lastSeen || null,
+          isOnline: u.lastSeen ? (Date.now() - u.lastSeen < 120000) : false,
+        },
+      });
     }
 
     // -------------------------------------------------------------------------
@@ -611,7 +658,7 @@ export default async function handler(req, res) {
       const senderUser = users.find(u => u.username.toLowerCase() === sender.toLowerCase()) || {
         username: sender,
         displayName: sender,
-        pfp: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        pfp: null,
       };
 
       const newMsg = {
