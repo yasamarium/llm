@@ -160,10 +160,10 @@
   // Chat Header Elements
   const chatHeaderProfile = document.getElementById("chatHeaderProfile");
   const activeContactAvatarSlot = document.getElementById("activeContactAvatarSlot");
-  const activeContactStatusDot = document.getElementById("activeContactStatusDot");
+  const activeContactStatusDot = null;
   const activeContactName = document.getElementById("activeContactName");
   const activeContactHandle = document.getElementById("activeContactHandle");
-  const activeContactStatus = document.getElementById("activeContactStatus");
+  const activeContactStatus = null;
   const activeVerifiedBadge = document.getElementById("activeVerifiedBadge");
   const openContactInfoBtn = document.getElementById("openContactInfoBtn");
 
@@ -230,13 +230,13 @@
   const contactInfoModal = document.getElementById("contactInfoModal");
   const closeContactInfoBtn = document.getElementById("closeContactInfoBtn");
   const contactSheetAvatarSlot = document.getElementById("contactSheetAvatarSlot");
-  const contactSheetStatusDot = document.getElementById("contactSheetStatusDot");
+  const contactSheetStatusDot = null;
   const contactSheetName = document.getElementById("contactSheetName");
   const contactSheetHandle = document.getElementById("contactSheetHandle");
   const contactSheetVerified = document.getElementById("contactSheetVerified");
   const copyContactHandleBtn = document.getElementById("copyContactHandleBtn");
   const copyHandleText = document.getElementById("copyHandleText");
-  const contactSheetStatusPill = document.getElementById("contactSheetStatusPill");
+  const contactSheetStatusPill = null;
   const contactSheetJoinDate = document.getElementById("contactSheetJoinDate");
   const contactSheetBio = document.getElementById("contactSheetBio");
   const contactSheetActions = document.getElementById("contactSheetActions");
@@ -595,10 +595,7 @@
     localStorage.removeItem("as_msg_current_user");
     localStorage.removeItem("as_msg_token");
 
-    if (syncInterval) {
-      clearInterval(syncInterval);
-      syncInterval = null;
-    }
+    stopSyncEngine();
 
     if (conversationList) conversationList.innerHTML = "";
     if (messagesFlow) messagesFlow.innerHTML = "";
@@ -804,11 +801,7 @@
       contactSheetAvatarSlot.innerHTML = renderAvatarHtml(name, target.pfp, "avatar-xl");
     }
 
-    // Status dot
-    if (contactSheetStatusDot) {
-      const isOnline = !!target.isOnline;
-      contactSheetStatusDot.className = `sheet-status-dot ${isOnline ? "" : "offline"}`;
-    }
+
 
     // Name & Verified
     if (contactSheetName) contactSheetName.textContent = name;
@@ -826,19 +819,7 @@
       };
     }
 
-    // Status Pill
-    if (contactSheetStatusPill) {
-      if (isChannel) {
-        contactSheetStatusPill.textContent = "Public Community Channel";
-        contactSheetStatusPill.className = "contact-sheet-status-pill";
-      } else if (target.isOnline) {
-        contactSheetStatusPill.textContent = "Active now";
-        contactSheetStatusPill.className = "contact-sheet-status-pill";
-      } else {
-        contactSheetStatusPill.textContent = "Offline";
-        contactSheetStatusPill.className = "contact-sheet-status-pill offline";
-      }
-    }
+
 
     // Joining Date
     if (contactSheetJoinDate) {
@@ -941,7 +922,6 @@
         <div class="convo-item ${isActive ? "active" : ""} ${isUnread ? "unread" : ""}" data-id="${c.id}">
           <div class="convo-pfp-wrap">
             ${avatarHtml}
-            ${c.isOnline ? '<div class="convo-online-dot"></div>' : ""}
           </div>
           <div class="convo-meta">
             <div class="convo-row-top">
@@ -980,7 +960,6 @@
         handle: "general",
         name: "Global Lounge",
         pfp: null,
-        status: "Active Community",
         verified: true,
         createdAt: 1788880000000,
         bio: "The public lounge for all AS Cloud community members.",
@@ -992,12 +971,16 @@
         handle: chatId.replace("dm_", "").replace("__", " & "),
         name: chatId,
         pfp: null,
-        status: "Online",
         createdAt: Date.now(),
         bio: "Available on AS Messages",
       };
     }
     activeConvoMeta = meta;
+
+    // Abort pending long-poll for prior chat so new chat connects immediately
+    if (longPollAbortCtrl) {
+      try { longPollAbortCtrl.abort(); } catch (_) {}
+    }
 
     // Render active contact avatar in header
     if (activeContactAvatarSlot) {
@@ -1005,7 +988,6 @@
     }
     if (activeContactName) activeContactName.textContent = meta.name || meta.handle;
     if (activeContactHandle) activeContactHandle.textContent = `@${meta.handle || meta.id}`;
-    if (activeContactStatus) activeContactStatus.textContent = meta.status || "Active now";
     if (activeVerifiedBadge) activeVerifiedBadge.style.display = meta.verified ? "inline-flex" : "none";
 
     if (window.innerWidth <= 768 && msgWorkspace) {
@@ -1259,6 +1241,13 @@
     scrollToBottom();
     playChime("sent");
 
+    // Instant local & cross-tab real-time dispatch (0ms)
+    broadcastRealtimeEvent({
+      type: "new_message",
+      chatId: activeConvoId,
+      message: optimisticMsg,
+    });
+
     try {
       const res = await fetch("/api/msg?action=send_message", {
         method: "POST",
@@ -1429,74 +1418,135 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Real-Time Adaptive Low-Latency Polling Engine
+  // Real-Time Live Long-Polling & Instant Cross-Tab Broadcast Engine
   // ---------------------------------------------------------------------------
+  const realtimeChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("as_messages_realtime_v1") : null;
+
+  function broadcastRealtimeEvent(event) {
+    try {
+      if (realtimeChannel) realtimeChannel.postMessage(event);
+      localStorage.setItem("as_msg_realtime_ping", JSON.stringify({ ...event, _t: Date.now() }));
+    } catch (_) {}
+  }
+
+  function handleIncomingRealtimeEvent(data) {
+    if (!data || !currentUser) return;
+    if (data.type === "new_message" && data.message) {
+      const m = data.message;
+      if (data.chatId === activeConvoId) {
+        if (!loadedMessageIds.has(m.id)) {
+          renderMessage(m, true);
+          if (m.sender.toLowerCase() !== currentUser.username.toLowerCase()) {
+            playChime("received");
+            if (chatMessagesContainer) {
+              const distFromBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight;
+              if (distFromBottom < 220) {
+                scrollToBottom();
+              }
+            }
+            fetch("/api/msg?action=mark_read", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chatId: activeConvoId, username: currentUser.username }),
+            });
+          }
+        }
+      }
+      loadConversations();
+    }
+  }
+
+  if (realtimeChannel) {
+    realtimeChannel.onmessage = (ev) => handleIncomingRealtimeEvent(ev.data);
+  }
+
+  window.addEventListener("storage", (ev) => {
+    if (ev.key === "as_msg_realtime_ping" && ev.newValue) {
+      try {
+        const data = JSON.parse(ev.newValue);
+        handleIncomingRealtimeEvent(data);
+      } catch (_) {}
+    }
+  });
+
+  let longPollAbortCtrl = null;
+  let isRealtimeLoopActive = false;
+
   function startSyncEngine() {
-    if (syncInterval) clearInterval(syncInterval);
-    // Active polling: 900ms for smooth live updates without jank
-    syncInterval = setInterval(syncLiveMessages, 900);
+    if (isRealtimeLoopActive) return;
+    isRealtimeLoopActive = true;
+    runRealtimeLongPoll();
+  }
+
+  function stopSyncEngine() {
+    isRealtimeLoopActive = false;
+    if (longPollAbortCtrl) {
+      try { longPollAbortCtrl.abort(); } catch (_) {}
+      longPollAbortCtrl = null;
+    }
   }
 
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      if (syncInterval) {
-        clearInterval(syncInterval);
-        syncInterval = setInterval(syncLiveMessages, 3000);
-      }
-    } else {
-      syncLiveMessages();
+    if (!document.hidden && currentUser && !isRealtimeLoopActive) {
       startSyncEngine();
     }
   });
 
-  async function syncLiveMessages() {
-    if (!currentUser || isPolling) return;
-    isPolling = true;
+  async function runRealtimeLongPoll() {
+    if (!currentUser) return;
 
-    try {
-      const url = `/api/msg?action=sync&username=${encodeURIComponent(currentUser.username)}&chatId=${encodeURIComponent(activeConvoId)}&since=${lastMessageTimestamp}`;
-      const res = await fetch(url);
-      if (!res.ok) return;
+    while (currentUser && isRealtimeLoopActive) {
+      try {
+        longPollAbortCtrl = new AbortController();
+        const url = `/api/msg?action=sync&wait=1&username=${encodeURIComponent(currentUser.username)}&chatId=${encodeURIComponent(activeConvoId || "")}&since=${lastMessageTimestamp}`;
+        
+        const res = await fetch(url, { signal: longPollAbortCtrl.signal });
+        if (!res.ok) {
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
 
-      const data = await res.json();
-      const newMsgs = data.newMessages || [];
+        const data = await res.json();
+        const newMsgs = data.newMessages || [];
 
-      if (newMsgs.length > 0) {
-        let hasIncoming = false;
-        newMsgs.forEach((m) => {
-          if (!loadedMessageIds.has(m.id)) {
-            renderMessage(m, true);
-            if (m.sender.toLowerCase() !== currentUser.username.toLowerCase()) {
-              hasIncoming = true;
+        if (newMsgs.length > 0) {
+          let hasIncoming = false;
+          newMsgs.forEach((m) => {
+            if (!loadedMessageIds.has(m.id)) {
+              renderMessage(m, true);
+              if (m.sender.toLowerCase() !== currentUser.username.toLowerCase()) {
+                hasIncoming = true;
+              }
             }
-          }
-        });
-
-        if (hasIncoming) {
-          playChime("received");
-          // Only scroll if user is already near bottom to avoid jarring jumps
-          if (chatMessagesContainer) {
-            const distFromBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight;
-            if (distFromBottom < 180) {
-              scrollToBottom();
-            }
-          }
-          fetch("/api/msg?action=mark_read", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chatId: activeConvoId, username: currentUser.username }),
           });
+
+          if (hasIncoming) {
+            playChime("received");
+            if (chatMessagesContainer) {
+              const distFromBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight;
+              if (distFromBottom < 220) {
+                scrollToBottom();
+              }
+            }
+            fetch("/api/msg?action=mark_read", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chatId: activeConvoId, username: currentUser.username }),
+            });
+            loadConversations();
+          }
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          await new Promise((r) => setTimeout(r, 1200));
         }
       }
-    } catch (_) {
-    } finally {
-      isPolling = false;
     }
   }
 
   setInterval(() => {
     if (currentUser) loadConversations();
-  }, 5000);
+  }, 4000);
 
   // ---------------------------------------------------------------------------
   // New Chat & Real User Search
@@ -1550,14 +1600,13 @@
           <div class="quick-contact-card" data-username="${u.username}" data-name="${escapeHtml(u.displayName || u.username)}" data-pfp="${escapeHtml(u.pfp || "")}" data-created="${u.createdAt || 0}" data-bio="${escapeHtml(u.bio || "")}">
             <div style="position: relative;">
               ${avatarHtml}
-              ${u.isOnline ? '<div class="convo-online-dot"></div>' : ""}
             </div>
             <div class="quick-contact-info">
               <div class="quick-contact-name">
                 ${escapeHtml(u.displayName || u.username)}
                 ${u.verified ? `<span class="verified-glyph">${ICONS.verified}</span>` : ""}
               </div>
-              <div class="quick-contact-handle">@${u.username} ${u.isOnline ? '• Online' : ''}</div>
+              <div class="quick-contact-handle">@${u.username}</div>
             </div>
             <button class="quick-chat-action-btn" type="button">Chat</button>
           </div>
@@ -1608,7 +1657,6 @@
       handle: cleanTarget,
       name: targetName || cleanTarget,
       pfp: targetPfp || null,
-      status: "Active now",
       createdAt: Date.now(),
       bio: "Available on AS Messages",
     };

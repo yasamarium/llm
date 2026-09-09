@@ -1,6 +1,10 @@
 // api/msg.js - AS Real Live Messaging Engine Backend with Secure Auth
 // Backed by yasamarium/msg-db-users, msg-db-messages, msg-db-rooms & msg-media-storage
 import crypto from "crypto";
+import { EventEmitter } from "events";
+
+const REALTIME_BUS = new EventEmitter();
+REALTIME_BUS.setMaxListeners(2000);
 
 export const config = {
   api: {
@@ -232,6 +236,23 @@ async function loadChatMessages(chatId, force = false) {
   return cached.messages;
 }
 
+async function persistChatNow(chatId) {
+  const cached = MEM_CHATS.get(chatId);
+  if (!cached) return;
+  const filePath = getChatFilePath(chatId);
+  const newSha = await writeRepoFile(
+    REPO_MESSAGES,
+    filePath,
+    cached.messages,
+    `feat: chat update in ${chatId}`,
+    cached.sha
+  );
+  if (newSha) {
+    cached.sha = newSha;
+    cached.isDirty = false;
+  }
+}
+
 function scheduleChatPersist(chatId) {
   if (PENDING_WRITES.has(chatId)) {
     clearTimeout(PENDING_WRITES.get(chatId));
@@ -239,22 +260,8 @@ function scheduleChatPersist(chatId) {
 
   const timer = setTimeout(async () => {
     PENDING_WRITES.delete(chatId);
-    const cached = MEM_CHATS.get(chatId);
-    if (!cached || !cached.isDirty) return;
-
-    const filePath = getChatFilePath(chatId);
-    const newSha = await writeRepoFile(
-      REPO_MESSAGES,
-      filePath,
-      cached.messages,
-      `feat: new message in ${chatId}`,
-      cached.sha
-    );
-    if (newSha) {
-      cached.sha = newSha;
-      cached.isDirty = false;
-    }
-  }, 1000);
+    await persistChatNow(chatId);
+  }, 400);
 
   PENDING_WRITES.set(chatId, timer);
 }
@@ -336,7 +343,6 @@ export default async function handler(req, res) {
         passwordHash: hash,
         salt,
         verified: false,
-        status: "Active now",
         createdAt: Date.now(),
         lastSeen: Date.now(),
       };
@@ -497,7 +503,6 @@ export default async function handler(req, res) {
           verified: !!u.verified,
           createdAt: u.createdAt || u.lastSeen || Date.now(),
           lastSeen: u.lastSeen,
-          isOnline: u.lastSeen ? (Date.now() - u.lastSeen < 120000) : false,
         }));
 
       return res.status(200).json({ status: "ok", users: matched });
@@ -556,7 +561,6 @@ export default async function handler(req, res) {
         if (msgs && msgs.length > 0) {
           const lastMsg = msgs[msgs.length - 1];
           const unreadCount = msgs.filter(m => m.sender.toLowerCase() !== username && m.status !== "read").length;
-          const isOnline = other.lastSeen ? (Date.now() - other.lastSeen < 120000) : false;
 
           convos.push({
             id: dmId,
@@ -567,8 +571,6 @@ export default async function handler(req, res) {
             bio: other.bio || "",
             createdAt: other.createdAt || other.lastSeen || Date.now(),
             verified: !!other.verified,
-            status: isOnline ? "Active now" : "Offline",
-            isOnline,
             lastMessage: {
               id: lastMsg.id,
               text: lastMsg.text,
@@ -616,7 +618,6 @@ export default async function handler(req, res) {
           verified: !!u.verified,
           createdAt: u.createdAt || u.lastSeen || Date.now(),
           lastSeen: u.lastSeen || null,
-          isOnline: u.lastSeen ? (Date.now() - u.lastSeen < 120000) : false,
         },
       });
     }
@@ -686,7 +687,12 @@ export default async function handler(req, res) {
         cached.isDirty = true;
       }
 
+      REALTIME_BUS.emit("chat:" + chatId, newMsg);
+      if (recipient) REALTIME_BUS.emit("user:" + recipient.toLowerCase(), newMsg);
+      REALTIME_BUS.emit("user:" + senderUser.username.toLowerCase(), newMsg);
+
       scheduleChatPersist(chatId);
+      persistChatNow(chatId).catch(() => {});
       senderUser.lastSeen = Date.now();
 
       return res.status(200).json({ status: "ok", message: newMsg });
@@ -716,19 +722,22 @@ export default async function handler(req, res) {
           cached.isDirty = true;
           cached.updatedAt = Date.now();
         }
+        REALTIME_BUS.emit("chat:" + chatId, { type: "read", chatId });
         scheduleChatPersist(chatId);
+        persistChatNow(chatId).catch(() => {});
       }
 
       return res.status(200).json({ status: "ok", marked: changed });
     }
 
     // -------------------------------------------------------------------------
-    // 12. Real-Time Sync & Presence
+    // 12. Real-Time Sync & Low-Latency Long-Polling
     // -------------------------------------------------------------------------
     if (action === "sync") {
       const username = (url.searchParams.get("username") || "").toLowerCase().trim();
       const activeChatId = url.searchParams.get("chatId");
       const since = parseInt(url.searchParams.get("since") || "0", 10);
+      const wait = url.searchParams.get("wait");
 
       if (username) {
         const users = await loadUsers();
@@ -738,6 +747,51 @@ export default async function handler(req, res) {
 
       let newMessages = [];
       if (activeChatId) {
+        const msgs = await loadChatMessages(activeChatId);
+        if (since > 0) {
+          newMessages = msgs.filter(m => m.timestamp > since);
+        } else {
+          newMessages = msgs;
+        }
+      }
+
+      // Long-polling: if wait=1 is requested and no new messages yet, wait for real-time bus or timeout
+      if ((wait === "1" || wait === "true") && newMessages.length === 0 && activeChatId) {
+        await new Promise((resolve) => {
+          let resolved = false;
+
+          const onEvent = () => {
+            if (resolved) return;
+            resolved = true;
+            cleanup();
+            resolve();
+          };
+
+          const cleanup = () => {
+            REALTIME_BUS.removeListener("chat:" + activeChatId, onEvent);
+            if (username) REALTIME_BUS.removeListener("user:" + username, onEvent);
+            clearInterval(pollInterval);
+            clearTimeout(timeoutTimer);
+          };
+
+          REALTIME_BUS.once("chat:" + activeChatId, onEvent);
+          if (username) REALTIME_BUS.once("user:" + username, onEvent);
+
+          const pollInterval = setInterval(async () => {
+            const latest = await loadChatMessages(activeChatId, true);
+            if (latest.some(m => m.timestamp > since)) {
+              onEvent();
+            }
+          }, 1200);
+
+          const timeoutTimer = setTimeout(() => {
+            if (resolved) return;
+            resolved = true;
+            cleanup();
+            resolve();
+          }, 9000);
+        });
+
         const msgs = await loadChatMessages(activeChatId);
         if (since > 0) {
           newMessages = msgs.filter(m => m.timestamp > since);
