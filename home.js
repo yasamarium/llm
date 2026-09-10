@@ -11,7 +11,8 @@
     checkDouble: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 6 9 17 4 12"/><polyline points="22 10 13 19 11 17"/></svg>`,
     play: `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`,
     pause: `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,
-    verified: `<svg width="13" height="13" viewBox="0 0 24 24" fill="#0a84ff"><path d="M12 2l2.4 2.8 3.7-.4 1.2 3.5 3.4 1.6-1.1 3.5 1.1 3.5-3.4 1.6-1.2 3.5-3.7-.4L12 22l-2.4-2.8-3.7.4-1.2-3.5-3.4-1.6 1.1-3.5-1.1-3.5 3.4-1.6 1.2-3.5 3.7.4L12 2z"/><path d="m9 12 2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+    verified: `<svg class="verified-badge-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.69.46-1.54.2-3.21-.81-4.32-1.01-1.01-2.68-1.27-4.22-.81-.74-1.3-2.11-2.18-3.69-2.18s-2.95.88-3.69 2.18c-1.54-.46-3.21-.2-4.22.81-1.01 1.01-1.27 2.68-.81 4.22-1.3.74-2.18 2.11-2.18 3.69s.88 2.95 2.18 3.69c-.46 1.54-.2 3.21.81 4.32 1.01 1.01 2.68 1.27 4.22.81.74 1.3 2.11 2.18 3.69 2.18s2.95-.88 3.69-2.18c1.54.46 3.21.2 4.22-.81 1.01-1.01 1.27-2.68.81-4.32 1.3-.74 2.18-2.11 2.18-3.69z" fill="#0095f6"/><path d="M10.2 16.2l-3.5-3.5 1.4-1.4 2.1 2.1 5.3-5.3 1.4 1.4-6.7 6.7z" fill="#ffffff"/></svg>`,
+    ownerCrown: `<svg class="owner-crown-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>`,
     userPlus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>`,
     eyeOpen: `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
     eyeOff: `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`,
@@ -26,11 +27,20 @@
 
   function getAvatarColorClass(str) {
     if (!str) return IOS_ACCENT_COLORS[0];
+    const clean = str.replace(/^@+/, "").trim().toLowerCase();
+    if (clean === "as") return "init-owner-purple";
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
     }
     return IOS_ACCENT_COLORS[hash % IOS_ACCENT_COLORS.length];
+  }
+
+  function renderOwnerBadgeHtml(mini = false) {
+    if (mini) {
+      return `<span class="owner-badge-mini">${ICONS.ownerCrown}Owner</span>`;
+    }
+    return `<span class="owner-tag-badge">${ICONS.ownerCrown}<span class="owner-text">Owner</span><span class="exclusive-pill">Exclusive</span></span>`;
   }
 
   function getInitialLetter(name, fallback = "U") {
@@ -166,6 +176,7 @@
   const activeContactHandle = document.getElementById("activeContactHandle");
   const activeContactStatus = null;
   const activeVerifiedBadge = document.getElementById("activeVerifiedBadge");
+  const activeOwnerBadge = document.getElementById("activeOwnerBadge");
   const openContactInfoBtn = document.getElementById("openContactInfoBtn");
 
   // Message Container
@@ -275,6 +286,31 @@
   const contactSheetName = document.getElementById("contactSheetName");
   const contactSheetHandle = document.getElementById("contactSheetHandle");
   const contactSheetVerified = document.getElementById("contactSheetVerified");
+  const contactSheetHero = document.getElementById("contactSheetHero");
+  const contactSheetOwnerBadge = document.getElementById("contactSheetOwnerBadge");
+  const ownerBlockAlertModal = document.getElementById("ownerBlockAlertModal");
+  const closeOwnerBlockAlertBtn = document.getElementById("closeOwnerBlockAlertBtn");
+
+  function showOwnerBlockAlert() {
+    if (ownerBlockAlertModal) {
+      ownerBlockAlertModal.style.display = "flex";
+    }
+  }
+
+  function hideOwnerBlockAlert() {
+    if (ownerBlockAlertModal) {
+      ownerBlockAlertModal.style.display = "none";
+    }
+  }
+
+  if (closeOwnerBlockAlertBtn) {
+    closeOwnerBlockAlertBtn.addEventListener("click", hideOwnerBlockAlert);
+  }
+  if (ownerBlockAlertModal) {
+    ownerBlockAlertModal.addEventListener("click", (e) => {
+      if (e.target === ownerBlockAlertModal) hideOwnerBlockAlert();
+    });
+  }
   const copyContactHandleBtn = document.getElementById("copyContactHandleBtn");
   const copyHandleText = document.getElementById("copyHandleText");
   const contactSheetStatusPill = null;
@@ -475,9 +511,9 @@
   }
 
   function formatJoinDate(timestamp) {
-    if (!timestamp) return "September 2026";
+    if (!timestamp) return "February 1990";
     const d = new Date(timestamp);
-    if (isNaN(d.getTime())) return "September 2026";
+    if (isNaN(d.getTime())) return "February 1990";
     const months = [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
@@ -485,6 +521,9 @@
     const month = months[d.getMonth()];
     const year = d.getFullYear();
     const day = d.getDate();
+    if (year === 1990 || timestamp === 633830400000) {
+      return "Joined February 1990";
+    }
     return `Joined ${day} ${month} ${year}`;
   }
 
@@ -907,7 +946,10 @@
       const name = currentUser.displayName || currentUser.username;
       navUserAvatarSlot.innerHTML = renderAvatarHtml(name, currentUser.pfp, "avatar-sm");
     }
-    if (navDisplayName) navDisplayName.textContent = currentUser.displayName || currentUser.username;
+    if (navDisplayName) {
+      const isOwner = (currentUser.role === "owner") || (currentUser.username && currentUser.username.toLowerCase() === "as");
+      navDisplayName.innerHTML = `${escapeHtml(currentUser.displayName || currentUser.username)} ${isOwner ? renderOwnerBadgeHtml(true) : ""}`;
+    }
     if (navUsername) navUsername.textContent = `@${currentUser.username}`;
   }
 
@@ -958,9 +1000,23 @@
 
 
 
-    // Name & Verified
+    // Owner detection
+    const isOwner = (target.role === "owner") || (handle.toLowerCase() === "as");
+    if (isOwner) {
+      target.role = "owner";
+      target.verified = true;
+      target.createdAt = 633830400000;
+    }
+
+    if (contactSheetHero) {
+      if (isOwner) contactSheetHero.classList.add("is-owner");
+      else contactSheetHero.classList.remove("is-owner");
+    }
+
+    // Name & Verified & Owner Badge
     if (contactSheetName) contactSheetName.textContent = name;
-    if (contactSheetVerified) contactSheetVerified.style.display = target.verified ? "inline-flex" : "none";
+    if (contactSheetVerified) contactSheetVerified.style.display = (target.verified || isOwner) ? "inline-flex" : "none";
+    if (contactSheetOwnerBadge) contactSheetOwnerBadge.style.display = isOwner ? "inline-flex" : "none";
 
     // Handle
     if (contactSheetHandle) contactSheetHandle.textContent = `@${handle}`;
@@ -1153,7 +1209,8 @@
           <div class="convo-meta">
             <div class="convo-row-top">
               <span class="convo-name">${escapeHtml(c.name || c.handle)}</span>
-              ${c.verified ? `<span class="verified-glyph">${ICONS.verified}</span>` : ""}
+              ${(c.verified || c.role === "owner" || (c.handle && c.handle.toLowerCase() === "as")) ? `<span class="verified-glyph">${ICONS.verified}</span>` : ""}
+              ${(c.role === "owner" || (c.handle && c.handle.toLowerCase() === "as")) ? renderOwnerBadgeHtml(true) : ""}
               <span class="convo-time">${timeStr}</span>
             </div>
             <div class="convo-row-bot">
@@ -1217,9 +1274,17 @@
     if (activeContactAvatarSlot) {
       activeContactAvatarSlot.innerHTML = renderAvatarHtml(meta.name || meta.handle, meta.pfp, "avatar-md");
     }
+    const isOwner = (meta.role === "owner") || (meta.handle && meta.handle.toLowerCase() === "as");
+    if (isOwner) {
+      meta.role = "owner";
+      meta.verified = true;
+      meta.createdAt = 633830400000;
+    }
+
     if (activeContactName) activeContactName.textContent = meta.name || meta.handle;
     if (activeContactHandle) activeContactHandle.textContent = `@${meta.handle || meta.id}`;
-    if (activeVerifiedBadge) activeVerifiedBadge.style.display = meta.verified ? "inline-flex" : "none";
+    if (activeVerifiedBadge) activeVerifiedBadge.style.display = (meta.verified || isOwner) ? "inline-flex" : "none";
+    if (activeOwnerBadge) activeOwnerBadge.style.display = isOwner ? "inline-flex" : "none";
 
     if (window.innerWidth <= 768 && msgWorkspace) {
       msgWorkspace.classList.add("mobile-chat-open");
@@ -2114,7 +2179,8 @@
             <div class="quick-contact-info">
               <div class="quick-contact-name">
                 ${escapeHtml(u.displayName || u.username)}
-                ${u.verified ? `<span class="verified-glyph">${ICONS.verified}</span>` : ""}
+                ${(u.verified || u.role === "owner" || (u.username && u.username.toLowerCase() === "as")) ? `<span class="verified-glyph">${ICONS.verified}</span>` : ""}
+                ${(u.role === "owner" || (u.username && u.username.toLowerCase() === "as")) ? renderOwnerBadgeHtml(true) : ""}
               </div>
               <div class="quick-contact-handle">@${u.username}</div>
             </div>
@@ -2161,14 +2227,17 @@
     const sorted = [currentUser.username.toLowerCase(), cleanTarget].sort();
     const dmId = `dm_${sorted[0]}__${sorted[1]}`;
 
+    const isTargetOwner = cleanTarget === "as";
     const meta = {
       id: dmId,
       type: "direct",
       handle: cleanTarget,
-      name: targetName || cleanTarget,
+      name: targetName || (isTargetOwner ? "AS (Owner)" : cleanTarget),
       pfp: targetPfp || null,
-      createdAt: Date.now(),
-      bio: "Available on AS Messages",
+      role: isTargetOwner ? "owner" : "",
+      verified: isTargetOwner ? true : false,
+      createdAt: isTargetOwner ? 633830400000 : Date.now(),
+      bio: isTargetOwner ? "Official Owner of AS Platform" : "Available on AS Messages",
       lastMessage: null,
     };
 
@@ -2377,6 +2446,10 @@
   async function toggleBlockUser(targetUsername) {
     if (!currentUser || !targetUsername) return;
     const cleanTarget = targetUsername.toLowerCase().trim();
+    if (cleanTarget === "as") {
+      showOwnerBlockAlert();
+      return;
+    }
     const isCurrentlyBlocked = Array.isArray(currentUser.blockedUsers) && currentUser.blockedUsers.includes(cleanTarget);
     const action = isCurrentlyBlocked ? "unblock_user" : "block_user";
 
@@ -2408,6 +2481,11 @@
           openContactInfo(activeConvoMeta);
         }
         renderSettingsBlocklist();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 403 || (errData.error && errData.error.includes("Owner"))) {
+          showOwnerBlockAlert();
+        }
       }
     } catch (err) {
       console.error("Error toggling block:", err);

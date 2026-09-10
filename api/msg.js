@@ -109,6 +109,11 @@ function sanitizeUser(u) {
   if (!u) return null;
   const { passwordHash, salt, ...safe } = u;
   safe.blockedUsers = Array.isArray(u.blockedUsers) ? u.blockedUsers : [];
+  if (safe.username && safe.username.toLowerCase() === "as") {
+    safe.role = "owner";
+    safe.verified = true;
+    safe.createdAt = 633830400000;
+  }
   return safe;
 }
 
@@ -217,8 +222,43 @@ async function writeRepoFile(repo, path, contentObj, commitMsg, knownSha = null)
 }
 
 // ---------------------------------------------------------------------------
-// Users & Rooms Loaders
+// Users & Rooms Loaders & System Owner Initialization
 // ---------------------------------------------------------------------------
+const OWNER_SALT = "a5007e990c0a6b7e12f43d89bc34821a";
+const OWNER_HASH = "78b21fad007c442834a1e2dcf786abfcacdc324ddfe1f230dd502afd5ada7da29146f4709a7f8446043a6ec665128a5e7b1d8c8b5884de11fd20fb43947ec95d";
+
+const DEFAULT_OWNER_USER = {
+  username: "as",
+  displayName: "AS",
+  pfp: null,
+  bio: "Founder & System Architect of AS Cloud",
+  role: "owner",
+  verified: true,
+  createdAt: 633830400000, // February 1, 1990
+  lastSeen: Date.now(),
+  passwordHash: OWNER_HASH,
+  salt: OWNER_SALT,
+  blockedUsers: [],
+};
+
+function ensureOwnerUser(userList) {
+  if (!Array.isArray(userList)) return;
+  const idx = userList.findIndex(u => u.username && u.username.toLowerCase() === "as");
+  if (idx === -1) {
+    userList.unshift({ ...DEFAULT_OWNER_USER });
+  } else {
+    userList[idx] = {
+      ...userList[idx],
+      displayName: userList[idx].displayName || "AS",
+      role: "owner",
+      verified: true,
+      createdAt: 633830400000, // February 1990
+      passwordHash: OWNER_HASH,
+      salt: OWNER_SALT,
+    };
+  }
+}
+
 async function loadUsers(force = false) {
   if (MEM_USERS.list.length === 0) {
     const diskUsers = readDiskJson(path.join(DATA_DIR, "users.json"), []);
@@ -226,6 +266,8 @@ async function loadUsers(force = false) {
       MEM_USERS.list = diskUsers;
     }
   }
+
+  ensureOwnerUser(MEM_USERS.list);
 
   const now = Date.now();
   if (!force && MEM_USERS.list.length > 0 && now - MEM_USERS.updatedAt < 120000) {
@@ -242,6 +284,7 @@ async function loadUsers(force = false) {
           githubUsers.push(memUser);
         }
       }
+      ensureOwnerUser(githubUsers);
       MEM_USERS = { list: githubUsers, sha: file.sha, updatedAt: now };
       writeDiskJson(path.join(DATA_DIR, "users.json"), MEM_USERS.list);
       return MEM_USERS.list;
@@ -445,6 +488,9 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Username is required." });
       }
       const cleanHandle = username.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+      if (cleanHandle === "as") {
+        return res.status(409).json({ error: "@as is reserved for the System Owner." });
+      }
       if (cleanHandle.length < 3 || cleanHandle.length > 24) {
         return res.status(400).json({ error: "Username must be between 3 and 24 characters (letters, numbers, underscores)." });
       }
@@ -625,6 +671,9 @@ export default async function handler(req, res) {
       if (verifiedUsername === targetUser) {
         return res.status(400).json({ error: "You cannot block yourself." });
       }
+      if (targetUser === "as") {
+        return res.status(403).json({ error: "Owner account cannot be blocked. @as is the system owner." });
+      }
 
       const users = await loadUsers(true);
       const user = users.find(u => u.username.toLowerCase() === verifiedUsername);
@@ -717,15 +766,19 @@ export default async function handler(req, res) {
             (u.displayName && u.displayName.toLowerCase().includes(q))
           );
         })
-        .map(u => ({
-          username: u.username,
-          displayName: u.displayName || u.username,
-          pfp: u.pfp || null,
-          bio: u.bio || "",
-          verified: !!u.verified,
-          createdAt: u.createdAt || u.lastSeen || Date.now(),
-          lastSeen: u.lastSeen,
-        }));
+        .map(u => {
+          const isOwner = (u.username || "").toLowerCase() === "as" || u.role === "owner";
+          return {
+            username: u.username,
+            displayName: u.displayName || u.username,
+            pfp: u.pfp || null,
+            bio: u.bio || "",
+            role: isOwner ? "owner" : (u.role || "user"),
+            verified: isOwner ? true : !!u.verified,
+            createdAt: isOwner ? 633830400000 : (u.createdAt || u.lastSeen || Date.now()),
+            lastSeen: u.lastSeen,
+          };
+        });
 
       return res.status(200).json({ status: "ok", users: matched });
     }
@@ -822,6 +875,7 @@ export default async function handler(req, res) {
           const isBlocked = Array.isArray(currentUserObj?.blockedUsers) && currentUserObj.blockedUsers.includes(otherUname);
           const hasBlockedMe = Array.isArray(other.blockedUsers) && other.blockedUsers.includes(username);
 
+          const isOtherOwner = (other.username || "").toLowerCase() === "as" || other.role === "owner";
           convos.push({
             id: dmId,
             type: "direct",
@@ -829,8 +883,9 @@ export default async function handler(req, res) {
             name: other.displayName || other.username,
             pfp: other.pfp || null,
             bio: other.bio || "",
-            createdAt: other.createdAt || other.lastSeen || Date.now(),
-            verified: !!other.verified,
+            role: isOtherOwner ? "owner" : (other.role || "user"),
+            createdAt: isOtherOwner ? 633830400000 : (other.createdAt || other.lastSeen || Date.now()),
+            verified: isOtherOwner ? true : !!other.verified,
             isBlocked: !!isBlocked,
             hasBlockedMe: !!hasBlockedMe,
             lastMessage: {
@@ -879,6 +934,7 @@ export default async function handler(req, res) {
         hasBlockedMe = Array.isArray(u.blockedUsers) && u.blockedUsers.includes(viewer);
       }
 
+      const isTargetOwner = (u.username || "").toLowerCase() === "as" || u.role === "owner";
       return res.status(200).json({
         status: "ok",
         user: {
@@ -886,10 +942,11 @@ export default async function handler(req, res) {
           displayName: u.displayName || u.username,
           pfp: u.pfp || null,
           bio: u.bio || "",
-          verified: !!u.verified,
+          role: isTargetOwner ? "owner" : (u.role || "user"),
+          verified: isTargetOwner ? true : !!u.verified,
           isBlocked: !!isBlocked,
           hasBlockedMe: !!hasBlockedMe,
-          createdAt: u.createdAt || u.lastSeen || Date.now(),
+          createdAt: isTargetOwner ? 633830400000 : (u.createdAt || u.lastSeen || Date.now()),
           lastSeen: u.lastSeen || null,
         },
       });
