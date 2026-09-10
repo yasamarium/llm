@@ -904,7 +904,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "chatId is required." });
       }
       const messages = await loadChatMessages(chatId);
-      return res.status(200).json({ status: "ok", chatId, messages });
+      const safeMessages = messages.map(m => m.chatId ? m : { ...m, chatId });
+      return res.status(200).json({ status: "ok", chatId, messages: safeMessages });
     }
 
     // -------------------------------------------------------------------------
@@ -1110,7 +1111,8 @@ export default async function handler(req, res) {
       return res.status(200).json({
         status: "ok",
         timestamp: Date.now(),
-        newMessages,
+        chatId: activeChatId,
+        newMessages: newMessages.map(m => m.chatId ? m : { ...m, chatId: activeChatId }),
       });
     }
 

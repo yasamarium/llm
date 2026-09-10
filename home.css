@@ -3058,3 +3058,130 @@ html, body {
   border: none !important;
 }
 
+/* ==========================================================================
+   Smooth Loading Animations & Skeleton Shimmer (iOS OLED Dark Theme)
+   ========================================================================== */
+
+/* Chat Messages Skeleton Container */
+.chat-loading-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 8px;
+  width: 100%;
+  box-sizing: border-box;
+  animation: chatFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.skeleton-bubble {
+  max-width: 68%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #141416;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.skeleton-bubble.incoming {
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.skeleton-bubble.outgoing {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: #1c1c1f;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.skeleton-line {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.035) 25%, rgba(255, 255, 255, 0.10) 50%, rgba(255, 255, 255, 0.035) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.6s infinite ease-in-out;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Sidebar Skeleton Loader */
+.sidebar-loading-skeleton {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 8px;
+  box-sizing: border-box;
+  animation: chatFadeIn 0.2s ease;
+}
+
+.convo-skeleton-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.035) 25%, rgba(255, 255, 255, 0.10) 50%, rgba(255, 255, 255, 0.035) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.6s infinite ease-in-out;
+}
+
+.skeleton-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* Smooth Spinner (Apple-Style) */
+.smooth-spinner {
+  width: 18px;
+  height: 18px;
+  animation: smoothSpin 0.75s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+@keyframes smoothSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Chat view fade-in transition */
+.chat-fade-in {
+  animation: chatFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes chatFadeIn {
+  from {
+    opacity: 0.25;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+

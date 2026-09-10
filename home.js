@@ -347,12 +347,33 @@
     } catch (_) {}
   }
 
+  let chatSessionCounter = 0;
+
   function loadLocalChatMessages(chatId) {
+    if (!chatId) return [];
     try {
       const raw = localStorage.getItem(getLocalChatMsgsKey(chatId));
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          // Strictly purge any foreign messages that do not belong to this chatId
+          const cleaned = parsed.filter((m) => {
+            if (!m || !m.id) return false;
+            if (m.chatId && m.chatId !== chatId) return false;
+            if (chatId.startsWith("dm_")) {
+              const parts = chatId.replace("dm_", "").split("__");
+              const s = (m.sender || "").toLowerCase();
+              const r = (m.recipient || "").toLowerCase();
+              if (s && !parts.includes(s)) return false;
+              if (r && !parts.includes(r)) return false;
+            }
+            return true;
+          });
+          if (cleaned.length !== parsed.length) {
+            saveLocalChatMessages(chatId, cleaned);
+          }
+          return cleaned;
+        }
       }
     } catch (_) {}
     return [];
@@ -361,21 +382,49 @@
   function saveLocalChatMessages(chatId, msgs) {
     try {
       if (chatId && Array.isArray(msgs)) {
-        const slice = msgs.slice(-150);
+        const tagged = msgs
+          .filter((m) => m && m.id && (!m.chatId || m.chatId === chatId))
+          .map((m) => (m.chatId ? m : { ...m, chatId }));
+        const slice = tagged.slice(-150);
         localStorage.setItem(getLocalChatMsgsKey(chatId), JSON.stringify(slice));
       }
     } catch (_) {}
   }
 
   function appendLocalChatMessage(chatId, newMsg) {
+    if (!chatId || !newMsg || !newMsg.id) return;
+    if (newMsg.chatId && newMsg.chatId !== chatId) return;
     try {
       const existing = loadLocalChatMessages(chatId);
-      if (!existing.some(m => m.id === newMsg.id)) {
-        existing.push(newMsg);
+      if (!existing.some((m) => m.id === newMsg.id)) {
+        existing.push({ ...newMsg, chatId });
         saveLocalChatMessages(chatId, existing);
       }
     } catch (_) {}
   }
+
+  function renderLoadingSkeleton() {
+    return `
+      <div class="chat-loading-skeleton" id="chatLoadingSkeleton" aria-label="Loading messages">
+        <div class="skeleton-bubble incoming">
+          <div class="skeleton-line" style="width: 140px;"></div>
+          <div class="skeleton-line" style="width: 85px;"></div>
+        </div>
+        <div class="skeleton-bubble outgoing">
+          <div class="skeleton-line" style="width: 165px;"></div>
+        </div>
+        <div class="skeleton-bubble incoming">
+          <div class="skeleton-line" style="width: 210px;"></div>
+          <div class="skeleton-line" style="width: 110px;"></div>
+        </div>
+        <div class="skeleton-bubble outgoing">
+          <div class="skeleton-line" style="width: 130px;"></div>
+          <div class="skeleton-line" style="width: 75px;"></div>
+        </div>
+      </div>
+    `;
+  }
+
   let syncInterval = null;
   let isPolling = false;
 
@@ -1128,6 +1177,7 @@
   // Open and Switch Active Chat
   // ---------------------------------------------------------------------------
   async function openChat(chatId, newContactMeta = null) {
+    const sessionToken = ++chatSessionCounter;
     activeConvoId = chatId;
 
     let meta = conversations.find((c) => c.id === chatId) || newContactMeta;
@@ -1185,17 +1235,21 @@
     const localMsgs = loadLocalChatMessages(chatId);
     if (messagesFlow) {
       messagesFlow.innerHTML = "";
+      messagesFlow.classList.remove("chat-fade-in");
+      void messagesFlow.offsetWidth; // Trigger reflow for smooth iOS fade-in transition
+      messagesFlow.classList.add("chat-fade-in");
+
       if (localMsgs.length > 0) {
         localMsgs.forEach((msg) => renderMessage(msg, false));
         scrollToBottom();
       } else {
-        messagesFlow.innerHTML = '<div style="text-align:center; padding: 30px; color: var(--text-secondary); font-size: 13px;">Loading messages...</div>';
+        messagesFlow.innerHTML = renderLoadingSkeleton();
       }
     }
 
-    await loadChatHistory(chatId);
+    await loadChatHistory(chatId, sessionToken);
 
-    if (messageTextInput) messageTextInput.focus();
+    if (activeConvoId === chatId && messageTextInput) messageTextInput.focus();
 
     if (currentUser) {
       try {
@@ -1211,7 +1265,7 @@
   // ---------------------------------------------------------------------------
   // Load Messages for Active Chat
   // ---------------------------------------------------------------------------
-  async function loadChatHistory(chatId) {
+  async function loadChatHistory(chatId, sessionToken) {
     try {
       const res = await fetch(`/api/msg?action=get_messages&chatId=${encodeURIComponent(chatId)}`);
       if (!res.ok) return;
@@ -1222,23 +1276,24 @@
         saveLocalChatMessages(chatId, messages);
       }
 
-      if (activeConvoId !== chatId) return;
+      // STRICT CHAT GUARD: If user switched chats while fetching, discard DOM update
+      if (activeConvoId !== chatId || sessionToken !== chatSessionCounter) return;
 
-      const loadingPlaceholder = messagesFlow.querySelector("div");
-      if (loadingPlaceholder && loadingPlaceholder.textContent.includes("Loading messages...")) {
-        messagesFlow.innerHTML = "";
+      const skeleton = messagesFlow ? messagesFlow.querySelector(".chat-loading-skeleton") : null;
+      if (skeleton) {
+        skeleton.remove();
       }
 
       if (messages.length === 0 && (!messagesFlow.children || messagesFlow.children.length === 0)) {
         messagesFlow.innerHTML = `
-          <div style="text-align:center; padding: 40px 20px; color: var(--text-secondary);">
+          <div style="text-align:center; padding: 40px 20px; color: var(--text-secondary); animation: chatFadeIn 0.2s ease;">
             <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">No messages here yet</div>
             <div style="font-size: 12px;">Say hello to start the conversation over AS Cloud!</div>
           </div>
         `;
       } else {
         messages.forEach((msg) => {
-          renderMessage(msg, false);
+          renderMessage({ ...msg, chatId }, false);
         });
       }
 
@@ -1253,7 +1308,28 @@
   // ---------------------------------------------------------------------------
   function renderMessage(m, animate = true) {
     if (!messagesFlow || !m || !m.id) return;
+
+    // STRICT CHAT ISOLATION GUARD 1: Message must belong to activeConvoId
+    if (m.chatId && activeConvoId && m.chatId !== activeConvoId) {
+      return;
+    }
+
+    // STRICT CHAT ISOLATION GUARD 2: In direct chats, verify sender and recipient belong to active DM pair
+    if (activeConvoMeta && activeConvoMeta.type === "direct" && currentUser) {
+      const partner = (activeConvoMeta.handle || activeConvoMeta.name || "").toLowerCase();
+      const me = currentUser.username.toLowerCase();
+      const s = (m.sender || "").toLowerCase();
+      const r = (m.recipient || "").toLowerCase();
+      if (s && r && !((s === me && r === partner) || (s === partner && r === me))) {
+        return;
+      }
+    }
+
     if (loadedMessageIds.has(m.id) || document.getElementById(m.id)) return;
+
+    // Remove loading skeleton if present
+    const skeleton = messagesFlow.querySelector(".chat-loading-skeleton");
+    if (skeleton) skeleton.remove();
 
     // Check for duplicate optimistic / in-flight messages from the same sender
     if (currentUser && m.sender && m.sender.toLowerCase() === currentUser.username.toLowerCase()) {
@@ -1520,6 +1596,10 @@
       return;
     }
 
+    const targetChatId = activeConvoId;
+    const targetMeta = activeConvoMeta;
+    if (!targetChatId) return;
+
     const currentReply = activeReply;
     cancelReply();
 
@@ -1532,11 +1612,11 @@
     const clientMsgId = `m_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const optimisticMsg = {
       id: clientMsgId,
-      chatId: activeConvoId,
+      chatId: targetChatId,
       sender: currentUser.username,
       senderName: currentUser.displayName || currentUser.username,
       senderPfp: currentUser.pfp,
-      recipient: activeConvoMeta.type === "direct" ? activeConvoMeta.handle : null,
+      recipient: targetMeta?.type === "direct" ? targetMeta.handle : null,
       text: cleanText,
       mediaType: media ? media.type : null,
       mediaUrl: media ? media.url : null,
@@ -1546,17 +1626,19 @@
       status: "sent",
     };
 
-    renderMessage(optimisticMsg, true);
-    scrollToBottom();
-    playChime("sent");
+    if (activeConvoId === targetChatId) {
+      renderMessage(optimisticMsg, true);
+      scrollToBottom();
+      playChime("sent");
+    }
 
-    // Persist immediately to client local cache
-    appendLocalChatMessage(activeConvoId, optimisticMsg);
+    // Persist immediately to target chat local cache
+    appendLocalChatMessage(targetChatId, optimisticMsg);
 
     // Cross-tab real-time dispatch
     broadcastRealtimeEvent({
       type: "new_message",
-      chatId: activeConvoId,
+      chatId: targetChatId,
       message: optimisticMsg,
     });
 
@@ -1567,9 +1649,9 @@
         body: JSON.stringify({
           action: "send_message",
           id: clientMsgId,
-          chatId: activeConvoId,
+          chatId: targetChatId,
           sender: currentUser.username,
-          recipient: activeConvoMeta.type === "direct" ? activeConvoMeta.handle : null,
+          recipient: targetMeta?.type === "direct" ? targetMeta.handle : null,
           text: cleanText,
           mediaType: media ? media.type : null,
           mediaUrl: media ? media.url : null,
@@ -1659,7 +1741,14 @@
     const { file, base64, isImg } = pendingMediaUpload;
     const caption = (mediaPreviewCaption ? mediaPreviewCaption.value : "").trim();
 
-    if (sendMediaBtnText) sendMediaBtnText.textContent = "Uploading...";
+    if (sendMediaBtnText) {
+      sendMediaBtnText.innerHTML = `
+        <svg class="smooth-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="32" stroke-dashoffset="12" style="margin-right: 6px; width: 14px; height: 14px;">
+          <circle cx="12" cy="12" r="10" stroke-width="2.5"></circle>
+        </svg>
+        <span>Uploading...</span>
+      `;
+    }
     if (sendMediaPreviewBtn) sendMediaPreviewBtn.disabled = true;
 
     let cdnUrl = base64;
@@ -1827,7 +1916,15 @@
     if (!data || !currentUser) return;
     if (data.type === "new_message" && data.message) {
       const m = data.message;
-      if (data.chatId === activeConvoId) {
+      const eventChatId = data.chatId || m.chatId;
+
+      // Always save to the relevant chat's cache
+      if (eventChatId) {
+        appendLocalChatMessage(eventChatId, { ...m, chatId: eventChatId });
+      }
+
+      // STRICT CHAT GUARD: Only render if this message belongs to the currently active conversation
+      if (eventChatId && activeConvoId && eventChatId === activeConvoId) {
         if (!loadedMessageIds.has(m.id) && !document.getElementById(m.id)) {
           renderMessage(m, true);
           if (m.sender.toLowerCase() !== currentUser.username.toLowerCase()) {
@@ -1890,9 +1987,12 @@
     if (!currentUser) return;
 
     while (currentUser && isRealtimeLoopActive) {
+      const pollTargetChatId = activeConvoId;
+      const pollSessionId = chatSessionCounter;
+
       try {
         longPollAbortCtrl = new AbortController();
-        const url = `/api/msg?action=sync&wait=1&username=${encodeURIComponent(currentUser.username)}&chatId=${encodeURIComponent(activeConvoId || "")}&since=${lastMessageTimestamp}`;
+        const url = `/api/msg?action=sync&wait=1&username=${encodeURIComponent(currentUser.username)}&chatId=${encodeURIComponent(pollTargetChatId || "")}&since=${lastMessageTimestamp}`;
         
         const res = await fetch(url, { signal: longPollAbortCtrl.signal });
         if (!res.ok) {
@@ -1901,13 +2001,31 @@
         }
 
         const data = await res.json();
+        const resChatId = data.chatId || pollTargetChatId;
         const newMsgs = data.newMessages || [];
+
+        // STRICT CHAT BOUNDARY: If user switched conversations while awaiting response, do NOT render to active screen!
+        if (activeConvoId !== resChatId || chatSessionCounter !== pollSessionId) {
+          if (newMsgs.length > 0 && resChatId) {
+            newMsgs.forEach((m) => appendLocalChatMessage(resChatId, { ...m, chatId: resChatId }));
+            loadConversations();
+          }
+          continue;
+        }
 
         if (newMsgs.length > 0) {
           let hasIncoming = false;
           newMsgs.forEach((m) => {
+            const mWithChat = { ...m, chatId: resChatId };
+            // Ensure message belongs to currently open chat
+            if (mWithChat.chatId !== activeConvoId) {
+              appendLocalChatMessage(mWithChat.chatId, mWithChat);
+              return;
+            }
+
             if (!loadedMessageIds.has(m.id) && !document.getElementById(m.id)) {
-              renderMessage(m, true);
+              renderMessage(mWithChat, true);
+              appendLocalChatMessage(activeConvoId, mWithChat);
               if (m.sender.toLowerCase() !== currentUser.username.toLowerCase()) {
                 hasIncoming = true;
               }
