@@ -1482,35 +1482,371 @@ html, body {
   color: var(--text-secondary);
 }
 
-/* Responsive Mobile Rules */
+/* ==========================================================================
+   Mobile & Phone Web Optimization (Screens <= 768px, iOS & Android)
+   ========================================================================== */
 @media (max-width: 768px) {
-  .msg-sidebar {
+  /* 1. App Container & Viewport Lock */
+  html, body, .msg-app {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    position: fixed;
     width: 100%;
-    min-width: 100%;
-    max-width: 100%;
+  }
+
+  .msg-workspace {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    display: block;
+  }
+
+  /* 2. Hide Desktop-only Left Rail on Phone */
+  .wa-left-rail {
+    display: none !important;
+  }
+
+  /* 3. Full-width Sidebar (Chats List) */
+  .msg-sidebar {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh;
+    height: 100dvh;
     position: absolute;
     inset: 0;
+    z-index: 10;
+    transform: translateX(0);
+    opacity: 1;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+    background: #111b21;
   }
+
+  /* When Chat is Open on Phone: Slide out Sidebar */
+  .msg-workspace.mobile-chat-open .msg-sidebar,
   .msg-workspace.chat-open .msg-sidebar {
-    transform: translateX(-100%);
+    transform: translateX(-25%);
+    opacity: 0;
+    pointer-events: none;
   }
+
+  /* 4. Full-width Chat Pane */
   .msg-chat-pane {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh;
+    height: 100dvh;
     position: absolute;
     inset: 0;
+    z-index: 20;
     transform: translateX(100%);
-    transition: transform 0.32s var(--spring-easing);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #0b141a;
   }
+
+  /* When Chat is Open on Phone: Slide in Chat Pane */
+  .msg-workspace.mobile-chat-open .msg-chat-pane,
   .msg-workspace.chat-open .msg-chat-pane {
     transform: translateX(0);
   }
-  .mobile-back-btn {
+
+  /* 5. Mobile Chat Header & Buttons */
+  .chat-header {
+    padding: 8px 10px;
+    height: 58px;
+    min-height: 58px;
+    box-sizing: border-box;
     display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #202c33;
   }
-  .brand-title {
+
+  .mobile-back-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: var(--accent-blue, #0a84ff);
+    margin-right: 4px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .mobile-back-btn:active {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .chat-header-profile {
+    flex: 1;
+    min-width: 0;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .header-pfp-wrapper {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    flex-shrink: 0;
+  }
+
+  .header-details {
+    min-width: 0;
+    overflow: hidden;
+    gap: 1px;
+  }
+
+  .header-title-row {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .header-contact-name {
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+  }
+
+  .header-subtitle-row {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .header-contact-handle {
+    font-size: 11px;
+    color: var(--accent-blue, #0a84ff);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+  }
+
+  .chat-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .header-action-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+  }
+
+  /* 6. Message History Stream on Mobile */
+  .chat-messages-container {
+    padding: 10px 8px 6px 8px;
+    flex: 1;
+  }
+
+  .messages-flow {
+    gap: 8px;
+  }
+
+  .msg-row {
+    max-width: 88%;
+    gap: 4px;
+  }
+
+  .msg-bubble {
+    padding: 7px 10px 5px 10px;
+    border-radius: 14px;
+  }
+
+  .msg-text-content {
+    font-size: 14px;
+    line-height: 1.38;
+  }
+
+  .msg-reply-trigger-btn {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    margin: 0 2px;
+    opacity: 0.7;
+    pointer-events: auto;
+  }
+
+  .msg-media-photo {
+    max-width: 240px;
+    max-height: 240px;
+    border-radius: 10px;
+  }
+
+  .voice-note-card {
+    min-width: 180px;
+    gap: 8px;
+  }
+
+  /* 7. Bottom Composer Bar & Buttons on Phone */
+  .chat-input-bar {
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) 8px;
+    background: #202c33;
+    border-top: 1px solid rgba(134, 150, 160, 0.15);
+  }
+
+  .composer-capsule {
+    padding: 4px 6px 4px 8px;
+    gap: 4px;
+    border-radius: 22px;
+    background: #2a3942;
+    border: none;
+    box-shadow: none;
+  }
+
+  .composer-action-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    color: #8696a0;
+  }
+
+  .composer-textarea {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
+    padding: 6px 4px;
+    max-height: 110px;
+    color: #d1d7db;
+  }
+
+  .composer-send-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: var(--accent-blue, #0a84ff);
+  }
+
+  /* Reply & Blocked Banners on Phone */
+  .composer-reply-banner {
+    padding: 6px 10px;
+    margin-bottom: 5px;
+    border-radius: 12px;
+  }
+
+  .reply-banner-snippet {
+    max-width: 80%;
+    font-size: 11.5px;
+  }
+
+  .composer-blocked-banner {
+    padding: 8px 12px;
+    border-radius: 12px;
+    gap: 8px;
+  }
+
+  .blocked-banner-text {
+    font-size: 11.5px;
+  }
+
+  .blocked-unblock-btn {
+    padding: 4px 12px;
+    font-size: 11.5px;
+  }
+
+  .scroll-bottom-btn {
+    bottom: 74px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+  }
+
+  /* 8. Filter Chips Horizontal Scroll on Phone */
+  .wa-filter-chips {
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 12px 8px 12px;
+    gap: 6px;
+  }
+
+  .wa-filter-chips::-webkit-scrollbar {
     display: none;
   }
-  .nav-center-pill {
-    display: none;
+
+  .wa-filter-chip {
+    flex-shrink: 0;
+    padding: 5px 12px;
+    font-size: 12.5px;
+  }
+
+  /* 9. Modals on Phone (Responsive Card / Sheet) */
+  .modal-overlay {
+    padding: 10px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-card,
+  .media-preview-card,
+  .ios-sheet-card {
+    width: 100% !important;
+    max-width: 420px !important;
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+  }
+
+  .modal-body,
+  .contact-sheet-body {
+    padding: 14px 16px;
+    max-height: calc(85dvh - 120px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-footer,
+  .media-preview-footer {
+    padding: 10px 14px;
+  }
+
+  .form-input,
+  .media-caption-input,
+  .input-with-prefix input {
+    font-size: 16px !important; /* Prevents auto-zoom on mobile */
+  }
+
+  .media-preview-display-zone {
+    max-height: 220px;
+    min-height: 140px;
+  }
+
+  .media-preview-img {
+    max-height: 210px;
+  }
+
+  .auth-card {
+    width: 95% !important;
+    max-width: 380px !important;
+    padding: 22px 18px;
+    border-radius: 18px;
   }
 }
 

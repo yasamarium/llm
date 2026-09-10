@@ -1040,6 +1040,7 @@
 
     if (window.innerWidth <= 768 && msgWorkspace) {
       msgWorkspace.classList.add("mobile-chat-open");
+      msgWorkspace.classList.add("chat-open");
     }
 
     renderConversationList();
@@ -1925,6 +1926,7 @@
   if (mobileBackBtn && msgWorkspace) {
     mobileBackBtn.addEventListener("click", () => {
       msgWorkspace.classList.remove("mobile-chat-open");
+      msgWorkspace.classList.remove("chat-open");
     });
   }
 
@@ -2061,7 +2063,14 @@
           renderNavProfile();
           hideAuthOverlay();
           await loadConversations();
-          await openChat(activeConvoId);
+          if (window.innerWidth > 768) {
+            await openChat(activeConvoId);
+          } else {
+            if (msgWorkspace) {
+              msgWorkspace.classList.remove("mobile-chat-open");
+              msgWorkspace.classList.remove("chat-open");
+            }
+          }
           startSyncEngine();
           return;
         }
