@@ -1,5 +1,8 @@
 // api/msg.js - AS Real Live Messaging Engine Backend with Secure Auth
 // Backed by yasamarium/msg-db-users, msg-db-messages, msg-db-rooms & msg-media-storage
+import fs from "fs";
+import path from "path";
+import os from "os";
 import crypto from "crypto";
 import { EventEmitter } from "events";
 
@@ -31,8 +34,33 @@ const REPO_ROOMS = "msg-db-rooms";
 const REPO_SYSTEM = "msg-db-system";
 
 // ---------------------------------------------------------------------------
-// In-Memory Fast Cache for Sub-50ms WhatsApp Response Times
+// In-Memory & Resilient Local Storage Cache (0ms latency, zero rate-limit issues)
 // ---------------------------------------------------------------------------
+const DATA_DIR = path.join(os.tmpdir(), "as_msg_v2_storage");
+const CHATS_DIR = path.join(DATA_DIR, "chats");
+try {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(CHATS_DIR)) fs.mkdirSync(CHATS_DIR, { recursive: true });
+} catch (_) {}
+
+function readDiskJson(filePath, fallback = null) {
+  try {
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (_) {}
+  return fallback;
+}
+
+function writeDiskJson(filePath, data) {
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  } catch (_) {}
+}
+
 const MEM_CHATS = new Map(); // chatId -> { messages: [], sha: string, updatedAt: number, isDirty: boolean }
 let MEM_USERS = { list: [], sha: null, updatedAt: 0 };
 let MEM_ROOMS = { list: [], sha: null, updatedAt: 0 };
@@ -159,43 +187,83 @@ async function writeRepoFile(repo, path, contentObj, commitMsg, knownSha = null)
 // Users & Rooms Loaders
 // ---------------------------------------------------------------------------
 async function loadUsers(force = false) {
-  const now = Date.now();
-  if (!force && MEM_USERS.list.length > 0 && now - MEM_USERS.updatedAt < 30000) {
-    return MEM_USERS.list;
-  }
-  const file = await fetchRepoFile(REPO_USERS, "data/users.json");
-  if (file && Array.isArray(file.content)) {
-    const githubUsers = file.content;
-    const githubUsernames = new Set(githubUsers.map(u => u.username.toLowerCase()));
-    for (const memUser of MEM_USERS.list) {
-      if (!githubUsernames.has(memUser.username.toLowerCase())) {
-        githubUsers.push(memUser);
-      }
+  if (MEM_USERS.list.length === 0) {
+    const diskUsers = readDiskJson(path.join(DATA_DIR, "users.json"), []);
+    if (diskUsers && diskUsers.length > 0) {
+      MEM_USERS.list = diskUsers;
     }
-    MEM_USERS = { list: githubUsers, sha: file.sha, updatedAt: now };
+  }
+
+  const now = Date.now();
+  if (!force && MEM_USERS.list.length > 0 && now - MEM_USERS.updatedAt < 120000) {
     return MEM_USERS.list;
   }
+
+  try {
+    const file = await fetchRepoFile(REPO_USERS, "data/users.json");
+    if (file && Array.isArray(file.content)) {
+      const githubUsers = file.content;
+      const githubUsernames = new Set(githubUsers.map(u => u.username.toLowerCase()));
+      for (const memUser of MEM_USERS.list) {
+        if (!githubUsernames.has(memUser.username.toLowerCase())) {
+          githubUsers.push(memUser);
+        }
+      }
+      MEM_USERS = { list: githubUsers, sha: file.sha, updatedAt: now };
+      writeDiskJson(path.join(DATA_DIR, "users.json"), MEM_USERS.list);
+      return MEM_USERS.list;
+    }
+  } catch (_) {}
+
   return MEM_USERS.list;
 }
 
 async function saveUsers(newList) {
   MEM_USERS.list = newList;
   MEM_USERS.updatedAt = Date.now();
-  const newSha = await writeRepoFile(REPO_USERS, "data/users.json", newList, "chore: update users directory", MEM_USERS.sha);
-  if (newSha) MEM_USERS.sha = newSha;
+  writeDiskJson(path.join(DATA_DIR, "users.json"), newList);
+  writeRepoFile(REPO_USERS, "data/users.json", newList, "chore: update users directory", MEM_USERS.sha)
+    .then(newSha => { if (newSha) MEM_USERS.sha = newSha; })
+    .catch(() => {});
 }
 
 async function loadRooms(force = false) {
+  const DEFAULT_ROOMS = [
+    {
+      id: "room_general",
+      name: "Global Lounge",
+      pfp: null,
+      type: "channel",
+      description: "Welcome to the global public lounge on AS Cloud",
+      createdAt: 1710000000000
+    }
+  ];
+
+  if (MEM_ROOMS.list.length === 0) {
+    const diskRooms = readDiskJson(path.join(DATA_DIR, "rooms.json"), null);
+    if (diskRooms && diskRooms.length > 0) {
+      MEM_ROOMS.list = diskRooms;
+    } else {
+      MEM_ROOMS.list = DEFAULT_ROOMS;
+      writeDiskJson(path.join(DATA_DIR, "rooms.json"), DEFAULT_ROOMS);
+    }
+  }
+
   const now = Date.now();
-  if (!force && MEM_ROOMS.list.length > 0 && now - MEM_ROOMS.updatedAt < 20000) {
+  if (!force && MEM_ROOMS.list.length > 0 && now - MEM_ROOMS.updatedAt < 120000) {
     return MEM_ROOMS.list;
   }
-  const file = await fetchRepoFile(REPO_ROOMS, "data/rooms.json");
-  if (file && Array.isArray(file.content)) {
-    MEM_ROOMS = { list: file.content, sha: file.sha, updatedAt: now };
-    return MEM_ROOMS.list;
-  }
-  return MEM_ROOMS.list;
+
+  try {
+    const file = await fetchRepoFile(REPO_ROOMS, "data/rooms.json");
+    if (file && Array.isArray(file.content) && file.content.length > 0) {
+      MEM_ROOMS = { list: file.content, sha: file.sha, updatedAt: now };
+      writeDiskJson(path.join(DATA_DIR, "rooms.json"), MEM_ROOMS.list);
+      return MEM_ROOMS.list;
+    }
+  } catch (_) {}
+
+  return MEM_ROOMS.list.length > 0 ? MEM_ROOMS.list : DEFAULT_ROOMS;
 }
 
 // ---------------------------------------------------------------------------
@@ -207,31 +275,50 @@ function getChatFilePath(chatId) {
 }
 
 async function loadChatMessages(chatId, force = false) {
-  const now = Date.now();
+  const safeId = chatId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const diskChatPath = path.join(CHATS_DIR, `${safeId}.json`);
+
   const cached = MEM_CHATS.get(chatId);
-  if (!force && cached && now - cached.updatedAt < 3000) {
+  if (!force && cached) {
     return cached.messages;
   }
 
-  const filePath = getChatFilePath(chatId);
-  const file = await fetchRepoFile(REPO_MESSAGES, filePath);
-  if (file && Array.isArray(file.content)) {
+  // Check disk
+  const diskMsgs = readDiskJson(diskChatPath, null);
+  if (diskMsgs && Array.isArray(diskMsgs)) {
     MEM_CHATS.set(chatId, {
-      messages: file.content,
-      sha: file.sha,
-      updatedAt: now,
-      isDirty: false,
+      messages: diskMsgs,
+      sha: cached?.sha || null,
+      updatedAt: Date.now(),
+      isDirty: false
     });
-    return file.content;
+    return diskMsgs;
   }
+
+  // Fallback to GitHub
+  try {
+    const filePath = getChatFilePath(chatId);
+    const file = await fetchRepoFile(REPO_MESSAGES, filePath);
+    if (file && Array.isArray(file.content)) {
+      MEM_CHATS.set(chatId, {
+        messages: file.content,
+        sha: file.sha,
+        updatedAt: Date.now(),
+        isDirty: false,
+      });
+      writeDiskJson(diskChatPath, file.content);
+      return file.content;
+    }
+  } catch (_) {}
 
   if (!cached) {
     MEM_CHATS.set(chatId, {
       messages: [],
       sha: null,
-      updatedAt: now,
+      updatedAt: Date.now(),
       isDirty: false,
     });
+    writeDiskJson(diskChatPath, []);
     return [];
   }
   return cached.messages;
@@ -240,18 +327,23 @@ async function loadChatMessages(chatId, force = false) {
 async function persistChatNow(chatId) {
   const cached = MEM_CHATS.get(chatId);
   if (!cached) return;
+  const safeId = chatId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const diskChatPath = path.join(CHATS_DIR, `${safeId}.json`);
+  writeDiskJson(diskChatPath, cached.messages);
+
   const filePath = getChatFilePath(chatId);
-  const newSha = await writeRepoFile(
+  writeRepoFile(
     REPO_MESSAGES,
     filePath,
     cached.messages,
     `feat: chat update in ${chatId}`,
     cached.sha
-  );
-  if (newSha) {
-    cached.sha = newSha;
-    cached.isDirty = false;
-  }
+  ).then(newSha => {
+    if (newSha && cached) {
+      cached.sha = newSha;
+      cached.isDirty = false;
+    }
+  }).catch(() => {});
 }
 
 function scheduleChatPersist(chatId) {
@@ -411,12 +503,24 @@ export default async function handler(req, res) {
       }
 
       const users = await loadUsers();
-      const user = users.find(u => u.username.toLowerCase() === verifiedUsername);
+      let user = users.find(u => u.username.toLowerCase() === verifiedUsername);
       if (!user) {
-        return res.status(404).json({ error: "User profile not found." });
+        user = {
+          username: verifiedUsername,
+          displayName: verifiedUsername,
+          pfp: null,
+          bio: "Available on AS Messages",
+          verified: false,
+          blockedUsers: [],
+          createdAt: Date.now(),
+          lastSeen: Date.now()
+        };
+        users.push(user);
+        saveUsers(users);
+      } else {
+        user.lastSeen = Date.now();
       }
 
-      user.lastSeen = Date.now();
       return res.status(200).json({
         status: "ok",
         user: sanitizeUser(user),
@@ -602,7 +706,7 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------------------------
-    // 8. Get Conversations for User
+    // 8. Get Conversations for User (Fast In-Memory / Local Disk)
     // -------------------------------------------------------------------------
     if (action === "get_conversations") {
       const username = (url.searchParams.get("username") || "").toLowerCase().trim();
@@ -614,6 +718,8 @@ export default async function handler(req, res) {
       const EXCLUDED_USERNAMES = new Set(["as_support", "support", "system", "general", "admin", "general_support", "generalsupport"]);
 
       const convos = [];
+
+      // 1. Rooms
       for (const room of rooms) {
         const msgs = await loadChatMessages(room.id);
         const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
@@ -636,22 +742,25 @@ export default async function handler(req, res) {
         });
       }
 
-      for (const other of users) {
-        const otherUname = (other.username || "").toLowerCase();
-        if (otherUname === username || EXCLUDED_USERNAMES.has(otherUname)) continue;
-        if (other.displayName && (other.displayName.toLowerCase().includes("support") || other.displayName.toLowerCase().includes("general support"))) continue;
+      // 2. Direct Chats (Parallel 0ms memory & local disk checks)
+      const currentUserObj = users.find(u => u.username.toLowerCase() === username);
+      const otherUsers = users.filter(u => {
+        const un = (u.username || "").toLowerCase();
+        return un && un !== username && !EXCLUDED_USERNAMES.has(un);
+      });
+
+      const dmPromises = otherUsers.map(async (other) => {
+        const otherUname = other.username.toLowerCase();
         const dmId = getDmChatId(username, other.username);
         const msgs = await loadChatMessages(dmId);
 
         if (msgs && msgs.length > 0) {
           const lastMsg = msgs[msgs.length - 1];
           const unreadCount = msgs.filter(m => m.sender.toLowerCase() !== username && m.status !== "read").length;
-
-          const currentUserObj = users.find(u => u.username.toLowerCase() === username);
           const isBlocked = Array.isArray(currentUserObj?.blockedUsers) && currentUserObj.blockedUsers.includes(otherUname);
           const hasBlockedMe = Array.isArray(other.blockedUsers) && other.blockedUsers.includes(username);
 
-          convos.push({
+          return {
             id: dmId,
             type: "direct",
             handle: other.username,
@@ -671,9 +780,13 @@ export default async function handler(req, res) {
               mediaType: lastMsg.mediaType,
             },
             unread: unreadCount,
-          });
+          };
         }
-      }
+        return null;
+      });
+
+      const directConvos = (await Promise.all(dmPromises)).filter(Boolean);
+      convos.push(...directConvos);
 
       convos.sort((a, b) => {
         const timeA = a.lastMessage?.time || 0;
@@ -900,26 +1013,18 @@ export default async function handler(req, res) {
           const cleanup = () => {
             REALTIME_BUS.removeListener("chat:" + activeChatId, onEvent);
             if (username) REALTIME_BUS.removeListener("user:" + username, onEvent);
-            clearInterval(pollInterval);
             clearTimeout(timeoutTimer);
           };
 
           REALTIME_BUS.once("chat:" + activeChatId, onEvent);
           if (username) REALTIME_BUS.once("user:" + username, onEvent);
 
-          const pollInterval = setInterval(async () => {
-            const latest = await loadChatMessages(activeChatId, true);
-            if (latest.some(m => m.timestamp > since)) {
-              onEvent();
-            }
-          }, 1200);
-
           const timeoutTimer = setTimeout(() => {
             if (resolved) return;
             resolved = true;
             cleanup();
             resolve();
-          }, 9000);
+          }, 12000);
         });
 
         const msgs = await loadChatMessages(activeChatId);

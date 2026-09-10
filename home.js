@@ -926,14 +926,44 @@
   // ---------------------------------------------------------------------------
   // Load Conversations List
   // ---------------------------------------------------------------------------
+  function updateLocalConversationPreview(chatId, lastMsg) {
+    if (!chatId || !currentUser) return;
+    let found = conversations.find(c => c.id === chatId);
+    if (found) {
+      found.lastMessage = lastMsg;
+      conversations = [found, ...conversations.filter(c => c.id !== chatId)];
+    } else if (activeConvoMeta) {
+      found = {
+        id: chatId,
+        type: activeConvoMeta.type || "direct",
+        handle: activeConvoMeta.handle || activeConvoMeta.id,
+        name: activeConvoMeta.name || activeConvoMeta.handle,
+        pfp: activeConvoMeta.pfp || null,
+        verified: !!activeConvoMeta.verified,
+        lastMessage: lastMsg,
+        unread: 0,
+      };
+      conversations = [found, ...conversations];
+    }
+    try {
+      localStorage.setItem(`as_msg_convos_${currentUser.username}`, JSON.stringify(conversations));
+    } catch (_) {}
+    renderConversationList();
+  }
+
   async function loadConversations() {
     if (!currentUser) return;
     try {
       const res = await fetch(`/api/msg?action=get_conversations&username=${encodeURIComponent(currentUser.username)}`);
       if (res.ok) {
         const data = await res.json();
-        conversations = data.conversations || [];
-        renderConversationList();
+        if (Array.isArray(data.conversations)) {
+          conversations = data.conversations;
+          try {
+            localStorage.setItem(`as_msg_convos_${currentUser.username}`, JSON.stringify(conversations));
+          } catch (_) {}
+          renderConversationList();
+        }
       }
     } catch (err) {
       console.error("Error loading conversations:", err);
@@ -1457,6 +1487,14 @@
           if (receipt) receipt.innerHTML = ICONS.checkDouble;
         }
       }
+      updateLocalConversationPreview(activeConvoId, {
+        id: clientMsgId,
+        text: cleanText,
+        sender: currentUser.username,
+        time: Date.now(),
+        status: "sent",
+        mediaType: media ? media.type : null,
+      });
       loadConversations();
     } catch (err) {
       console.error("Error sending message:", err);
@@ -2197,32 +2235,53 @@
     if (relayStatusText) relayStatusText.textContent = "AS Cloud • 5 Relay Nodes Active";
 
     if (currentUser && sessionToken) {
+      // 1. Immediately render UI and unhide workspace with local session (0ms instant login)
+      renderNavProfile();
+      hideAuthOverlay();
+
+      // 2. Load conversations from localStorage cache immediately (0ms instant list)
+      try {
+        const savedConvos = localStorage.getItem(`as_msg_convos_${currentUser.username}`);
+        if (savedConvos) {
+          conversations = JSON.parse(savedConvos);
+          renderConversationList();
+        }
+      } catch (_) {}
+
+      // 3. Fetch fresh conversations from backend
+      await loadConversations();
+      if (window.innerWidth > 768) {
+        await openChat(activeConvoId);
+      } else {
+        if (msgWorkspace) {
+          msgWorkspace.classList.remove("mobile-chat-open");
+          msgWorkspace.classList.remove("chat-open");
+        }
+      }
+      startSyncEngine();
+
+      // 4. Validate session in background (ONLY logout if explicit 401)
       try {
         const res = await fetch(`/api/msg?action=verify_session&token=${encodeURIComponent(sessionToken)}`);
         if (res.ok) {
           const data = await res.json();
-          currentUser = data.user;
-          localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
-          renderNavProfile();
-          hideAuthOverlay();
-          await loadConversations();
-          if (window.innerWidth > 768) {
-            await openChat(activeConvoId);
-          } else {
-            if (msgWorkspace) {
-              msgWorkspace.classList.remove("mobile-chat-open");
-              msgWorkspace.classList.remove("chat-open");
-            }
+          if (data.user) {
+            currentUser = { ...currentUser, ...data.user };
+            localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
+            renderNavProfile();
           }
-          startSyncEngine();
-          return;
+        } else if (res.status === 401) {
+          // Token is cryptographically expired or forged
+          currentUser = null;
+          sessionToken = null;
+          localStorage.removeItem("as_msg_current_user");
+          localStorage.removeItem("as_msg_token");
+          showAuthOverlay("login");
         }
-      } catch (_) {}
-
-      currentUser = null;
-      sessionToken = null;
-      localStorage.removeItem("as_msg_current_user");
-      localStorage.removeItem("as_msg_token");
+      } catch (err) {
+        console.warn("Session check offline or slow, maintaining local session:", err);
+      }
+      return;
     }
 
     showAuthOverlay("login");
