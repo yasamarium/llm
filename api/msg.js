@@ -113,37 +113,59 @@ function sanitizeUser(u) {
 }
 
 // ---------------------------------------------------------------------------
-// GitHub Content Helpers
+// GitHub Content Helpers with Circuit Breaker & 2s Timeout (Zero Hanging Requests)
 // ---------------------------------------------------------------------------
+let GITHUB_RATE_LIMITED_UNTIL = 0;
+
 async function fetchRepoFile(repo, path) {
+  if (Date.now() < GITHUB_RATE_LIMITED_UNTIL) {
+    return null;
+  }
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+
     const url = `https://api.github.com/repos/${OWNER}/${repo}/contents/${path}`;
     const res = await fetch(url, {
+      signal: controller.signal,
       headers: {
         Authorization: `Bearer ${GITHUB_TOKEN}`,
         Accept: "application/vnd.github+json",
         "User-Agent": "AS-Messages-Backend",
       },
     });
+    clearTimeout(timeout);
+
     if (res.status === 200) {
       const data = await res.json();
       const content = Buffer.from(data.content, "base64").toString("utf-8");
       return { sha: data.sha, content: JSON.parse(content) };
     }
+    if (res.status === 403 || res.status === 429) {
+      GITHUB_RATE_LIMITED_UNTIL = Date.now() + 60000;
+    }
     return null;
   } catch (err) {
-    console.error(`Error reading ${repo}/${path}:`, err);
+    if (err.name === "AbortError" || err.cause?.name === "ConnectTimeoutError") {
+      GITHUB_RATE_LIMITED_UNTIL = Date.now() + 30000;
+    }
     return null;
   }
 }
 
 async function writeRepoFile(repo, path, contentObj, commitMsg, knownSha = null) {
+  if (Date.now() < GITHUB_RATE_LIMITED_UNTIL) {
+    return null;
+  }
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3500);
+
     const url = `https://api.github.com/repos/${OWNER}/${repo}/contents/${path}`;
     let sha = knownSha;
-
     if (!sha) {
       const checkRes = await fetch(url, {
+        signal: controller.signal,
         headers: {
           Authorization: `Bearer ${GITHUB_TOKEN}`,
           Accept: "application/vnd.github+json",
@@ -153,11 +175,16 @@ async function writeRepoFile(repo, path, contentObj, commitMsg, knownSha = null)
       if (checkRes.status === 200) {
         const checkData = await checkRes.json();
         sha = checkData.sha;
+      } else if (checkRes.status === 403 || checkRes.status === 429) {
+        GITHUB_RATE_LIMITED_UNTIL = Date.now() + 60000;
+        clearTimeout(timeout);
+        return null;
       }
     }
 
     const b64 = Buffer.from(JSON.stringify(contentObj, null, 2)).toString("base64");
     const putRes = await fetch(url, {
+      signal: controller.signal,
       method: "PUT",
       headers: {
         Authorization: `Bearer ${GITHUB_TOKEN}`,
@@ -171,14 +198,20 @@ async function writeRepoFile(repo, path, contentObj, commitMsg, knownSha = null)
         branch: "main",
       }),
     });
+    clearTimeout(timeout);
 
     if (putRes.status === 200 || putRes.status === 201) {
       const data = await putRes.json();
       return data.content?.sha || null;
     }
+    if (putRes.status === 403 || putRes.status === 429) {
+      GITHUB_RATE_LIMITED_UNTIL = Date.now() + 60000;
+    }
     return null;
   } catch (err) {
-    console.error(`Error writing ${repo}/${path}:`, err);
+    if (err.name === "AbortError" || err.cause?.name === "ConnectTimeoutError") {
+      GITHUB_RATE_LIMITED_UNTIL = Date.now() + 30000;
+    }
     return null;
   }
 }
@@ -706,7 +739,7 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------------------------
-    // 8. Get Conversations for User (Fast In-Memory / Local Disk)
+    // 8. Get Conversations for User (Instant In-Memory & Local Disk Discovery)
     // -------------------------------------------------------------------------
     if (action === "get_conversations") {
       const username = (url.searchParams.get("username") || "").toLowerCase().trim();
@@ -742,25 +775,54 @@ export default async function handler(req, res) {
         });
       }
 
-      // 2. Direct Chats (Parallel 0ms memory & local disk checks)
+      // 2. Discover active direct chats from user.chats, local disk files, and MEM_CHATS
       const currentUserObj = users.find(u => u.username.toLowerCase() === username);
-      const otherUsers = users.filter(u => {
-        const un = (u.username || "").toLowerCase();
-        return un && un !== username && !EXCLUDED_USERNAMES.has(un);
-      });
+      const userActiveChats = new Set(Array.isArray(currentUserObj?.chats) ? currentUserObj.chats : []);
 
-      const dmPromises = otherUsers.map(async (other) => {
-        const otherUname = other.username.toLowerCase();
-        const dmId = getDmChatId(username, other.username);
+      try {
+        if (fs.existsSync(CHATS_DIR)) {
+          const diskFiles = fs.readdirSync(CHATS_DIR);
+          for (const f of diskFiles) {
+            if (f.startsWith("dm_") && f.endsWith(".json")) {
+              const cid = f.replace(".json", "");
+              const parts = cid.replace("dm_", "").split("__");
+              if (parts.includes(username)) {
+                userActiveChats.add(cid);
+              }
+            }
+          }
+        }
+      } catch (_) {}
+
+      for (const [cid] of MEM_CHATS.entries()) {
+        if (cid.startsWith("dm_")) {
+          const parts = cid.replace("dm_", "").split("__");
+          if (parts.includes(username)) {
+            userActiveChats.add(cid);
+          }
+        }
+      }
+
+      for (const dmId of userActiveChats) {
+        const parts = dmId.replace("dm_", "").split("__");
+        const otherUname = parts.find(p => p !== username) || parts[0];
+        if (EXCLUDED_USERNAMES.has(otherUname)) continue;
+
+        const other = users.find(u => u.username.toLowerCase() === otherUname) || {
+          username: otherUname,
+          displayName: otherUname,
+          pfp: null,
+          verified: false
+        };
+
         const msgs = await loadChatMessages(dmId);
-
         if (msgs && msgs.length > 0) {
           const lastMsg = msgs[msgs.length - 1];
           const unreadCount = msgs.filter(m => m.sender.toLowerCase() !== username && m.status !== "read").length;
           const isBlocked = Array.isArray(currentUserObj?.blockedUsers) && currentUserObj.blockedUsers.includes(otherUname);
           const hasBlockedMe = Array.isArray(other.blockedUsers) && other.blockedUsers.includes(username);
 
-          return {
+          convos.push({
             id: dmId,
             type: "direct",
             handle: other.username,
@@ -780,13 +842,9 @@ export default async function handler(req, res) {
               mediaType: lastMsg.mediaType,
             },
             unread: unreadCount,
-          };
+          });
         }
-        return null;
-      });
-
-      const directConvos = (await Promise.all(dmPromises)).filter(Boolean);
-      convos.push(...directConvos);
+      }
 
       convos.sort((a, b) => {
         const timeA = a.lastMessage?.time || 0;
@@ -937,6 +995,20 @@ export default async function handler(req, res) {
       scheduleChatPersist(chatId);
       persistChatNow(chatId).catch(() => {});
       senderUser.lastSeen = Date.now();
+
+      // Track active chats on user objects for instant 0ms retrieval
+      if (!Array.isArray(senderUser.chats)) senderUser.chats = [];
+      if (!senderUser.chats.includes(chatId)) senderUser.chats.push(chatId);
+
+      if (recipient) {
+        const cleanRecipient = recipient.toLowerCase();
+        const recipientUser = users.find(u => u.username.toLowerCase() === cleanRecipient);
+        if (recipientUser) {
+          if (!Array.isArray(recipientUser.chats)) recipientUser.chats = [];
+          if (!recipientUser.chats.includes(chatId)) recipientUser.chats.push(chatId);
+        }
+      }
+      saveUsers(users);
 
       return res.status(200).json({ status: "ok", message: newMsg });
     }

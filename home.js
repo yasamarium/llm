@@ -313,6 +313,69 @@
   let conversations = [];
   let loadedMessageIds = new Set();
   let lastMessageTimestamp = 0;
+
+  // ---------------------------------------------------------------------------
+  // Client-Side Fast Storage Cache (Instant 0ms UI, zero lag, no disappearing chats)
+  // ---------------------------------------------------------------------------
+  function getLocalConvosKey() {
+    return currentUser ? `as_msg_convos_${currentUser.username.toLowerCase()}` : "as_msg_convos_guest";
+  }
+
+  function getLocalChatMsgsKey(chatId) {
+    return `as_msg_chat_${chatId}`;
+  }
+
+  function loadLocalConvos() {
+    try {
+      const raw = localStorage.getItem(getLocalConvosKey());
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          conversations = parsed;
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  function saveLocalConvos() {
+    try {
+      if (currentUser && Array.isArray(conversations)) {
+        localStorage.setItem(getLocalConvosKey(), JSON.stringify(conversations));
+      }
+    } catch (_) {}
+  }
+
+  function loadLocalChatMessages(chatId) {
+    try {
+      const raw = localStorage.getItem(getLocalChatMsgsKey(chatId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  function saveLocalChatMessages(chatId, msgs) {
+    try {
+      if (chatId && Array.isArray(msgs)) {
+        const slice = msgs.slice(-150);
+        localStorage.setItem(getLocalChatMsgsKey(chatId), JSON.stringify(slice));
+      }
+    } catch (_) {}
+  }
+
+  function appendLocalChatMessage(chatId, newMsg) {
+    try {
+      const existing = loadLocalChatMessages(chatId);
+      if (!existing.some(m => m.id === newMsg.id)) {
+        existing.push(newMsg);
+        saveLocalChatMessages(chatId, existing);
+      }
+    } catch (_) {}
+  }
   let syncInterval = null;
   let isPolling = false;
 
@@ -926,28 +989,62 @@
   // ---------------------------------------------------------------------------
   // Load Conversations List
   // ---------------------------------------------------------------------------
-  function updateLocalConversationPreview(chatId, lastMsg) {
-    if (!chatId || !currentUser) return;
+  function mergeConversations(serverConvos) {
+    const map = new Map();
+    // 1. Preserve all existing local conversations
+    for (const c of conversations) {
+      if (c && c.id) map.set(c.id, c);
+    }
+    // 2. Merge server conversations
+    if (Array.isArray(serverConvos)) {
+      for (const sc of serverConvos) {
+        if (!sc || !sc.id) continue;
+        const local = map.get(sc.id);
+        if (!local) {
+          map.set(sc.id, sc);
+        } else {
+          const localTime = local.lastMessage?.time || 0;
+          const serverTime = sc.lastMessage?.time || 0;
+          if (serverTime >= localTime) {
+            map.set(sc.id, { ...local, ...sc });
+          } else {
+            map.set(sc.id, { ...sc, lastMessage: local.lastMessage });
+          }
+        }
+      }
+    }
+    conversations = Array.from(map.values()).sort((a, b) => {
+      const tA = a.lastMessage?.time || 0;
+      const tB = b.lastMessage?.time || 0;
+      return tB - tA;
+    });
+    saveLocalConvos();
+    renderConversationList();
+  }
+
+  function updateLocalConversationPreview(chatId, lastMsg, contactMeta = null) {
+    if (!chatId) return;
     let found = conversations.find(c => c.id === chatId);
+    const meta = contactMeta || activeConvoMeta;
     if (found) {
       found.lastMessage = lastMsg;
+      if (meta && meta.name) found.name = meta.name;
+      if (meta && meta.pfp) found.pfp = meta.pfp;
       conversations = [found, ...conversations.filter(c => c.id !== chatId)];
-    } else if (activeConvoMeta) {
+    } else if (meta) {
       found = {
         id: chatId,
-        type: activeConvoMeta.type || "direct",
-        handle: activeConvoMeta.handle || activeConvoMeta.id,
-        name: activeConvoMeta.name || activeConvoMeta.handle,
-        pfp: activeConvoMeta.pfp || null,
-        verified: !!activeConvoMeta.verified,
+        type: meta.type || (chatId.startsWith("dm_") ? "direct" : "channel"),
+        handle: meta.handle || meta.id,
+        name: meta.name || meta.handle || meta.id,
+        pfp: meta.pfp || null,
+        verified: !!meta.verified,
         lastMessage: lastMsg,
         unread: 0,
       };
       conversations = [found, ...conversations];
     }
-    try {
-      localStorage.setItem(`as_msg_convos_${currentUser.username}`, JSON.stringify(conversations));
-    } catch (_) {}
+    saveLocalConvos();
     renderConversationList();
   }
 
@@ -958,15 +1055,11 @@
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.conversations)) {
-          conversations = data.conversations;
-          try {
-            localStorage.setItem(`as_msg_convos_${currentUser.username}`, JSON.stringify(conversations));
-          } catch (_) {}
-          renderConversationList();
+          mergeConversations(data.conversations);
         }
       }
     } catch (err) {
-      console.error("Error loading conversations:", err);
+      console.warn("Error background loading conversations:", err);
     }
   }
 
@@ -1085,9 +1178,20 @@
 
     renderConversationList();
 
+    // FAST 0ms LOCAL MESSAGE RENDERING
     loadedMessageIds.clear();
     lastMessageTimestamp = 0;
-    if (messagesFlow) messagesFlow.innerHTML = '<div style="text-align:center; padding: 30px; color: var(--text-secondary); font-size: 13px;">Loading messages...</div>';
+    
+    const localMsgs = loadLocalChatMessages(chatId);
+    if (messagesFlow) {
+      messagesFlow.innerHTML = "";
+      if (localMsgs.length > 0) {
+        localMsgs.forEach((msg) => renderMessage(msg, false));
+        scrollToBottom();
+      } else {
+        messagesFlow.innerHTML = '<div style="text-align:center; padding: 30px; color: var(--text-secondary); font-size: 13px;">Loading messages...</div>';
+      }
+    }
 
     await loadChatHistory(chatId);
 
@@ -1110,14 +1214,22 @@
   async function loadChatHistory(chatId) {
     try {
       const res = await fetch(`/api/msg?action=get_messages&chatId=${encodeURIComponent(chatId)}`);
-      if (!res.ok) throw new Error("Failed to load messages");
+      if (!res.ok) return;
       const data = await res.json();
       const messages = data.messages || [];
 
-      if (messagesFlow) messagesFlow.innerHTML = "";
-      loadedMessageIds.clear();
+      if (messages.length > 0) {
+        saveLocalChatMessages(chatId, messages);
+      }
 
-      if (messages.length === 0) {
+      if (activeConvoId !== chatId) return;
+
+      const loadingPlaceholder = messagesFlow.querySelector("div");
+      if (loadingPlaceholder && loadingPlaceholder.textContent.includes("Loading messages...")) {
+        messagesFlow.innerHTML = "";
+      }
+
+      if (messages.length === 0 && (!messagesFlow.children || messagesFlow.children.length === 0)) {
         messagesFlow.innerHTML = `
           <div style="text-align:center; padding: 40px 20px; color: var(--text-secondary);">
             <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">No messages here yet</div>
@@ -1132,8 +1244,7 @@
 
       scrollToBottom();
     } catch (err) {
-      console.error("Error loading chat history:", err);
-      if (messagesFlow) messagesFlow.innerHTML = '<div style="text-align:center; padding: 20px; color: #ff453a; font-size: 12px;">Failed to load messages. Please try again.</div>';
+      console.warn("Error background loading chat history:", err);
     }
   }
 
@@ -1438,6 +1549,9 @@
     renderMessage(optimisticMsg, true);
     scrollToBottom();
     playChime("sent");
+
+    // Persist immediately to client local cache
+    appendLocalChatMessage(activeConvoId, optimisticMsg);
 
     // Cross-tab real-time dispatch
     broadcastRealtimeEvent({
@@ -1824,9 +1938,7 @@
     }
   }
 
-  setInterval(() => {
-    if (currentUser) loadConversations();
-  }, 4000);
+  // Replaced aggressive 4s polling with real-time event bus and reactive cache updates (Zero Lag)
 
   // ---------------------------------------------------------------------------
   // New Chat & Real User Search
@@ -1939,7 +2051,11 @@
       pfp: targetPfp || null,
       createdAt: Date.now(),
       bio: "Available on AS Messages",
+      lastMessage: null,
     };
+
+    // Immediately register in local conversations list so chat never disappears
+    updateLocalConversationPreview(dmId, null, meta);
 
     openChat(dmId, meta);
   }
