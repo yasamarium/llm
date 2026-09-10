@@ -211,6 +211,16 @@
   // Settings Blocklist Container
   const settingsBlocklistContainer = document.getElementById("settingsBlocklistContainer");
 
+  // iOS Two-Step Confirmation Modal Elements
+  const twoStepConfirmModal = document.getElementById("twoStepConfirmModal");
+  const twoStepBadge = document.getElementById("twoStepBadge");
+  const twoStepIconWrap = document.getElementById("twoStepIconWrap");
+  const twoStepTitle = document.getElementById("twoStepTitle");
+  const twoStepDesc = document.getElementById("twoStepDesc");
+  const twoStepCancelBtn = document.getElementById("twoStepCancelBtn");
+  const twoStepPrimaryBtn = document.getElementById("twoStepPrimaryBtn");
+  const closeTwoStepModalBtn = document.getElementById("closeTwoStepModalBtn");
+
   // Active Reply State
   let activeReply = null;
 
@@ -1101,7 +1111,26 @@
   // Render Individual Message
   // ---------------------------------------------------------------------------
   function renderMessage(m, animate = true) {
-    if (!messagesFlow || loadedMessageIds.has(m.id)) return;
+    if (!messagesFlow || !m || !m.id) return;
+    if (loadedMessageIds.has(m.id) || document.getElementById(m.id)) return;
+
+    // Check for duplicate optimistic / in-flight messages from the same sender
+    if (currentUser && m.sender && m.sender.toLowerCase() === currentUser.username.toLowerCase()) {
+      const existingRows = messagesFlow.querySelectorAll(".msg-row.outgoing");
+      for (const row of existingRows) {
+        if (row.id === m.id) return;
+        const rowText = row.querySelector(".msg-text-content")?.textContent || "";
+        const rowTime = parseInt(row.dataset.timestamp || "0", 10);
+        if (rowText && rowText === (m.text || "").trim() && Math.abs((m.timestamp || Date.now()) - rowTime) < 3500) {
+          row.id = m.id;
+          loadedMessageIds.add(m.id);
+          const receipt = row.querySelector(".msg-receipt-icon");
+          if (receipt) receipt.innerHTML = ICONS.checkDouble;
+          return;
+        }
+      }
+    }
+
     loadedMessageIds.add(m.id);
 
     if (m.timestamp > lastMessageTimestamp) {
@@ -1184,7 +1213,7 @@
     const replyBtnHtml = `<button class="msg-reply-trigger-btn" type="button" title="Reply to message" data-id="${m.id}">${ICONS.reply}</button>`;
 
     const html = `
-      <div class="msg-row ${isOut ? "outgoing" : "incoming"} ${isChannel ? "channel-row" : "direct-row"} ${animate ? "animate-in" : ""}" id="${m.id}">
+      <div class="msg-row ${isOut ? "outgoing" : "incoming"} ${isChannel ? "channel-row" : "direct-row"} ${animate ? "animate-in" : ""}" id="${m.id}" data-timestamp="${m.timestamp || Date.now()}">
         ${avatarHtml}
         <div class="msg-bubble-content">
           ${replyBtnHtml}
@@ -1359,9 +1388,9 @@
       autoResizeTextarea();
     }
 
-    const tempId = `temp_${Date.now()}`;
+    const clientMsgId = `m_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const optimisticMsg = {
-      id: tempId,
+      id: clientMsgId,
       chatId: activeConvoId,
       sender: currentUser.username,
       senderName: currentUser.displayName || currentUser.username,
@@ -1380,7 +1409,7 @@
     scrollToBottom();
     playChime("sent");
 
-    // Instant local & cross-tab real-time dispatch (0ms)
+    // Cross-tab real-time dispatch
     broadcastRealtimeEvent({
       type: "new_message",
       chatId: activeConvoId,
@@ -1393,6 +1422,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "send_message",
+          id: clientMsgId,
           chatId: activeConvoId,
           sender: currentUser.username,
           recipient: activeConvoMeta.type === "direct" ? activeConvoMeta.handle : null,
@@ -1406,7 +1436,7 @@
 
       if (res.status === 403) {
         const errData = await res.json().catch(() => ({}));
-        const row = document.getElementById(tempId);
+        const row = document.getElementById(clientMsgId);
         if (row) {
           const footer = row.querySelector(".msg-footer");
           if (footer) footer.innerHTML += `<span style="color: #ff453a; font-size: 11px; margin-left: 6px;">Not delivered</span>`;
@@ -1418,11 +1448,11 @@
       if (res.ok) {
         const data = await res.json();
         const serverMsg = data.message;
-        const row = document.getElementById(tempId);
-        if (row && serverMsg) {
-          row.id = serverMsg.id;
-          loadedMessageIds.delete(tempId);
-          loadedMessageIds.add(serverMsg.id);
+        const targetId = serverMsg?.id || clientMsgId;
+        loadedMessageIds.add(targetId);
+        const row = document.getElementById(clientMsgId) || document.getElementById(targetId);
+        if (row) {
+          row.id = targetId;
           const receipt = row.querySelector(".msg-receipt-icon");
           if (receipt) receipt.innerHTML = ICONS.checkDouble;
         }
@@ -1646,7 +1676,7 @@
     if (data.type === "new_message" && data.message) {
       const m = data.message;
       if (data.chatId === activeConvoId) {
-        if (!loadedMessageIds.has(m.id)) {
+        if (!loadedMessageIds.has(m.id) && !document.getElementById(m.id)) {
           renderMessage(m, true);
           if (m.sender.toLowerCase() !== currentUser.username.toLowerCase()) {
             playChime("received");
@@ -1724,7 +1754,7 @@
         if (newMsgs.length > 0) {
           let hasIncoming = false;
           newMsgs.forEach((m) => {
-            if (!loadedMessageIds.has(m.id)) {
+            if (!loadedMessageIds.has(m.id) && !document.getElementById(m.id)) {
               renderMessage(m, true);
               if (m.sender.toLowerCase() !== currentUser.username.toLowerCase()) {
                 hasIncoming = true;
@@ -1961,15 +1991,128 @@
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // iOS Two-Step Confirmation Guard for Block & Unblock Actions
+  // ---------------------------------------------------------------------------
+  function showTwoStepConfirmation({ type, targetUsername }) {
+    return new Promise((resolve) => {
+      if (!twoStepConfirmModal) {
+        if (type === "block") {
+          const s1 = confirm("Are you sure that you wanna block this user? its just a technical step but it has the tendency to break any relation into null");
+          if (!s1) return resolve(false);
+          const s2 = confirm(`Please confirm: Blocking @${targetUsername} will restrict all messaging. Finalize block?`);
+          return resolve(s2);
+        } else {
+          const s1 = confirm("Are you sure that restart the convo by unblocking the user ?");
+          if (!s1) return resolve(false);
+          const s2 = confirm(`Please confirm: Unblocking @${targetUsername} will restore conversations and allow both parties to message again.`);
+          return resolve(s2);
+        }
+      }
+
+      let currentStep = 1;
+
+      function renderStep() {
+        if (type === "block") {
+          if (currentStep === 1) {
+            twoStepBadge.className = "two-step-badge";
+            twoStepBadge.textContent = "Step 1 of 2 • Safety Check";
+            twoStepIconWrap.className = "two-step-icon-wrap icon-block";
+            twoStepIconWrap.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`;
+            twoStepTitle.textContent = `Block @${targetUsername}?`;
+            twoStepDesc.textContent = "Are you sure that you wanna block this user? its just a technical step but it has the tendency to break any relation into null";
+            twoStepCancelBtn.textContent = "Cancel";
+            twoStepPrimaryBtn.className = "modal-btn primary-btn";
+            twoStepPrimaryBtn.textContent = "Continue";
+          } else {
+            twoStepBadge.className = "two-step-badge badge-step-2";
+            twoStepBadge.textContent = "Step 2 of 2 • Final Confirmation";
+            twoStepIconWrap.className = "two-step-icon-wrap icon-block";
+            twoStepIconWrap.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff453a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+            twoStepTitle.textContent = `Confirm Blocking @${targetUsername}`;
+            twoStepDesc.textContent = `Blocking @${targetUsername} will prevent them from sending you messages or seeing your profile updates. Are you sure you want to finalize this action?`;
+            twoStepCancelBtn.textContent = "Back";
+            twoStepPrimaryBtn.className = "modal-btn primary-btn two-step-primary-danger";
+            twoStepPrimaryBtn.textContent = "Yes, Block User";
+          }
+        } else {
+          // Unblock flow
+          if (currentStep === 1) {
+            twoStepBadge.className = "two-step-badge";
+            twoStepBadge.textContent = "Step 1 of 2 • Restore Access";
+            twoStepIconWrap.className = "two-step-icon-wrap icon-unblock";
+            twoStepIconWrap.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`;
+            twoStepTitle.textContent = `Unblock @${targetUsername}?`;
+            twoStepDesc.textContent = "Are you sure that restart the convo by unblocking the user ?";
+            twoStepCancelBtn.textContent = "Cancel";
+            twoStepPrimaryBtn.className = "modal-btn primary-btn";
+            twoStepPrimaryBtn.textContent = "Continue";
+          } else {
+            twoStepBadge.className = "two-step-badge badge-unblock-step-2";
+            twoStepBadge.textContent = "Step 2 of 2 • Final Confirmation";
+            twoStepIconWrap.className = "two-step-icon-wrap icon-unblock";
+            twoStepIconWrap.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>`;
+            twoStepTitle.textContent = `Confirm Unblocking @${targetUsername}`;
+            twoStepDesc.textContent = `Unblocking @${targetUsername} will immediately restore direct messaging and allow both of you to exchange messages again.`;
+            twoStepCancelBtn.textContent = "Back";
+            twoStepPrimaryBtn.className = "modal-btn primary-btn two-step-primary-normal";
+            twoStepPrimaryBtn.textContent = "Yes, Unblock User";
+          }
+        }
+      }
+
+      function cleanup() {
+        twoStepPrimaryBtn.removeEventListener("click", onPrimary);
+        twoStepCancelBtn.removeEventListener("click", onCancel);
+        if (closeTwoStepModalBtn) closeTwoStepModalBtn.removeEventListener("click", onClose);
+        twoStepConfirmModal.style.display = "none";
+      }
+
+      function onPrimary() {
+        if (currentStep === 1) {
+          currentStep = 2;
+          renderStep();
+        } else {
+          cleanup();
+          resolve(true);
+        }
+      }
+
+      function onCancel() {
+        if (currentStep === 2) {
+          currentStep = 1;
+          renderStep();
+        } else {
+          cleanup();
+          resolve(false);
+        }
+      }
+
+      function onClose() {
+        cleanup();
+        resolve(false);
+      }
+
+      renderStep();
+      twoStepPrimaryBtn.addEventListener("click", onPrimary);
+      twoStepCancelBtn.addEventListener("click", onCancel);
+      if (closeTwoStepModalBtn) closeTwoStepModalBtn.addEventListener("click", onClose);
+
+      twoStepConfirmModal.style.display = "flex";
+    });
+  }
+
   async function toggleBlockUser(targetUsername) {
     if (!currentUser || !targetUsername) return;
     const cleanTarget = targetUsername.toLowerCase().trim();
     const isCurrentlyBlocked = Array.isArray(currentUser.blockedUsers) && currentUser.blockedUsers.includes(cleanTarget);
     const action = isCurrentlyBlocked ? "unblock_user" : "block_user";
 
-    if (!isCurrentlyBlocked) {
-      if (!confirm(`Are you sure you want to block @${cleanTarget}? They will not be able to message you.`)) return;
-    }
+    const confirmed = await showTwoStepConfirmation({
+      type: isCurrentlyBlocked ? "unblock" : "block",
+      targetUsername: cleanTarget,
+    });
+    if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/msg?action=${action}`, {

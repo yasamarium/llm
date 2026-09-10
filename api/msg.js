@@ -741,6 +741,7 @@ export default async function handler(req, res) {
     // -------------------------------------------------------------------------
     if (action === "send_message" && req.method === "POST") {
       const {
+        id: clientMsgId,
         chatId,
         sender,
         recipient,
@@ -780,8 +781,12 @@ export default async function handler(req, res) {
         }
       }
 
+      const msgId = (clientMsgId && typeof clientMsgId === "string" && clientMsgId.startsWith("m_"))
+        ? clientMsgId
+        : `m_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
       const newMsg = {
-        id: `m_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        id: msgId,
         chatId,
         sender: senderUser.username,
         senderName: senderUser.displayName || senderUser.username,

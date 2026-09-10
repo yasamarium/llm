@@ -207,7 +207,7 @@ html, body {
   width: 100vw;
   overflow: hidden;
   position: relative;
-  background: #111b21;
+  background: #000000;
 }
 
 /* WhatsApp Left Vertical Rail */
@@ -215,14 +215,14 @@ html, body {
   width: 60px;
   min-width: 60px;
   height: 100vh;
-  background: #202c33;
+  background: #141418;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
   box-sizing: border-box;
-  border-right: 1px solid rgba(134, 150, 160, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 25;
 }
 
@@ -241,7 +241,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #aebac1;
+  color: #8e8e93;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -251,12 +251,12 @@ html, body {
 
 .wa-rail-item:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #e9edef;
+  color: #ffffff;
 }
 
 .wa-rail-item.active {
-  background: #374248;
-  color: #e9edef;
+  background: #22222a;
+  color: #ffffff;
 }
 
 .wa-brand-logo {
@@ -291,8 +291,8 @@ html, body {
   min-width: 320px;
   max-width: 450px;
   height: 100vh;
-  background: #111b21;
-  border-right: 1px solid rgba(134, 150, 160, 0.15);
+  background: #000000;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   transition: transform 0.32s var(--spring-easing);
@@ -307,13 +307,13 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #111b21;
+  background: #000000;
 }
 
 .wa-sidebar-title {
   font-size: 22px;
   font-weight: 700;
-  color: #e9edef;
+  color: #ffffff;
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -328,8 +328,8 @@ html, body {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #00a884;
-  color: #111b21;
+  background: #0a84ff;
+  color: #ffffff;
   border: none;
   display: flex;
   align-items: center;
@@ -339,7 +339,7 @@ html, body {
 }
 
 .wa-new-chat-btn:hover {
-  background: #25d366;
+  background: #0071e3;
   transform: scale(1.05);
 }
 
@@ -348,7 +348,7 @@ html, body {
   height: 36px;
   border-radius: 50%;
   background: transparent;
-  color: #aebac1;
+  color: #8e8e93;
   border: none;
   display: flex;
   align-items: center;
@@ -358,23 +358,23 @@ html, body {
 
 .wa-icon-btn:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #e9edef;
+  color: #ffffff;
 }
 
 /* WhatsApp Search Box */
 .wa-search-wrap {
   padding: 8px 12px;
-  background: #111b21;
+  background: #000000;
 }
 
 .wa-search-box {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #202c33;
+  background: #141418;
   padding: 7px 14px;
   border-radius: 8px;
-  color: #8696a0;
+  color: #8e8e93;
 }
 
 .wa-search-box input {
@@ -382,12 +382,12 @@ html, body {
   background: transparent;
   border: none;
   outline: none;
-  color: #d1d7db;
+  color: #ffffff;
   font-size: 14px;
 }
 
 .wa-search-box input::placeholder {
-  color: #8696a0;
+  color: #8e8e93;
 }
 
 /* WhatsApp Filter Chips */
@@ -396,16 +396,16 @@ html, body {
   align-items: center;
   gap: 8px;
   padding: 6px 16px 10px 16px;
-  background: #111b21;
-  border-bottom: 1px solid rgba(134, 150, 160, 0.12);
+  background: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .wa-filter-chip {
   padding: 6px 14px;
   border-radius: 18px;
-  background: #202c33;
+  background: #141418;
   border: none;
-  color: #8696a0;
+  color: #8e8e93;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -413,13 +413,13 @@ html, body {
 }
 
 .wa-filter-chip:hover {
-  background: #2a3942;
-  color: #d1d7db;
+  background: #1a1a22;
+  color: #ffffff;
 }
 
 .wa-filter-chip.active {
-  background: #0a332c;
-  color: #00a884;
+  background: #0a84ff;
+  color: #ffffff;
 }
 
 /* Conversation List (WhatsApp Style) */
@@ -429,13 +429,13 @@ html, body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  background: #111b21;
+  background: #000000;
 }
 .conversation-list::-webkit-scrollbar {
   width: 5px;
 }
 .conversation-list::-webkit-scrollbar-thumb {
-  background: rgba(134, 150, 160, 0.2);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 4px;
 }
 
@@ -449,7 +449,7 @@ html, body {
   max-height: 72px;
   cursor: pointer;
   background: transparent;
-  border-bottom: 1px solid rgba(134, 150, 160, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   transition: background 0.12s ease;
   position: relative;
   user-select: none;
@@ -457,11 +457,11 @@ html, body {
 }
 
 .convo-item:hover, .conversation-item:hover {
-  background: #202c33;
+  background: #141418;
 }
 
 .convo-item.active, .conversation-item.active {
-  background: #2a3942;
+  background: #1a1a22;
 }
 
 .convo-pfp-wrap, .convo-pfp-box {
@@ -504,7 +504,7 @@ html, body {
 .convo-name {
   font-size: 16px;
   font-weight: 500;
-  color: #e9edef;
+  color: #ffffff;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -513,7 +513,7 @@ html, body {
 
 .convo-time {
   font-size: 12px;
-  color: #8696a0;
+  color: #8e8e93;
   flex-shrink: 0;
   margin-left: 8px;
 }
@@ -532,7 +532,7 @@ html, body {
 
 .convo-snippet, .convo-last-msg {
   font-size: 13.5px;
-  color: #8696a0;
+  color: #8e8e93;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1524,7 +1524,7 @@ html, body {
     display: flex;
     flex-direction: column;
     transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
-    background: #111b21;
+    background: #000000;
   }
 
   /* When Chat is Open on Phone: Slide out Sidebar */
@@ -1549,7 +1549,7 @@ html, body {
     display: flex;
     flex-direction: column;
     transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-    background: #0b141a;
+    background: #000000;
   }
 
   /* When Chat is Open on Phone: Slide in Chat Pane */
@@ -1567,7 +1567,7 @@ html, body {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: #202c33;
+    background: #141418;
   }
 
   .mobile-back-btn {
@@ -1701,15 +1701,15 @@ html, body {
   /* 7. Bottom Composer Bar & Buttons on Phone */
   .chat-input-bar {
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) 8px;
-    background: #202c33;
-    border-top: 1px solid rgba(134, 150, 160, 0.15);
+    background: #141418;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .composer-capsule {
     padding: 4px 6px 4px 8px;
     gap: 4px;
     border-radius: 22px;
-    background: #2a3942;
+    background: #1a1a22;
     border: none;
     box-shadow: none;
   }
@@ -1719,14 +1719,14 @@ html, body {
     height: 36px;
     min-width: 36px;
     border-radius: 50%;
-    color: #8696a0;
+    color: #8e8e93;
   }
 
   .composer-textarea {
     font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
     padding: 6px 4px;
     max-height: 110px;
-    color: #d1d7db;
+    color: #ffffff;
   }
 
   .composer-send-btn {
@@ -2934,3 +2934,127 @@ html, body {
   background: var(--accent-blue, #0a84ff);
   border-color: var(--accent-blue, #0a84ff);
 }
+
+/* ==========================================================================
+   8. iOS Two-Step Confirmation Dialog
+   ========================================================================== */
+.two-step-confirm-card {
+  width: 90%;
+  max-width: 380px;
+  background: #121218;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 24px 20px 20px 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: modalPopIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.two-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.two-step-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #a1a1aa;
+}
+
+.two-step-badge.badge-step-2 {
+  background: rgba(255, 69, 58, 0.12);
+  border-color: rgba(255, 69, 58, 0.3);
+  color: #ff453a;
+}
+
+.two-step-badge.badge-unblock-step-2 {
+  background: rgba(10, 132, 255, 0.12);
+  border-color: rgba(10, 132, 255, 0.3);
+  color: #0a84ff;
+}
+
+.two-step-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.two-step-icon-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.two-step-icon-wrap.icon-block {
+  background: rgba(255, 69, 58, 0.15);
+  color: #ff453a;
+}
+
+.two-step-icon-wrap.icon-unblock {
+  background: rgba(10, 132, 255, 0.15);
+  color: #0a84ff;
+}
+
+.two-step-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.two-step-desc {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #d1d1d6;
+  margin: 0;
+  word-break: break-word;
+}
+
+.two-step-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.two-step-footer .modal-btn {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.15s ease;
+}
+
+.two-step-footer .modal-btn:active {
+  transform: scale(0.96);
+}
+
+.two-step-primary-danger {
+  background: #ff453a !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.two-step-primary-normal {
+  background: #0a84ff !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
