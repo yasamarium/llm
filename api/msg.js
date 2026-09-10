@@ -80,6 +80,7 @@ function verifySessionToken(token) {
 function sanitizeUser(u) {
   if (!u) return null;
   const { passwordHash, salt, ...safe } = u;
+  safe.blockedUsers = Array.isArray(u.blockedUsers) ? u.blockedUsers : [];
   return safe;
 }
 
@@ -343,6 +344,7 @@ export default async function handler(req, res) {
         passwordHash: hash,
         salt,
         verified: false,
+        blockedUsers: [],
         createdAt: Date.now(),
         lastSeen: Date.now(),
       };
@@ -475,6 +477,89 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------------------------
+    // 5.5 Block / Unblock User & Blocklist
+    // -------------------------------------------------------------------------
+    if (action === "block_user" && req.method === "POST") {
+      const verifiedUsername = verifySessionToken(token) || (req.body?.username || "").toLowerCase().trim();
+      const targetUser = (req.body?.targetUser || "").toLowerCase().trim();
+      if (!verifiedUsername || !targetUser) {
+        return res.status(400).json({ error: "username and targetUser are required." });
+      }
+      if (verifiedUsername === targetUser) {
+        return res.status(400).json({ error: "You cannot block yourself." });
+      }
+
+      const users = await loadUsers(true);
+      const user = users.find(u => u.username.toLowerCase() === verifiedUsername);
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      if (!Array.isArray(user.blockedUsers)) user.blockedUsers = [];
+      if (!user.blockedUsers.includes(targetUser)) {
+        user.blockedUsers.push(targetUser);
+        await saveUsers(users);
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        message: `@${targetUser} blocked successfully.`,
+        blockedUsers: user.blockedUsers,
+      });
+    }
+
+    if (action === "unblock_user" && req.method === "POST") {
+      const verifiedUsername = verifySessionToken(token) || (req.body?.username || "").toLowerCase().trim();
+      const targetUser = (req.body?.targetUser || "").toLowerCase().trim();
+      if (!verifiedUsername || !targetUser) {
+        return res.status(400).json({ error: "username and targetUser are required." });
+      }
+
+      const users = await loadUsers(true);
+      const user = users.find(u => u.username.toLowerCase() === verifiedUsername);
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      if (Array.isArray(user.blockedUsers)) {
+        user.blockedUsers = user.blockedUsers.filter(u => u.toLowerCase() !== targetUser);
+        await saveUsers(users);
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        message: `@${targetUser} unblocked successfully.`,
+        blockedUsers: user.blockedUsers || [],
+      });
+    }
+
+    if (action === "get_blocklist") {
+      const verifiedUsername = verifySessionToken(token) || (url.searchParams.get("username") || "").toLowerCase().trim();
+      if (!verifiedUsername) {
+        return res.status(400).json({ error: "Username is required." });
+      }
+
+      const users = await loadUsers();
+      const user = users.find(u => u.username.toLowerCase() === verifiedUsername);
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      const blockedHandles = Array.isArray(user.blockedUsers) ? user.blockedUsers : [];
+      const blockedList = blockedHandles.map(handle => {
+        const u = users.find(x => x.username.toLowerCase() === handle);
+        return {
+          username: handle,
+          displayName: u ? (u.displayName || u.username) : handle,
+          pfp: u?.pfp || null,
+          verified: !!u?.verified,
+        };
+      });
+
+      return res.status(200).json({ status: "ok", blockedUsers: blockedList });
+    }
+
+    // -------------------------------------------------------------------------
     // 6. Search Users
     // -------------------------------------------------------------------------
     if (action === "search_users" || action === "get_users") {
@@ -562,6 +647,10 @@ export default async function handler(req, res) {
           const lastMsg = msgs[msgs.length - 1];
           const unreadCount = msgs.filter(m => m.sender.toLowerCase() !== username && m.status !== "read").length;
 
+          const currentUserObj = users.find(u => u.username.toLowerCase() === username);
+          const isBlocked = Array.isArray(currentUserObj?.blockedUsers) && currentUserObj.blockedUsers.includes(otherUname);
+          const hasBlockedMe = Array.isArray(other.blockedUsers) && other.blockedUsers.includes(username);
+
           convos.push({
             id: dmId,
             type: "direct",
@@ -571,6 +660,8 @@ export default async function handler(req, res) {
             bio: other.bio || "",
             createdAt: other.createdAt || other.lastSeen || Date.now(),
             verified: !!other.verified,
+            isBlocked: !!isBlocked,
+            hasBlockedMe: !!hasBlockedMe,
             lastMessage: {
               id: lastMsg.id,
               text: lastMsg.text,
@@ -608,6 +699,15 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "User not found." });
       }
 
+      const viewer = (url.searchParams.get("viewer") || "").toLowerCase().trim();
+      let isBlocked = false;
+      let hasBlockedMe = false;
+      if (viewer) {
+        const viewerUser = users.find(x => x.username.toLowerCase() === viewer);
+        isBlocked = Array.isArray(viewerUser?.blockedUsers) && viewerUser.blockedUsers.includes(target);
+        hasBlockedMe = Array.isArray(u.blockedUsers) && u.blockedUsers.includes(viewer);
+      }
+
       return res.status(200).json({
         status: "ok",
         user: {
@@ -616,6 +716,8 @@ export default async function handler(req, res) {
           pfp: u.pfp || null,
           bio: u.bio || "",
           verified: !!u.verified,
+          isBlocked: !!isBlocked,
+          hasBlockedMe: !!hasBlockedMe,
           createdAt: u.createdAt || u.lastSeen || Date.now(),
           lastSeen: u.lastSeen || null,
         },
@@ -646,6 +748,7 @@ export default async function handler(req, res) {
         mediaType = null,
         mediaUrl = null,
         duration = null,
+        replyTo = null,
       } = req.body || {};
 
       if (!chatId || !sender) {
@@ -656,11 +759,26 @@ export default async function handler(req, res) {
       }
 
       const users = await loadUsers();
-      const senderUser = users.find(u => u.username.toLowerCase() === sender.toLowerCase()) || {
+      const cleanSender = sender.toLowerCase();
+      const senderUser = users.find(u => u.username.toLowerCase() === cleanSender) || {
         username: sender,
         displayName: sender,
         pfp: null,
       };
+
+      // Block validation for direct chats
+      if (recipient) {
+        const cleanRecipient = recipient.toLowerCase();
+        const recipientUser = users.find(u => u.username.toLowerCase() === cleanRecipient);
+        
+        if (recipientUser && Array.isArray(recipientUser.blockedUsers) && recipientUser.blockedUsers.includes(cleanSender)) {
+          return res.status(403).json({ error: "Cannot send message. You have been blocked by this user." });
+        }
+
+        if (senderUser && Array.isArray(senderUser.blockedUsers) && senderUser.blockedUsers.includes(cleanRecipient)) {
+          return res.status(403).json({ error: "Cannot send message. You have blocked this user. Unblock first." });
+        }
+      }
 
       const newMsg = {
         id: `m_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -673,6 +791,13 @@ export default async function handler(req, res) {
         mediaType,
         mediaUrl,
         duration,
+        replyTo: (replyTo && replyTo.id) ? {
+          id: replyTo.id,
+          sender: replyTo.sender,
+          senderName: replyTo.senderName || replyTo.sender,
+          text: replyTo.text || "",
+          mediaType: replyTo.mediaType || null,
+        } : null,
         timestamp: Date.now(),
         status: "sent",
       };

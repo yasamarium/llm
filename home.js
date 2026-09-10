@@ -16,6 +16,7 @@
     eyeOpen: `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
     eyeOff: `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`,
     copy: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`,
+    reply: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`,
   };
 
   // ---------------------------------------------------------------------------
@@ -173,6 +174,7 @@
   const scrollBottomBtn = document.getElementById("scrollBottomBtn");
 
   // Composer Elements
+  const composerCapsule = document.getElementById("composerCapsule");
   const messageTextInput = document.getElementById("messageTextInput");
   const sendMessageBtn = document.getElementById("sendMessageBtn");
   const attachMediaBtn = document.getElementById("attachMediaBtn");
@@ -182,6 +184,35 @@
   const recordingTime = document.getElementById("recordingTime");
   const cancelRecordBtn = document.getElementById("cancelRecordBtn");
   const sendRecordBtn = document.getElementById("sendRecordBtn");
+
+  // Reply Banner Elements
+  const composerReplyBanner = document.getElementById("composerReplyBanner");
+  const replyBannerTitle = document.getElementById("replyBannerTitle");
+  const replyBannerSnippet = document.getElementById("replyBannerSnippet");
+  const closeReplyBannerBtn = document.getElementById("closeReplyBannerBtn");
+
+  // Blocked Banner Elements
+  const composerBlockedBanner = document.getElementById("composerBlockedBanner");
+  const composerBlockedText = document.getElementById("composerBlockedText");
+  const composerUnblockBtn = document.getElementById("composerUnblockBtn");
+
+  // Media Preview Modal Elements
+  const mediaPreviewModal = document.getElementById("mediaPreviewModal");
+  const mediaPreviewImage = document.getElementById("mediaPreviewImage");
+  const mediaPreviewFileInfo = document.getElementById("mediaPreviewFileInfo");
+  const mediaPreviewFileName = document.getElementById("mediaPreviewFileName");
+  const mediaPreviewFileSize = document.getElementById("mediaPreviewFileSize");
+  const mediaPreviewCaption = document.getElementById("mediaPreviewCaption");
+  const cancelMediaPreviewBtn = document.getElementById("cancelMediaPreviewBtn");
+  const discardMediaBtn = document.getElementById("discardMediaBtn");
+  const sendMediaPreviewBtn = document.getElementById("sendMediaPreviewBtn");
+  const sendMediaBtnText = document.getElementById("sendMediaBtnText");
+
+  // Settings Blocklist Container
+  const settingsBlocklistContainer = document.getElementById("settingsBlocklistContainer");
+
+  // Active Reply State
+  let activeReply = null;
 
   // Instagram-Style Auth Elements
   const authOverlay = document.getElementById("authOverlay");
@@ -624,6 +655,8 @@
     if (inputBio) inputBio.value = currentUser.bio || "";
     if (inputOldPassword) inputOldPassword.value = "";
     if (inputNewPassword) inputNewPassword.value = "";
+
+    renderSettingsBlocklist();
   }
 
   function closeProfileModal() {
@@ -843,12 +876,23 @@
         if (editBtn) editBtn.onclick = () => { closeContactInfo(); openProfileModal(); };
         if (outBtn) outBtn.onclick = () => { closeContactInfo(); handleLogout(); };
       } else {
+        const cleanTarget = handle.toLowerCase();
+        const isBlocked = Array.isArray(currentUser?.blockedUsers) && currentUser.blockedUsers.includes(cleanTarget);
         contactSheetActions.innerHTML = `
           <button class="modal-primary-btn" id="sheetDirectMsgBtn" type="button">Message</button>
           <button class="modal-secondary-btn" id="sheetCloseBtn" type="button">Done</button>
+          ${!isChannel ? `
+            <button id="sheetBlockBtn" class="sheet-block-btn ${isBlocked ? "unblock" : "block"}" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+              </svg>
+              <span>${isBlocked ? `Unblock @${handle}` : `Block @${handle}`}</span>
+            </button>
+          ` : ""}
         `;
         const msgBtn = document.getElementById("sheetDirectMsgBtn");
         const doneBtn = document.getElementById("sheetCloseBtn");
+        const blockBtn = document.getElementById("sheetBlockBtn");
         if (msgBtn) msgBtn.onclick = () => {
           closeContactInfo();
           if (activeConvoId !== target.id) {
@@ -856,6 +900,7 @@
           }
         };
         if (doneBtn) doneBtn.onclick = closeContactInfo;
+        if (blockBtn) blockBtn.onclick = () => toggleBlockUser(handle);
       }
     }
   }
@@ -982,6 +1027,9 @@
       try { longPollAbortCtrl.abort(); } catch (_) {}
     }
 
+    cancelReply();
+    updateComposerBlockedState();
+
     // Render active contact avatar in header
     if (activeContactAvatarSlot) {
       activeContactAvatarSlot.innerHTML = renderAvatarHtml(meta.name || meta.handle, meta.pfp, "avatar-md");
@@ -1066,6 +1114,24 @@
     const senderName = m.senderName || m.sender;
     const senderColor = getSenderColor(m.sender);
 
+    let replyQuoteHtml = "";
+    if (m.replyTo && m.replyTo.id) {
+      const qSender = escapeHtml(m.replyTo.senderName || m.replyTo.sender || "User");
+      let qSnippet = m.replyTo.text || "";
+      if (!qSnippet && m.replyTo.mediaType === "image") qSnippet = "Photo";
+      else if (!qSnippet && m.replyTo.mediaType === "audio") qSnippet = "Voice note";
+      else if (!qSnippet && m.replyTo.mediaType === "file") qSnippet = "Attachment";
+
+      replyQuoteHtml = `
+        <div class="msg-reply-quote" data-target-id="${escapeHtml(m.replyTo.id)}" title="Click to view quoted message">
+          <div class="reply-quote-content">
+            <span class="reply-quote-sender">${qSender}</span>
+            <span class="reply-quote-text">${escapeHtml(qSnippet || "Message")}</span>
+          </div>
+        </div>
+      `;
+    }
+
     let bodyContent = "";
 
     if (m.mediaType === "image" && m.mediaUrl) {
@@ -1114,13 +1180,16 @@
     }
 
     const avatarHtml = showAvatar ? renderAvatarHtml(senderName, m.senderPfp, "avatar-xs", "msg-bubble-avatar") : "";
+    const replyBtnHtml = `<button class="msg-reply-trigger-btn" type="button" title="Reply to message" data-id="${m.id}">${ICONS.reply}</button>`;
 
     const html = `
       <div class="msg-row ${isOut ? "outgoing" : "incoming"} ${isChannel ? "channel-row" : "direct-row"} ${animate ? "animate-in" : ""}" id="${m.id}">
         ${avatarHtml}
         <div class="msg-bubble-content">
+          ${replyBtnHtml}
           <div class="msg-bubble">
             ${showSenderName ? `<div class="msg-sender-name" style="color: ${senderColor};">${escapeHtml(senderName)}</div>` : ""}
+            ${replyQuoteHtml}
             <div class="msg-text">${bodyContent}</div>
             <div class="msg-footer">
               <span class="msg-timestamp">${timeStr}</span>
@@ -1136,6 +1205,49 @@
   }
 
   function bindMessageInteractions() {
+    // Reply Action Trigger Button
+    document.querySelectorAll(".msg-reply-trigger-btn:not([data-bound])").forEach((btn) => {
+      btn.setAttribute("data-bound", "true");
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-id");
+        const row = document.getElementById(id);
+        if (!row) return;
+
+        const isRowOut = row.classList.contains("outgoing");
+        const sName = row.querySelector(".msg-sender-name")?.textContent || (isRowOut ? (currentUser?.displayName || currentUser?.username) : (activeConvoMeta?.name || activeConvoMeta?.handle || "Contact"));
+        const txt = row.querySelector(".msg-text-content")?.textContent || "";
+        const isImg = !!row.querySelector(".msg-media-photo");
+        const isAudio = !!row.querySelector(".voice-note-card");
+
+        startReplyToMessage({
+          id,
+          sender: isRowOut ? currentUser.username : (activeConvoMeta?.handle || "contact"),
+          senderName: sName,
+          text: txt,
+          mediaType: isImg ? "image" : (isAudio ? "audio" : null),
+        });
+      });
+    });
+
+    // Quoted Message Click (Scroll to Quote)
+    document.querySelectorAll(".msg-reply-quote:not([data-bound])").forEach((quote) => {
+      quote.setAttribute("data-bound", "true");
+      quote.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const targetId = quote.getAttribute("data-target-id");
+        if (!targetId) return;
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+          targetEl.classList.remove("msg-highlight-pulse");
+          void targetEl.offsetWidth;
+          targetEl.classList.add("msg-highlight-pulse");
+          setTimeout(() => targetEl.classList.remove("msg-highlight-pulse"), 1500);
+        }
+      });
+    });
+
     document.querySelectorAll(".msg-media-photo:not([data-bound])").forEach((el) => {
       el.setAttribute("data-bound", "true");
       el.addEventListener("click", () => {
@@ -1206,7 +1318,29 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Send Message (Optimistic Instant Delivery)
+  // Message Reply Helpers
+  // ---------------------------------------------------------------------------
+  function startReplyToMessage(info) {
+    activeReply = info;
+    if (replyBannerTitle) replyBannerTitle.textContent = `Replying to ${info.senderName || info.sender}`;
+    let preview = info.text || "";
+    if (!preview && info.mediaType === "image") preview = "Photo";
+    else if (!preview && info.mediaType === "audio") preview = "Voice note";
+    else if (!preview && info.mediaType === "file") preview = "Attachment";
+    if (replyBannerSnippet) replyBannerSnippet.textContent = preview || "Message";
+    if (composerReplyBanner) composerReplyBanner.style.display = "flex";
+    if (messageTextInput) messageTextInput.focus();
+  }
+
+  function cancelReply() {
+    activeReply = null;
+    if (composerReplyBanner) composerReplyBanner.style.display = "none";
+  }
+
+  if (closeReplyBannerBtn) closeReplyBannerBtn.addEventListener("click", cancelReply);
+
+  // ---------------------------------------------------------------------------
+  // Send Message (Optimistic Instant Delivery with Reply & Block Support)
   // ---------------------------------------------------------------------------
   async function handleSendMessage(text = "", media = null) {
     if (!text.trim() && !media) return;
@@ -1214,6 +1348,9 @@
       showAuthOverlay("login");
       return;
     }
+
+    const currentReply = activeReply;
+    cancelReply();
 
     const cleanText = text.trim();
     if (messageTextInput) {
@@ -1233,6 +1370,7 @@
       mediaType: media ? media.type : null,
       mediaUrl: media ? media.url : null,
       duration: media ? media.duration : null,
+      replyTo: currentReply ? { ...currentReply } : null,
       timestamp: Date.now(),
       status: "sent",
     };
@@ -1261,8 +1399,20 @@
           mediaType: media ? media.type : null,
           mediaUrl: media ? media.url : null,
           duration: media ? media.duration : null,
+          replyTo: currentReply ? { ...currentReply } : null,
         }),
       });
+
+      if (res.status === 403) {
+        const errData = await res.json().catch(() => ({}));
+        const row = document.getElementById(tempId);
+        if (row) {
+          const footer = row.querySelector(".msg-footer");
+          if (footer) footer.innerHTML += `<span style="color: #ff453a; font-size: 11px; margin-left: 6px;">Not delivered</span>`;
+        }
+        alert(errData.error || "Cannot send message. This user is blocked.");
+        return;
+      }
 
       if (res.ok) {
         const data = await res.json();
@@ -1300,45 +1450,106 @@
   if (messageTextInput) messageTextInput.addEventListener("input", autoResizeTextarea);
 
   // ---------------------------------------------------------------------------
-  // Media Attachments
+  // Media Attachments & Preview with Optional Caption
   // ---------------------------------------------------------------------------
+  let pendingMediaUpload = null;
+
+  function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  }
+
+  function closeMediaPreviewModal() {
+    pendingMediaUpload = null;
+    if (mediaPreviewModal) mediaPreviewModal.style.display = "none";
+    if (mediaPreviewImage) mediaPreviewImage.src = "";
+    if (mediaFileInput) mediaFileInput.value = "";
+    if (sendMediaBtnText) sendMediaBtnText.textContent = "Send Media";
+    if (sendMediaPreviewBtn) sendMediaPreviewBtn.disabled = false;
+  }
+
+  async function sendPendingMedia() {
+    if (!pendingMediaUpload) return;
+    const { file, base64, isImg } = pendingMediaUpload;
+    const caption = (mediaPreviewCaption ? mediaPreviewCaption.value : "").trim();
+
+    if (sendMediaBtnText) sendMediaBtnText.textContent = "Uploading...";
+    if (sendMediaPreviewBtn) sendMediaPreviewBtn.disabled = true;
+
+    let cdnUrl = base64;
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: base64,
+          filename: `msg_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`,
+          contentType: file.type,
+          target: "msg-media-storage",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.proxyUrl) cdnUrl = data.proxyUrl;
+      }
+    } catch (_) {}
+
+    closeMediaPreviewModal();
+
+    handleSendMessage(caption, {
+      type: isImg ? "image" : "file",
+      url: cdnUrl,
+    });
+  }
+
   if (attachMediaBtn && mediaFileInput) {
     attachMediaBtn.addEventListener("click", () => mediaFileInput.click());
-    mediaFileInput.addEventListener("change", async (e) => {
+    mediaFileInput.addEventListener("change", (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
       const isImg = file.type.startsWith("image/");
       const reader = new FileReader();
 
-      reader.onload = async (ev) => {
+      reader.onload = (ev) => {
         const base64 = ev.target.result;
-        let cdnUrl = base64;
+        pendingMediaUpload = { file, base64, isImg };
 
-        try {
-          const res = await fetch("/api/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              image: base64,
-              filename: `msg_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`,
-              contentType: file.type,
-              target: "msg-media-storage",
-            }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.proxyUrl) cdnUrl = data.proxyUrl;
+        if (isImg) {
+          if (mediaPreviewImage) {
+            mediaPreviewImage.src = base64;
+            mediaPreviewImage.style.display = "block";
           }
-        } catch (_) {}
+          if (mediaPreviewFileInfo) mediaPreviewFileInfo.style.display = "none";
+        } else {
+          if (mediaPreviewImage) mediaPreviewImage.style.display = "none";
+          if (mediaPreviewFileInfo) {
+            mediaPreviewFileInfo.style.display = "flex";
+            if (mediaPreviewFileName) mediaPreviewFileName.textContent = file.name;
+            if (mediaPreviewFileSize) mediaPreviewFileSize.textContent = formatBytes(file.size);
+          }
+        }
 
-        handleSendMessage("", {
-          type: isImg ? "image" : "file",
-          url: cdnUrl,
-        });
-        mediaFileInput.value = "";
+        if (mediaPreviewCaption) mediaPreviewCaption.value = "";
+        if (mediaPreviewModal) mediaPreviewModal.style.display = "flex";
+        if (mediaPreviewCaption) mediaPreviewCaption.focus();
       };
       reader.readAsDataURL(file);
+    });
+  }
+
+  if (sendMediaPreviewBtn) sendMediaPreviewBtn.addEventListener("click", sendPendingMedia);
+  if (cancelMediaPreviewBtn) cancelMediaPreviewBtn.addEventListener("click", closeMediaPreviewModal);
+  if (discardMediaBtn) discardMediaBtn.addEventListener("click", closeMediaPreviewModal);
+  if (mediaPreviewCaption) {
+    mediaPreviewCaption.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendPendingMedia();
+      }
     });
   }
 
@@ -1722,6 +1933,116 @@
     closeLightboxBtn.addEventListener("click", () => {
       mediaLightbox.style.display = "none";
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Block / Unblock Management & Settings Blocklist
+  // ---------------------------------------------------------------------------
+  function updateComposerBlockedState() {
+    if (!activeConvoMeta || activeConvoMeta.type !== "direct" || !currentUser) {
+      if (composerBlockedBanner) composerBlockedBanner.style.display = "none";
+      if (composerCapsule) composerCapsule.style.display = "flex";
+      return;
+    }
+
+    const partnerHandle = (activeConvoMeta.handle || "").toLowerCase();
+    const isBlocked = Array.isArray(currentUser.blockedUsers) && currentUser.blockedUsers.includes(partnerHandle);
+
+    if (isBlocked) {
+      if (composerCapsule) composerCapsule.style.display = "none";
+      if (composerReplyBanner) composerReplyBanner.style.display = "none";
+      if (composerBlockedText) composerBlockedText.textContent = `You have blocked @${partnerHandle}. Unblock to send messages.`;
+      if (composerBlockedBanner) composerBlockedBanner.style.display = "flex";
+    } else {
+      if (composerBlockedBanner) composerBlockedBanner.style.display = "none";
+      if (composerCapsule) composerCapsule.style.display = "flex";
+    }
+  }
+
+  async function toggleBlockUser(targetUsername) {
+    if (!currentUser || !targetUsername) return;
+    const cleanTarget = targetUsername.toLowerCase().trim();
+    const isCurrentlyBlocked = Array.isArray(currentUser.blockedUsers) && currentUser.blockedUsers.includes(cleanTarget);
+    const action = isCurrentlyBlocked ? "unblock_user" : "block_user";
+
+    if (!isCurrentlyBlocked) {
+      if (!confirm(`Are you sure you want to block @${cleanTarget}? They will not be able to message you.`)) return;
+    }
+
+    try {
+      const res = await fetch(`/api/msg?action=${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: currentUser.username,
+          targetUser: cleanTarget,
+          token: sessionToken,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        currentUser.blockedUsers = data.blockedUsers || [];
+        localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
+
+        updateComposerBlockedState();
+        loadConversations();
+        if (contactInfoModal && contactInfoModal.style.display !== "none" && activeConvoMeta) {
+          openContactInfo(activeConvoMeta);
+        }
+        renderSettingsBlocklist();
+      }
+    } catch (err) {
+      console.error("Error toggling block:", err);
+    }
+  }
+
+  if (composerUnblockBtn) {
+    composerUnblockBtn.addEventListener("click", () => {
+      if (activeConvoMeta && activeConvoMeta.handle) {
+        toggleBlockUser(activeConvoMeta.handle);
+      }
+    });
+  }
+
+  async function renderSettingsBlocklist() {
+    if (!settingsBlocklistContainer || !currentUser) return;
+    try {
+      const res = await fetch(`/api/msg?action=get_blocklist&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(sessionToken || "")}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const list = data.blockedUsers || [];
+
+      if (list.length === 0) {
+        settingsBlocklistContainer.innerHTML = '<div class="blocklist-empty-msg">No blocked users</div>';
+        return;
+      }
+
+      settingsBlocklistContainer.innerHTML = list.map((u) => {
+        const avatarHtml = renderAvatarHtml(u.displayName || u.username, u.pfp, "avatar-sm");
+        return `
+          <div class="blocklist-item">
+            <div class="blocklist-user-info">
+              ${avatarHtml}
+              <div class="blocklist-names">
+                <span class="blocklist-name">${escapeHtml(u.displayName || u.username)}</span>
+                <span class="blocklist-handle">@${escapeHtml(u.username)}</span>
+              </div>
+            </div>
+            <button class="blocklist-unblock-btn" data-username="${escapeHtml(u.username)}" type="button">Unblock</button>
+          </div>
+        `;
+      }).join("");
+
+      settingsBlocklistContainer.querySelectorAll(".blocklist-unblock-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const uname = btn.getAttribute("data-username");
+          toggleBlockUser(uname);
+        });
+      });
+    } catch (err) {
+      console.error("Error rendering blocklist:", err);
+    }
   }
 
   // ---------------------------------------------------------------------------

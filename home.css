@@ -2116,3 +2116,485 @@ html, body {
   background: rgba(255, 255, 255, 0.14);
 }
 
+
+/* ==========================================================================
+   Replies, Media Preview & Block System Enhancements (iOS Style, Zero Emojis)
+   ========================================================================== */
+
+/* 1. Composer Reply Banner */
+.composer-reply-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(22, 22, 28, 0.95);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 7px;
+  backdrop-filter: blur(16px);
+  animation: slideReplyBannerIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideReplyBannerIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reply-banner-accent {
+  width: 3.5px;
+  align-self: stretch;
+  background: var(--accent-blue, #0a84ff);
+  border-radius: 2px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.reply-banner-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reply-banner-sender-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent-blue, #0a84ff);
+}
+
+.reply-banner-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reply-banner-snippet {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 92%;
+}
+
+.reply-banner-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.reply-banner-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* 2. Quoted Reply Card Inside Message Bubble */
+.msg-reply-quote {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 8px;
+  padding: 6px 9px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  border-left: 3px solid var(--accent-blue, #0a84ff);
+  transition: background 0.15s ease, transform 0.1s ease;
+  overflow: hidden;
+}
+
+.outgoing .msg-reply-quote {
+  background: rgba(0, 0, 0, 0.22);
+  border-left-color: #ffffff;
+}
+
+.msg-reply-quote:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.msg-reply-quote:active {
+  transform: scale(0.98);
+}
+
+.reply-quote-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.reply-quote-sender {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-blue, #0a84ff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.outgoing .reply-quote-sender {
+  color: #ffffff;
+}
+
+.reply-quote-text {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Scroll-to-quote Highlight Pulse */
+@keyframes replyHighlightPulse {
+  0% { background: rgba(10, 132, 255, 0.45); transform: scale(1.02); }
+  50% { background: rgba(10, 132, 255, 0.2); }
+  100% { background: transparent; transform: scale(1); }
+}
+
+.msg-row.msg-highlight-pulse .msg-bubble {
+  animation: replyHighlightPulse 1.4s ease-out;
+}
+
+/* 3. Floating Reply Action Button on Message Bubble */
+.msg-bubble-content {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+}
+
+.msg-reply-trigger-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease;
+  background: rgba(28, 28, 36, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+.incoming .msg-reply-trigger-btn {
+  order: 2;
+}
+
+.outgoing .msg-reply-trigger-btn {
+  order: 0;
+}
+
+.msg-row:hover .msg-reply-trigger-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.msg-reply-trigger-btn:hover {
+  background: var(--accent-blue, #0a84ff);
+  color: #ffffff;
+  transform: scale(1.1);
+  border-color: var(--accent-blue, #0a84ff);
+}
+
+/* Touch devices: show subtly on active */
+@media (hover: none) {
+  .msg-reply-trigger-btn {
+    opacity: 0.6;
+    pointer-events: auto;
+  }
+}
+
+/* 4. Blocked Notice Composer Banner */
+.composer-blocked-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(28, 18, 22, 0.95);
+  border: 1px solid rgba(255, 69, 58, 0.28);
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+  gap: 12px;
+  animation: slideReplyBannerIn 0.2s ease;
+}
+
+.blocked-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #ff6961;
+  font-weight: 500;
+}
+
+.blocked-unblock-btn {
+  background: rgba(255, 69, 58, 0.15);
+  border: 1px solid rgba(255, 69, 58, 0.4);
+  color: #ff453a;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.blocked-unblock-btn:hover {
+  background: #ff453a;
+  color: #ffffff;
+}
+
+/* 5. Settings Modal Blocked Accounts Section */
+.settings-blocklist-section {
+  margin-top: 14px;
+}
+
+.settings-blocklist-header {
+  margin-bottom: 10px;
+}
+
+.settings-blocklist-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.settings-blocklist-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.settings-blocklist-container {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 2px 0;
+}
+
+.blocklist-empty-msg {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 12px 0;
+  font-style: italic;
+}
+
+.blocklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.blocklist-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.blocklist-user-info {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.blocklist-names {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.blocklist-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blocklist-handle {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.blocklist-unblock-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.blocklist-unblock-btn:hover {
+  background: var(--accent-blue, #0a84ff);
+  border-color: var(--accent-blue, #0a84ff);
+}
+
+/* 6. Media Preview Modal */
+.media-preview-card {
+  max-width: 480px;
+  width: 92%;
+  border-radius: 20px;
+  background: #111116;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.media-preview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 18px;
+}
+
+.media-preview-display-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  max-height: 320px;
+  background: #08080a;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.media-preview-img {
+  max-width: 100%;
+  max-height: 310px;
+  object-fit: contain;
+  display: block;
+}
+
+.media-preview-file-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  color: #ffffff;
+}
+
+.media-file-icon {
+  color: var(--accent-blue, #0a84ff);
+}
+
+.media-file-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.media-file-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  word-break: break-all;
+}
+
+.media-file-size {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.media-caption-container {
+  width: 100%;
+}
+
+.media-caption-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: #ffffff;
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.media-caption-input:focus {
+  border-color: var(--accent-blue, #0a84ff);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.media-preview-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* 7. Sheet Block Button */
+.sheet-block-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  margin-top: 10px;
+}
+
+.sheet-block-btn.block {
+  background: rgba(255, 69, 58, 0.12);
+  color: #ff453a;
+  border-color: rgba(255, 69, 58, 0.25);
+}
+
+.sheet-block-btn.block:hover {
+  background: #ff453a;
+  color: #ffffff;
+}
+
+.sheet-block-btn.unblock {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.sheet-block-btn.unblock:hover {
+  background: var(--accent-blue, #0a84ff);
+  border-color: var(--accent-blue, #0a84ff);
+}
