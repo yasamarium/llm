@@ -152,9 +152,9 @@
     const MODEL_CONFIG = {
     "maiko-yen": {
       name: "MAIKO YEN",
-      badge: "23 Nodes",
-      title: "MAIKO YEN (20+ Workflow Nodes • Made by AS)",
-      placeholder: "Message MAIKO YEN (Distributed fleet • Made by AS)...",
+      badge: "31 Nodes",
+      title: "MAIKO YEN (31 Dedicated Nodes • 5h Auto-Restart • Made by AS)",
+      placeholder: "Message MAIKO YEN (31-Node Dedicated Cluster • Made by AS)...",
       isExclusive: false,
       isMaiko: true,
       symClass: "sym-maiko-yen",

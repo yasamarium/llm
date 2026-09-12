@@ -4,6 +4,14 @@ const DEFAULT_API_KEY = "qwen3-direct-access";
 
 const ENDPOINTS = {
   "maiko-yen": [
+    "https://raw.githubusercontent.com/yasamarium/maiko-node-1/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/maiko-node-2/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/maiko-node-3/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/maiko-node-4/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/maiko-node-5/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/maiko-node-6/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/maiko-node-7/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/maiko-node-8/main/endpoint.txt",
     "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt",
     "https://raw.githubusercontent.com/yasamarium/server2/main/endpoint.txt",
     "https://raw.githubusercontent.com/yasamarium/server3/main/endpoint.txt",
@@ -315,7 +323,7 @@ export default async function handler(req, res) {
 
   if (isGreeting(lastUserMsg)) {
     if (modelKey === "maiko-yen") {
-      const replyText = "Hello! I am **MAIKO YEN**, an advanced AI model created and made by **AS**, running on an autonomous distributed network of 20+ cloud workflow nodes. How can I assist you today?";
+      const replyText = "Hello! I am **MAIKO YEN**, an advanced AI model created and made by **AS**, running on a dedicated distributed network of 30+ cloud workflow nodes (5hr continuous auto-restart). How can I assist you today?";
       if (stream) {
         res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
         res.setHeader("Cache-Control", "no-cache, no-transform");

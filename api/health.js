@@ -3,6 +3,14 @@
 const ENDPOINTS = {
   "maiko-yen": {
     list: [
+      "https://raw.githubusercontent.com/yasamarium/maiko-node-1/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/maiko-node-2/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/maiko-node-3/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/maiko-node-4/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/maiko-node-5/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/maiko-node-6/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/maiko-node-7/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/maiko-node-8/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/server2/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/server3/main/endpoint.txt",
@@ -27,7 +35,7 @@ const ENDPOINTS = {
       "https://raw.githubusercontent.com/yasamarium/server22/main/endpoint.txt",
       "https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt",
     ],
-    label: "MAIKO YEN (23 Nodes • Made by AS)",
+    label: "MAIKO YEN (31 Nodes • Made by AS)",
   },
   "r1": {
     list: [
