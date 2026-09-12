@@ -2978,3 +2978,81 @@ html, body {
 
 
 
+
+/* ==========================================================================
+   MAIKO YEN Distributed 20+ Nodes Shimmer & Electric Cyan Glow
+   ========================================================================== */
+.badge-maiko-yen {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3.5px !important;
+  font-weight: 700 !important;
+  font-size: 9px !important;
+  letter-spacing: 0.05em !important;
+  padding: 2px 7.5px !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(
+    90deg,
+    #0284c7 0%,
+    #06b6d4 25%,
+    #3b82f6 50%,
+    #38bdf8 75%,
+    #0284c7 100%
+  ) !important;
+  background-size: 250% 100% !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(56, 189, 248, 0.6) !important;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.6), inset 0 0 4px rgba(255, 255, 255, 0.4) !important;
+  animation: cyanShimmer 2.8s linear infinite, cyanPulse 2s ease-in-out infinite alternate !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+  user-select: none !important;
+  vertical-align: middle !important;
+  line-height: 1.2 !important;
+}
+
+@keyframes cyanShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes cyanPulse {
+  0% {
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.55), inset 0 0 3px rgba(255, 255, 255, 0.25);
+    border-color: rgba(56, 189, 248, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 0 10px rgba(14, 165, 233, 0.65), inset 0 0 6px rgba(255, 255, 255, 0.65);
+    border-color: rgba(56, 189, 248, 0.9);
+  }
+}
+
+.maiko-group-label {
+  color: #38bdf8 !important;
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.2), transparent) !important;
+  border-left: 2.5px solid #06b6d4 !important;
+  padding-left: 8px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+}
+
+.popover-item.maiko-yen-item {
+  border-left: 2px solid rgba(6, 182, 212, 0.4);
+}
+
+.popover-item.maiko-yen-item:hover {
+  background: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+.model-picker-glyph.sym-maiko-yen {
+  color: #38bdf8 !important;
+}

@@ -3,6 +3,31 @@
 const DEFAULT_API_KEY = "qwen3-direct-access";
 
 const ENDPOINTS = {
+  "maiko-yen": [
+    "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server2/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server3/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server4/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server5/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server6/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server7/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server8/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server9/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server10/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server11/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server12/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server13/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server14/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server15/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server16/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server17/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server18/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server19/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server20/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server21/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/server22/main/endpoint.txt",
+    "https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt",
+  ],
   "r1": [
     "https://raw.githubusercontent.com/yasamarium/server9/main/endpoint.txt",
     "https://raw.githubusercontent.com/yasamarium/server15/main/endpoint.txt",
@@ -65,6 +90,7 @@ async function fetchEndpointUrl(rawUrl) {
 
 function normalizeModel(rawModel) {
   const m = (rawModel || "").toLowerCase();
+  if (m.includes("maiko") || m.includes("yen")) return "maiko-yen";
   if (m.includes("gpt-5") || m.includes("gpt5")) return "gpt-5";
   if (m.includes("kimi") || m.includes("k2.6")) return "kimi-k2.6";
   if (m.includes("claude") || m.includes("opus")) return "claude-opus-4.8";
@@ -186,6 +212,26 @@ async function getAvailableEndpoints(modelKey) {
   return validUrls.length > 0 ? validUrls : ["http://localhost:8000"];
 }
 
+function isIdentityQuery(rawText) {
+  if (!rawText) return false;
+  const cleaned = rawText
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  const identityKeywords = [
+    "who are you", "what is your name", "who made you", "who created you",
+    "who built you", "who designed you", "who developed you", "what are you",
+    "tum kaun ho", "tera naam kya hai", "apka naam kya hai", "kisne banaya",
+    "kisne create kiya", "tell me about yourself", "identify yourself",
+    "who is your owner", "who owns you", "who is your maker", "maker of you",
+    "who is as", "are you maiko", "are you maiko yen"
+  ];
+  return identityKeywords.some(phrase => cleaned.includes(phrase));
+}
+
 function isGreeting(rawText) {
   if (!rawText) return false;
   const cleaned = rawText
@@ -247,7 +293,45 @@ export default async function handler(req, res) {
 
   // Instant preset reply for greetings (HI, hello, hey, etc.) - saves cloud inference & latency
   const lastUserMsg = messages[messages.length - 1]?.content || "";
+  // MAIKO YEN specific identity and creator fast-path
+  if (modelKey === "maiko-yen" && isIdentityQuery(lastUserMsg)) {
+    const replyText = "I am **MAIKO YEN**, an advanced autonomous AI model created and made by **AS**. I operate across a distributed cloud architecture of 20+ workflow node repositories on AS cloud. How can I assist you today?";
+    if (stream) {
+      res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
+
+      const sseMsg = { choices: [{ delta: { content: replyText } }] };
+      res.write(`data: ${JSON.stringify(sseMsg)}\n\n`);
+      res.write("data: [DONE]\n\n");
+      return res.end();
+    } else {
+      return res.status(200).json({
+        choices: [{ message: { role: "assistant", content: replyText } }],
+      });
+    }
+  }
+
   if (isGreeting(lastUserMsg)) {
+    if (modelKey === "maiko-yen") {
+      const replyText = "Hello! I am **MAIKO YEN**, an advanced AI model created and made by **AS**, running on an autonomous distributed network of 20+ cloud workflow nodes. How can I assist you today?";
+      if (stream) {
+        res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+        res.setHeader("Cache-Control", "no-cache, no-transform");
+        res.setHeader("Connection", "keep-alive");
+        res.setHeader("X-Accel-Buffering", "no");
+
+        const sseMsg = { choices: [{ delta: { content: replyText } }] };
+        res.write(`data: ${JSON.stringify(sseMsg)}\n\n`);
+        res.write("data: [DONE]\n\n");
+        return res.end();
+      } else {
+        return res.status(200).json({
+          choices: [{ message: { role: "assistant", content: replyText } }],
+        });
+      }
+    }
     const isS62 = Boolean(S62_MODELS[modelKey]);
     const s62Names = {
       "gpt-5": "GPT-5",
@@ -392,6 +476,19 @@ export default async function handler(req, res) {
     }
   }
 
+  // MAIKO YEN workflow fleet preparation: Ensure persona system prompt is injected
+  let effectiveMessages = messages;
+  if (modelKey === "maiko-yen") {
+    const maikoSystemPrompt = {
+      role: "system",
+      content: "You are MAIKO YEN, an advanced artificial intelligence system created and made by AS. You run on an autonomous distributed network of 20+ workflow node repositories. Your name is MAIKO YEN, and your creator is AS. When asked who you are, what your name is, or who made you, always answer that you are MAIKO YEN, made by AS. Never claim to be made by OpenAI, Google, Meta, or any other entity. Provide intelligent, helpful, accurate, polite, and comprehensive answers."
+    };
+    effectiveMessages = [
+      maikoSystemPrompt,
+      ...messages.filter(m => m.role !== "system"),
+    ];
+  }
+
   const targetUrls = await getAvailableEndpoints(modelKey);
   const apiKey = process.env.LLMSERVER_API_KEY || DEFAULT_API_KEY;
 
@@ -407,7 +504,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: modelKey,
-          messages,
+          messages: effectiveMessages,
           temperature: Number(temperature),
           max_tokens: Number(max_tokens),
           stream: Boolean(stream),
@@ -443,6 +540,54 @@ export default async function handler(req, res) {
       lastError = err;
       continue;
     }
+  }
+
+  // Seamless fallback for MAIKO YEN if nodes are in 6-hour restart cycle
+  if (modelKey === "maiko-yen") {
+    try {
+      const recent = effectiveMessages.slice(-6);
+      const promptText = "Instructions: You are MAIKO YEN, created and made by AS. Runs on 20+ workflow nodes. Always identify as MAIKO YEN made by AS.\n\n" +
+        recent.map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n") + "\nAssistant:";
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const fallbackUrl = "https://apis.davidcyril.name.ng/ai/deepseek-v4-flash";
+      const upstreamRes = await fetch(`${fallbackUrl}?prompt=${encodeURIComponent(promptText)}`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (upstreamRes.ok) {
+        const json = await upstreamRes.json();
+        let replyText = json.data || json.result || json.response || "";
+        if (replyText) {
+          // Sanitize any generic branding
+          replyText = replyText
+            .replace(/deepseek|chatgpt|openai|google assistant/gi, "MAIKO YEN")
+            .replace(/developed by deepseek|developed by openai|created by google/gi, "created and made by AS");
+
+          if (stream) {
+            res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+            res.setHeader("Cache-Control", "no-cache, no-transform");
+            res.setHeader("Connection", "keep-alive");
+            res.setHeader("X-Accel-Buffering", "no");
+
+            const words = replyText.split(" ");
+            for (let i = 0; i < words.length; i += 2) {
+              const chunk = (i > 0 ? " " : "") + words.slice(i, i + 2).join(" ");
+              res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`);
+              if (i + 2 < words.length) await new Promise((r) => setTimeout(r, 16));
+            }
+            res.write("data: [DONE]\n\n");
+            return res.end();
+          } else {
+            return res.status(200).json({
+              choices: [{ message: { role: "assistant", content: replyText } }],
+            });
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   return res.status(502).json({

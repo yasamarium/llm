@@ -149,7 +149,17 @@
     }
   });
 
-  const MODEL_CONFIG = {
+    const MODEL_CONFIG = {
+    "maiko-yen": {
+      name: "MAIKO YEN",
+      badge: "23 Nodes",
+      title: "MAIKO YEN (20+ Workflow Nodes • Made by AS)",
+      placeholder: "Message MAIKO YEN (Distributed fleet • Made by AS)...",
+      isExclusive: false,
+      isMaiko: true,
+      symClass: "sym-maiko-yen",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 3v6m0 6v6M3 12h6m6 0h6"/><circle cx="12" cy="3" r="1.8"/><circle cx="12" cy="21" r="1.8"/><circle cx="3" cy="12" r="1.8"/><circle cx="21" cy="12" r="1.8"/><path d="M5.6 5.6l4.2 4.2m4.4 4.4l4.2 4.2M5.6 18.4l4.2-4.2m4.4-4.4l4.2-4.2" stroke-dasharray="1 1.5"/></svg>`,
+    },
     "gpt-5": {
       name: "GPT-5",
       badge: "EXCLUSIVE S-62",
@@ -450,6 +460,7 @@
     if (currentModelBadge) {
       currentModelBadge.textContent = cfg.badge;
       currentModelBadge.classList.toggle("badge-exclusive-s62", Boolean(cfg.isExclusive));
+      currentModelBadge.classList.toggle("badge-maiko-yen", Boolean(cfg.isMaiko));
     }
 
     // Update popover items active state
@@ -3137,7 +3148,12 @@
     abortController = new AbortController();
 
     const fullMessages = [
-      { role: "system", content: "You are a helpful, concise, and polite AI assistant." },
+      {
+        role: "system",
+        content: currentReqModel === "maiko-yen"
+          ? "You are MAIKO YEN, an advanced artificial intelligence system created and made by AS. You run on a distributed network of 20+ cloud workflow nodes. Whenever asked about your identity or creator, you always proudly and clearly state that your name is MAIKO YEN and you were made by AS. Be helpful, intelligent, polite, and comprehensive."
+          : "You are a helpful, concise, and polite AI assistant."
+      },
       ...conversation,
     ];
 

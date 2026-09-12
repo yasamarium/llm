@@ -1,6 +1,34 @@
 // api/health.js - Checks health across multi-replica AS Cloud fleet
 
 const ENDPOINTS = {
+  "maiko-yen": {
+    list: [
+      "https://raw.githubusercontent.com/yasamarium/server1/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server2/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server3/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server4/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server5/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server6/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server7/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server8/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server9/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server10/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server11/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server12/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server13/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server14/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server15/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server16/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server17/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server18/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server19/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server20/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server21/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/server22/main/endpoint.txt",
+      "https://raw.githubusercontent.com/yasamarium/llmserver/main/endpoint.txt",
+    ],
+    label: "MAIKO YEN (23 Nodes • Made by AS)",
+  },
   "r1": {
     list: [
       "https://raw.githubusercontent.com/yasamarium/server9/main/endpoint.txt",
@@ -91,6 +119,7 @@ async function fetchEndpointUrl(rawUrl) {
 
 function normalizeKey(raw) {
   const m = (raw || "").toLowerCase();
+  if (m.includes("maiko") || m.includes("yen")) return "maiko-yen";
   if (m.includes("gpt-5") || m.includes("gpt5")) return "gpt-5";
   if (m.includes("kimi") || m.includes("k2.6")) return "kimi-k2.6";
   if (m.includes("claude") || m.includes("opus")) return "claude-opus-4.8";
