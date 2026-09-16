@@ -3731,8 +3731,9 @@ button:active,
 }
 
 
+
 /* ==========================================================================
-   iOS Native Offline Screen & Animated Black Cat Searching for Internet
+   iOS Native Offline Screen & Animated Walking Cat Roaming System
    ========================================================================== */
 
 .ios-offline-overlay {
@@ -3740,11 +3741,19 @@ button:active,
   inset: 0;
   z-index: 99999;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 20px;
+  justify-content: flex-start;
+  padding: 48px 20px 20px;
+  overflow: hidden;
   animation: offlineFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .ios-offline-overlay {
+    padding: 36px 16px 16px;
+  }
 }
 
 @keyframes offlineFadeIn {
@@ -3756,18 +3765,21 @@ button:active,
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.82);
+  pointer-events: none;
 }
 
 .ios-offline-card {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 440px;
+  max-width: 420px;
   background: rgba(22, 22, 26, 0.92);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 0.5px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 25px 65px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  border-radius: 28px;
-  padding: 28px 24px 22px;
+  border-radius: 26px;
+  padding: 24px 22px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3776,136 +3788,12 @@ button:active,
 }
 
 @keyframes offlineCardPop {
-  0% { transform: scale(0.88) translateY(24px); opacity: 0; }
+  0% { transform: scale(0.9) translateY(-18px); opacity: 0; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
-.cat-stage-container {
-  width: 100%;
-  max-width: 280px;
-  height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
-}
-
-.offline-cat-svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-/* Cat Animations */
-.cat-tail-pivot {
-  transform-origin: 98px 160px;
-  animation: tailWag 3.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
-}
-
-@keyframes tailWag {
-  0% { transform: rotate(-8deg); }
-  50% { transform: rotate(5deg); }
-  100% { transform: rotate(-14deg); }
-}
-
-.cat-breathing-body {
-  transform-origin: 140px 180px;
-  animation: catBreathe 3s ease-in-out infinite alternate;
-}
-
-@keyframes catBreathe {
-  0% { transform: scaleY(1); }
-  100% { transform: scaleY(1.026) translateY(-1px); }
-}
-
-.cat-head-pivot {
-  transform-origin: 140px 115px;
-  animation: catHeadSearch 5.2s ease-in-out infinite;
-}
-
-@keyframes catHeadSearch {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-5deg); }
-  60% { transform: rotate(5.5deg); }
-  85% { transform: rotate(-2deg); }
-}
-
-.cat-ear-right {
-  transform-origin: 154px 85px;
-  animation: earTwitch 4.4s ease-in-out infinite;
-}
-
-@keyframes earTwitch {
-  0%, 88%, 100% { transform: rotate(0deg); }
-  90% { transform: rotate(14deg); }
-  92% { transform: rotate(-6deg); }
-  94% { transform: rotate(8deg); }
-}
-
-.cat-pupils {
-  animation: eyeScan 4.2s ease-in-out infinite;
-}
-
-@keyframes eyeScan {
-  0%, 100% { transform: translateX(0); }
-  20%, 35% { transform: translateX(-2.4px); }
-  55%, 70% { transform: translateX(2.4px); }
-  85% { transform: translate(0, -1.5px); }
-}
-
-.cat-eyelids {
-  transform-origin: 140px 98px;
-  animation: catBlink 4.5s infinite;
-}
-
-@keyframes catBlink {
-  0%, 93%, 97%, 100% { transform: scaleY(0); }
-  95% { transform: scaleY(1); }
-}
-
-/* Radar and Wi-Fi Waves */
-.radar-wave.wave-1 {
-  animation: radarWavePulse 2.8s cubic-bezier(0.15, 0.8, 0.25, 1) infinite;
-}
-.radar-wave.wave-2 {
-  animation: radarWavePulse 2.8s cubic-bezier(0.15, 0.8, 0.25, 1) infinite 0.7s;
-}
-.radar-wave.wave-3 {
-  animation: radarWavePulse 2.8s cubic-bezier(0.15, 0.8, 0.25, 1) infinite 1.4s;
-}
-
-@keyframes radarWavePulse {
-  0% { transform: scale(0.6); transform-origin: 140px 55px; opacity: 0.9; }
-  100% { transform: scale(1.65); transform-origin: 140px 55px; opacity: 0; }
-}
-
-.wifi-arc.arc-inner {
-  animation: wifiSearchSweep 1.5s ease-in-out infinite 0s;
-}
-.wifi-arc.arc-mid {
-  animation: wifiSearchSweep 1.5s ease-in-out infinite 0.22s;
-}
-.wifi-arc.arc-outer {
-  animation: wifiSearchSweep 1.5s ease-in-out infinite 0.44s;
-}
-
-@keyframes wifiSearchSweep {
-  0% { opacity: 0.18; stroke: #454555; }
-  45% { opacity: 1; stroke: #ff453a; filter: drop-shadow(0 0 8px rgba(255, 69, 58, 0.85)); }
-  100% { opacity: 0.18; stroke: #454555; }
-}
-
-.beacon-diode {
-  animation: diodePulse 1.1s ease-in-out infinite alternate;
-}
-
-@keyframes diodePulse {
-  0% { fill: #ff453a; opacity: 0.5; transform: scale(0.85); transform-origin: 0 6px; }
-  100% { fill: #ff375f; opacity: 1; transform: scale(1.2); transform-origin: 0 6px; filter: drop-shadow(0 0 8px #ff453a); }
-}
-
 .offline-badge-row {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .offline-badge-pill {
@@ -3937,26 +3825,26 @@ button:active,
 }
 
 .offline-title {
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.025em;
   color: #ffffff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .offline-description {
   font-size: 13.5px;
-  line-height: 1.5;
+  line-height: 1.45;
   color: #8e8e93;
-  max-width: 360px;
-  margin-bottom: 22px;
+  max-width: 350px;
+  margin-bottom: 18px;
 }
 
 .offline-actions {
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .offline-retry-btn {
@@ -3965,13 +3853,13 @@ button:active,
   justify-content: center;
   gap: 8px;
   width: 100%;
-  max-width: 240px;
-  padding: 13px 20px;
+  max-width: 220px;
+  padding: 12px 18px;
   background: #ffffff;
   color: #000000;
   border: none;
-  border-radius: 16px;
-  font-size: 14.5px;
+  border-radius: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
@@ -4002,12 +3890,171 @@ button:active,
 }
 
 .offline-footer-meta {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #636366;
   font-weight: 400;
 }
 
-/* When connection is restored state */
+/* --------------------------------------------------------------------------
+   Walking Cat Roamer Sprite & Keyframes
+   -------------------------------------------------------------------------- */
+
+.offline-roaming-cat {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 140px;
+  height: 105px;
+  z-index: 10;
+  pointer-events: none;
+  will-change: transform;
+  transition: transform 0.05s linear;
+}
+
+@media (max-width: 768px) {
+  .offline-roaming-cat {
+    width: 110px;
+    height: 82px;
+  }
+}
+
+.walking-cat-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+}
+
+/* Articulated Quadruped Gait Cycles */
+.cat-is-walking .leg-back-near {
+  transform-origin: 44px 55px;
+  animation: walkBackNear 0.85s ease-in-out infinite;
+}
+
+.cat-is-walking .leg-front-near {
+  transform-origin: 104px 62px;
+  animation: walkFrontNear 0.85s ease-in-out infinite 0.21s;
+}
+
+.cat-is-walking .leg-back-far {
+  transform-origin: 48px 55px;
+  animation: walkBackFar 0.85s ease-in-out infinite 0.42s;
+}
+
+.cat-is-walking .leg-front-far {
+  transform-origin: 100px 62px;
+  animation: walkFrontFar 0.85s ease-in-out infinite 0.64s;
+}
+
+@keyframes walkBackNear {
+  0% { transform: rotate(-22deg); }
+  35% { transform: rotate(18deg) translateY(-3px); }
+  70% { transform: rotate(8deg); }
+  100% { transform: rotate(-22deg); }
+}
+
+@keyframes walkFrontNear {
+  0% { transform: rotate(24deg); }
+  35% { transform: rotate(-18deg) translateY(-3px); }
+  70% { transform: rotate(-6deg); }
+  100% { transform: rotate(24deg); }
+}
+
+@keyframes walkBackFar {
+  0% { transform: rotate(-22deg); }
+  35% { transform: rotate(18deg) translateY(-3px); }
+  70% { transform: rotate(8deg); }
+  100% { transform: rotate(-22deg); }
+}
+
+@keyframes walkFrontFar {
+  0% { transform: rotate(24deg); }
+  35% { transform: rotate(-18deg) translateY(-3px); }
+  70% { transform: rotate(-6deg); }
+  100% { transform: rotate(24deg); }
+}
+
+/* Stride Bobbing Physics */
+.cat-is-walking .cat-walk-torso {
+  animation: torsoWalkBob 0.42s ease-in-out infinite alternate;
+  transform-origin: 75px 65px;
+}
+
+@keyframes torsoWalkBob {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-2.6px) rotate(1deg); }
+}
+
+.cat-is-walking .cat-walk-head {
+  animation: headWalkBob 0.42s ease-in-out infinite alternate;
+  transform-origin: 120px 45px;
+}
+
+@keyframes headWalkBob {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-1.6px) rotate(-2deg); }
+}
+
+.cat-is-walking .cat-walk-tail {
+  animation: tailWalkSway 0.85s ease-in-out infinite alternate;
+  transform-origin: 36px 50px;
+}
+
+@keyframes tailWalkSway {
+  0% { transform: rotate(-12deg); }
+  100% { transform: rotate(16deg); }
+}
+
+.cat-is-walking .cat-walk-shadow {
+  animation: shadowPulse 0.42s ease-in-out infinite alternate;
+  transform-origin: 72px 112px;
+}
+
+@keyframes shadowPulse {
+  0% { transform: scaleX(1) scaleY(1); opacity: 0.6; }
+  100% { transform: scaleX(0.88) scaleY(0.8); opacity: 0.45; }
+}
+
+/* Sniffing State (When paused at destination) */
+.offline-roaming-cat:not(.cat-is-walking) .cat-walk-head {
+  animation: catSniff 1.6s ease-in-out infinite alternate;
+  transform-origin: 120px 45px;
+}
+
+@keyframes catSniff {
+  0% { transform: rotate(0deg); }
+  40% { transform: rotate(10deg) translateY(2px); }
+  80% { transform: rotate(-4deg); }
+  100% { transform: rotate(6deg) translateY(1px); }
+}
+
+/* Wi-Fi Searching Radar on Antenna */
+.scanner-arc.arc-1 {
+  animation: wifiArcPulse 1.2s ease-in-out infinite 0s;
+}
+.scanner-arc.arc-2 {
+  animation: wifiArcPulse 1.2s ease-in-out infinite 0.2s;
+}
+.scanner-arc.arc-3 {
+  animation: wifiArcPulse 1.2s ease-in-out infinite 0.4s;
+}
+
+@keyframes wifiArcPulse {
+  0% { opacity: 0.2; stroke: #555566; }
+  50% { opacity: 1; stroke: #ff453a; filter: drop-shadow(0 0 6px rgba(255, 69, 58, 0.85)); }
+  100% { opacity: 0.2; stroke: #555566; }
+}
+
+.scanner-diode {
+  animation: diodeBlink 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes diodeBlink {
+  0% { fill: #ff453a; opacity: 0.5; }
+  100% { fill: #ff375f; opacity: 1; filter: drop-shadow(0 0 8px #ff453a); }
+}
+
+/* Restored Connection State */
 .ios-offline-card.restored .offline-badge-pill {
   background: rgba(52, 199, 89, 0.15);
   border-color: rgba(52, 199, 89, 0.35);
@@ -4019,13 +4066,13 @@ button:active,
   box-shadow: 0 0 10px #34c759;
 }
 
-.ios-offline-card.restored .beacon-diode {
+.offline-roaming-cat.restored .scanner-diode {
   fill: #34c759 !important;
   animation: none !important;
   filter: drop-shadow(0 0 8px #34c759) !important;
 }
 
-.ios-offline-card.restored .wifi-arc {
+.offline-roaming-cat.restored .scanner-arc {
   stroke: #34c759 !important;
   animation: none !important;
   opacity: 1 !important;

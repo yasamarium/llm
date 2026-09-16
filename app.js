@@ -3711,52 +3711,166 @@
 
 
   // ---------------------------------------------------------------------------
-  // iOS Offline Screen & Cat Radar Engine
+  // iOS Offline Screen & Walking Cat Roamer System (Strictly Zero Emojis)
   // ---------------------------------------------------------------------------
   function initOfflineSystem() {
     const offlineOverlay = document.getElementById("iosOfflineOverlay");
     const retryBtn = document.getElementById("offlineRetryBtn");
     const timerNotice = document.getElementById("offlineTimerNotice");
+    const roamingCat = document.getElementById("offlineRoamingCat");
     if (!offlineOverlay) return;
 
     let isOffline = !navigator.onLine;
     let autoRetryTimer = null;
     let secondsLeft = 4;
 
+    // Cat Roamer Physics State
+    let catX = 60;
+    let catY = 300;
+    let targetX = 60;
+    let targetY = 300;
+    let facing = 1; // 1 = right, -1 = left
+    let isRoamingActive = false;
+    let animFrameId = null;
+    let pauseTimer = null;
+    let isPausedAtTarget = false;
+
+    function getBounds() {
+      const isMobile = window.innerWidth <= 768;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (isMobile) {
+        return {
+          minX: 10,
+          maxX: Math.max(20, w - 125),
+          minY: Math.max(280, h * 0.55),
+          maxY: Math.max(300, h - 110),
+          speed: 1.25,
+        };
+      } else {
+        return {
+          minX: 35,
+          maxX: Math.max(80, w - 175),
+          minY: Math.max(160, h * 0.45),
+          maxY: Math.max(220, h - 130),
+          speed: 1.85,
+        };
+      }
+    }
+
+    function pickNewTarget() {
+      const b = getBounds();
+      targetX = b.minX + Math.random() * (b.maxX - b.minX);
+      targetY = b.minY + Math.random() * (b.maxY - b.minY);
+      isPausedAtTarget = false;
+      if (roamingCat) {
+        roamingCat.classList.add("cat-is-walking");
+      }
+    }
+
+    function updateCatRoam() {
+      if (!isRoamingActive || !roamingCat || offlineOverlay.style.display === "none") return;
+
+      const b = getBounds();
+
+      // Keep cat strictly within visible bounds on screen resize
+      catX = Math.max(b.minX, Math.min(b.maxX, catX));
+      catY = Math.max(b.minY, Math.min(b.maxY, catY));
+
+      if (!isPausedAtTarget) {
+        const dx = targetX - catX;
+        const dy = targetY - catY;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 6) {
+          const vx = (dx / dist) * b.speed;
+          const vy = (dy / dist) * b.speed;
+          catX += vx;
+          catY += vy;
+
+          // Flip direction when walking left vs right
+          if (dx > 2) facing = 1;
+          else if (dx < -2) facing = -1;
+
+          roamingCat.style.transform = `translate3d(${catX}px, ${catY}px, 0) scaleX(${facing})`;
+          if (!roamingCat.classList.contains("cat-is-walking")) {
+            roamingCat.classList.add("cat-is-walking");
+          }
+        } else {
+          // Arrived at target: pause and sniff for packets
+          isPausedAtTarget = true;
+          roamingCat.classList.remove("cat-is-walking");
+
+          clearTimeout(pauseTimer);
+          const pauseDuration = 1600 + Math.random() * 1400; // 1.6s to 3s sniff
+          pauseTimer = setTimeout(() => {
+            if (isRoamingActive) {
+              pickNewTarget();
+            }
+          }, pauseDuration);
+        }
+      }
+
+      animFrameId = requestAnimationFrame(updateCatRoam);
+    }
+
+    function startRoaming() {
+      if (isRoamingActive) return;
+      isRoamingActive = true;
+      const b = getBounds();
+      catX = (b.minX + b.maxX) / 2;
+      catY = (b.minY + b.maxY) / 2;
+      pickNewTarget();
+      animFrameId = requestAnimationFrame(updateCatRoam);
+    }
+
+    function stopRoaming() {
+      isRoamingActive = false;
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      clearTimeout(pauseTimer);
+    }
+
     function showOfflineScreen() {
       if (!isOffline) return;
       offlineOverlay.style.display = "flex";
       offlineOverlay.setAttribute("aria-hidden", "false");
-      offlineOverlay.classList.remove("fade-out");
       if (typeof Taptic !== "undefined") Taptic.warning();
       if (typeof playIosSound !== "undefined") playIosSound("pop");
+      startRoaming();
       startAutoRetryCountdown();
     }
 
     function hideOfflineScreen(instant = false) {
       if (instant) {
+        stopRoaming();
         offlineOverlay.style.display = "none";
         offlineOverlay.setAttribute("aria-hidden", "true");
         return;
       }
       const card = offlineOverlay.querySelector(".ios-offline-card");
       if (card) card.classList.add("restored");
+      if (roamingCat) roamingCat.classList.add("restored");
       const badgeText = offlineOverlay.querySelector(".offline-badge-text");
       if (badgeText) badgeText.textContent = "Online • Connection Restored";
       if (typeof Taptic !== "undefined") Taptic.success();
       if (typeof playIosSound !== "undefined") playIosSound("refresh");
 
       setTimeout(() => {
-        offlineOverlay.style.transition = "opacity 0.3s var(--ios-spring-bounce)";
+        offlineOverlay.style.transition = "opacity 0.35s var(--ios-spring-bounce)";
         offlineOverlay.style.opacity = "0";
         setTimeout(() => {
+          stopRoaming();
           offlineOverlay.style.display = "none";
           offlineOverlay.style.opacity = "";
           offlineOverlay.style.transition = "";
           offlineOverlay.setAttribute("aria-hidden", "true");
           if (card) card.classList.remove("restored");
-          if (badgeText) badgeText.textContent = "Offline • Feline Radar Active";
-        }, 300);
+          if (roamingCat) roamingCat.classList.remove("restored");
+          if (badgeText) badgeText.textContent = "Offline • Cat Radar Active";
+        }, 350);
       }, 750);
     }
 
