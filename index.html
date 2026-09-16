@@ -56,6 +56,18 @@
 
     <!-- Chat Messages Viewport -->
     <main class="ios-chat-viewport" id="chatViewport">
+      <!-- iOS Pull-To-Refresh Activity Spinner (Strictly Zero Emojis) -->
+      <div class="ios-ptr-container" id="aiPtr">
+        <div class="ios-spinner-blade"></div>
+        <div class="ios-spinner-blade"></div>
+        <div class="ios-spinner-blade"></div>
+        <div class="ios-spinner-blade"></div>
+        <div class="ios-spinner-blade"></div>
+        <div class="ios-spinner-blade"></div>
+        <div class="ios-spinner-blade"></div>
+        <div class="ios-spinner-blade"></div>
+      </div>
+
       <!-- Minimalist Welcome State -->
       <div class="welcome-view" id="welcomeView">
         <div class="welcome-content">
@@ -422,6 +434,42 @@
           </svg>
           <span>Open in Tab</span>
         </a>
+      </div>
+    </div>
+  <!-- iOS 18 Context Menu & Floating Tapback Bar for AI messages (Strictly Zero Emojis) -->
+  <div id="aiMessageContextMenu" class="ios-context-overlay" style="display: none;">
+    <div class="ios-context-backdrop" id="aiContextBackdrop"></div>
+    <div class="ios-context-wrapper" id="aiContextWrapper">
+      <div class="ios-tapback-bar" id="aiTapbackBar">
+        <button class="tapback-btn" data-reaction="heart" title="Heart" aria-label="Heart">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#ff2d55"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </button>
+        <button class="tapback-btn" data-reaction="thumbsup" title="Thumbs Up" aria-label="Thumbs Up">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#34c759"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+        </button>
+        <button class="tapback-btn" data-reaction="thumbsdown" title="Thumbs Down" aria-label="Thumbs Down">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#ff9500"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
+        </button>
+        <button class="tapback-btn" data-reaction="haha" title="HaHa" aria-label="HaHa">
+          <span class="tapback-typography" style="color: #ff9f0a; font-weight: 800; font-size: 13px;">HA</span>
+        </button>
+        <button class="tapback-btn" data-reaction="exclaim" title="Exclamation" aria-label="Exclamation">
+          <span class="tapback-typography" style="color: #ff375f; font-weight: 900; font-size: 17px;">!!</span>
+        </button>
+        <button class="tapback-btn" data-reaction="question" title="Question" aria-label="Question">
+          <span class="tapback-typography" style="color: #bf5af2; font-weight: 900; font-size: 17px;">?</span>
+        </button>
+      </div>
+      <div class="ios-context-preview" id="aiContextPreview"></div>
+      <div class="ios-context-action-menu" id="aiActionMenu">
+        <button class="ios-context-action-item" id="aiCtxCopyBtn" type="button">
+          <span>Copy Message</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        </button>
+        <button class="ios-context-action-item" id="aiCtxShareBtn" type="button">
+          <span>Share</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        </button>
       </div>
     </div>
   </div>

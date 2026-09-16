@@ -3056,3 +3056,289 @@ html, body {
 .model-picker-glyph.sym-maiko-yen {
   color: #38bdf8 !important;
 }
+
+
+/* ==========================================================================
+   iOS Native Physical Interactions, Gestures & Smoothness Styles (AI App)
+   ========================================================================== */
+
+/* 1. Global Spring Physics & Active Tap Compression */
+:root {
+  --ios-spring-bounce: cubic-bezier(0.32, 0.72, 0, 1);
+  --ios-spring-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+  --ios-touch-ease: cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+button:active, 
+.suggestion-chip:active, 
+.popover-item:active, 
+.ios-circle-btn:active,
+.attach-capsule-btn:active,
+.send-capsule-btn:active {
+  transform: scale(0.965) !important;
+  transition: transform 0.12s var(--ios-touch-ease) !important;
+}
+
+/* 2. iOS Rubber-Band & Touch Smoothness */
+.ios-chat-viewport {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* 3. iOS Sheet Drag Handle for Model Popover */
+.sheet-drag-handle {
+  width: 38px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  margin: 8px auto 14px;
+  cursor: grab;
+  transition: background 0.2s ease, width 0.2s ease;
+  touch-action: none;
+}
+
+.sheet-drag-handle:active {
+  background: rgba(255, 255, 255, 0.5);
+  width: 44px;
+  cursor: grabbing;
+}
+
+/* 4. Native iOS Pull-To-Refresh Activity Indicator */
+.ios-ptr-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: height 0.25s var(--ios-spring-bounce), opacity 0.25s ease;
+  pointer-events: none;
+  width: 100%;
+}
+
+.ios-ptr-container.pulling,
+.ios-ptr-container.refreshing {
+  opacity: 1;
+}
+
+.ios-ptr-spinner {
+  position: relative;
+  width: 22px;
+  height: 22px;
+}
+
+.ios-spinner-blade {
+  position: absolute;
+  left: 9.5px;
+  top: 0;
+  width: 2.5px;
+  height: 6px;
+  border-radius: 1.5px;
+  background-color: rgba(255, 255, 255, 0.75);
+  transform-origin: 1.25px 11px;
+}
+
+.ios-spinner-blade:nth-child(1) { transform: rotate(0deg); opacity: 0.2; }
+.ios-spinner-blade:nth-child(2) { transform: rotate(45deg); opacity: 0.3; }
+.ios-spinner-blade:nth-child(3) { transform: rotate(90deg); opacity: 0.4; }
+.ios-spinner-blade:nth-child(4) { transform: rotate(135deg); opacity: 0.5; }
+.ios-spinner-blade:nth-child(5) { transform: rotate(180deg); opacity: 0.6; }
+.ios-spinner-blade:nth-child(6) { transform: rotate(225deg); opacity: 0.7; }
+.ios-spinner-blade:nth-child(7) { transform: rotate(270deg); opacity: 0.85; }
+.ios-spinner-blade:nth-child(8) { transform: rotate(315deg); opacity: 1; }
+
+.ios-ptr-container.refreshing .ios-ptr-spinner {
+  animation: iosSpin 0.75s steps(8) infinite;
+}
+
+@keyframes iosSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 5. iOS Floating Tapback & Context Menu Overlay */
+.ios-context-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  animation: contextFadeIn 0.2s ease-out;
+}
+
+@keyframes contextFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ios-context-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  cursor: pointer;
+}
+
+.ios-context-wrapper {
+  position: relative;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 90vw;
+  animation: contextPop 0.24s var(--ios-spring-bounce);
+}
+
+@keyframes contextPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Floating Tapback Pill */
+.ios-tapback-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(36, 36, 42, 0.88);
+  backdrop-filter: blur(35px) saturate(200%);
+  -webkit-backdrop-filter: blur(35px) saturate(200%);
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.tapback-btn {
+  background: none;
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ffffff;
+  transition: transform 0.18s var(--ios-spring-bounce), background 0.15s ease;
+}
+
+.tapback-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.22);
+}
+
+.tapback-btn:active {
+  transform: scale(0.92);
+}
+
+/* Target Message Spotlight in Context View */
+.ios-context-preview {
+  max-width: 82vw;
+  max-height: 45vh;
+  overflow: hidden;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+
+.ios-context-preview .ios-bubble {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Action Menu Items */
+.ios-context-action-menu {
+  width: 210px;
+  background: rgba(32, 32, 36, 0.85);
+  backdrop-filter: blur(35px) saturate(200%);
+  -webkit-backdrop-filter: blur(35px) saturate(200%);
+  border: 0.5px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ios-context-action-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.ios-context-action-item:last-child {
+  border-bottom: none;
+}
+
+.ios-context-action-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ios-context-action-item:active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* 6. Message Tapback Reaction Badge on Bubble */
+.msg-reaction-container {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  position: absolute;
+  bottom: -11px;
+  right: 12px;
+  z-index: 5;
+  background: rgba(28, 28, 34, 0.95);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  padding: 2px 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+  animation: reactionPop 0.22s var(--ios-spring-bounce);
+  cursor: pointer;
+}
+
+@keyframes reactionPop {
+  0% { transform: scale(0); opacity: 0; }
+  75% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.reaction-mini-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 7. Double-Tap Floating Heart Burst */
+.ios-heart-burst {
+  position: absolute;
+  pointer-events: none;
+  z-index: 50;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: heartBurst 0.65s var(--ios-spring-bounce) forwards;
+}
+
+@keyframes heartBurst {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  45% { transform: translate(-50%, -50%) scale(1.35); opacity: 1; }
+  70% { transform: translate(-50%, -65%) scale(1.1); opacity: 0.9; }
+  100% { transform: translate(-50%, -85%) scale(0.85); opacity: 0; }
+}

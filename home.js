@@ -99,7 +99,21 @@
     return audioCtx;
   }
 
-  function playChime(type = "sent") {
+  // ---------------------------------------------------------------------------
+  // iOS Taptic Engine System
+  // ---------------------------------------------------------------------------
+  const Taptic = {
+    selection: () => { try { navigator.vibrate?.(6); } catch (_) {} },
+    light: () => { try { navigator.vibrate?.(10); } catch (_) {} },
+    medium: () => { try { navigator.vibrate?.(18); } catch (_) {} },
+    heavy: () => { try { navigator.vibrate?.(26); } catch (_) {} },
+    reaction: () => { try { navigator.vibrate?.([8, 25, 12]); } catch (_) {} },
+    success: () => { try { navigator.vibrate?.([10, 35, 15]); } catch (_) {} },
+    warning: () => { try { navigator.vibrate?.([15, 50, 20]); } catch (_) {} },
+    error: () => { try { navigator.vibrate?.([20, 30, 20, 30, 25]); } catch (_) {} },
+  };
+
+  function playIosSound(type = "sent") {
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
@@ -111,22 +125,49 @@
       const now = ctx.currentTime;
       if (type === "sent") {
         osc.type = "sine";
-        osc.frequency.setValueAtTime(640, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-        gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.frequency.setValueAtTime(540, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
         osc.start(now);
-        osc.stop(now + 0.09);
-      } else {
+        osc.stop(now + 0.1);
+      } else if (type === "received") {
         osc.type = "sine";
-        osc.frequency.setValueAtTime(820, now);
-        osc.frequency.setValueAtTime(940, now + 0.06);
-        gain.gain.setValueAtTime(0.08, now);
+        osc.frequency.setValueAtTime(680, now);
+        osc.frequency.setValueAtTime(860, now + 0.05);
+        gain.gain.setValueAtTime(0.09, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         osc.start(now);
         osc.stop(now + 0.12);
+      } else if (type === "pop") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.04);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === "tapback") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(750, now);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.start(now);
+        osc.stop(now + 0.06);
+      } else if (type === "refresh") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(1100, now);
+        osc.frequency.exponentialRampToValueAtTime(450, now + 0.06);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.start(now);
+        osc.stop(now + 0.07);
       }
     } catch (_) {}
+  }
+
+  function playChime(type = "sent") {
+    playIosSound(type);
   }
 
   // ---------------------------------------------------------------------------
@@ -1494,8 +1535,23 @@
     const avatarHtml = showAvatar ? renderAvatarHtml(senderName, m.senderPfp, "avatar-xs", "msg-bubble-avatar") : "";
     const replyBtnHtml = `<button class="msg-reply-trigger-btn" type="button" title="Reply to message" data-id="${m.id}">${ICONS.reply}</button>`;
 
+    // Load saved reactions for message
+    const msgReactions = getMessageReactions(m.id);
+    let reactionBadgeHtml = "";
+    if (msgReactions && msgReactions.length > 0) {
+      reactionBadgeHtml = `
+        <div class="msg-reaction-container" data-msg-id="${m.id}">
+          ${msgReactions.map(r => `<span class="reaction-mini-icon">${renderReactionIconHtml(r)}</span>`).join("")}
+          ${msgReactions.length > 1 ? `<span class="reaction-count">${msgReactions.length}</span>` : ""}
+        </div>
+      `;
+    }
+
     const html = `
       <div class="msg-row ${isOut ? "outgoing" : "incoming"} ${isChannel ? "channel-row" : "direct-row"} ${animate ? "animate-in" : ""}" id="${m.id}" data-timestamp="${m.timestamp || Date.now()}">
+        <div class="swipe-reply-cue" aria-hidden="true">
+          ${ICONS.reply}
+        </div>
         ${avatarHtml}
         <div class="msg-bubble-content">
           ${replyBtnHtml}
@@ -1507,6 +1563,7 @@
               <span class="msg-timestamp">${timeStr}</span>
               ${receiptHtml}
             </div>
+            ${reactionBadgeHtml}
           </div>
         </div>
       </div>
@@ -1517,6 +1574,9 @@
   }
 
   function bindMessageInteractions() {
+    // Attach iOS Swipe-To-Reply, Long-Press Context Menu, and Double-Tap gestures to all message rows
+    document.querySelectorAll(".msg-row:not([data-ios-bound])").forEach(attachIosMessageGestures);
+
     // Reply Action Trigger Button
     document.querySelectorAll(".msg-reply-trigger-btn:not([data-bound])").forEach((btn) => {
       btn.setAttribute("data-bound", "true");
@@ -2540,11 +2600,656 @@
     }
   }
 
+
+  // ---------------------------------------------------------------------------
+  // iOS Message Reactions Storage & Icon System (Strictly Zero Emojis)
+  // ---------------------------------------------------------------------------
+  const REACTION_ICONS = {
+    heart: `<svg class="reaction-badge-svg" width="14" height="14" viewBox="0 0 24 24" fill="#ff2d55"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
+    thumbsup: `<svg class="reaction-badge-svg" width="14" height="14" viewBox="0 0 24 24" fill="#34c759"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>`,
+    thumbsdown: `<svg class="reaction-badge-svg" width="14" height="14" viewBox="0 0 24 24" fill="#ff9500"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>`,
+    haha: `<span style="font-size: 8px; font-weight: 800; line-height: 1; color: #ff9f0a;">HA</span>`,
+    exclaim: `<span style="font-size: 11px; font-weight: 900; line-height: 1; color: #ff375f;">!!</span>`,
+    question: `<span style="font-size: 11px; font-weight: 900; line-height: 1; color: #bf5af2;">?</span>`,
+  };
+
+  function renderReactionIconHtml(type) {
+    return REACTION_ICONS[type] || REACTION_ICONS.heart;
+  }
+
+  function getMessageReactions(msgId) {
+    try {
+      const stored = localStorage.getItem(`as_msg_rx_${msgId}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function toggleMessageReaction(msgId, reactionType) {
+    if (!msgId) return;
+    let list = getMessageReactions(msgId);
+    if (list.includes(reactionType)) {
+      list = list.filter(r => r !== reactionType);
+    } else {
+      list = [reactionType]; // 1 active reaction per user
+    }
+    try {
+      localStorage.setItem(`as_msg_rx_${msgId}`, JSON.stringify(list));
+    } catch (_) {}
+
+    // Update row DOM
+    const row = document.getElementById(msgId);
+    if (row) {
+      let badge = row.querySelector(".msg-reaction-container");
+      if (list.length === 0) {
+        if (badge) badge.remove();
+      } else {
+        if (!badge) {
+          badge = document.createElement("div");
+          badge.className = "msg-reaction-container";
+          badge.setAttribute("data-msg-id", msgId);
+          row.querySelector(".msg-bubble")?.appendChild(badge);
+        }
+        badge.innerHTML = `${list.map(r => `<span class="reaction-mini-icon">${renderReactionIconHtml(r)}</span>`).join("")}`;
+      }
+    }
+    Taptic.reaction();
+    playIosSound("tapback");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Double-Tap Quick Heart Burst Reaction
+  // ---------------------------------------------------------------------------
+  function triggerHeartBurst(bubbleEl, clientX, clientY) {
+    const burst = document.createElement("div");
+    burst.className = "ios-heart-burst";
+    burst.innerHTML = `<svg width="42" height="42" viewBox="0 0 24 24" fill="#ff2d55"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+    
+    const rect = bubbleEl.getBoundingClientRect();
+    burst.style.left = `${(clientX || rect.left + rect.width / 2) - rect.left}px`;
+    burst.style.top = `${(clientY || rect.top + rect.height / 2) - rect.top}px`;
+    
+    bubbleEl.appendChild(burst);
+    setTimeout(() => burst.remove(), 700);
+  }
+
+  // ---------------------------------------------------------------------------
+  // iOS Native Long-Press Context Menu & Tapback Manager
+  // ---------------------------------------------------------------------------
+  const iosMessageContextMenu = document.getElementById("iosMessageContextMenu");
+  const iosContextBackdrop = document.getElementById("iosContextBackdrop");
+  const iosContextWrapper = document.getElementById("iosContextWrapper");
+  const iosContextPreview = document.getElementById("iosContextPreview");
+  const ctxReplyBtn = document.getElementById("ctxReplyBtn");
+  const ctxCopyBtn = document.getElementById("ctxCopyBtn");
+  const ctxInfoBtn = document.getElementById("ctxInfoBtn");
+  const ctxDeleteBtn = document.getElementById("ctxDeleteBtn");
+
+  let activeContextMsg = null;
+
+  function openIosContextMenu(msgData, bubbleEl) {
+    if (!iosMessageContextMenu || !msgData) return;
+    activeContextMsg = msgData;
+
+    if (iosContextPreview) {
+      iosContextPreview.innerHTML = "";
+      const clone = bubbleEl.cloneNode(true);
+      clone.querySelectorAll(".msg-reaction-container").forEach(el => el.remove());
+      iosContextPreview.appendChild(clone);
+    }
+
+    if (ctxDeleteBtn) {
+      const isOut = msgData.isOut;
+      ctxDeleteBtn.style.display = isOut ? "flex" : "none";
+    }
+
+    iosMessageContextMenu.style.display = "flex";
+    Taptic.medium();
+    playIosSound("pop");
+  }
+
+  function closeIosContextMenu() {
+    if (iosMessageContextMenu) {
+      iosMessageContextMenu.style.display = "none";
+    }
+    activeContextMsg = null;
+  }
+
+  if (iosContextBackdrop) iosContextBackdrop.addEventListener("click", closeIosContextMenu);
+
+  document.querySelectorAll(".tapback-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const rx = btn.getAttribute("data-reaction");
+      if (activeContextMsg && rx) {
+        toggleMessageReaction(activeContextMsg.id, rx);
+      }
+      closeIosContextMenu();
+    });
+  });
+
+  if (ctxReplyBtn) {
+    ctxReplyBtn.addEventListener("click", () => {
+      if (activeContextMsg) {
+        startReplyToMessage({
+          id: activeContextMsg.id,
+          sender: activeContextMsg.sender,
+          senderName: activeContextMsg.senderName,
+          text: activeContextMsg.text,
+          mediaType: activeContextMsg.mediaType,
+        });
+      }
+      closeIosContextMenu();
+    });
+  }
+
+  if (ctxCopyBtn) {
+    ctxCopyBtn.addEventListener("click", () => {
+      if (activeContextMsg && activeContextMsg.text) {
+        navigator.clipboard?.writeText(activeContextMsg.text);
+        Taptic.success();
+      }
+      closeIosContextMenu();
+    });
+  }
+
+  if (ctxInfoBtn) {
+    ctxInfoBtn.addEventListener("click", () => {
+      closeIosContextMenu();
+      openContactInfo(activeConvoMeta);
+    });
+  }
+
+  if (ctxDeleteBtn) {
+    ctxDeleteBtn.addEventListener("click", () => {
+      if (activeContextMsg && activeContextMsg.id) {
+        const row = document.getElementById(activeContextMsg.id);
+        if (row) {
+          row.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+          row.style.opacity = "0";
+          row.style.transform = "scale(0.85)";
+          setTimeout(() => row.remove(), 220);
+        }
+        Taptic.heavy();
+      }
+      closeIosContextMenu();
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // iOS Gesture Binder (Swipe-To-Reply, Long-Press, Double-Tap)
+  // ---------------------------------------------------------------------------
+  function attachIosMessageGestures(row) {
+    if (!row || row.hasAttribute("data-ios-bound")) return;
+    row.setAttribute("data-ios-bound", "true");
+
+    const bubbleContent = row.querySelector(".msg-bubble-content");
+    const bubble = row.querySelector(".msg-bubble");
+    const cue = row.querySelector(".swipe-reply-cue");
+    if (!bubbleContent || !bubble) return;
+
+    let startX = 0;
+    let startY = 0;
+    let currentX = 0;
+    let isSwiping = false;
+    let hasCrossedThreshold = false;
+    let longPressTimer = null;
+    let lastTapTime = 0;
+
+    const msgId = row.id;
+    const isOut = row.classList.contains("outgoing");
+    const senderName = row.querySelector(".msg-sender-name")?.textContent || (isOut ? (currentUser?.displayName || currentUser?.username) : (activeConvoMeta?.name || activeConvoMeta?.handle || "Contact"));
+    const text = row.querySelector(".msg-text-content")?.textContent || "";
+    const isImg = !!row.querySelector(".msg-media-photo");
+    const isAudio = !!row.querySelector(".voice-note-card");
+
+    const msgData = {
+      id: msgId,
+      isOut,
+      sender: isOut ? currentUser?.username : (activeConvoMeta?.handle || "contact"),
+      senderName,
+      text,
+      mediaType: isImg ? "image" : (isAudio ? "audio" : null),
+    };
+
+    function startLongPress(e) {
+      clearTimeout(longPressTimer);
+      longPressTimer = setTimeout(() => {
+        openIosContextMenu(msgData, bubble);
+      }, 460);
+    }
+
+    function cancelLongPress() {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+
+    // Double-Tap Quick Heart
+    bubble.addEventListener("click", (e) => {
+      const now = Date.now();
+      if (now - lastTapTime < 280) {
+        cancelLongPress();
+        toggleMessageReaction(msgId, "heart");
+        triggerHeartBurst(bubble, e.clientX, e.clientY);
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+    });
+
+    // Touch events for swipe-to-reply
+    row.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      currentX = startX;
+      isSwiping = false;
+      hasCrossedThreshold = false;
+      startLongPress(e);
+    }, { passive: true });
+
+    row.addEventListener("touchmove", (e) => {
+      if (e.touches.length !== 1) return;
+      currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const dx = currentX - startX;
+      const dy = currentY - startY;
+
+      // If finger moved > 8px, cancel long-press
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        cancelLongPress();
+      }
+
+      // Check horizontal swipe intent
+      if (!isSwiping && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        isSwiping = true;
+      }
+
+      if (isSwiping) {
+        // Swiping direction (allow pulling bubble inward towards center)
+        const pullDir = isOut ? -1 : 1;
+        const rawOffset = dx * pullDir;
+        if (rawOffset > 0) {
+          // Logarithmic rubber band spring resistance
+          const dampened = Math.min(68, Math.pow(rawOffset, 0.82) * 2.2);
+          bubbleContent.style.transform = `translateX(${dampened * pullDir}px)`;
+          bubbleContent.style.transition = "none";
+
+          if (cue) {
+            cue.style.opacity = Math.min(1, dampened / 40);
+            cue.style.transform = `translateY(-50%) scale(${0.7 + (dampened / 68) * 0.4})`;
+            if (dampened >= 48) {
+              if (!hasCrossedThreshold) {
+                hasCrossedThreshold = true;
+                cue.classList.add("cue-active");
+                Taptic.medium();
+              }
+            } else {
+              if (hasCrossedThreshold) {
+                hasCrossedThreshold = false;
+                cue.classList.remove("cue-active");
+              }
+            }
+          }
+        }
+      }
+    }, { passive: true });
+
+    function onTouchEnd() {
+      cancelLongPress();
+      if (isSwiping) {
+        bubbleContent.style.transition = "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)";
+        bubbleContent.style.transform = "translateX(0)";
+        if (cue) {
+          cue.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+          cue.style.opacity = "0";
+          cue.style.transform = "translateY(-50%) scale(0.6)";
+          cue.classList.remove("cue-active");
+        }
+        if (hasCrossedThreshold) {
+          Taptic.success();
+          playIosSound("sent");
+          startReplyToMessage(msgData);
+        }
+      }
+      isSwiping = false;
+      hasCrossedThreshold = false;
+    }
+
+    row.addEventListener("touchend", onTouchEnd, { passive: true });
+    row.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    // Desktop Context Menu (Right Click)
+    bubble.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      cancelLongPress();
+      openIosContextMenu(msgData, bubble);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // iOS Pull-To-Refresh Physical Physics Engine
+  // ---------------------------------------------------------------------------
+  function setupPullToRefresh(containerEl, ptrEl, onRefresh) {
+    if (!containerEl || !ptrEl) return;
+    let startY = 0;
+    let isPulling = false;
+    let thresholdTriggered = false;
+
+    containerEl.addEventListener("touchstart", (e) => {
+      if (containerEl.scrollTop <= 0 && e.touches.length === 1) {
+        startY = e.touches[0].clientY;
+        isPulling = false;
+        thresholdTriggered = false;
+      } else {
+        startY = 0;
+      }
+    }, { passive: true });
+
+    containerEl.addEventListener("touchmove", (e) => {
+      if (!startY || e.touches.length !== 1 || containerEl.scrollTop > 0) return;
+      const currentY = e.touches[0].clientY;
+      const dy = currentY - startY;
+
+      if (dy > 8) {
+        isPulling = true;
+        const damp = Math.min(68, Math.pow(dy, 0.8) * 1.5);
+        ptrEl.style.height = `${damp}px`;
+        ptrEl.classList.add("pulling");
+
+        // Rotate blades progressively
+        const spinner = ptrEl.querySelector(".ios-ptr-spinner");
+        if (spinner) {
+          spinner.style.transform = `rotate(${(damp / 55) * 270}deg)`;
+        }
+
+        if (damp >= 50) {
+          if (!thresholdTriggered) {
+            thresholdTriggered = true;
+            Taptic.selection();
+          }
+        } else {
+          thresholdTriggered = false;
+        }
+      }
+    }, { passive: true });
+
+    containerEl.addEventListener("touchend", () => {
+      if (!isPulling) return;
+      isPulling = false;
+      startY = 0;
+
+      if (thresholdTriggered) {
+        ptrEl.style.height = "42px";
+        ptrEl.classList.remove("pulling");
+        ptrEl.classList.add("refreshing");
+        playIosSound("refresh");
+        Taptic.medium();
+
+        Promise.resolve(onRefresh()).finally(() => {
+          setTimeout(() => {
+            ptrEl.style.height = "0";
+            ptrEl.classList.remove("refreshing");
+          }, 350);
+        });
+      } else {
+        ptrEl.style.height = "0";
+        ptrEl.classList.remove("pulling");
+      }
+    }, { passive: true });
+  }
+
+  // ---------------------------------------------------------------------------
+  // iOS Interactive Edge-Swipe Back Navigation (UINavigationController feel)
+  // ---------------------------------------------------------------------------
+  function setupEdgeSwipeBack() {
+    let edgeStartX = 0;
+    let edgeStartY = 0;
+    let isEdgeSwiping = false;
+    const pane = msgChatPane;
+    const sidebar = msgSidebar;
+
+    window.addEventListener("touchstart", (e) => {
+      if (window.innerWidth <= 768 && msgWorkspace?.classList.contains("mobile-chat-open")) {
+        if (e.touches.length === 1 && e.touches[0].clientX < 32) {
+          edgeStartX = e.touches[0].clientX;
+          edgeStartY = e.touches[0].clientY;
+          isEdgeSwiping = false;
+        }
+      }
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (e) => {
+      if (!edgeStartX || e.touches.length !== 1) return;
+      const curX = e.touches[0].clientX;
+      const curY = e.touches[0].clientY;
+      const dx = curX - edgeStartX;
+      const dy = curY - edgeStartY;
+
+      if (!isEdgeSwiping && dx > 15 && dx > Math.abs(dy) * 1.5) {
+        isEdgeSwiping = true;
+        document.body.classList.add("edge-nav-swiping");
+      }
+
+      if (isEdgeSwiping && dx > 0 && pane) {
+        pane.style.transform = `translateX(${dx}px)`;
+        if (sidebar) {
+          const progress = Math.min(1, dx / window.innerWidth);
+          sidebar.style.transform = `scale(${0.96 + progress * 0.04})`;
+          sidebar.style.opacity = `${0.7 + progress * 0.3}`;
+        }
+      }
+    }, { passive: true });
+
+    window.addEventListener("touchend", (e) => {
+      if (!isEdgeSwiping || !pane) {
+        edgeStartX = 0;
+        return;
+      }
+      isEdgeSwiping = false;
+      document.body.classList.remove("edge-nav-swiping");
+
+      const finalDx = e.changedTouches[0].clientX - edgeStartX;
+      edgeStartX = 0;
+
+      if (finalDx > window.innerWidth * 0.32) {
+        // Complete navigation back
+        pane.style.transition = "transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)";
+        pane.style.transform = "translateX(100%)";
+        if (sidebar) {
+          sidebar.style.transition = "transform 0.25s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease";
+          sidebar.style.transform = "scale(1)";
+          sidebar.style.opacity = "1";
+        }
+        Taptic.light();
+        setTimeout(() => {
+          if (mobileBackBtn) mobileBackBtn.click();
+          pane.style.transform = "";
+          pane.style.transition = "";
+          if (sidebar) {
+            sidebar.style.transform = "";
+            sidebar.style.opacity = "";
+            sidebar.style.transition = "";
+          }
+        }, 260);
+      } else {
+        // Spring cancel
+        pane.style.transition = "transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)";
+        pane.style.transform = "translateX(0)";
+        if (sidebar) {
+          sidebar.style.transition = "transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.28s ease";
+          sidebar.style.transform = "";
+          sidebar.style.opacity = "";
+        }
+        setTimeout(() => {
+          pane.style.transform = "";
+          pane.style.transition = "";
+          if (sidebar) {
+            sidebar.style.transform = "";
+            sidebar.style.opacity = "";
+            sidebar.style.transition = "";
+          }
+        }, 290);
+      }
+    }, { passive: true });
+  }
+
+  // ---------------------------------------------------------------------------
+  // iOS Modal Drag-To-Dismiss Physics
+  // ---------------------------------------------------------------------------
+  function attachModalSheetDrag(modalEl, cardEl, onClose) {
+    if (!modalEl || !cardEl) return;
+    const handle = cardEl.querySelector(".sheet-drag-handle");
+    const dragTarget = handle || cardEl;
+
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    dragTarget.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        startY = e.touches[0].clientY;
+        currentY = startY;
+        isDragging = true;
+        cardEl.style.transition = "none";
+      }
+    }, { passive: true });
+
+    dragTarget.addEventListener("touchmove", (e) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      currentY = e.touches[0].clientY;
+      const dy = currentY - startY;
+
+      if (dy > 0) {
+        cardEl.style.transform = `translateY(${dy}px)`;
+      } else {
+        // Rubber band upward
+        cardEl.style.transform = `translateY(${dy * 0.2}px)`;
+      }
+    }, { passive: true });
+
+    function onDragEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      const dy = currentY - startY;
+      startY = 0;
+
+      if (dy > 85) {
+        cardEl.style.transition = "transform 0.24s cubic-bezier(0.32, 0.72, 0, 1)";
+        cardEl.style.transform = "translateY(100%)";
+        Taptic.light();
+        setTimeout(() => {
+          cardEl.style.transform = "";
+          cardEl.style.transition = "";
+          if (typeof onClose === "function") onClose();
+          else modalEl.style.display = "none";
+        }, 250);
+      } else {
+        cardEl.style.transition = "transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)";
+        cardEl.style.transform = "";
+        setTimeout(() => {
+          cardEl.style.transition = "";
+        }, 290);
+      }
+    }
+
+    dragTarget.addEventListener("touchend", onDragEnd, { passive: true });
+    dragTarget.addEventListener("touchcancel", onDragEnd, { passive: true });
+  }
+
+  // ---------------------------------------------------------------------------
+  // iOS Visual Viewport Keyboard Smoothing
+  // ---------------------------------------------------------------------------
+  function initVisualViewportSync() {
+    if (!window.visualViewport) return;
+
+    function handleViewport() {
+      const vh = window.visualViewport.height;
+      const offsetTop = window.visualViewport.offsetTop;
+      const fullH = window.innerHeight;
+      const kbHeight = Math.max(0, fullH - vh);
+
+      if (window.innerWidth <= 768 && msgChatPane) {
+        if (kbHeight > 120) {
+          // Keyboard visible: push composer right above it
+          composerCapsule?.style.setProperty("bottom", `${kbHeight}px`);
+          if (chatMessagesContainer) {
+            chatMessagesContainer.style.paddingBottom = `${kbHeight + 60}px`;
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+          }
+        } else {
+          composerCapsule?.style.removeProperty("bottom");
+          if (chatMessagesContainer) {
+            chatMessagesContainer.style.removeProperty("padding-bottom");
+          }
+        }
+      }
+    }
+
+    window.visualViewport.addEventListener("resize", handleViewport);
+    window.visualViewport.addEventListener("scroll", handleViewport);
+
+    // Tap on message list blurs keyboard smoothly
+    messagesFlow?.addEventListener("touchstart", (e) => {
+      if (document.activeElement === messageTextInput && e.target !== messageTextInput) {
+        messageTextInput.blur();
+      }
+    }, { passive: true });
+  }
+
+
   // ---------------------------------------------------------------------------
   // App Initialization & Session Verification
   // ---------------------------------------------------------------------------
   async function init() {
     if (relayStatusText) relayStatusText.textContent = "AS Cloud • 5 Relay Nodes Active";
+
+    // Initialize iOS Experience Systems
+    setupEdgeSwipeBack();
+    initVisualViewportSync();
+
+    const convoPtr = document.getElementById("convoPtr");
+    if (convoPtr && conversationList) {
+      setupPullToRefresh(conversationList, convoPtr, async () => {
+        await loadConversations();
+      });
+    }
+
+    const chatPtr = document.getElementById("chatPtr");
+    if (chatPtr && chatMessagesContainer) {
+      setupPullToRefresh(chatMessagesContainer, chatPtr, async () => {
+        if (activeConvoId) {
+          await loadChatHistory(activeConvoId, chatSessionCounter);
+        }
+      });
+    }
+
+    // Attach modal sheet drag-to-dismiss physics
+    const contactInfoSheet = document.getElementById("contactInfoSheet");
+    if (contactInfoModal && contactInfoSheet) {
+      attachModalSheetDrag(contactInfoModal, contactInfoSheet, closeContactInfo);
+    }
+    const profileEditCard = document.querySelector(".profile-edit-card");
+    if (profileModal && profileEditCard) {
+      attachModalSheetDrag(profileModal, profileEditCard, closeProfileModal);
+    }
+    const newChatCard = document.querySelector(".new-chat-card");
+    if (newChatModal && newChatCard) {
+      attachModalSheetDrag(newChatModal, newChatCard, closeNewChatModal);
+    }
+    const mediaPreviewCard = document.querySelector(".media-preview-card");
+    if (mediaPreviewModal && mediaPreviewCard) {
+      attachModalSheetDrag(mediaPreviewModal, mediaPreviewCard, closeMediaPreviewModal);
+    }
+
+    // Bind Taptic feedback to filter chips, buttons and tabs
+    document.querySelectorAll(".wa-filter-chip").forEach((chip) => {
+      chip.addEventListener("click", () => Taptic.selection());
+    });
+    document.querySelectorAll(".wa-rail-item").forEach((item) => {
+      item.addEventListener("click", () => Taptic.light());
+    });
 
     if (currentUser && sessionToken) {
       // 1. Immediately render UI and unhide workspace with local session (0ms instant login)

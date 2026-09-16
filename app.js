@@ -49,13 +49,84 @@
   let abortController = null;
   let isGenerating = false;
 
-  // Tactile Haptic Vibration for Mobile Devices
+  // ---------------------------------------------------------------------------
+  // iOS Taptic Engine & Web Audio Sound Synthesis (Strictly Zero Emojis)
+  // ---------------------------------------------------------------------------
+  const Taptic = {
+    selection: () => { try { navigator.vibrate?.(6); } catch (_) {} },
+    light: () => { try { navigator.vibrate?.(10); } catch (_) {} },
+    medium: () => { try { navigator.vibrate?.(18); } catch (_) {} },
+    heavy: () => { try { navigator.vibrate?.(26); } catch (_) {} },
+    reaction: () => { try { navigator.vibrate?.([8, 25, 12]); } catch (_) {} },
+    success: () => { try { navigator.vibrate?.([10, 35, 15]); } catch (_) {} },
+    warning: () => { try { navigator.vibrate?.([15, 50, 20]); } catch (_) {} },
+    error: () => { try { navigator.vibrate?.([20, 30, 20, 30, 25]); } catch (_) {} },
+  };
+
   function triggerHaptic(type = "light") {
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      try {
-        navigator.vibrate(type === "medium" ? 15 : 8);
-      } catch (e) {}
+    if (type === "medium") Taptic.medium();
+    else if (type === "heavy") Taptic.heavy();
+    else Taptic.light();
+  }
+
+  let audioCtx = null;
+  function getAudioContext() {
+    try {
+      if (!audioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) audioCtx = new AudioCtx();
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    } catch (_) {
+      return null;
     }
+  }
+
+  function playIosSound(type = "sent") {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      if (type === "sent") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(540, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } else if (type === "pop") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.04);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === "tapback") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(750, now);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.start(now);
+        osc.stop(now + 0.06);
+      } else if (type === "refresh") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(1100, now);
+        osc.frequency.exponentialRampToValueAtTime(450, now + 0.06);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.start(now);
+        osc.stop(now + 0.07);
+      }
+    } catch (_) {}
   }
 
   // Cross-browser clipboard copy with fallback
@@ -1157,6 +1228,8 @@
 
     row.appendChild(bubble);
     messagesFlow.appendChild(row);
+
+    attachIosMessageGestures(row, bubble);
 
     smoothScrollToBottom();
     return bubble;
@@ -3311,6 +3384,330 @@
       { passive: true }
     );
   }
+
+
+  // ---------------------------------------------------------------------------
+  // iOS Message Reactions Storage & Icon System (Strictly Zero Emojis)
+  // ---------------------------------------------------------------------------
+  const REACTION_ICONS = {
+    heart: `<svg class="reaction-badge-svg" width="14" height="14" viewBox="0 0 24 24" fill="#ff2d55"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
+    thumbsup: `<svg class="reaction-badge-svg" width="14" height="14" viewBox="0 0 24 24" fill="#34c759"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>`,
+    thumbsdown: `<svg class="reaction-badge-svg" width="14" height="14" viewBox="0 0 24 24" fill="#ff9500"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>`,
+    haha: `<span style="font-size: 8px; font-weight: 800; line-height: 1; color: #ff9f0a;">HA</span>`,
+    exclaim: `<span style="font-size: 11px; font-weight: 900; line-height: 1; color: #ff375f;">!!</span>`,
+    question: `<span style="font-size: 11px; font-weight: 900; line-height: 1; color: #bf5af2;">?</span>`,
+  };
+
+  function renderReactionIconHtml(type) {
+    return REACTION_ICONS[type] || REACTION_ICONS.heart;
+  }
+
+  function triggerHeartBurst(bubbleEl, clientX, clientY) {
+    const burst = document.createElement("div");
+    burst.className = "ios-heart-burst";
+    burst.innerHTML = `<svg width="42" height="42" viewBox="0 0 24 24" fill="#ff2d55"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+    const rect = bubbleEl.getBoundingClientRect();
+    burst.style.left = `${(clientX || rect.left + rect.width / 2) - rect.left}px`;
+    burst.style.top = `${(clientY || rect.top + rect.height / 2) - rect.top}px`;
+    bubbleEl.appendChild(burst);
+    setTimeout(() => burst.remove(), 700);
+  }
+
+  // ---------------------------------------------------------------------------
+  // iOS Context Menu & Tapback Manager for AI Viewport
+  // ---------------------------------------------------------------------------
+  const aiMessageContextMenu = document.getElementById("aiMessageContextMenu");
+  const aiContextBackdrop = document.getElementById("aiContextBackdrop");
+  const aiContextPreview = document.getElementById("aiContextPreview");
+  const aiCtxCopyBtn = document.getElementById("aiCtxCopyBtn");
+  const aiCtxShareBtn = document.getElementById("aiCtxShareBtn");
+
+  let activeContextBubble = null;
+
+  function openAiContextMenu(bubbleEl) {
+    if (!aiMessageContextMenu || !bubbleEl) return;
+    activeContextBubble = bubbleEl;
+
+    if (aiContextPreview) {
+      aiContextPreview.innerHTML = "";
+      const clone = bubbleEl.cloneNode(true);
+      clone.querySelectorAll(".msg-reaction-container").forEach(el => el.remove());
+      aiContextPreview.appendChild(clone);
+    }
+
+    aiMessageContextMenu.style.display = "flex";
+    Taptic.medium();
+    playIosSound("pop");
+  }
+
+  function closeAiContextMenu() {
+    if (aiMessageContextMenu) {
+      aiMessageContextMenu.style.display = "none";
+    }
+    activeContextBubble = null;
+  }
+
+  if (aiContextBackdrop) aiContextBackdrop.addEventListener("click", closeAiContextMenu);
+
+  document.querySelectorAll("#aiTapbackBar .tapback-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const rx = btn.getAttribute("data-reaction");
+      if (activeContextBubble && rx) {
+        let badge = activeContextBubble.querySelector(".msg-reaction-container");
+        if (!badge) {
+          badge = document.createElement("div");
+          badge.className = "msg-reaction-container";
+          activeContextBubble.appendChild(badge);
+        }
+        badge.innerHTML = `<span class="reaction-mini-icon">${renderReactionIconHtml(rx)}</span>`;
+        Taptic.reaction();
+        playIosSound("tapback");
+      }
+      closeAiContextMenu();
+    });
+  });
+
+  if (aiCtxCopyBtn) {
+    aiCtxCopyBtn.addEventListener("click", () => {
+      if (activeContextBubble) {
+        const text = activeContextBubble.innerText || activeContextBubble.textContent || "";
+        copyTextToClipboard(text);
+        Taptic.success();
+      }
+      closeAiContextMenu();
+    });
+  }
+
+  if (aiCtxShareBtn) {
+    aiCtxShareBtn.addEventListener("click", () => {
+      if (activeContextBubble) {
+        const text = activeContextBubble.innerText || "";
+        if (navigator.share) {
+          navigator.share({ title: "AS Intelligence", text }).catch(() => {});
+        } else {
+          copyTextToClipboard(text);
+        }
+        Taptic.light();
+      }
+      closeAiContextMenu();
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Message Gestures: Long-Press Context Menu & Double-Tap Heart Burst
+  // ---------------------------------------------------------------------------
+  function attachIosMessageGestures(row, bubble) {
+    let pressTimer = null;
+    let isLongPress = false;
+    let lastTap = 0;
+
+    function startPress(e) {
+      isLongPress = false;
+      pressTimer = setTimeout(() => {
+        isLongPress = true;
+        openAiContextMenu(bubble);
+      }, 450);
+    }
+
+    function cancelPress() {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    }
+
+    bubble.addEventListener("touchstart", (e) => {
+      startPress(e);
+    }, { passive: true });
+
+    bubble.addEventListener("touchmove", cancelPress, { passive: true });
+    bubble.addEventListener("touchend", (e) => {
+      cancelPress();
+      if (isLongPress) return;
+
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        // Double tap heart burst
+        const touch = e.changedTouches?.[0];
+        triggerHeartBurst(bubble, touch?.clientX, touch?.clientY);
+        let badge = bubble.querySelector(".msg-reaction-container");
+        if (!badge) {
+          badge = document.createElement("div");
+          badge.className = "msg-reaction-container";
+          bubble.appendChild(badge);
+        }
+        badge.innerHTML = `<span class="reaction-mini-icon">${renderReactionIconHtml("heart")}</span>`;
+        Taptic.reaction();
+        playIosSound("tapback");
+        lastTap = 0;
+      } else {
+        lastTap = now;
+      }
+    });
+
+    bubble.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      openAiContextMenu(bubble);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // iOS Pull-To-Refresh Physics on Viewport
+  // ---------------------------------------------------------------------------
+  function setupAiPullToRefresh() {
+    const ptr = document.getElementById("aiPtr");
+    if (!ptr || !chatViewport) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isPulling = false;
+    let isRefreshing = false;
+    const threshold = 65;
+
+    chatViewport.addEventListener("touchstart", (e) => {
+      if (chatViewport.scrollTop <= 0 && !isRefreshing) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+      }
+    }, { passive: true });
+
+    chatViewport.addEventListener("touchmove", (e) => {
+      if (!isPulling || isRefreshing) return;
+      currentY = e.touches[0].clientY;
+      const rawOffset = currentY - startY;
+      if (rawOffset <= 0) return;
+
+      const dampened = Math.min(68, Math.pow(rawOffset, 0.82) * 2.2);
+      ptr.style.height = `${dampened}px`;
+      ptr.classList.add("pulling");
+
+      const rotation = Math.min(360, (dampened / threshold) * 360);
+      const spinner = ptr.querySelector(".ios-ptr-spinner") || ptr;
+      spinner.style.transform = `rotate(${rotation}deg)`;
+
+      if (dampened >= threshold && !ptr.dataset.primed) {
+        ptr.dataset.primed = "true";
+        Taptic.medium();
+      } else if (dampened < threshold && ptr.dataset.primed) {
+        delete ptr.dataset.primed;
+      }
+    }, { passive: true });
+
+    chatViewport.addEventListener("touchend", async () => {
+      if (!isPulling || isRefreshing) return;
+      isPulling = false;
+      const rawOffset = currentY - startY;
+      const dampened = Math.min(68, Math.pow(rawOffset, 0.82) * 2.2);
+      delete ptr.dataset.primed;
+
+      if (dampened >= threshold) {
+        isRefreshing = true;
+        ptr.classList.remove("pulling");
+        ptr.classList.add("refreshing");
+        ptr.style.height = "46px";
+        Taptic.success();
+        playIosSound("refresh");
+
+        try {
+          await checkConnection();
+        } catch (_) {}
+
+        setTimeout(() => {
+          ptr.style.transition = "height 0.28s var(--ios-spring-bounce), opacity 0.25s ease";
+          ptr.style.height = "0";
+          ptr.classList.remove("refreshing");
+          setTimeout(() => {
+            ptr.style.transition = "";
+            isRefreshing = false;
+          }, 300);
+        }, 600);
+      } else {
+        ptr.style.transition = "height 0.24s var(--ios-spring-bounce)";
+        ptr.style.height = "0";
+        ptr.classList.remove("pulling");
+        setTimeout(() => {
+          ptr.style.transition = "";
+        }, 250);
+      }
+    }, { passive: true });
+  }
+
+  // ---------------------------------------------------------------------------
+  // iOS Modal Sheet Drag-To-Dismiss Physics
+  // ---------------------------------------------------------------------------
+  function attachModalSheetDrag(modalEl, cardEl, onClose) {
+    if (!modalEl || !cardEl) return;
+    const dragTarget = cardEl.querySelector(".sheet-drag-handle") || cardEl;
+
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    dragTarget.addEventListener("touchstart", (e) => {
+      if (window.innerWidth > 768) return;
+      startY = e.touches[0].clientY;
+      currentY = startY;
+      isDragging = true;
+      cardEl.style.transition = "none";
+    }, { passive: true });
+
+    dragTarget.addEventListener("touchmove", (e) => {
+      if (!isDragging) return;
+      currentY = e.touches[0].clientY;
+      const dy = currentY - startY;
+      if (dy > 0) {
+        cardEl.style.transform = `translateY(${dy}px)`;
+      }
+    }, { passive: true });
+
+    function onDragEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      const dy = currentY - startY;
+      startY = 0;
+
+      if (dy > 80) {
+        cardEl.style.transition = "transform 0.24s var(--ios-spring-bounce)";
+        cardEl.style.transform = "translateY(100%)";
+        Taptic.light();
+        setTimeout(() => {
+          cardEl.style.transform = "";
+          cardEl.style.transition = "";
+          if (typeof onClose === "function") onClose();
+          else modalEl.classList.add("hidden");
+        }, 250);
+      } else {
+        cardEl.style.transition = "transform 0.28s var(--ios-spring-bounce)";
+        cardEl.style.transform = "";
+        setTimeout(() => {
+          cardEl.style.transition = "";
+        }, 290);
+      }
+    }
+
+    dragTarget.addEventListener("touchend", onDragEnd, { passive: true });
+    dragTarget.addEventListener("touchcancel", onDragEnd, { passive: true });
+  }
+
+
+  // Initialize iOS Systems
+  setupAiPullToRefresh();
+  if (modelModal && modelPopover) {
+    attachModalSheetDrag(modelModal, modelPopover, closePopover);
+  }
+
+  // Bind Taptic feedback to buttons and chips
+  document.querySelectorAll(".suggestion-chip").forEach((chip) => {
+    chip.addEventListener("click", () => Taptic.light());
+  });
+  document.querySelectorAll(".popover-item").forEach((item) => {
+    item.addEventListener("click", () => Taptic.selection());
+  });
+  if (newChatBtn) newChatBtn.addEventListener("click", () => Taptic.medium());
+  if (modelPickerBtn) modelPickerBtn.addEventListener("click", () => Taptic.light());
+  if (attachBtn) attachBtn.addEventListener("click", () => Taptic.light());
+  if (sendBtn) sendBtn.addEventListener("click", () => { Taptic.heavy(); playIosSound("sent"); });
 
   // Initialize
   syncVisualViewport();
