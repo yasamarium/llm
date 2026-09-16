@@ -3206,6 +3206,137 @@
     if (relayStatusText) relayStatusText.textContent = "AS Cloud • 5 Relay Nodes Active";
 
     // Initialize iOS Experience Systems
+
+  // ---------------------------------------------------------------------------
+  // iOS Offline Screen & Cat Radar Engine
+  // ---------------------------------------------------------------------------
+  function initOfflineSystem() {
+    const offlineOverlay = document.getElementById("iosOfflineOverlay");
+    const retryBtn = document.getElementById("offlineRetryBtn");
+    const timerNotice = document.getElementById("offlineTimerNotice");
+    if (!offlineOverlay) return;
+
+    let isOffline = !navigator.onLine;
+    let autoRetryTimer = null;
+    let secondsLeft = 4;
+
+    function showOfflineScreen() {
+      if (!isOffline) return;
+      offlineOverlay.style.display = "flex";
+      offlineOverlay.setAttribute("aria-hidden", "false");
+      offlineOverlay.classList.remove("fade-out");
+      if (typeof Taptic !== "undefined") Taptic.warning();
+      if (typeof playIosSound !== "undefined") playIosSound("pop");
+      startAutoRetryCountdown();
+    }
+
+    function hideOfflineScreen(instant = false) {
+      if (instant) {
+        offlineOverlay.style.display = "none";
+        offlineOverlay.setAttribute("aria-hidden", "true");
+        return;
+      }
+      const card = offlineOverlay.querySelector(".ios-offline-card");
+      if (card) card.classList.add("restored");
+      const badgeText = offlineOverlay.querySelector(".offline-badge-text");
+      if (badgeText) badgeText.textContent = "Online • Connection Restored";
+      if (typeof Taptic !== "undefined") Taptic.success();
+      if (typeof playIosSound !== "undefined") playIosSound("refresh");
+
+      setTimeout(() => {
+        offlineOverlay.style.transition = "opacity 0.3s var(--ios-spring-bounce)";
+        offlineOverlay.style.opacity = "0";
+        setTimeout(() => {
+          offlineOverlay.style.display = "none";
+          offlineOverlay.style.opacity = "";
+          offlineOverlay.style.transition = "";
+          offlineOverlay.setAttribute("aria-hidden", "true");
+          if (card) card.classList.remove("restored");
+          if (badgeText) badgeText.textContent = "Offline • Feline Radar Active";
+        }, 300);
+      }, 750);
+    }
+
+    async function testConnection() {
+      if (retryBtn) {
+        retryBtn.classList.add("retrying");
+        const lbl = retryBtn.querySelector(".retry-btn-label");
+        if (lbl) lbl.textContent = "Checking...";
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch("/api/health?t=" + Date.now(), {
+          cache: "no-store",
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok || res.status < 500) {
+          isOffline = false;
+          hideOfflineScreen();
+          return true;
+        }
+      } catch (_) {
+        // Still offline
+      } finally {
+        if (retryBtn) {
+          retryBtn.classList.remove("retrying");
+          const lbl = retryBtn.querySelector(".retry-btn-label");
+          if (lbl) lbl.textContent = "Check Connection";
+        }
+      }
+      return false;
+    }
+
+    function startAutoRetryCountdown() {
+      clearInterval(autoRetryTimer);
+      secondsLeft = 4;
+      if (timerNotice) timerNotice.textContent = `Auto-reconnecting in ${secondsLeft}s...`;
+
+      autoRetryTimer = setInterval(async () => {
+        secondsLeft--;
+        if (secondsLeft > 0) {
+          if (timerNotice) timerNotice.textContent = `Auto-reconnecting in ${secondsLeft}s...`;
+        } else {
+          secondsLeft = 4;
+          if (timerNotice) timerNotice.textContent = "Checking connection...";
+          const restored = await testConnection();
+          if (restored) {
+            clearInterval(autoRetryTimer);
+          } else {
+            if (timerNotice) timerNotice.textContent = `Auto-reconnecting in ${secondsLeft}s...`;
+          }
+        }
+      }, 1000);
+    }
+
+    window.addEventListener("offline", () => {
+      isOffline = true;
+      showOfflineScreen();
+    });
+
+    window.addEventListener("online", async () => {
+      const restored = await testConnection();
+      if (restored) {
+        clearInterval(autoRetryTimer);
+      }
+    });
+
+    if (retryBtn) {
+      retryBtn.addEventListener("click", () => {
+        if (typeof Taptic !== "undefined") Taptic.selection();
+        testConnection();
+      });
+    }
+
+    if (!navigator.onLine) {
+      showOfflineScreen();
+    }
+  }
+
+    initOfflineSystem();
     setupEdgeSwipeBack();
     initVisualViewportSync();
 

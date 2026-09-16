@@ -436,6 +436,8 @@
         </a>
       </div>
     </div>
+  </div>
+
   <!-- iOS 18 Context Menu & Floating Tapback Bar for AI messages (Strictly Zero Emojis) -->
   <div id="aiMessageContextMenu" class="ios-context-overlay" style="display: none;">
     <div class="ios-context-backdrop" id="aiContextBackdrop"></div>
@@ -470,6 +472,197 @@
           <span>Share</span>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- iOS Native Offline Screen with Animated Black Cat Searching for Internet (Strictly Zero Emojis) -->
+  <div id="iosOfflineOverlay" class="ios-offline-overlay" aria-hidden="true" style="display: none;">
+    <div class="ios-offline-backdrop"></div>
+    <div class="ios-offline-card">
+      <!-- Animated Black Cat Searching for Internet Signal -->
+      <div class="cat-stage-container">
+        <svg class="offline-cat-svg" viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Radar Glow -->
+    <radialGradient id="radarGlow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0a84ff" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#0a84ff" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#0a84ff" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Cat Body Gradient -->
+    <linearGradient id="catBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c1c24"/>
+      <stop offset="50%" stop-color="#121217"/>
+      <stop offset="100%" stop-color="#08080b"/>
+    </linearGradient>
+
+    <!-- Cat Belly / Highlight Gradient -->
+    <linearGradient id="catHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2d2d38" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#15151c" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Eye Glow Filter -->
+    <filter id="eyeGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Signal Pulse Filter -->
+    <filter id="signalGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 1. Ambient Radar Scanning Grid -->
+  <g class="radar-scan-group">
+    <ellipse cx="140" cy="80" rx="90" ry="60" fill="url(#radarGlow)" />
+    <!-- Concentric Wi-Fi / Radar Pulse Waves -->
+    <circle class="radar-wave wave-1" cx="140" cy="55" r="22" stroke="#0a84ff" stroke-width="1.2" stroke-opacity="0.5" stroke-dasharray="3 3"/>
+    <circle class="radar-wave wave-2" cx="140" cy="55" r="42" stroke="#0a84ff" stroke-width="1.2" stroke-opacity="0.4" stroke-dasharray="4 4"/>
+    <circle class="radar-wave wave-3" cx="140" cy="55" r="62" stroke="#0a84ff" stroke-width="1.2" stroke-opacity="0.3" stroke-dasharray="5 5"/>
+  </g>
+
+  <!-- 2. Searching Wi-Fi Arcs (Above Cat's Antenna) -->
+  <g class="wifi-searching-beacon" transform="translate(140, 52)">
+    <!-- Arc 3 (Outer) -->
+    <path class="wifi-arc arc-outer" d="M -26 -16 A 30 30 0 0 1 26 -16" stroke="#ff453a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <!-- Arc 2 (Mid) -->
+    <path class="wifi-arc arc-mid" d="M -18 -8 A 20 20 0 0 1 18 -8" stroke="#ff453a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <!-- Arc 1 (Inner) -->
+    <path class="wifi-arc arc-inner" d="M -10 0 A 10 10 0 0 1 10 0" stroke="#ff453a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <!-- Beacon Dot / Offline Search Diode -->
+    <circle class="beacon-diode" cx="0" cy="6" r="3.5" fill="#ff453a" filter="url(#signalGlow)"/>
+  </g>
+
+  <!-- 3. Ground Cast Shadow -->
+  <ellipse class="cat-ground-shadow" cx="138" cy="184" rx="64" ry="10" fill="#000000" opacity="0.65"/>
+
+  <!-- 4. The Cat Assembly -->
+  <g class="cat-breathing-body">
+    <!-- Tail (Animated Wave Wagging) -->
+    <g class="cat-tail-pivot">
+      <path class="cat-tail-path" d="M 98 162 C 70 162, 54 140, 52 118 C 50 96, 68 84, 76 88 C 82 92, 74 104, 68 114 C 64 124, 74 150, 98 152 Z" fill="url(#catBodyGrad)"/>
+    </g>
+
+    <!-- Hind Body & Haunches -->
+    <path class="cat-main-body" d="M 100 178 C 92 165, 94 135, 108 120 C 122 105, 142 106, 160 114 C 176 122, 185 145, 182 178 C 180 184, 98 184, 100 178 Z" fill="url(#catBodyGrad)"/>
+    <path d="M 112 130 C 124 114, 148 114, 162 122 C 172 130, 176 155, 174 175 C 165 175, 120 175, 112 130 Z" fill="url(#catHighlight)"/>
+
+    <!-- Front Paws Resting Flat -->
+    <ellipse cx="126" cy="180" rx="9" ry="5" fill="#181820"/>
+    <ellipse cx="154" cy="180" rx="9" ry="5" fill="#181820"/>
+
+    <!-- Paw Claws / Pads Accent -->
+    <line x1="123" y1="181" x2="123" y2="184" stroke="#2c2c36" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="126" y1="181" x2="126" y2="184" stroke="#2c2c36" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="129" y1="181" x2="129" y2="184" stroke="#2c2c36" stroke-width="1.2" stroke-linecap="round"/>
+
+    <line x1="151" y1="181" x2="151" y2="184" stroke="#2c2c36" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="154" y1="181" x2="154" y2="184" stroke="#2c2c36" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="157" y1="181" x2="157" y2="184" stroke="#2c2c36" stroke-width="1.2" stroke-linecap="round"/>
+
+    <!-- Collar with Cyber Wi-Fi Antenna -->
+    <rect x="122" y="118" width="36" height="5" rx="2.5" fill="#24242e"/>
+    <!-- Antenna Rod extending up towards searching beacon -->
+    <path class="antenna-rod" d="M 140 118 L 140 68" stroke="#3a3a48" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="140" cy="68" r="3" fill="#0a84ff" filter="url(#eyeGlow)"/>
+
+    <!-- Cat Head Assembly (Tilts & Looks around) -->
+    <g class="cat-head-pivot">
+      <!-- Left Ear -->
+      <g class="cat-ear-left">
+        <polygon points="112,98 122,68 134,92" fill="#16161d"/>
+        <polygon points="116,95 123,73 131,91" fill="#382234"/>
+      </g>
+      <!-- Right Ear (Twitching) -->
+      <g class="cat-ear-right">
+        <polygon points="146,92 158,68 168,98" fill="#16161d"/>
+        <polygon points="149,91 157,73 164,95" fill="#382234"/>
+      </g>
+
+      <!-- Head Skull Base -->
+      <circle cx="140" cy="102" r="23" fill="url(#catBodyGrad)"/>
+      <!-- Cheeks Highlight -->
+      <path d="M 122 108 C 120 118, 160 118, 158 108 C 152 100, 128 100, 122 108 Z" fill="#1c1c24"/>
+
+      <!-- Glowing Cyan/Green Eyes with Searching Pupils -->
+      <g class="cat-eyes-group">
+        <!-- Eye Sockets -->
+        <ellipse cx="131" cy="98" rx="5.5" ry="6.5" fill="#050508"/>
+        <ellipse cx="149" cy="98" rx="5.5" ry="6.5" fill="#050508"/>
+
+        <!-- Glowing Sclera -->
+        <ellipse cx="131" cy="98" rx="5" ry="6" fill="#30d158" filter="url(#eyeGlow)"/>
+        <ellipse cx="149" cy="98" rx="5" ry="6" fill="#30d158" filter="url(#eyeGlow)"/>
+
+        <!-- Animated Scanning Pupils (Slits that pan left & right) -->
+        <g class="cat-pupils">
+          <ellipse class="pupil-left" cx="131" cy="98" rx="1.8" ry="4.5" fill="#050508"/>
+          <ellipse class="pupil-right" cx="149" cy="98" rx="1.8" ry="4.5" fill="#050508"/>
+          <!-- Eye Catchlights -->
+          <circle cx="129.5" cy="95.5" r="1.2" fill="#ffffff" opacity="0.9"/>
+          <circle cx="147.5" cy="95.5" r="1.2" fill="#ffffff" opacity="0.9"/>
+        </g>
+
+        <!-- Eyelids for Blinking Animation -->
+        <g class="cat-eyelids">
+          <path class="eyelid-left" d="M 125 91 Q 131 91 137 91 Q 131 91 125 91 Z" fill="#121217"/>
+          <path class="eyelid-right" d="M 143 91 Q 149 91 155 91 Q 149 91 143 91 Z" fill="#121217"/>
+        </g>
+      </g>
+
+      <!-- Cute Tiny Nose -->
+      <polygon points="138.5,106 141.5,106 140,108.5" fill="#ff7da7"/>
+
+      <!-- Whiskers (Twitch with breathing) -->
+      <g class="cat-whiskers" stroke="#484856" stroke-width="0.85" stroke-linecap="round">
+        <!-- Left Whiskers -->
+        <line x1="135" y1="108" x2="114" y2="105"/>
+        <line x1="135" y1="109" x2="112" y2="110"/>
+        <line x1="135" y1="110" x2="116" y2="115"/>
+        <!-- Right Whiskers -->
+        <line x1="145" y1="108" x2="166" y2="105"/>
+        <line x1="145" y1="109" x2="168" y2="110"/>
+        <line x1="145" y1="110" x2="164" y2="115"/>
+      </g>
+    </g>
+  </g>
+</svg>
+      </div>
+
+      <div class="offline-badge-row">
+        <span class="offline-badge-pill">
+          <span class="offline-pulse-dot"></span>
+          <span class="offline-badge-text">Offline • Feline Radar Active</span>
+        </span>
+      </div>
+
+      <h2 class="offline-title">Searching for Signal...</h2>
+      <p class="offline-description">
+        Internet connection lost. Our black cat is actively scanning network frequencies and sniffing packets to reconnect you.
+      </p>
+
+      <div class="offline-actions">
+        <button id="offlineRetryBtn" class="offline-retry-btn" type="button">
+          <svg class="offline-retry-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span class="retry-btn-label">Check Connection</span>
+        </button>
+      </div>
+
+      <div class="offline-footer-meta">
+        <span id="offlineTimerNotice">Auto-reconnecting when online</span>
       </div>
     </div>
   </div>
