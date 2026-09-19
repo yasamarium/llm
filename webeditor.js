@@ -1,7 +1,7 @@
 /**
  * AS Web Editor • Visual Website Builder Engine
  * Desktop-First Precision Studio
- * Multi-Page Project Architecture, Direct Media Links, Component Presets & ZIP Exporter
+ * Prominent Page Tabs, Fluid Expanding Scroll, Live Code Editor, Presets & Plugins System
  * Strictly Zero Unicode Emojis
  */
 
@@ -34,6 +34,14 @@
         bgColor: '#0a0a0c',
         html: ''
       }
+    },
+    plugins: {
+      whatsapp: { enabled: false, number: '', message: 'Hello! I visited your website.' },
+      cookie: { enabled: false, text: 'We use cookies to enhance your experience.', btnText: 'Accept' },
+      themeToggle: { enabled: false },
+      form: { enabled: false, endpoint: '' },
+      seo: { enabled: false, ogImage: '' },
+      customScript: { enabled: false, head: '', body: '' }
     }
   };
 
@@ -49,7 +57,7 @@
   // DOM Elements
   const canvas = document.getElementById('webCanvas');
   const artboardWrapper = document.getElementById('artboardWrapper');
-  const pageSelectDropdown = document.getElementById('pageSelectDropdown');
+  const pageTabList = document.getElementById('wePageTabList');
   const projectNameInput = document.getElementById('projectNameInput');
   const saveStatusIndicator = document.getElementById('saveStatusIndicator');
   const floatingToolbar = document.getElementById('elementFloatingToolbar');
@@ -112,6 +120,15 @@
   const propPadding = document.getElementById('propPadding');
   const propMarginBottom = document.getElementById('propMarginBottom');
 
+  // Code Editor Elements
+  const codeModal = document.getElementById('codeModal');
+  const editPageHtml = document.getElementById('editPageHtml');
+  const editPageCss = document.getElementById('editPageCss');
+  const applyCodeBtn = document.getElementById('applyCodeBtn');
+  const elementCodeModal = document.getElementById('elementCodeModal');
+  const editElementHtml = document.getElementById('editElementHtml');
+  const applyElementCodeBtn = document.getElementById('applyElementCodeBtn');
+
   // =========================================================================
   // Initialization & Storage
   // =========================================================================
@@ -120,7 +137,8 @@
     setupGatekeeper();
     setupEventListeners();
     setupKeyboardShortcuts();
-    renderPageDropdown();
+    setupPluginsListeners();
+    renderPageTabs();
     loadPage(project.activePageId);
     recordHistory('Initial Load');
   }
@@ -145,7 +163,18 @@
         const parsed = JSON.parse(saved);
         if (parsed && parsed.pages && Object.keys(parsed.pages).length > 0) {
           project = parsed;
+          if (!project.plugins) {
+            project.plugins = {
+              whatsapp: { enabled: false, number: '', message: '' },
+              cookie: { enabled: false, text: 'We use cookies.', btnText: 'Accept' },
+              themeToggle: { enabled: false },
+              form: { enabled: false, endpoint: '' },
+              seo: { enabled: false, ogImage: '' },
+              customScript: { enabled: false, head: '', body: '' }
+            };
+          }
           if (projectNameInput) projectNameInput.value = project.name || 'My Website';
+          syncPluginFieldsFromState();
           return;
         }
       }
@@ -155,13 +184,17 @@
     // Default starter template if empty
     project.pages.index.html = getDefaultHomeContent();
     project.pages.about.html = getDefaultAboutContent();
+    syncPluginFieldsFromState();
   }
 
   function saveProjectToStorage() {
     try {
       // Sync active page content before saving
       if (canvas && project.pages[project.activePageId]) {
-        project.pages[project.activePageId].html = canvas.innerHTML;
+        // Strip out temporary section insert bars before saving
+        const clone = canvas.cloneNode(true);
+        clone.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+        project.pages[project.activePageId].html = clone.innerHTML;
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
       triggerSaveIndicator();
@@ -184,13 +217,13 @@
   // History Engine (Undo / Redo)
   // =========================================================================
   function recordHistory(actionName) {
-    // If we're not at top of stack, drop future states
     if (historyIndex < historyStack.length - 1) {
       historyStack.splice(historyIndex + 1);
     }
-    // Deep clone project state
     const snapshot = JSON.parse(JSON.stringify(project));
-    snapshot.activeCanvasHtml = canvas.innerHTML;
+    const clone = canvas.cloneNode(true);
+    clone.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+    snapshot.activeCanvasHtml = clone.innerHTML;
     historyStack.push({ action: actionName, snapshot });
     if (historyStack.length > MAX_HISTORY) {
       historyStack.shift();
@@ -218,7 +251,8 @@
   function restoreHistoryState(snapshot) {
     project = JSON.parse(JSON.stringify(snapshot));
     if (projectNameInput) projectNameInput.value = project.name;
-    renderPageDropdown();
+    renderPageTabs();
+    syncPluginFieldsFromState();
     loadPage(project.activePageId, false);
     deselectElement();
     updateHistoryButtons();
@@ -230,19 +264,42 @@
   }
 
   // =========================================================================
-  // Multi-Page Management
+  // Prominent Page Tabs Bar & Multi-Page Management
   // =========================================================================
-  function renderPageDropdown() {
-    if (!pageSelectDropdown) return;
-    pageSelectDropdown.innerHTML = '';
+  function renderPageTabs() {
+    if (!pageTabList) return;
+    pageTabList.innerHTML = '';
     const pageKeys = Object.keys(project.pages);
+
     pageKeys.forEach(pageId => {
       const page = project.pages[pageId];
-      const opt = document.createElement('option');
-      opt.value = page.id;
-      opt.textContent = `${page.name} (${page.slug}.html)`;
-      if (page.id === project.activePageId) opt.selected = true;
-      pageSelectDropdown.appendChild(opt);
+      const tab = document.createElement('div');
+      tab.className = `we-page-tab ${page.id === project.activePageId ? 'active' : ''}`;
+      tab.innerHTML = `
+        <span>${page.name}</span>
+        <span class="we-page-tab-slug">${page.slug}.html</span>
+      `;
+
+      // Allow deleting tab if more than 1 page
+      if (pageKeys.length > 1) {
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'we-tab-close-btn';
+        closeBtn.title = 'Delete this page';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deletePage(page.id);
+        });
+        tab.appendChild(closeBtn);
+      }
+
+      tab.addEventListener('click', () => {
+        if (page.id !== project.activePageId) {
+          switchPage(page.id);
+        }
+      });
+
+      pageTabList.appendChild(tab);
     });
 
     renderPagesTabList();
@@ -291,11 +348,13 @@
     if (!project.pages[pageId]) return;
     // Save current page state
     if (canvas && project.pages[project.activePageId]) {
-      project.pages[project.activePageId].html = canvas.innerHTML;
+      const clone = canvas.cloneNode(true);
+      clone.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+      project.pages[project.activePageId].html = clone.innerHTML;
     }
     project.activePageId = pageId;
     loadPage(pageId);
-    renderPageDropdown();
+    renderPageTabs();
     recordHistory(`Switch to ${project.pages[pageId].name}`);
   }
 
@@ -306,8 +365,9 @@
     canvas.style.backgroundColor = page.bgColor || '#0a0a0c';
     canvas.innerHTML = page.html || '';
 
-    // Re-bind click listeners to canvas nodes
+    // Re-bind click listeners to canvas nodes & insert divider bars
     bindCanvasNodeListeners();
+    renderSectionInsertBars();
     deselectElement();
     updateLayersTree();
   }
@@ -341,38 +401,58 @@
     closeModal('newPageModal');
   }
 
-  function deleteCurrentPage() {
+  function deletePage(pageId) {
     const pageKeys = Object.keys(project.pages);
     if (pageKeys.length <= 1) {
       alert('You cannot delete the only remaining page in the project.');
       return;
     }
-    const currentId = project.activePageId;
-    if (confirm(`Are you sure you want to delete the page "${project.pages[currentId].name}"?`)) {
-      delete project.pages[currentId];
-      const nextId = Object.keys(project.pages)[0];
-      project.activePageId = nextId;
-      loadPage(nextId);
-      renderPageDropdown();
-      closeModal('pageSettingsModal');
+    if (confirm(`Are you sure you want to delete the page "${project.pages[pageId].name}"?`)) {
+      delete project.pages[pageId];
+      if (project.activePageId === pageId) {
+        const nextId = Object.keys(project.pages)[0];
+        project.activePageId = nextId;
+        loadPage(nextId);
+      }
+      renderPageTabs();
       recordHistory('Delete Page');
     }
   }
 
   // =========================================================================
-  // Canvas Node Manipulation & Selection
+  // Canvas Node Manipulation & Insertion Bars (Fluid Scroll Expansion)
   // =========================================================================
+  function renderSectionInsertBars() {
+    // Remove existing insert bars first
+    canvas.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+
+    const topLevelNodes = canvas.querySelectorAll(':scope > .we-node');
+    topLevelNodes.forEach((node, idx) => {
+      // Create insert bar before each section
+      const bar = document.createElement('div');
+      bar.className = 'we-section-insert-bar';
+      bar.innerHTML = `
+        <div class="we-section-insert-line"></div>
+        <button class="we-section-insert-btn" type="button">+ Insert Section</button>
+      `;
+      bar.querySelector('.we-section-insert-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        insertPreset('hero', node); // Insert before this node
+      });
+      canvas.insertBefore(bar, node);
+    });
+  }
+
   function bindCanvasNodeListeners() {
     const nodes = canvas.querySelectorAll('.we-node');
     nodes.forEach(node => {
-      // Ensure unique ID
       if (!node.getAttribute('data-we-id')) {
         node.setAttribute('data-we-id', 'node-' + Math.random().toString(36).substr(2, 9));
       }
       node.removeEventListener('click', handleNodeClick);
       node.addEventListener('click', handleNodeClick);
 
-      // Inline text editing double click
+      // Single-click direct inline text editing for text elements
       if (['heading', 'paragraph', 'badge', 'button'].includes(node.getAttribute('data-we-type'))) {
         node.setAttribute('contenteditable', 'true');
         node.removeEventListener('input', handleNodeTextInput);
@@ -433,7 +513,7 @@
   }
 
   // =========================================================================
-  // Property Inspector Binding (Two-Way Synchronization)
+  // Property Inspector Binding
   // =========================================================================
   function populateInspector(el) {
     if (!inspectorEmptyState || !inspectorForm) return;
@@ -486,7 +566,6 @@
       propTextColorPicker.value = hexColor;
       propTextColorText.value = hexColor;
 
-      // Text align
       const align = comp.textAlign || 'left';
       document.querySelectorAll('#propTextAlignGroup .we-toggle-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-align') === align);
@@ -494,7 +573,6 @@
     }
 
     // Section 4: Colors & Background
-    const bg = el.style.background || comp.backgroundColor;
     const rgbBg = comp.backgroundColor;
     const hexBg = rgbToHex(rgbBg);
     propBgColorPicker.value = hexBg;
@@ -535,35 +613,218 @@
   }
 
   // =========================================================================
+  // Live Two-Way Code Editor (Full Page & Per-Element)
+  // =========================================================================
+  function openPageCodeEditor() {
+    if (project.pages[project.activePageId]) {
+      const clone = canvas.cloneNode(true);
+      clone.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+      project.pages[project.activePageId].html = clone.innerHTML;
+    }
+    const page = project.pages[project.activePageId];
+    document.getElementById('codePageBadge').textContent = `${page.slug}.html`;
+
+    editPageHtml.value = formatHtmlString(page.html || '');
+    editPageCss.value = generateBundledCss();
+
+    openModal('codeModal');
+  }
+
+  function applyPageCodeChanges() {
+    const updatedHtml = editPageHtml.value;
+    canvas.innerHTML = updatedHtml;
+
+    if (project.pages[project.activePageId]) {
+      project.pages[project.activePageId].html = updatedHtml;
+    }
+
+    bindCanvasNodeListeners();
+    renderSectionInsertBars();
+    deselectElement();
+    updateLayersTree();
+    closeModal('codeModal');
+    recordHistory('Apply Custom Code to Page');
+  }
+
+  function openElementCodeEditor() {
+    if (!selectedElement) return;
+    const clone = selectedElement.cloneNode(true);
+    clone.classList.remove('selected');
+    editElementHtml.value = formatHtmlString(clone.outerHTML);
+    openModal('elementCodeModal');
+  }
+
+  function applyElementCodeChanges() {
+    if (!selectedElement) return;
+    const updatedHtml = editElementHtml.value.trim();
+    if (!updatedHtml) return;
+
+    const temp = document.createElement('div');
+    temp.innerHTML = updatedHtml;
+    const newElement = temp.firstElementChild;
+    if (newElement) {
+      newElement.classList.add('we-node');
+      selectedElement.parentNode.replaceChild(newElement, selectedElement);
+      bindCanvasNodeListeners();
+      selectElement(newElement);
+      renderSectionInsertBars();
+      updateLayersTree();
+      closeModal('elementCodeModal');
+      recordHistory('Apply Element Custom HTML');
+    }
+  }
+
+  // =========================================================================
+  // Plugins & Integrations Engine
+  // =========================================================================
+  function setupPluginsListeners() {
+    const pWhatsapp = document.getElementById('pluginWhatsappToggle');
+    const pCookie = document.getElementById('pluginCookieToggle');
+    const pTheme = document.getElementById('pluginThemeToggle');
+    const pForm = document.getElementById('pluginFormToggle');
+    const pSeo = document.getElementById('pluginSeoToggle');
+    const pScript = document.getElementById('pluginCustomScriptToggle');
+
+    // Toggles
+    pWhatsapp.addEventListener('change', (e) => {
+      project.plugins.whatsapp.enabled = e.target.checked;
+      document.getElementById('pluginWhatsappFields').style.display = e.target.checked ? 'flex' : 'none';
+      saveProjectToStorage();
+    });
+
+    pCookie.addEventListener('change', (e) => {
+      project.plugins.cookie.enabled = e.target.checked;
+      document.getElementById('pluginCookieFields').style.display = e.target.checked ? 'flex' : 'none';
+      saveProjectToStorage();
+    });
+
+    pTheme.addEventListener('change', (e) => {
+      project.plugins.themeToggle.enabled = e.target.checked;
+      saveProjectToStorage();
+    });
+
+    pForm.addEventListener('change', (e) => {
+      project.plugins.form.enabled = e.target.checked;
+      document.getElementById('pluginFormFields').style.display = e.target.checked ? 'flex' : 'none';
+      saveProjectToStorage();
+    });
+
+    pSeo.addEventListener('change', (e) => {
+      project.plugins.seo.enabled = e.target.checked;
+      document.getElementById('pluginSeoFields').style.display = e.target.checked ? 'flex' : 'none';
+      saveProjectToStorage();
+    });
+
+    pScript.addEventListener('change', (e) => {
+      project.plugins.customScript.enabled = e.target.checked;
+      document.getElementById('pluginCustomScriptFields').style.display = e.target.checked ? 'flex' : 'none';
+      saveProjectToStorage();
+    });
+
+    // Inputs
+    document.getElementById('pluginWhatsappNumber').addEventListener('input', (e) => {
+      project.plugins.whatsapp.number = e.target.value;
+      saveProjectToStorage();
+    });
+    document.getElementById('pluginWhatsappMsg').addEventListener('input', (e) => {
+      project.plugins.whatsapp.message = e.target.value;
+      saveProjectToStorage();
+    });
+
+    document.getElementById('pluginCookieText').addEventListener('input', (e) => {
+      project.plugins.cookie.text = e.target.value;
+      saveProjectToStorage();
+    });
+    document.getElementById('pluginCookieBtnText').addEventListener('input', (e) => {
+      project.plugins.cookie.btnText = e.target.value;
+      saveProjectToStorage();
+    });
+
+    document.getElementById('pluginFormEndpoint').addEventListener('input', (e) => {
+      project.plugins.form.endpoint = e.target.value;
+      saveProjectToStorage();
+    });
+
+    document.getElementById('pluginOgImage').addEventListener('input', (e) => {
+      project.plugins.seo.ogImage = e.target.value;
+      saveProjectToStorage();
+    });
+
+    document.getElementById('pluginHeadScript').addEventListener('input', (e) => {
+      project.plugins.customScript.head = e.target.value;
+      saveProjectToStorage();
+    });
+    document.getElementById('pluginBodyScript').addEventListener('input', (e) => {
+      project.plugins.customScript.body = e.target.value;
+      saveProjectToStorage();
+    });
+  }
+
+  function syncPluginFieldsFromState() {
+    if (!project.plugins) return;
+    const pw = document.getElementById('pluginWhatsappToggle');
+    if (pw) {
+      pw.checked = !!project.plugins.whatsapp.enabled;
+      document.getElementById('pluginWhatsappFields').style.display = pw.checked ? 'flex' : 'none';
+      document.getElementById('pluginWhatsappNumber').value = project.plugins.whatsapp.number || '';
+      document.getElementById('pluginWhatsappMsg').value = project.plugins.whatsapp.message || '';
+    }
+
+    const pc = document.getElementById('pluginCookieToggle');
+    if (pc) {
+      pc.checked = !!project.plugins.cookie.enabled;
+      document.getElementById('pluginCookieFields').style.display = pc.checked ? 'flex' : 'none';
+      document.getElementById('pluginCookieText').value = project.plugins.cookie.text || '';
+      document.getElementById('pluginCookieBtnText').value = project.plugins.cookie.btnText || '';
+    }
+
+    const pt = document.getElementById('pluginThemeToggle');
+    if (pt) pt.checked = !!project.plugins.themeToggle.enabled;
+
+    const pf = document.getElementById('pluginFormToggle');
+    if (pf) {
+      pf.checked = !!project.plugins.form.enabled;
+      document.getElementById('pluginFormFields').style.display = pf.checked ? 'flex' : 'none';
+      document.getElementById('pluginFormEndpoint').value = project.plugins.form.endpoint || '';
+    }
+
+    const ps = document.getElementById('pluginSeoToggle');
+    if (ps) {
+      ps.checked = !!project.plugins.seo.enabled;
+      document.getElementById('pluginSeoFields').style.display = ps.checked ? 'flex' : 'none';
+      document.getElementById('pluginOgImage').value = project.plugins.seo.ogImage || '';
+    }
+
+    const psc = document.getElementById('pluginCustomScriptToggle');
+    if (psc) {
+      psc.checked = !!project.plugins.customScript.enabled;
+      document.getElementById('pluginCustomScriptFields').style.display = psc.checked ? 'flex' : 'none';
+      document.getElementById('pluginHeadScript').value = project.plugins.customScript.head || '';
+      document.getElementById('pluginBodyScript').value = project.plugins.customScript.body || '';
+    }
+  }
+
+  // =========================================================================
   // Inspector Input Event Listeners
   // =========================================================================
   function setupEventListeners() {
-    // Canvas click -> deselect if clicking canvas directly
     canvas.addEventListener('click', (e) => {
       if (e.target === canvas) {
         deselectElement();
       }
     });
 
-    // Project Name Rename
     projectNameInput.addEventListener('input', (e) => {
       project.name = e.target.value;
       saveProjectToStorage();
     });
 
-    // Page Switcher Dropdown
-    pageSelectDropdown.addEventListener('change', (e) => {
-      switchPage(e.target.value);
-    });
-
-    // Add Page Button
-    document.getElementById('addPageBtn').addEventListener('click', () => {
+    document.getElementById('tabBarAddPageBtn').addEventListener('click', () => {
       openModal('newPageModal');
     });
 
-    // Page Settings Button
-    document.getElementById('pageSettingsBtn').addEventListener('click', () => {
-      openPageSettingsModal();
+    document.getElementById('createNewPageBtn').addEventListener('click', () => {
+      openModal('newPageModal');
     });
 
     // Viewport Mode Switcher
@@ -589,7 +850,7 @@
       });
     });
 
-    // Basic Elements Drag and Click to insert
+    // Basic Elements Click to insert
     document.querySelectorAll('.we-element-card').forEach(card => {
       card.addEventListener('click', function () {
         const type = this.getAttribute('data-element');
@@ -616,11 +877,26 @@
       });
     });
 
+    // Bottom Add Section Button
+    document.getElementById('canvasBottomAddSectionBtn').addEventListener('click', () => {
+      insertPreset('hero');
+      setTimeout(() => {
+        canvas.scrollTop = canvas.scrollHeight;
+      }, 50);
+    });
+
     // Contextual Floating Toolbar Actions
+    document.getElementById('toolEditCode').addEventListener('click', openElementCodeEditor);
+    document.getElementById('inspectorEditCodeBtn').addEventListener('click', openElementCodeEditor);
     document.getElementById('toolMoveUp').addEventListener('click', () => moveElement(-1));
     document.getElementById('toolMoveDown').addEventListener('click', () => moveElement(1));
     document.getElementById('toolDuplicate').addEventListener('click', duplicateElement);
     document.getElementById('toolDelete').addEventListener('click', deleteElement);
+
+    // Code Editor Buttons
+    document.getElementById('viewCodeBtn').addEventListener('click', openPageCodeEditor);
+    applyCodeBtn.addEventListener('click', applyPageCodeChanges);
+    applyElementCodeBtn.addEventListener('click', applyElementCodeChanges);
 
     // Inspector Events: Button Link
     propLinkType.addEventListener('change', (e) => {
@@ -866,34 +1142,27 @@
       recordHistory('Update Margin Bottom');
     });
 
-    // History Buttons Click
     undoBtn.addEventListener('click', undo);
     redoBtn.addEventListener('click', redo);
 
-    // Clear Canvas Button
     document.getElementById('clearCanvasBtn').addEventListener('click', () => {
       if (confirm('Are you sure you want to clear all elements on this page?')) {
         canvas.innerHTML = '';
         deselectElement();
+        renderSectionInsertBars();
         updateLayersTree();
         recordHistory('Clear Canvas');
       }
     });
 
-    // Preview Mode Button
     document.getElementById('previewBtn').addEventListener('click', openLivePreview);
 
-    // Code Viewer Button
-    document.getElementById('viewCodeBtn').addEventListener('click', openCodeInspector);
-
-    // Export Button
     document.getElementById('exportBtn').addEventListener('click', () => {
       const pageCount = Object.keys(project.pages).length;
       document.getElementById('exportPageCount').textContent = `${pageCount} page${pageCount > 1 ? 's' : ''}`;
       openModal('exportModal');
     });
 
-    // Modal Close Triggers
     document.querySelectorAll('.we-modal-close, [data-close]').forEach(btn => {
       btn.addEventListener('click', function () {
         const modalId = this.getAttribute('data-close');
@@ -901,7 +1170,6 @@
       });
     });
 
-    // Create New Page Modal Form
     document.getElementById('confirmCreatePageBtn').addEventListener('click', () => {
       const name = document.getElementById('newPageNameInput').value.trim();
       const slug = document.getElementById('newPageSlugInput').value.trim();
@@ -913,22 +1181,9 @@
       createNewPage(name, slug || name.toLowerCase().replace(/\s+/g, '-'), starter);
     });
 
-    // Save Page Settings Modal Form
-    document.getElementById('savePageSettingsBtn').addEventListener('click', () => {
-      const active = project.pages[project.activePageId];
-      if (!active) return;
-      active.title = document.getElementById('settingPageTitle').value;
-      active.desc = document.getElementById('settingPageDesc').value;
-      active.bgColor = document.getElementById('settingPageBgColorPicker').value;
-      canvas.style.backgroundColor = active.bgColor;
-      renderPageDropdown();
-      closeModal('pageSettingsModal');
-      recordHistory('Update Page Settings');
-    });
+    document.getElementById('deletePageBtn').addEventListener('click', () => deletePage(project.activePageId));
 
-    document.getElementById('deletePageBtn').addEventListener('click', deleteCurrentPage);
-
-    // Code Inspector Tabs
+    // Code tabs switching in codeModal
     document.querySelectorAll('.we-code-tab').forEach(tab => {
       tab.addEventListener('click', function () {
         document.querySelectorAll('.we-code-tab').forEach(t => t.classList.remove('active'));
@@ -940,12 +1195,12 @@
     });
 
     document.getElementById('copyCodeBtn').addEventListener('click', () => {
-      const activePane = document.querySelector('.we-code-pane.active code');
-      if (activePane) {
-        navigator.clipboard.writeText(activePane.textContent);
+      const activeTextarea = document.querySelector('.we-code-pane.active textarea');
+      if (activeTextarea) {
+        navigator.clipboard.writeText(activeTextarea.value);
         const copyBtn = document.getElementById('copyCodeBtn');
         copyBtn.textContent = 'Copied!';
-        setTimeout(() => { copyBtn.textContent = 'Copy Code'; }, 1500);
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
       }
     });
 
@@ -986,7 +1241,6 @@
   // =========================================================================
   function setupKeyboardShortcuts() {
     window.addEventListener('keydown', (e) => {
-      // Ignore if user is typing in form inputs
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
       const isContentEditable = document.activeElement.isContentEditable;
 
@@ -1020,7 +1274,7 @@
   // =========================================================================
   // Element Insertion Functions
   // =========================================================================
-  function insertElement(type) {
+  function insertElement(type, beforeNode = null) {
     const el = document.createElement('div');
     el.className = 'we-node';
     el.setAttribute('data-we-type', type);
@@ -1033,7 +1287,7 @@
         break;
 
       case 'paragraph':
-        el.innerHTML = '<p style="font-size: 16px; color: #9ca3af; line-height: 1.6; margin: 0;">This is a paragraph text block. Double-click to edit the content or customize styling in the right panel.</p>';
+        el.innerHTML = '<p style="font-size: 16px; color: #9ca3af; line-height: 1.6; margin: 0;">This is a paragraph text block. Click to edit in place or customize styling in the right panel.</p>';
         el.style.marginBottom = '16px';
         break;
 
@@ -1111,8 +1365,14 @@
         break;
     }
 
-    canvas.appendChild(el);
+    if (beforeNode && beforeNode.parentNode === canvas) {
+      canvas.insertBefore(el, beforeNode);
+    } else {
+      canvas.appendChild(el);
+    }
+
     bindCanvasNodeListeners();
+    renderSectionInsertBars();
     selectElement(el);
     updateLayersTree();
     recordHistory(`Insert ${type}`);
@@ -1152,12 +1412,13 @@
 
     canvas.appendChild(el);
     bindCanvasNodeListeners();
+    renderSectionInsertBars();
     selectElement(el);
     updateLayersTree();
     recordHistory(`Insert ${styleName} Button`);
   }
 
-  function insertPreset(presetType) {
+  function insertPreset(presetType, beforeNode = null) {
     const wrapper = document.createElement('div');
     wrapper.className = 'we-node';
     wrapper.setAttribute('data-we-type', 'section');
@@ -1294,12 +1555,12 @@
           <div style="padding: 40px 20px; background: #121318; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 18px; max-width: 600px; margin: 0 auto;">
             <h2 style="font-size: 26px; font-weight: 700; color: #fff; margin: 0 0 8px; text-align: center;">Get in Touch</h2>
             <p style="font-size: 14px; color: #9ca3af; margin: 0 0 24px; text-align: center;">Have questions or need enterprise consultation? Send us a message.</p>
-            <div style="display: flex; flex-direction: column; gap: 14px;">
-              <input type="text" placeholder="Your Name" style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none;">
-              <input type="email" placeholder="Your Email Address" style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none;">
-              <textarea placeholder="Your Message..." rows="4" style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none; resize: vertical;"></textarea>
-              <button class="we-node" data-we-type="button" data-we-link-type="none" style="background: #0a84ff; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">Send Message</button>
-            </div>
+            <form action="${project.plugins.form.enabled ? (project.plugins.form.endpoint || '#') : '#'}" method="POST" style="display: flex; flex-direction: column; gap: 14px;">
+              <input type="text" name="name" placeholder="Your Name" required style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none;">
+              <input type="email" name="email" placeholder="Your Email Address" required style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none;">
+              <textarea name="message" placeholder="Your Message..." rows="4" required style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none; resize: vertical;"></textarea>
+              <button class="we-node" data-we-type="button" data-we-link-type="none" type="submit" style="background: #0a84ff; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">Send Message</button>
+            </form>
           </div>
         `;
         break;
@@ -1352,8 +1613,14 @@
         break;
     }
 
-    canvas.appendChild(wrapper);
+    if (beforeNode && beforeNode.parentNode === canvas) {
+      canvas.insertBefore(wrapper, beforeNode);
+    } else {
+      canvas.appendChild(wrapper);
+    }
+
     bindCanvasNodeListeners();
+    renderSectionInsertBars();
     selectElement(wrapper);
     updateLayersTree();
     recordHistory(`Insert ${presetType} Section`);
@@ -1366,16 +1633,18 @@
     if (!selectedElement) return;
     if (direction === -1) {
       const prev = selectedElement.previousElementSibling;
-      if (prev) {
+      if (prev && !prev.classList.contains('we-section-insert-bar')) {
         canvas.insertBefore(selectedElement, prev);
+        renderSectionInsertBars();
         positionFloatingToolbar(selectedElement);
         updateLayersTree();
         recordHistory('Move Element Up');
       }
     } else if (direction === 1) {
       const next = selectedElement.nextElementSibling;
-      if (next) {
+      if (next && !next.classList.contains('we-section-insert-bar')) {
         canvas.insertBefore(next, selectedElement);
+        renderSectionInsertBars();
         positionFloatingToolbar(selectedElement);
         updateLayersTree();
         recordHistory('Move Element Down');
@@ -1390,6 +1659,7 @@
     clone.classList.remove('selected');
     selectedElement.parentNode.insertBefore(clone, selectedElement.nextSibling);
     bindCanvasNodeListeners();
+    renderSectionInsertBars();
     selectElement(clone);
     updateLayersTree();
     recordHistory('Duplicate Element');
@@ -1400,6 +1670,7 @@
     const parent = selectedElement.parentNode;
     parent.removeChild(selectedElement);
     deselectElement();
+    renderSectionInsertBars();
     updateLayersTree();
     recordHistory('Delete Element');
   }
@@ -1452,9 +1723,10 @@
   // Interactive Live Preview Mode
   // =========================================================================
   function openLivePreview() {
-    // Save current canvas state
     if (project.pages[project.activePageId]) {
-      project.pages[project.activePageId].html = canvas.innerHTML;
+      const clone = canvas.cloneNode(true);
+      clone.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+      project.pages[project.activePageId].html = clone.innerHTML;
     }
 
     const modal = document.getElementById('previewModal');
@@ -1498,25 +1770,6 @@
   }
 
   // =========================================================================
-  // Code Inspector (HTML & CSS Viewer)
-  // =========================================================================
-  function openCodeInspector() {
-    if (project.pages[project.activePageId]) {
-      project.pages[project.activePageId].html = canvas.innerHTML;
-    }
-    const page = project.pages[project.activePageId];
-    document.getElementById('codePageName').textContent = `${page.slug}.html`;
-
-    const htmlCode = generateFullPageHtml(page, true);
-    const cssCode = generateBundledCss();
-
-    document.getElementById('codeHtmlViewer').textContent = htmlCode;
-    document.getElementById('codeCssViewer').textContent = cssCode;
-
-    openModal('codeModal');
-  }
-
-  // =========================================================================
   // Package Exporter (ZIP & Single HTML)
   // =========================================================================
   function exportProjectZip() {
@@ -1525,9 +1778,10 @@
       return;
     }
 
-    // Ensure all canvas changes are committed
     if (project.pages[project.activePageId]) {
-      project.pages[project.activePageId].html = canvas.innerHTML;
+      const clone = canvas.cloneNode(true);
+      clone.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+      project.pages[project.activePageId].html = clone.innerHTML;
     }
 
     const zip = new JSZip();
@@ -1548,7 +1802,9 @@
 
   function exportSinglePageHtml() {
     if (project.pages[project.activePageId]) {
-      project.pages[project.activePageId].html = canvas.innerHTML;
+      const clone = canvas.cloneNode(true);
+      clone.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+      project.pages[project.activePageId].html = clone.innerHTML;
     }
     const page = project.pages[project.activePageId];
     const fullHtml = generateFullPageHtml(page, true);
@@ -1559,12 +1815,14 @@
   }
 
   // =========================================================================
-  // HTML / CSS Code Generators
+  // HTML / CSS Code Generators with Plugins Injection
   // =========================================================================
   function generateFullPageHtml(page, inlineCss = false, cssFileName = 'style.css') {
-    // Clean canvas HTML: convert data-we-link-type to functional hrefs and remove editor classes
     const temp = document.createElement('div');
     temp.innerHTML = page.html || '';
+
+    // Remove any leftover editor bars
+    temp.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
 
     // Convert linked buttons
     temp.querySelectorAll('.we-node').forEach(node => {
@@ -1623,6 +1881,10 @@
     const desc = page.desc || 'Created with AS Web Editor';
     const bg = page.bgColor || '#0a0a0c';
 
+    // Build Plugin Scripts & Head/Body injections
+    const pluginHeadTags = buildPluginHeadInjections();
+    const pluginBodyTags = buildPluginBodyInjections();
+
     if (inlineCss) {
       return `<!DOCTYPE html>
 <html lang="en">
@@ -1634,6 +1896,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+${pluginHeadTags}
   <style>
 ${generateBundledCss(bg)}
   </style>
@@ -1642,6 +1905,7 @@ ${generateBundledCss(bg)}
   <main class="page-container">
 ${indentHtml(cleanContent, 4)}
   </main>
+${pluginBodyTags}
 </body>
 </html>`;
     }
@@ -1657,13 +1921,80 @@ ${indentHtml(cleanContent, 4)}
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${cssFileName}">
+${pluginHeadTags}
 </head>
 <body style="background-color: ${bg};">
   <main class="page-container">
 ${indentHtml(cleanContent, 4)}
   </main>
+${pluginBodyTags}
 </body>
 </html>`;
+  }
+
+  function buildPluginHeadInjections() {
+    let out = '';
+    const plugins = project.plugins || {};
+
+    if (plugins.seo && plugins.seo.enabled && plugins.seo.ogImage) {
+      out += `  <meta property="og:title" content="${escapeHtml(project.name)}">\n`;
+      out += `  <meta property="og:image" content="${escapeHtml(plugins.seo.ogImage)}">\n`;
+      out += `  <meta property="og:type" content="website">\n`;
+    }
+
+    if (plugins.customScript && plugins.customScript.enabled && plugins.customScript.head) {
+      out += `  ${plugins.customScript.head}\n`;
+    }
+
+    return out;
+  }
+
+  function buildPluginBodyInjections() {
+    let out = '';
+    const plugins = project.plugins || {};
+
+    // 1. WhatsApp Floating Widget
+    if (plugins.whatsapp && plugins.whatsapp.enabled && plugins.whatsapp.number) {
+      const cleanNum = plugins.whatsapp.number.replace(/[^0-9]/g, '');
+      const msg = encodeURIComponent(plugins.whatsapp.message || 'Hello!');
+      out += `
+  <!-- WhatsApp Floating Widget (AS Plugin) -->
+  <a href="https://wa.me/${cleanNum}?text=${msg}" target="_blank" rel="noopener noreferrer" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; width: 56px; height: 56px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(37, 211, 102, 0.45); text-decoration: none;" title="Chat with us on WhatsApp">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="#ffffff"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
+  </a>\n`;
+    }
+
+    // 2. Cookie Consent Banner
+    if (plugins.cookie && plugins.cookie.enabled) {
+      const text = escapeHtml(plugins.cookie.text || 'We use cookies to improve your experience.');
+      const btn = escapeHtml(plugins.cookie.btnText || 'Accept');
+      out += `
+  <!-- Cookie Consent Banner (AS Plugin) -->
+  <div id="asCookieBanner" style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(18, 19, 24, 0.95); backdrop-filter: blur(16px); border-top: 1px solid rgba(255, 255, 255, 0.1); padding: 16px 24px; z-index: 9998; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+    <p style="margin: 0; font-size: 13px; color: #d1d5db;">${text}</p>
+    <button onclick="document.getElementById('asCookieBanner').style.display='none'" style="background: #0a84ff; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">${btn}</button>
+  </div>\n`;
+    }
+
+    // 3. Dark/Light Theme Switcher
+    if (plugins.themeToggle && plugins.themeToggle.enabled) {
+      out += `
+  <!-- Theme Switcher (AS Plugin) -->
+  <button id="asThemeBtn" onclick="document.body.classList.toggle('as-light-mode')" style="position: fixed; bottom: 24px; left: 24px; z-index: 9999; background: rgba(18, 19, 24, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+    <span>Theme Mode</span>
+  </button>
+  <style>
+    body.as-light-mode { background-color: #f8fafc !important; color: #0f172a !important; }
+    body.as-light-mode .page-container * { color: inherit; }
+  </style>\n`;
+    }
+
+    // 4. Custom Body Scripts
+    if (plugins.customScript && plugins.customScript.enabled && plugins.customScript.body) {
+      out += `  ${plugins.customScript.body}\n`;
+    }
+
+    return out;
   }
 
   function generateBundledCss(defaultBg = '#0a0a0c') {
@@ -1808,18 +2139,18 @@ button:active, a:active {
       <div class="we-node" data-we-type="section" style="padding: 40px 20px; background: #121318; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 18px; max-width: 600px; margin: 0 auto 40px;">
         <h2 style="font-size: 26px; font-weight: 700; color: #fff; margin: 0 0 8px; text-align: center;">Send Us a Message</h2>
         <p style="font-size: 14px; color: #9ca3af; margin: 0 0 24px; text-align: center;">We will respond within 24 hours.</p>
-        <div style="display: flex; flex-direction: column; gap: 14px;">
-          <input type="text" placeholder="Full Name" style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none;">
-          <input type="email" placeholder="Email Address" style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none;">
-          <textarea placeholder="Message..." rows="4" style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none; resize: vertical;"></textarea>
-          <button class="we-node" data-we-type="button" data-we-link-type="none" style="background: #0a84ff; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">Submit Request</button>
-        </div>
+        <form action="${project.plugins && project.plugins.form && project.plugins.form.enabled ? (project.plugins.form.endpoint || '#') : '#'}" method="POST" style="display: flex; flex-direction: column; gap: 14px;">
+          <input type="text" name="name" placeholder="Full Name" required style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none;">
+          <input type="email" name="email" placeholder="Email Address" required style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none;">
+          <textarea name="message" placeholder="Message..." rows="4" required style="width: 100%; background: #191b22; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #fff; padding: 12px; font-size: 13px; outline: none; resize: vertical;"></textarea>
+          <button class="we-node" data-we-type="button" data-we-link-type="none" type="submit" style="background: #0a84ff; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">Submit Request</button>
+        </form>
       </div>
     `;
   }
 
   // =========================================================================
-  // Modal Helpers
+  // Modal Helpers & Utilities
   // =========================================================================
   function openModal(id) {
     const el = document.getElementById(id);
@@ -1831,23 +2162,6 @@ button:active, a:active {
     if (el) el.classList.remove('open');
   }
 
-  function openPageSettingsModal() {
-    const active = project.pages[project.activePageId];
-    if (!active) return;
-    document.getElementById('settingPageTitle').value = active.title || '';
-    document.getElementById('settingPageSlug').value = active.slug || '';
-    document.getElementById('settingPageDesc').value = active.desc || '';
-
-    const hexBg = active.bgColor || '#0a0a0c';
-    document.getElementById('settingPageBgColorPicker').value = hexBg;
-    document.getElementById('settingPageBgColorText').value = hexBg;
-
-    openModal('pageSettingsModal');
-  }
-
-  // =========================================================================
-  // Utilities
-  // =========================================================================
   function rgbToHex(rgb) {
     if (!rgb || rgb === 'transparent' || rgb === 'rgba(0, 0, 0, 0)') return '#000000';
     if (rgb.startsWith('#')) return rgb;
@@ -1877,6 +2191,15 @@ button:active, a:active {
   function indentHtml(html, spaces) {
     const pad = ' '.repeat(spaces);
     return html.split('\n').map(line => pad + line).join('\n');
+  }
+
+  function formatHtmlString(html) {
+    return html
+      .replace(/>\s*</g, '>\n<')
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+      .join('\n');
   }
 
   // Initialize once DOM is loaded

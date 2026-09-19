@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>AS Web Editor • Visual Website Builder</title>
-  <meta name="description" content="Visual no-code multi-page website builder with direct media attachments, custom styling, component presets, and exportable project packages.">
+  <meta name="description" content="Visual no-code multi-page website builder with live code editing, direct media attachments, plugins, and exportable project packages.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230a84ff%22/><path d=%22M25 35h50M25 50h35M25 65h45%22 stroke=%22white%22 stroke-width=%228%22 stroke-linecap=%22round%22/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="webeditor.css">
   <!-- Client-side ZIP exporter -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -27,7 +27,7 @@
         </svg>
       </div>
       <h2>Desktop Experience Required</h2>
-      <p>AS Web Editor is a high-performance visual website studio engineered specifically for PC and desktop displays with multi-pane inspectors and drag-and-drop artboard precision.</p>
+      <p>AS Web Editor is a high-performance visual website studio engineered specifically for PC and desktop displays with multi-pane inspectors, code editors, and drag-and-drop precision.</p>
       <div class="gatekeeper-badge">Screen width must be at least 960px</div>
       <div class="gatekeeper-actions">
         <a href="/" class="we-btn we-btn-primary">Return to AS Cloud</a>
@@ -60,33 +60,8 @@
         </div>
       </div>
 
-      <!-- Center: Multi-Page Switcher & Viewport Toggles -->
+      <!-- Center: Viewport Mode Switcher & Plugins Badge -->
       <div class="we-center-controls">
-        <!-- Page Selector -->
-        <div class="we-page-selector-wrap">
-          <label for="pageSelectDropdown" class="we-control-label">Page:</label>
-          <div class="we-custom-select">
-            <select id="pageSelectDropdown" class="we-select" title="Active Page">
-              <!-- Dynamically populated by JS -->
-            </select>
-          </div>
-          <button id="addPageBtn" class="we-icon-btn" title="Create New Page" aria-label="Add Page">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
-          <button id="pageSettingsBtn" class="we-icon-btn" title="Page Settings (SEO / Title)" aria-label="Page Settings">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="we-divider-v"></div>
-
-        <!-- Viewport Mode Switcher -->
         <div class="we-viewport-switcher" role="group" aria-label="Device Viewport">
           <button id="viewDesktopBtn" class="we-viewport-btn active" data-viewport="desktop" title="Desktop View (Full Width)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -113,7 +88,7 @@
         </div>
       </div>
 
-      <!-- Right: History, Preview, Code, Export -->
+      <!-- Right: History, Live Code Edit, Preview, Download -->
       <div class="we-actions-section">
         <!-- History Undo / Redo -->
         <div class="we-history-group">
@@ -141,12 +116,12 @@
           <span>Clear</span>
         </button>
 
-        <button id="viewCodeBtn" class="we-action-btn" title="Inspect Generated HTML & CSS">
+        <button id="viewCodeBtn" class="we-action-btn we-action-code" title="Open Live HTML & CSS Editor">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="16 18 22 12 16 6"/>
             <polyline points="8 6 2 12 8 18"/>
           </svg>
-          <span>Code</span>
+          <span>Edit Code</span>
         </button>
 
         <button id="previewBtn" class="we-action-btn we-action-highlight" title="Live Interactive Multi-Page Preview">
@@ -170,27 +145,31 @@
     <!-- Studio Body: 3-Column Studio Workspace -->
     <div class="we-workspace">
 
-      <!-- Left Sidebar: Elements, Presets, Pages -->
+      <!-- Left Sidebar: Elements, Presets, Pages, Plugins -->
       <aside class="we-sidebar-left">
-        <!-- Sidebar Tabs -->
+        <!-- Sidebar 4 Tabs -->
         <div class="we-tabs-header">
-          <button class="we-tab-btn active" data-tab="elementsTab">
+          <button class="we-tab-btn active" data-tab="elementsTab" title="Elements Library">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             <span>Elements</span>
           </button>
-          <button class="we-tab-btn" data-tab="presetsTab">
+          <button class="we-tab-btn" data-tab="presetsTab" title="Sections & Blocks">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             <span>Presets</span>
           </button>
-          <button class="we-tab-btn" data-tab="pagesTab">
+          <button class="we-tab-btn" data-tab="pagesTab" title="Pages Manager">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             <span>Pages</span>
+          </button>
+          <button class="we-tab-btn" data-tab="pluginsTab" title="Plugins & Integrations">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Plugins</span>
           </button>
         </div>
 
         <!-- Tab 1: Elements -->
         <div id="elementsTab" class="we-tab-pane active">
-          <div class="we-section-title">Basic Elements</div>
+          <div class="we-section-title">Add Elements</div>
           <div class="we-elements-grid">
             <div class="we-element-card" data-element="heading" draggable="true" title="Add Heading (H1-H6)">
               <div class="we-element-icon">H1</div>
@@ -251,7 +230,7 @@
           </div>
 
           <div class="we-tip-box">
-            <span>Tip: Click or drag elements directly onto the canvas to insert. Double-click any text on canvas to edit in place.</span>
+            <span>Tip: Click any element to insert. Single click text on the canvas to edit in place. Click "Edit Code" on any element or page to customize raw HTML/CSS!</span>
           </div>
         </div>
 
@@ -346,7 +325,7 @@
 
         <!-- Tab 3: Pages & Layer Tree -->
         <div id="pagesTab" class="we-tab-pane">
-          <div class="we-section-title">Project Pages</div>
+          <div class="we-section-title">All Project Pages</div>
           <div class="we-pages-manager">
             <div id="pagesListContainer" class="we-pages-list">
               <!-- Dynamically populated -->
@@ -362,10 +341,140 @@
             <!-- Dynamically populated list of elements on active page -->
           </div>
         </div>
+
+        <!-- Tab 4: Plugins & Integrations -->
+        <div id="pluginsTab" class="we-tab-pane">
+          <div class="we-section-title">Plugins & Integrations</div>
+          <p style="font-size: 11px; color: var(--we-text-dim); margin-bottom: 14px;">Enable modular extensions that automatically inject into your preview and exported website.</p>
+
+          <div class="we-plugins-list">
+            <!-- Plugin 1: WhatsApp Chat Bubble -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>WhatsApp Chat Widget</strong>
+                  <span>Floating chat bubble on website</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginWhatsappToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginWhatsappFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginWhatsappNumber">Phone (with country code)</label>
+                <input type="text" id="pluginWhatsappNumber" class="we-input" placeholder="+1234567890">
+                <label class="we-prop-label" for="pluginWhatsappMsg" style="margin-top: 6px;">Default Message</label>
+                <input type="text" id="pluginWhatsappMsg" class="we-input" placeholder="Hello! I visited your website...">
+              </div>
+            </div>
+
+            <!-- Plugin 2: Cookie Consent Banner -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Cookie Consent Banner</strong>
+                  <span>GDPR compliant bottom popup</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginCookieToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginCookieFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginCookieText">Banner Text</label>
+                <input type="text" id="pluginCookieText" class="we-input" value="We use cookies to enhance your browsing experience.">
+                <label class="we-prop-label" for="pluginCookieBtnText" style="margin-top: 6px;">Accept Button Text</label>
+                <input type="text" id="pluginCookieBtnText" class="we-input" value="Accept & Close">
+              </div>
+            </div>
+
+            <!-- Plugin 3: Dark/Light Mode Switcher -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Theme Mode Switcher</strong>
+                  <span>Adds Dark/Light toggle to site</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginThemeToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Plugin 4: Form Webhook / Email -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Form Submissions</strong>
+                  <span>Connect contact forms to email/webhook</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginFormToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginFormFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginFormEndpoint">Formspree / Webhook URL</label>
+                <input type="url" id="pluginFormEndpoint" class="we-input" placeholder="https://formspree.io/f/your-form-id">
+              </div>
+            </div>
+
+            <!-- Plugin 5: SEO & OpenGraph Social Cards -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>SEO & Social Card (OG)</strong>
+                  <span>Meta tags for Google & Social Media</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginSeoToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginSeoFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginOgImage">Social Share Image (Direct URL)</label>
+                <input type="url" id="pluginOgImage" class="we-input" placeholder="https://.../preview.jpg">
+              </div>
+            </div>
+
+            <!-- Plugin 6: Custom Code & Analytics Injection -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Custom Head & Body Scripts</strong>
+                  <span>Google Analytics, fonts, custom JS</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginCustomScriptToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginCustomScriptFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginHeadScript">Head Scripts (&lt;head&gt;)</label>
+                <textarea id="pluginHeadScript" class="we-textarea we-mono-area" rows="3" placeholder="<!-- e.g. GA tag, font link -->"></textarea>
+                <label class="we-prop-label" for="pluginBodyScript" style="margin-top: 6px;">Body Scripts (&lt;body&gt;)</label>
+                <textarea id="pluginBodyScript" class="we-textarea we-mono-area" rows="3" placeholder="<!-- e.g. chat widget, tracking -->"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
       </aside>
 
-      <!-- Center: Canvas Viewport Artboard -->
+      <!-- Center: Canvas Viewport Artboard with Dedicated Page Tab Bar -->
       <main class="we-canvas-area" id="canvasArea">
+
+        <!-- Dedicated Prominent Page Tabs Bar -->
+        <div class="we-page-tab-strip" id="wePageTabStrip">
+          <div class="we-page-tab-list" id="wePageTabList">
+            <!-- Dynamically populated with active page tabs -->
+          </div>
+          <button id="tabBarAddPageBtn" class="we-tab-add-btn" title="Create New Webpage">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>New Page</span>
+          </button>
+        </div>
+
         <div class="we-artboard-wrapper" id="artboardWrapper">
           <!-- Frame Device Bezels -->
           <div class="we-artboard-frame" id="artboardFrame">
@@ -375,9 +484,17 @@
               <div class="we-notch-camera"></div>
             </div>
 
-            <!-- Visual Canvas Container -->
+            <!-- Visual Canvas Container (Expands naturally with scroll) -->
             <div id="webCanvas" class="we-canvas" data-page-id="index">
               <!-- Live website elements reside here -->
+            </div>
+
+            <!-- Big Friendly Add Section to Bottom Button -->
+            <div class="we-bottom-insert-zone">
+              <button id="canvasBottomAddSectionBtn" class="we-bottom-add-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Add Section to Page</span>
+              </button>
             </div>
           </div>
         </div>
@@ -385,6 +502,9 @@
         <!-- Floating Contextual Element Toolbar -->
         <div id="elementFloatingToolbar" class="we-floating-toolbar">
           <span id="floatingElementName" class="we-floating-title">Element</span>
+          <button id="toolEditCode" class="we-tool-btn we-tool-highlight" title="Edit HTML/Code of this Element">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </button>
           <button id="toolMoveUp" class="we-tool-btn" title="Move Up">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
@@ -420,6 +540,14 @@
 
           <!-- Dynamic Properties Form -->
           <div id="inspectorForm" class="we-inspector-form" style="display: none;">
+
+            <!-- Quick Action: Edit Element Code Directly -->
+            <div style="margin-bottom: 14px;">
+              <button id="inspectorEditCodeBtn" class="we-btn we-btn-secondary we-btn-full">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span>Edit Element HTML Code</span>
+              </button>
+            </div>
 
             <!-- Section 1: Button & Link Actions (Shown for buttons/links) -->
             <div class="we-prop-section" id="sectionLinkAction">
@@ -672,6 +800,62 @@
 
   </div>
 
+  <!-- Modal: Live HTML & CSS Full Page Code Editor -->
+  <div id="codeModal" class="we-modal we-modal-lg">
+    <div class="we-modal-card we-modal-lg">
+      <div class="we-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h3>Live Code Editor</h3>
+          <span id="codePageBadge" class="we-element-type-badge">index.html</span>
+        </div>
+        <button class="we-modal-close" data-close="codeModal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="we-code-tabs">
+        <button class="we-code-tab active" data-code-tab="htmlEditorPane">HTML Body</button>
+        <button class="we-code-tab" data-code-tab="cssEditorPane">Custom CSS</button>
+      </div>
+      <div class="we-modal-body we-code-body">
+        <div id="htmlEditorPane" class="we-code-pane active">
+          <textarea id="editPageHtml" class="we-code-editor" spellcheck="false" placeholder="Enter custom HTML..."></textarea>
+        </div>
+        <div id="cssEditorPane" class="we-code-pane">
+          <textarea id="editPageCss" class="we-code-editor" spellcheck="false" placeholder="Enter custom CSS rules..."></textarea>
+        </div>
+      </div>
+      <div class="we-modal-footer">
+        <div style="margin-right: auto; font-size: 11px; color: var(--we-text-dim);">
+          Tip: Edits apply directly to the canvas in real-time.
+        </div>
+        <button id="copyCodeBtn" class="we-btn we-btn-secondary">Copy</button>
+        <button id="applyCodeBtn" class="we-btn we-btn-primary">Apply Changes to Canvas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Element-Level Code Editor -->
+  <div id="elementCodeModal" class="we-modal">
+    <div class="we-modal-card we-modal-lg">
+      <div class="we-modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h3>Edit Element HTML</h3>
+          <span id="elementCodeBadge" class="we-element-type-badge">Selected Element</span>
+        </div>
+        <button class="we-modal-close" data-close="elementCodeModal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="we-modal-body we-code-body">
+        <textarea id="editElementHtml" class="we-code-editor" spellcheck="false" style="min-height: 240px;"></textarea>
+      </div>
+      <div class="we-modal-footer">
+        <button class="we-btn we-btn-secondary" data-close="elementCodeModal">Cancel</button>
+        <button id="applyElementCodeBtn" class="we-btn we-btn-primary">Apply to Element</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Page Settings & SEO -->
   <div id="pageSettingsModal" class="we-modal">
     <div class="we-modal-card">
@@ -787,34 +971,6 @@
     </div>
   </div>
 
-  <!-- Modal: Code Inspector (HTML & CSS) -->
-  <div id="codeModal" class="we-modal">
-    <div class="we-modal-card we-modal-lg">
-      <div class="we-modal-header">
-        <h3>Generated Code Inspector</h3>
-        <button class="we-modal-close" data-close="codeModal">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <div class="we-code-tabs">
-        <button class="we-code-tab active" data-code-tab="htmlTab">HTML (<span id="codePageName">index.html</span>)</button>
-        <button class="we-code-tab" data-code-tab="cssTab">CSS (style.css)</button>
-      </div>
-      <div class="we-modal-body we-code-body">
-        <div id="htmlTab" class="we-code-pane active">
-          <pre><code id="codeHtmlViewer" class="we-code-block"></code></pre>
-        </div>
-        <div id="cssTab" class="we-code-pane">
-          <pre><code id="codeCssViewer" class="we-code-block"></code></pre>
-        </div>
-      </div>
-      <div class="we-modal-footer">
-        <button id="copyCodeBtn" class="we-btn we-btn-secondary">Copy Code</button>
-        <button class="we-btn we-btn-primary" data-close="codeModal">Done</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Modal: Download & Export Website Package -->
   <div id="exportModal" class="we-modal">
     <div class="we-modal-card">
@@ -825,7 +981,7 @@
         </button>
       </div>
       <div class="we-modal-body">
-        <p class="we-export-desc">Your website is ready for download. You can download the complete multi-page bundle with all connected pages and CSS, or download just the active single page.</p>
+        <p class="we-export-desc">Your website is ready for download with all connected multi-page links and plugins configured.</p>
 
         <div class="we-export-cards">
           <!-- Option 1: Complete ZIP -->
@@ -835,7 +991,7 @@
             </div>
             <div class="we-export-card-info">
               <strong>Complete Website Package (.zip)</strong>
-              <p>Includes all project pages (<span id="exportPageCount">1 page</span>), shared <code>style.css</code>, and connected inter-page button links ready for static hosting.</p>
+              <p>Includes all project pages (<span id="exportPageCount">1 page</span>), shared <code>style.css</code>, enabled plugins, and connected inter-page button links ready for static hosting.</p>
             </div>
           </div>
 
@@ -846,7 +1002,7 @@
             </div>
             <div class="we-export-card-info">
               <strong>Single HTML Page (.html)</strong>
-              <p>Exports only the currently active page with all styles embedded in a standalone single-file document.</p>
+              <p>Exports only the currently active page with all styles and plugins embedded in a standalone single-file document.</p>
             </div>
           </div>
         </div>

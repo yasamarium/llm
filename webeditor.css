@@ -1,5 +1,6 @@
 /* AS Web Editor • Visual Website Builder CSS
    Desktop-First Precision Studio Architecture
+   Prominent Page Tabs, Fluid Canvas Scroll, Live Code Editor, and Plugins System
    Strictly Zero Emojis
 */
 
@@ -8,6 +9,7 @@
   --we-surface-1: #121318;
   --we-surface-2: #191b22;
   --we-surface-3: #22252f;
+  --we-surface-code: #0b0c10;
   --we-border: rgba(255, 255, 255, 0.08);
   --we-border-hover: rgba(255, 255, 255, 0.16);
   --we-border-active: rgba(10, 132, 255, 0.6);
@@ -18,6 +20,7 @@
   --we-primary-hover: #0070e0;
   --we-primary-glow: rgba(10, 132, 255, 0.25);
   --we-accent: #6366f1;
+  --we-accent-glow: rgba(99, 102, 241, 0.25);
   --we-danger: #ef4444;
   --we-danger-glow: rgba(239, 68, 68, 0.25);
   --we-success: #10b981;
@@ -236,45 +239,11 @@ html, body {
   color: #f59e0b;
 }
 
-/* Center Controls: Multi-page & Viewports */
+/* Center Controls: Viewports */
 .we-center-controls {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.we-page-selector-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--we-surface-2);
-  border: 1px solid var(--we-border);
-  border-radius: var(--we-radius-md);
-  padding: 3px 6px 3px 10px;
-}
-
-.we-control-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--we-text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.we-custom-select select {
-  background: transparent;
-  border: none;
-  color: var(--we-text-main);
-  font-size: 12px;
-  font-weight: 500;
-  outline: none;
-  cursor: pointer;
-  padding: 3px 6px;
-}
-
-.we-custom-select select option {
-  background: var(--we-surface-2);
-  color: var(--we-text-main);
 }
 
 .we-viewport-switcher {
@@ -374,6 +343,16 @@ html, body {
 .we-action-btn:hover {
   background: var(--we-surface-3);
   border-color: var(--we-border-hover);
+  color: #fff;
+}
+
+.we-action-code {
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+}
+
+.we-action-code:hover {
+  background: rgba(99, 102, 241, 0.15);
   color: #fff;
 }
 
@@ -477,15 +456,16 @@ html, body {
 .we-tab-btn {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 4px;
+  gap: 4px;
+  padding: 8px 2px;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--we-text-dim);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
@@ -498,6 +478,7 @@ html, body {
 .we-tab-btn.active {
   color: var(--we-primary);
   border-bottom-color: var(--we-primary);
+  background: rgba(10, 132, 255, 0.04);
 }
 
 .we-tab-pane {
@@ -538,7 +519,7 @@ html, body {
   background: var(--we-surface-2);
   border: 1px solid var(--we-border);
   border-radius: var(--we-radius-md);
-  cursor: grab;
+  cursor: pointer;
   transition: all 0.15s;
 }
 
@@ -546,10 +527,6 @@ html, body {
   background: var(--we-surface-3);
   border-color: var(--we-border-hover);
   transform: translateY(-1px);
-}
-
-.we-element-card:active {
-  cursor: grabbing;
 }
 
 .we-element-icon {
@@ -685,7 +662,7 @@ html, body {
   font-weight: 700;
 }
 
-/* Pages & Layers Tab */
+/* Pages List Tab */
 .we-pages-list {
   display: flex;
   flex-direction: column;
@@ -763,17 +740,239 @@ html, body {
 }
 
 /* ==========================================================================
-   Canvas Center Area
+   Plugins Tab & Settings Cards
+   ========================================================================== */
+.we-plugins-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.we-plugin-card {
+  background: var(--we-surface-2);
+  border: 1px solid var(--we-border);
+  border-radius: var(--we-radius-md);
+  padding: 12px;
+  transition: border-color 0.15s;
+}
+
+.we-plugin-card:hover {
+  border-color: var(--we-border-hover);
+}
+
+.we-plugin-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.we-plugin-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.we-plugin-meta strong {
+  font-size: 12px;
+  color: #fff;
+}
+
+.we-plugin-meta span {
+  font-size: 11px;
+  color: var(--we-text-dim);
+}
+
+/* Apple-style Toggle Switch */
+.we-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.we-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.we-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: var(--we-surface-3);
+  transition: 0.2s;
+  border-radius: 34px;
+  border: 1px solid var(--we-border);
+}
+
+.we-slider::before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #fff;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.we-switch input:checked + .we-slider {
+  background-color: var(--we-primary);
+  border-color: var(--we-primary);
+}
+
+.we-switch input:checked + .we-slider::before {
+  transform: translateX(16px);
+}
+
+.we-plugin-fields {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.we-mono-area {
+  font-family: var(--we-font-mono);
+  font-size: 11px;
+}
+
+/* ==========================================================================
+   Prominent Page Tabs Bar (Docked Above Canvas)
+   ========================================================================== */
+.we-page-tab-strip {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 auto 12px;
+  background: var(--we-surface-1);
+  border: 1px solid var(--we-border);
+  border-radius: var(--we-radius-md);
+  padding: 4px 6px;
+  user-select: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.we-page-tab-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.we-page-tab-list::-webkit-scrollbar {
+  display: none;
+}
+
+.we-page-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--we-surface-2);
+  border: 1px solid transparent;
+  border-radius: var(--we-radius-sm);
+  padding: 6px 12px;
+  color: var(--we-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.we-page-tab:hover {
+  color: #fff;
+  background: var(--we-surface-3);
+}
+
+.we-page-tab.active {
+  background: rgba(10, 132, 255, 0.12);
+  border-color: rgba(10, 132, 255, 0.4);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(10, 132, 255, 0.2);
+}
+
+.we-page-tab-slug {
+  font-size: 10px;
+  color: var(--we-text-dim);
+  font-family: var(--we-font-mono);
+}
+
+.we-tab-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--we-text-dim);
+  cursor: pointer;
+  margin-left: 2px;
+  transition: all 0.1s;
+}
+
+.we-tab-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.we-tab-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--we-border);
+  border-radius: var(--we-radius-sm);
+  color: var(--we-text-dim);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.we-tab-add-btn:hover {
+  border-color: var(--we-primary);
+  color: var(--we-primary);
+  background: rgba(10, 132, 255, 0.08);
+}
+
+/* ==========================================================================
+   Canvas Center Area & Natural Infinite Vertical Scroll
    ========================================================================== */
 .we-canvas-area {
   flex: 1;
   height: 100%;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: #060608;
   display: flex;
-  justify-content: center;
-  padding: 40px;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 40px 100px;
   position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--we-surface-3) transparent;
+}
+
+.we-canvas-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.we-canvas-area::-webkit-scrollbar-thumb {
+  background: var(--we-surface-3);
+  border-radius: 4px;
 }
 
 .we-artboard-wrapper {
@@ -801,14 +1000,14 @@ html, body {
 
 .we-artboard-frame {
   width: 100%;
-  min-height: 800px;
+  min-height: 850px;
+  height: auto;
   background: #0a0a0c;
   border: 1px solid var(--we-border);
   border-radius: var(--we-radius-lg);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   position: relative;
-  transition: all 0.25s;
-  overflow: hidden;
+  transition: width 0.25s, border-radius 0.25s;
   display: flex;
   flex-direction: column;
 }
@@ -821,7 +1020,6 @@ html, body {
 .viewport-mobile .we-artboard-frame {
   border: 10px solid #22252f;
   border-radius: 40px;
-  min-height: 740px;
 }
 
 .we-device-notch {
@@ -853,22 +1051,22 @@ html, body {
 
 /* Actual Canvas */
 .we-canvas {
-  flex: 1;
   width: 100%;
-  min-height: 800px;
+  min-height: 750px;
+  height: auto;
   background-color: #0a0a0c;
   color: #ffffff;
-  padding: 24px;
+  padding: 30px;
   outline: none;
   position: relative;
 }
 
 .we-canvas:empty::before {
-  content: 'Canvas is empty. Drag or click elements from the left panel to begin building your webpage.';
+  content: 'Canvas is empty. Click any element from the left panel or click Add Section below to begin building.';
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 400px;
+  height: 350px;
   color: var(--we-text-dim);
   font-size: 14px;
   border: 2px dashed rgba(255, 255, 255, 0.08);
@@ -880,7 +1078,7 @@ html, body {
 /* Visual Canvas Element Styles & Selection Outline */
 .we-node {
   position: relative;
-  transition: outline 0.1s;
+  transition: outline 0.1s, box-shadow 0.15s;
   cursor: pointer;
 }
 
@@ -899,6 +1097,80 @@ html, body {
   outline: 2px solid var(--we-accent) !important;
   outline-offset: 3px;
   background: rgba(99, 102, 241, 0.1);
+}
+
+/* Section Hover Insert Divider Bar between sections */
+.we-section-insert-bar {
+  position: relative;
+  height: 18px;
+  margin: -9px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  z-index: 10;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.we-section-insert-bar:hover {
+  opacity: 1;
+}
+
+.we-section-insert-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--we-primary);
+  box-shadow: 0 0 10px var(--we-primary-glow);
+}
+
+.we-section-insert-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  background: var(--we-primary);
+  color: #fff;
+  border-radius: var(--we-radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(10, 132, 255, 0.5);
+  border: none;
+  cursor: pointer;
+}
+
+/* Bottom Insert Zone */
+.we-bottom-insert-zone {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.we-bottom-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--we-surface-2);
+  border: 1px solid var(--we-border);
+  color: var(--we-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 24px;
+  border-radius: var(--we-radius-md);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.we-bottom-add-btn:hover {
+  background: var(--we-surface-3);
+  border-color: var(--we-primary);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 /* Floating Contextual Toolbar */
@@ -946,6 +1218,11 @@ html, body {
 .we-tool-btn:hover {
   background: var(--we-surface-3);
   color: #fff;
+}
+
+.we-tool-highlight:hover {
+  background: rgba(99, 102, 241, 0.25);
+  color: #a5b4fc;
 }
 
 .we-tool-danger:hover {
@@ -1192,7 +1469,7 @@ html, body {
 }
 
 /* ==========================================================================
-   Modals & Overlays
+   Modals & Code Editor Styling
    ========================================================================== */
 .we-modal {
   display: none;
@@ -1224,7 +1501,7 @@ html, body {
 }
 
 .we-modal-lg {
-  max-width: 760px;
+  max-width: 860px;
 }
 
 .we-modal-header {
@@ -1271,46 +1548,60 @@ html, body {
   background: var(--we-surface-2);
 }
 
-.we-starter-options {
+/* Code Editor Panes */
+.we-code-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.we-radio-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
   background: var(--we-surface-2);
-  border: 1px solid var(--we-border);
-  border-radius: var(--we-radius-md);
-  cursor: pointer;
-  transition: all 0.15s;
+  border-bottom: 1px solid var(--we-border);
+  padding: 0 16px;
 }
 
-.we-radio-card:hover {
-  border-color: var(--we-border-hover);
-}
-
-.we-radio-card input {
-  margin-top: 3px;
-  accent-color: var(--we-primary);
-}
-
-.we-radio-card-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.we-radio-card-content strong {
-  color: #fff;
-  font-size: 12px;
-}
-
-.we-radio-card-content span {
+.we-code-tab {
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
   color: var(--we-text-dim);
-  font-size: 11px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.we-code-tab.active {
+  color: var(--we-primary);
+  border-bottom-color: var(--we-primary);
+  font-weight: 500;
+}
+
+.we-code-body {
+  padding: 0;
+  background: var(--we-surface-code);
+}
+
+.we-code-pane {
+  display: none;
+  padding: 0;
+  height: 440px;
+}
+
+.we-code-pane.active {
+  display: block;
+}
+
+.we-code-editor {
+  width: 100%;
+  height: 100%;
+  background: #08090d;
+  color: #e0e7ff;
+  font-family: var(--we-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 16px;
+  border: none;
+  outline: none;
+  resize: none;
+  white-space: pre;
+  tab-size: 2;
+  scrollbar-width: thin;
 }
 
 /* Fullscreen Preview Modal */
@@ -1377,54 +1668,6 @@ html, body {
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
   transition: width 0.25s;
-}
-
-/* Code Inspector Modal */
-.we-code-tabs {
-  display: flex;
-  background: var(--we-surface-2);
-  border-bottom: 1px solid var(--we-border);
-  padding: 0 16px;
-}
-
-.we-code-tab {
-  padding: 10px 16px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--we-text-dim);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.we-code-tab.active {
-  color: var(--we-primary);
-  border-bottom-color: var(--we-primary);
-  font-weight: 500;
-}
-
-.we-code-body {
-  padding: 0;
-  background: #0d0e12;
-}
-
-.we-code-pane {
-  display: none;
-  padding: 16px;
-  overflow: auto;
-  max-height: 60vh;
-}
-
-.we-code-pane.active {
-  display: block;
-}
-
-.we-code-block {
-  font-family: var(--we-font-mono);
-  font-size: 12px;
-  color: #a5b4fc;
-  white-space: pre-wrap;
-  line-height: 1.6;
 }
 
 /* Export Cards */
