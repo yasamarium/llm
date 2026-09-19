@@ -13,6 +13,7 @@
   },
   "rewrites": [
     { "source": "/home", "destination": "/home.html" },
+    { "source": "/webeditor", "destination": "/webeditor.html" },
     { "source": "/i/:id*", "destination": "/api/i?id=:id*" },
     { "source": "/s/:id*", "destination": "/api/s?id=:id*" }
   ]
