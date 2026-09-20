@@ -14,7 +14,7 @@
   const CHUNK_HEIGHT = 48;
   const WATER_LEVEL = 18;
 
-  // Block IDs
+  // Block IDs (Includes architecture & decorative blocks for villages & cities)
   const BLOCKS = {
     AIR: 0,
     GRASS: 1,
@@ -35,7 +35,11 @@
     SNOW: 16,
     BRICKS: 17,
     BOOKSHELF: 18,
-    TNT: 19
+    TNT: 19,
+    STONE_BRICKS: 20,
+    GLOWSTONE: 21,
+    ROSE: 22,
+    POLISHED_STONE: 23
   };
 
   const BLOCK_NAMES = {
@@ -58,14 +62,19 @@
     [BLOCKS.SNOW]: 'Snow Block',
     [BLOCKS.BRICKS]: 'Bricks',
     [BLOCKS.BOOKSHELF]: 'Bookshelf',
-    [BLOCKS.TNT]: 'TNT'
+    [BLOCKS.TNT]: 'TNT',
+    [BLOCKS.STONE_BRICKS]: 'Stone Bricks',
+    [BLOCKS.GLOWSTONE]: 'Glowstone Lantern',
+    [BLOCKS.ROSE]: 'Red Rose Flower',
+    [BLOCKS.POLISHED_STONE]: 'Polished Stone'
   };
 
   const BLOCK_TRANSPARENT = {
     [BLOCKS.AIR]: true,
     [BLOCKS.LEAVES]: true,
     [BLOCKS.GLASS]: true,
-    [BLOCKS.WATER]: true
+    [BLOCKS.WATER]: true,
+    [BLOCKS.ROSE]: true
   };
 
   // User Settings State
@@ -121,6 +130,8 @@
   let scene, camera, renderer;
   let sunLight, ambientLight, moonLight;
   let sunMesh, moonMesh, starField, skyDome;
+  let cloudMesh, cloudTex;
+  let npcs = [];
   let handGroup, handArmMesh, handItemMesh;
   let wireframeTargetBox;
   let chunks = new Map(); // "cx,cz" => Chunk
@@ -602,6 +613,111 @@
       ctx.fillRect(15, 15, 2, 2);
     });
 
+    // 19. Stone Bricks (32x32 Chiseled Masonry Blocks)
+    texCanvases.stone_bricks = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#7a8288';
+      ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#4b5156';
+      // Mortar courses
+      ctx.fillRect(0, 7, 32, 1);
+      ctx.fillRect(0, 15, 32, 1);
+      ctx.fillRect(0, 23, 32, 1);
+      ctx.fillRect(0, 31, 32, 1);
+      // Vertical joints
+      ctx.fillRect(16, 0, 1, 7);
+      ctx.fillRect(8, 8, 1, 7);
+      ctx.fillRect(24, 8, 1, 7);
+      ctx.fillRect(16, 16, 1, 7);
+      ctx.fillRect(8, 24, 1, 7);
+      ctx.fillRect(24, 24, 1, 7);
+      // Bevel & texture noise
+      for (let x = 0; x < 32; x++) {
+        for (let y = 0; y < 32; y++) {
+          if (seededNoise(x, y, 20) > 0.8) {
+            ctx.fillStyle = '#8f979e';
+            ctx.fillRect(x, y, 1, 1);
+          } else if (seededNoise(x, y, 20) < 0.2) {
+            ctx.fillStyle = '#656c72';
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+    });
+
+    // 20. Glowstone Lantern (32x32 Glowing Amber Glass Lamp)
+    texCanvases.glowstone = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(0, 0, 32, 32);
+      // Warm amber frame
+      ctx.fillStyle = '#854d0e';
+      ctx.fillRect(0, 0, 32, 2);
+      ctx.fillRect(0, 30, 32, 2);
+      ctx.fillRect(0, 0, 2, 32);
+      ctx.fillRect(30, 0, 2, 32);
+      // Radiant crystalline core
+      for (let x = 2; x < 30; x++) {
+        for (let y = 2; y < 30; y++) {
+          const r = seededNoise(x, y, 21);
+          if (r > 0.75) ctx.fillStyle = '#fef08a';
+          else if (r > 0.45) ctx.fillStyle = '#fde047';
+          else if (r > 0.2) ctx.fillStyle = '#ca8a04';
+          else ctx.fillStyle = '#a16207';
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+      // Bright center sparkle
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(14, 14, 4, 4);
+    });
+
+    // 21. Red Rose Flower (32x32 Garden Flora)
+    texCanvases.rose = createPixelCanvas(ctx => {
+      ctx.clearRect(0, 0, 32, 32);
+      // Green stem
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(15, 14, 2, 18);
+      // Side leaves
+      ctx.fillRect(11, 22, 4, 2);
+      ctx.fillRect(17, 18, 4, 2);
+      // Red flower petals
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(10, 6, 12, 10);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(12, 4, 8, 12);
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(12, 8, 8, 6);
+      // Core highlight
+      ctx.fillStyle = '#fca5a5';
+      ctx.fillRect(14, 7, 4, 3);
+    });
+
+    // 22. Polished Stone Tiles (32x32 City Avenue Pavement)
+    texCanvases.polished_stone = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(0, 0, 32, 32);
+      // Beveled tile grid (4 quadrants)
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(0, 15, 32, 2);
+      ctx.fillRect(15, 0, 2, 32);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(0, 0, 32, 1);
+      ctx.fillRect(0, 0, 1, 32);
+      ctx.fillRect(0, 16, 32, 1);
+      ctx.fillRect(16, 0, 1, 32);
+      // Marble speckles
+      for (let x = 0; x < 32; x++) {
+        for (let y = 0; y < 32; y++) {
+          if (seededNoise(x, y, 22) > 0.85) {
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(x, y, 1, 1);
+          } else if (seededNoise(x, y, 22) < 0.15) {
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+    });
+
     // Convert canvases to Three.js Textures
     const threeTextures = {};
     for (const key in texCanvases) {
@@ -664,6 +780,17 @@
     blockMaterials[BLOCKS.BRICKS] = makeCubeMats(threeTextures.bricks);
     blockMaterials[BLOCKS.BOOKSHELF] = makeCubeMats(threeTextures.bookshelf, threeTextures.planks, threeTextures.planks);
     blockMaterials[BLOCKS.TNT] = makeCubeMats(threeTextures.tnt_side, threeTextures.tnt_top, threeTextures.tnt_top);
+    blockMaterials[BLOCKS.STONE_BRICKS] = makeCubeMats(threeTextures.stone_bricks);
+    blockMaterials[BLOCKS.GLOWSTONE] = makeCubeMats(threeTextures.glowstone);
+    blockMaterials[BLOCKS.ROSE] = [
+      makeMat(threeTextures.rose, true, 0.95),
+      makeMat(threeTextures.rose, true, 0.95),
+      makeMat(threeTextures.rose, true, 0.95),
+      makeMat(threeTextures.rose, true, 0.95),
+      makeMat(threeTextures.rose, true, 0.95),
+      makeMat(threeTextures.rose, true, 0.95)
+    ];
+    blockMaterials[BLOCKS.POLISHED_STONE] = makeCubeMats(threeTextures.polished_stone);
 
     // Save thumbnail preview canvases for UI
     blockIcons[BLOCKS.GRASS] = texCanvases.grass_side;
@@ -685,6 +812,10 @@
     blockIcons[BLOCKS.BRICKS] = texCanvases.bricks;
     blockIcons[BLOCKS.BOOKSHELF] = texCanvases.bookshelf;
     blockIcons[BLOCKS.TNT] = texCanvases.tnt_side;
+    blockIcons[BLOCKS.STONE_BRICKS] = texCanvases.stone_bricks;
+    blockIcons[BLOCKS.GLOWSTONE] = texCanvases.glowstone;
+    blockIcons[BLOCKS.ROSE] = texCanvases.rose;
+    blockIcons[BLOCKS.POLISHED_STONE] = texCanvases.polished_stone;
   }
 
   // =========================================================================
@@ -849,14 +980,32 @@
             }
           }
 
-          // Procedural Trees (Plains & Forest biomes)
-          if ((biome === 'Forest' || biome === 'Plains') && height > WATER_LEVEL + 1 && height < CHUNK_HEIGHT - 8) {
-            const treeChance = (biome === 'Forest') ? 0.045 : 0.012;
-            if (seededNoise(wx, wz, 555) < treeChance && x >= 2 && x <= CHUNK_SIZE - 3 && z >= 2 && z <= CHUNK_SIZE - 3) {
-              this.growTree(x, height + 1, z);
+          // Check if this chunk is reserved for a village or city
+          const isVillageChunk = (Math.abs(this.cx % 5) === 0 && Math.abs(this.cz % 5) === 0);
+          const isCityChunk = (Math.abs(this.cx % 8) === 3 && Math.abs(this.cz % 8) === 3);
+
+          // Procedural Trees (Only grow trees outside village/city centers)
+          if (!isVillageChunk && !isCityChunk) {
+            if ((biome === 'Forest' || biome === 'Plains') && height > WATER_LEVEL + 1 && height < CHUNK_HEIGHT - 8) {
+              const treeChance = (biome === 'Forest') ? 0.045 : 0.012;
+              if (seededNoise(wx, wz, 555) < treeChance && x >= 2 && x <= CHUNK_SIZE - 3 && z >= 2 && z <= CHUNK_SIZE - 3) {
+                this.growTree(x, height + 1, z);
+              }
             }
           }
         }
+      }
+
+      // Procedural Village Generation
+      const isVillage = (Math.abs(this.cx % 5) === 0 && Math.abs(this.cz % 5) === 0);
+      if (isVillage) {
+        this.generateVillage();
+      }
+
+      // Procedural City Generation
+      const isCity = (Math.abs(this.cx % 8) === 3 && Math.abs(this.cz % 8) === 3);
+      if (isCity) {
+        this.generateCity();
       }
 
       // Re-apply saved user modifications for this chunk
@@ -891,6 +1040,203 @@
           }
         }
       }
+    }
+
+    generateVillage() {
+      const originX = this.cx * CHUNK_SIZE;
+      const originZ = this.cz * CHUNK_SIZE;
+      const baseH = Math.min(28, Math.max(19, getTerrainHeight(originX + 8, originZ + 8)));
+
+      // 1. Cobblestone Pathways (Cross roads through the village)
+      for (let i = 0; i < CHUNK_SIZE; i++) {
+        // East-West road
+        this.setBlock(i, baseH, 7, BLOCKS.COBBLESTONE);
+        this.setBlock(i, baseH, 8, BLOCKS.COBBLESTONE);
+        // North-South road
+        this.setBlock(7, baseH, i, BLOCKS.COBBLESTONE);
+        this.setBlock(8, baseH, i, BLOCKS.COBBLESTONE);
+      }
+
+      // 2. Central Village Well with Water Pool (x:6..9, z:6..9)
+      for (let x = 6; x <= 9; x++) {
+        for (let z = 6; z <= 9; z++) {
+          const isRim = (x === 6 || x === 9 || z === 6 || z === 9);
+          if (isRim) {
+            this.setBlock(x, baseH + 1, z, BLOCKS.COBBLESTONE);
+          } else {
+            this.setBlock(x, baseH, z, BLOCKS.WATER);
+            this.setBlock(x, baseH - 1, z, BLOCKS.COBBLESTONE);
+          }
+        }
+      }
+      // Well roof pillars & canopy
+      const wellCorners = [[6, 6], [9, 6], [6, 9], [9, 9]];
+      wellCorners.forEach(([wx, wz]) => {
+        this.setBlock(wx, baseH + 2, wz, BLOCKS.WOOD);
+        this.setBlock(wx, baseH + 3, wz, BLOCKS.WOOD);
+      });
+      for (let rx = 6; rx <= 9; rx++) {
+        for (let rz = 6; rz <= 9; rz++) {
+          this.setBlock(rx, baseH + 4, rz, BLOCKS.PLANKS);
+        }
+      }
+      this.setBlock(7, baseH + 3, 7, BLOCKS.GLOWSTONE);
+
+      // 3. Cozy Village Cottage 1 (North-West: x:1..5, z:1..5)
+      this.buildCottage(1, baseH, 1, 5, 5, 4);
+
+      // 4. Cozy Village Cottage 2 (South-East: x:10..14, z:10..14)
+      this.buildCottage(10, baseH, 10, 5, 5, 4);
+
+      // 5. Village Farm Plot (South-West: x:1..5, z:10..14)
+      for (let x = 1; x <= 5; x++) {
+        for (let z = 10; z <= 14; z++) {
+          this.setBlock(x, baseH, z, BLOCKS.DIRT);
+          if (x === 3) {
+            this.setBlock(x, baseH, z, BLOCKS.WATER);
+          } else {
+            // Flowers and crops
+            this.setBlock(x, baseH + 1, z, (x % 2 === 0) ? BLOCKS.ROSE : BLOCKS.LEAVES);
+          }
+        }
+      }
+
+      // 6. Village Street Lamps with Glowstone
+      const lampPos = [[5, 6], [10, 9], [6, 10], [9, 5]];
+      lampPos.forEach(([lx, lz]) => {
+        this.setBlock(lx, baseH + 1, lz, BLOCKS.WOOD);
+        this.setBlock(lx, baseH + 2, lz, BLOCKS.WOOD);
+        this.setBlock(lx, baseH + 3, lz, BLOCKS.GLOWSTONE);
+      });
+    }
+
+    buildCottage(sx, sy, sz, w, d, h) {
+      // Clear interior & foundation
+      for (let x = sx; x < sx + w; x++) {
+        for (let z = sz; z < sz + d; z++) {
+          this.setBlock(x, sy, z, BLOCKS.COBBLESTONE);
+          for (let y = sy + 1; y < sy + h + 2; y++) {
+            this.setBlock(x, y, z, BLOCKS.AIR);
+          }
+        }
+      }
+      // Walls & Corners
+      for (let y = sy + 1; y <= sy + h; y++) {
+        for (let x = sx; x < sx + w; x++) {
+          for (let z = sz; z < sz + d; z++) {
+            const isCorner = (x === sx || x === sx + w - 1) && (z === sz || z === sz + d - 1);
+            const isEdge = (x === sx || x === sx + w - 1 || z === sz || z === sz + d - 1);
+            if (isCorner) {
+              this.setBlock(x, y, z, BLOCKS.WOOD); // Oak log corner pillars
+            } else if (isEdge) {
+              // Windows on side walls
+              if (y === sy + 2 && (x === sx + 2 || z === sz + 2)) {
+                this.setBlock(x, y, z, BLOCKS.GLASS);
+              } else {
+                this.setBlock(x, y, z, BLOCKS.PLANKS);
+              }
+            }
+          }
+        }
+      }
+      // Door opening on front
+      this.setBlock(sx + 2, sy + 1, sz, BLOCKS.AIR);
+      this.setBlock(sx + 2, sy + 2, sz, BLOCKS.AIR);
+
+      // Pitched Roof (Brick & Planks)
+      for (let x = sx; x < sx + w; x++) {
+        for (let z = sz; z < sz + d; z++) {
+          this.setBlock(x, sy + h + 1, z, BLOCKS.BRICKS);
+        }
+      }
+      // Cozy Interior Bookshelf & Lantern
+      this.setBlock(sx + 1, sy + 1, sz + d - 2, BLOCKS.BOOKSHELF);
+      this.setBlock(sx + 1, sy + 2, sz + d - 2, BLOCKS.BOOKSHELF);
+      this.setBlock(sx + w - 2, sy + h, sz + d - 2, BLOCKS.GLOWSTONE);
+    }
+
+    generateCity() {
+      const originX = this.cx * CHUNK_SIZE;
+      const originZ = this.cz * CHUNK_SIZE;
+      const baseH = Math.min(27, Math.max(19, getTerrainHeight(originX + 8, originZ + 8)));
+
+      // 1. Polished Stone Urban Avenues
+      for (let x = 0; x < CHUNK_SIZE; x++) {
+        for (let z = 0; z < CHUNK_SIZE; z++) {
+          if (x === 7 || x === 8 || z === 7 || z === 8) {
+            this.setBlock(x, baseH, z, BLOCKS.POLISHED_STONE);
+          } else if (x === 6 || x === 9 || z === 6 || z === 9) {
+            this.setBlock(x, baseH, z, BLOCKS.COBBLESTONE); // Curb
+          }
+        }
+      }
+
+      // 2. City Skyscraper Tower A (North-West: 6x6, 16 blocks tall)
+      this.buildSkyscraper(0, baseH, 0, 6, 6, 16, BLOCKS.STONE_BRICKS, BLOCKS.GLASS);
+
+      // 3. City Skyscraper Tower B (South-East: 6x6, 18 blocks tall)
+      this.buildSkyscraper(10, baseH, 10, 6, 6, 18, BLOCKS.BRICKS, BLOCKS.GLASS);
+
+      // 4. City Commercial Plaza (North-East: 5x5, 10 blocks tall)
+      this.buildSkyscraper(10, baseH, 1, 5, 5, 10, BLOCKS.POLISHED_STONE, BLOCKS.STONE_BRICKS);
+
+      // 5. Urban Streetlights (4 blocks high with Glowstone Lanterns)
+      const streetLights = [[5, 5], [10, 5], [5, 10], [10, 10]];
+      streetLights.forEach(([lx, lz]) => {
+        this.setBlock(lx, baseH + 1, lz, BLOCKS.STONE_BRICKS);
+        this.setBlock(lx, baseH + 2, lz, BLOCKS.STONE_BRICKS);
+        this.setBlock(lx, baseH + 3, lz, BLOCKS.GLOWSTONE);
+        this.setBlock(lx, baseH + 4, lz, BLOCKS.POLISHED_STONE);
+      });
+    }
+
+    buildSkyscraper(sx, sy, sz, w, d, h, wallBlock, accentBlock) {
+      // Clear space above
+      for (let x = sx; x < sx + w; x++) {
+        for (let z = sz; z < sz + d; z++) {
+          this.setBlock(x, sy, z, BLOCKS.POLISHED_STONE);
+          for (let y = sy + 1; y < sy + h + 4; y++) {
+            this.setBlock(x, y, z, BLOCKS.AIR);
+          }
+        }
+      }
+      // Multi-story floors with glass windows & glowing floors
+      for (let y = sy + 1; y <= sy + h; y++) {
+        const isFloorSlab = ((y - sy) % 4 === 0);
+        for (let x = sx; x < sx + w; x++) {
+          for (let z = sz; z < sz + d; z++) {
+            const isCorner = (x === sx || x === sx + w - 1) && (z === sz || z === sz + d - 1);
+            const isEdge = (x === sx || x === sx + w - 1 || z === sz || z === sz + d - 1);
+            if (isFloorSlab) {
+              this.setBlock(x, y, z, (x === sx + 2 && z === sz + 2) ? BLOCKS.GLOWSTONE : BLOCKS.STONE_BRICKS);
+            } else if (isCorner) {
+              this.setBlock(x, y, z, wallBlock);
+            } else if (isEdge) {
+              // Alternating glass window rows
+              if ((y - sy) % 4 === 2 || (y - sy) % 4 === 3) {
+                this.setBlock(x, y, z, BLOCKS.GLASS);
+              } else {
+                this.setBlock(x, y, z, accentBlock);
+              }
+            }
+          }
+        }
+      }
+      // Rooftop terrace with observation railing & antenna spire
+      for (let x = sx; x < sx + w; x++) {
+        for (let z = sz; z < sz + d; z++) {
+          this.setBlock(x, sy + h + 1, z, BLOCKS.POLISHED_STONE);
+          const isEdge = (x === sx || x === sx + w - 1 || z === sz || z === sz + d - 1);
+          if (isEdge) {
+            this.setBlock(x, sy + h + 2, z, BLOCKS.STONE_BRICKS); // Railing
+          }
+        }
+      }
+      // Glowing Rooftop Antenna
+      const midX = sx + Math.floor(w / 2);
+      const midZ = sz + Math.floor(d / 2);
+      this.setBlock(midX, sy + h + 2, midZ, BLOCKS.STONE_BRICKS);
+      this.setBlock(midX, sy + h + 3, midZ, BLOCKS.GLOWSTONE);
     }
   }
 
@@ -1566,6 +1912,10 @@
       case BLOCKS.BRICKS: return 0xb94a34;
       case BLOCKS.BOOKSHELF: return 0x8b5a2b;
       case BLOCKS.TNT: return 0xdc2626;
+      case BLOCKS.STONE_BRICKS: return 0x7a8288;
+      case BLOCKS.GLOWSTONE: return 0xeab308;
+      case BLOCKS.ROSE: return 0xdc2626;
+      case BLOCKS.POLISHED_STONE: return 0x94a3b8;
       default: return 0xaaaaaa;
     }
   }
@@ -1720,6 +2070,425 @@
       }
     } catch (e) {
       // Audio error ignored
+    }
+  }
+
+  // =========================================================================
+  // Dynamic Voxel Clouds System (Altitude Y=46.5, Wind Drift & Day Tinting)
+  // =========================================================================
+  function setupCloudLayer() {
+    // 64x64 Procedural Pixel Cloud Canvas with Puffy Voxel Patches
+    const cloudCanvas = document.createElement('canvas');
+    cloudCanvas.width = 64;
+    cloudCanvas.height = 64;
+    const cctx = cloudCanvas.getContext('2d');
+    cctx.clearRect(0, 0, 64, 64);
+
+    // Generate chunky pixel clouds
+    for (let x = 0; x < 64; x += 2) {
+      for (let y = 0; y < 64; y += 2) {
+        const n1 = Math.sin(x * 0.15) * Math.cos(y * 0.15);
+        const n2 = Math.sin(x * 0.35 + 1.2) * Math.cos(y * 0.35 + 0.8) * 0.5;
+        const val = n1 + n2;
+        if (val > 0.18) {
+          cctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+          cctx.fillRect(x, y, 2, 2);
+          // Highlight edges
+          if (val > 0.42) {
+            cctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
+            cctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+    }
+
+    cloudTex = new THREE.CanvasTexture(cloudCanvas);
+    cloudTex.magFilter = THREE.NearestFilter;
+    cloudTex.minFilter = THREE.NearestFilter;
+    cloudTex.wrapS = THREE.RepeatWrapping;
+    cloudTex.wrapT = THREE.RepeatWrapping;
+    cloudTex.repeat.set(12, 12);
+
+    const cloudGeom = new THREE.PlaneGeometry(600, 600);
+    const cloudMat = new THREE.MeshBasicMaterial({
+      map: cloudTex,
+      transparent: true,
+      opacity: 0.78,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      fog: true // Seamless fade into distant horizon
+    });
+
+    cloudMesh = new THREE.Mesh(cloudGeom, cloudMat);
+    cloudMesh.rotation.x = Math.PI / 2; // Flat horizontal plane
+    cloudMesh.position.set(player.x, 46.5, player.z);
+    cloudMesh.renderOrder = -400;
+    scene.add(cloudMesh);
+  }
+
+  function updateClouds(dt) {
+    if (!cloudMesh || !cloudTex) return;
+    // Slow gentle wind drift across the sky
+    cloudTex.offset.x = (cloudTex.offset.x + dt * 0.005) % 1.0;
+    cloudTex.offset.y = (cloudTex.offset.y + dt * 0.003) % 1.0;
+    // Follow player XZ so clouds stretch to the horizon
+    cloudMesh.position.x = player.x;
+    cloudMesh.position.z = player.z;
+
+    // Tint clouds smoothly with Day/Night cycle
+    const isDay = (dayTime >= 0.12 && dayTime <= 0.45);
+    const isDawnDusk = ((dayTime >= 0.00 && dayTime < 0.12) || (dayTime > 0.45 && dayTime <= 0.58));
+    if (isDay) {
+      cloudMesh.material.color.setRGB(1.0, 1.0, 1.0);
+      cloudMesh.material.opacity = 0.78;
+    } else if (isDawnDusk) {
+      cloudMesh.material.color.setRGB(1.0, 0.75, 0.55); // Golden peach sunset
+      cloudMesh.material.opacity = 0.82;
+    } else {
+      cloudMesh.material.color.setRGB(0.18, 0.22, 0.35); // Moonlit dark indigo
+      cloudMesh.material.opacity = 0.45;
+    }
+  }
+
+  // =========================================================================
+  // Cute Animated NPCs System (Mostly Female with Chibi Voxel Rigs & Wandering AI)
+  // =========================================================================
+  const NPC_PRESETS = [
+    {
+      name: 'Sakura',
+      role: 'Village Florist',
+      hairColor: 0x6d4c41, // Soft brown
+      ribbonColor: 0xf472b6, // Pink
+      dressColor: 0xfb7185, // Sakura rose dress
+      eyeColor: '#78350f',
+      dialogues: [
+        'Welcome to Square Era! The flowers here smell wonderful today!',
+        'Have you visited the village well? The water is crystal clear!',
+        'I love watching the clouds drift by in the afternoon.'
+      ]
+    },
+    {
+      name: 'Aoi',
+      role: 'City Architect',
+      hairColor: 0x1e293b, // Deep navy
+      ribbonColor: 0x38bdf8, // Sky blue
+      dressColor: 0x0284c7, // Modern blue jacket & skirt
+      eyeColor: '#0369a1',
+      dialogues: [
+        'I designed these city towers! What do you think of the architecture?',
+        'Double-tap space to fly up and see the city skyline from above!',
+        'Remember to place glowstone lanterns at night to keep the avenues bright!'
+      ]
+    },
+    {
+      name: 'Lily',
+      role: 'Town Baker',
+      hairColor: 0xfde047, // Golden blonde
+      ribbonColor: 0xf43f5e, // Cherry red
+      dressColor: 0xfef08a, // Warm cream dress with apron
+      eyeColor: '#15803d',
+      dialogues: [
+        'Hello there! Stay safe while exploring out there!',
+        'Press [I] anytime to view all the blocks in your creative palette!',
+        'Freshly baked treats are the best after a long day of mining.'
+      ]
+    },
+    {
+      name: 'Hana',
+      role: 'Botanist',
+      hairColor: 0xc2410c, // Auburn ginger
+      ribbonColor: 0x4ade80, // Leaf green
+      dressColor: 0x22c55e, // Mint green sundress
+      eyeColor: '#92400e',
+      dialogues: [
+        'The trees grow so tall across these biomes!',
+        'Look at that sunset! The colors across the horizon are gorgeous.',
+        'If you dig deep enough, you might discover diamonds near bedrock!'
+      ]
+    },
+    {
+      name: 'Rin',
+      role: 'Street Merchant',
+      hairColor: 0x7c3aed, // Lavender violet
+      ribbonColor: 0xa855f7, // Purple
+      dressColor: 0x8b5cf6, // Lavender kimono dress
+      eyeColor: '#581c87',
+      dialogues: [
+        'Welcome traveler! Feel free to explore our village streets.',
+        'You can build anything you imagine with these voxel blocks!',
+        'Nighttime can be cold, stay close to the cozy glowstone lights.'
+      ]
+    },
+    {
+      name: 'Maya',
+      role: 'Explorer',
+      hairColor: 0x451a03, // Dark brunette
+      ribbonColor: 0xf97316, // Orange
+      dressColor: 0xfb923c, // Coral explorer tunic
+      eyeColor: '#0d9488',
+      dialogues: [
+        'I just returned from exploring the mountain peaks!',
+        'The view from above the clouds is simply breathtaking.',
+        'Let us build a magnificent castle together!'
+      ]
+    },
+    {
+      name: 'Noah',
+      role: 'Friendly Villager',
+      hairColor: 0x3f3f46, // Dark grey
+      ribbonColor: 0x3b82f6, // Blue
+      dressColor: 0x64748b, // Denim jacket
+      eyeColor: '#374151',
+      dialogues: [
+        'Hey there friend! Need a hand with any construction?',
+        'The city avenues look amazing at night with all the lights turned on.'
+      ]
+    }
+  ];
+
+  class NPC {
+    constructor(preset, x, z) {
+      this.preset = preset;
+      this.x = x;
+      this.z = z;
+      this.y = Math.max(20, getTerrainHeight(Math.floor(x), Math.floor(z)) + 1);
+      this.targetX = x;
+      this.targetZ = z;
+      this.yaw = Math.random() * Math.PI * 2;
+      this.walkTimer = Math.random() * 10;
+      this.wanderTimer = Math.random() * 4;
+      this.isWalking = false;
+      this.moveSpeed = 1.6;
+
+      this.createModel();
+    }
+
+    createModel() {
+      this.group = new THREE.Group();
+      this.group.position.set(this.x, this.y, this.z);
+
+      // Cute Chibi Proportions: Head (0.44), Torso (0.45), Arms, Legs
+      // 1. Head Group
+      this.headGroup = new THREE.Group();
+      this.headGroup.position.set(0, 1.25, 0);
+
+      // Cute Anime Face Texture (32x32 with big sparkly eyes & rosy cheeks)
+      const faceCanvas = document.createElement('canvas');
+      faceCanvas.width = 32;
+      faceCanvas.height = 32;
+      const fctx = faceCanvas.getContext('2d');
+      fctx.fillStyle = '#ffedd5'; // Skin tone
+      fctx.fillRect(0, 0, 32, 32);
+      // Sparkly cute eyes
+      fctx.fillStyle = this.preset.eyeColor;
+      fctx.fillRect(6, 12, 6, 8);
+      fctx.fillRect(20, 12, 6, 8);
+      // White eye highlights
+      fctx.fillStyle = '#ffffff';
+      fctx.fillRect(7, 13, 2, 3);
+      fctx.fillRect(21, 13, 2, 3);
+      // Rosy cheeks (blush dots)
+      fctx.fillStyle = '#fb7185';
+      fctx.fillRect(5, 21, 5, 2);
+      fctx.fillRect(22, 21, 5, 2);
+      // Cute smile
+      fctx.fillStyle = '#e11d48';
+      fctx.fillRect(14, 23, 4, 1);
+
+      const faceTex = new THREE.CanvasTexture(faceCanvas);
+      faceTex.magFilter = THREE.NearestFilter;
+
+      const skinMat = new THREE.MeshLambertMaterial({ color: 0xffedd5 });
+      const faceMat = new THREE.MeshLambertMaterial({ map: faceTex });
+      // Head cube: [+X, -X, +Y, -Y, +Z (Face), -Z]
+      const headMats = [skinMat, skinMat, skinMat, skinMat, faceMat, skinMat];
+      const headGeom = new THREE.BoxGeometry(0.44, 0.44, 0.44);
+      const headMesh = new THREE.Mesh(headGeom, headMats);
+      this.headGroup.add(headMesh);
+
+      // Cute Hairstyle Mesh
+      const hairMat = new THREE.MeshLambertMaterial({ color: this.preset.hairColor });
+      const hairTopGeom = new THREE.BoxGeometry(0.48, 0.22, 0.48);
+      const hairTopMesh = new THREE.Mesh(hairTopGeom, hairMat);
+      hairTopMesh.position.set(0, 0.16, -0.02);
+      this.headGroup.add(hairTopMesh);
+
+      // Hair Bangs & Side Twintails/Strands
+      const strandGeom = new THREE.BoxGeometry(0.12, 0.36, 0.12);
+      const leftStrand = new THREE.Mesh(strandGeom, hairMat);
+      leftStrand.position.set(-0.25, -0.08, -0.05);
+      this.headGroup.add(leftStrand);
+
+      const rightStrand = new THREE.Mesh(strandGeom, hairMat);
+      rightStrand.position.set(0.25, -0.08, -0.05);
+      this.headGroup.add(rightStrand);
+
+      // Cute Hair Ribbon
+      const ribbonMat = new THREE.MeshLambertMaterial({ color: this.preset.ribbonColor });
+      const ribbonGeom = new THREE.BoxGeometry(0.18, 0.08, 0.08);
+      const ribbonMesh = new THREE.Mesh(ribbonGeom, ribbonMat);
+      ribbonMesh.position.set(0, 0.26, 0.18);
+      this.headGroup.add(ribbonMesh);
+
+      this.group.add(this.headGroup);
+
+      // 2. Torso with Cute Dress
+      const dressMat = new THREE.MeshLambertMaterial({ color: this.preset.dressColor });
+      const torsoGeom = new THREE.BoxGeometry(0.40, 0.50, 0.24);
+      this.torsoMesh = new THREE.Mesh(torsoGeom, dressMat);
+      this.torsoMesh.position.set(0, 0.80, 0);
+      this.group.add(this.torsoMesh);
+
+      // 3. Left & Right Arms (Pivots at shoulders)
+      const armGeom = new THREE.BoxGeometry(0.12, 0.45, 0.12);
+      armGeom.translate(0, -0.20, 0); // Pivot at shoulder
+
+      this.leftArm = new THREE.Mesh(armGeom, skinMat);
+      this.leftArm.position.set(-0.27, 0.98, 0);
+      this.group.add(this.leftArm);
+
+      this.rightArm = new THREE.Mesh(armGeom, skinMat);
+      this.rightArm.position.set(0.27, 0.98, 0);
+      this.group.add(this.rightArm);
+
+      // 4. Left & Right Legs (Pivots at hips)
+      const legGeom = new THREE.BoxGeometry(0.15, 0.55, 0.15);
+      legGeom.translate(0, -0.25, 0); // Pivot at hip
+
+      this.leftLeg = new THREE.Mesh(legGeom, dressMat);
+      this.leftLeg.position.set(-0.11, 0.55, 0);
+      this.group.add(this.leftLeg);
+
+      this.rightLeg = new THREE.Mesh(legGeom, dressMat);
+      this.rightLeg.position.set(0.11, 0.55, 0);
+      this.group.add(this.rightLeg);
+
+      // 5. Floating Name Tag Sprite
+      const tagCanvas = document.createElement('canvas');
+      tagCanvas.width = 256;
+      tagCanvas.height = 64;
+      const tctx = tagCanvas.getContext('2d');
+      tctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+      tctx.roundRect ? tctx.roundRect(4, 8, 248, 48, 12) : tctx.fillRect(4, 8, 248, 48);
+      tctx.fill();
+      tctx.strokeStyle = '#38bdf8';
+      tctx.lineWidth = 2;
+      tctx.stroke();
+      tctx.fillStyle = '#ffffff';
+      tctx.font = 'bold 20px sans-serif';
+      tctx.textAlign = 'center';
+      tctx.fillText(`${this.preset.name} [${this.preset.role}]`, 128, 40);
+
+      const tagTex = new THREE.CanvasTexture(tagCanvas);
+      const tagMat = new THREE.SpriteMaterial({ map: tagTex, depthWrite: false });
+      this.nameTag = new THREE.Sprite(tagMat);
+      this.nameTag.position.set(0, 1.75, 0);
+      this.nameTag.scale.set(1.4, 0.35, 1.0);
+      this.group.add(this.nameTag);
+
+      scene.add(this.group);
+    }
+
+    update(dt) {
+      // 1. Distance to player
+      const dx = player.x - this.x;
+      const dz = player.z - this.z;
+      const distToPlayer = Math.hypot(dx, dz);
+
+      // When player is close (< 4.0 blocks), face the player
+      if (distToPlayer < 4.0) {
+        const targetYaw = Math.atan2(dx, dz);
+        this.yaw += (targetYaw - this.yaw) * Math.min(dt * 6.0, 1.0);
+        this.headGroup.rotation.y = Math.sin(performance.now() * 0.002) * 0.15; // Gentle cute head tilt
+        this.isWalking = false;
+      } else {
+        this.headGroup.rotation.y = 0;
+        // Wandering AI
+        this.wanderTimer -= dt;
+        if (this.wanderTimer <= 0) {
+          this.wanderTimer = 3.5 + Math.random() * 4.0;
+          if (Math.random() < 0.65) {
+            // Pick a nearby destination
+            const ang = Math.random() * Math.PI * 2;
+            const dist = 3.0 + Math.random() * 5.0;
+            this.targetX = this.x + Math.cos(ang) * dist;
+            this.targetZ = this.z + Math.sin(ang) * dist;
+            this.isWalking = true;
+          } else {
+            this.isWalking = false;
+          }
+        }
+
+        if (this.isWalking) {
+          const tdx = this.targetX - this.x;
+          const tdz = this.targetZ - this.z;
+          const tdist = Math.hypot(tdx, tdz);
+          if (tdist > 0.4) {
+            this.yaw = Math.atan2(tdx, tdz);
+            const step = this.moveSpeed * dt;
+            this.x += (tdx / tdist) * step;
+            this.z += (tdz / tdist) * step;
+          } else {
+            this.isWalking = false;
+          }
+        }
+      }
+
+      // 2. Terrain ground height tracking
+      const groundH = getTerrainHeight(Math.floor(this.x), Math.floor(this.z));
+      const targetY = groundH + 1.0;
+      this.y += (targetY - this.y) * Math.min(dt * 10.0, 1.0);
+
+      // 3. Apply Group Position & Rotation
+      this.group.position.set(this.x, this.y, this.z);
+      this.group.rotation.y = this.yaw;
+
+      // 4. Walking and Idle Animations
+      if (this.isWalking) {
+        this.walkTimer += dt * 8.0;
+        const swing = Math.sin(this.walkTimer) * 0.55;
+        this.leftArm.rotation.x = swing;
+        this.rightArm.rotation.x = -swing;
+        this.leftLeg.rotation.x = -swing;
+        this.rightLeg.rotation.x = swing;
+      } else {
+        // Idle breathing & subtle arm rest
+        this.walkTimer = 0;
+        const breath = Math.sin(performance.now() * 0.003) * 0.03;
+        this.torsoMesh.position.y = 0.80 + breath;
+        this.leftArm.rotation.x *= 0.85;
+        this.rightArm.rotation.x *= 0.85;
+        this.leftLeg.rotation.x *= 0.85;
+        this.rightLeg.rotation.x *= 0.85;
+      }
+    }
+
+    interact() {
+      const line = this.preset.dialogues[Math.floor(Math.random() * this.preset.dialogues.length)];
+      showToast(`${this.preset.name}: "${line}"`);
+      playSynthesizedSound('place');
+    }
+  }
+
+  function spawnInitialNPCs() {
+    npcs = [];
+    // Spawn friendly cute NPCs near spawn area (x:8.5, z:8.5)
+    npcs.push(new NPC(NPC_PRESETS[0], 11.5, 9.5));  // Sakura (Florist)
+    npcs.push(new NPC(NPC_PRESETS[1], 7.0, 12.5));  // Aoi (Architect)
+    npcs.push(new NPC(NPC_PRESETS[2], 13.0, 14.0)); // Lily (Baker)
+
+    // Spawn NPCs in Village center (chunk cx:0, cz:0 is around 0..15)
+    npcs.push(new NPC(NPC_PRESETS[3], 4.5, 5.5));   // Hana (Botanist)
+    npcs.push(new NPC(NPC_PRESETS[4], 8.5, 4.5));   // Rin (Merchant)
+
+    // Spawn explorer NPCs towards city (chunk cx:3, cz:3 is around 48..63)
+    npcs.push(new NPC(NPC_PRESETS[5], 52.0, 52.0)); // Maya (Explorer)
+    npcs.push(new NPC(NPC_PRESETS[6], 55.0, 54.0)); // Noah (Villager)
+  }
+
+  function updateNPCs(dt) {
+    for (let i = 0; i < npcs.length; i++) {
+      npcs[i].update(dt);
     }
   }
 
@@ -2217,13 +2986,8 @@
     if (!grid) return;
     grid.innerHTML = '';
 
-    const allBlocks = [
-      BLOCKS.GRASS, BLOCKS.DIRT, BLOCKS.STONE, BLOCKS.COBBLESTONE,
-      BLOCKS.WOOD, BLOCKS.PLANKS, BLOCKS.LEAVES, BLOCKS.SAND,
-      BLOCKS.GLASS, BLOCKS.WATER, BLOCKS.COAL_ORE, BLOCKS.IRON_ORE,
-      BLOCKS.GOLD_ORE, BLOCKS.DIAMOND_ORE, BLOCKS.SNOW, BLOCKS.BRICKS,
-      BLOCKS.BOOKSHELF, BLOCKS.TNT, BLOCKS.BEDROCK
-    ];
+    // Show ALL non-air blocks available in the game
+    const allBlocks = Object.values(BLOCKS).filter(b => b !== BLOCKS.AIR);
 
     allBlocks.forEach(bId => {
       const item = document.createElement('div');
@@ -2326,6 +3090,8 @@
     // 3. Setup Celestial 3D Skybox (Sun, Moon, Stars)
     setupCelestialSkybox();
     setupAmbientDust();
+    setupCloudLayer();
+    spawnInitialNPCs();
 
     // 4. Setup Target Box Outline
     const wireGeom = new THREE.BoxGeometry(1.002, 1.002, 1.002);
@@ -2414,6 +3180,8 @@
       updateParticles(dt);
 
       updateAmbientDust(dt);
+      updateClouds(dt);
+      updateNPCs(dt);
 
       // 8.5. Animate Water UV scrolling for realistic shimmer
       chunks.forEach(chunk => {
@@ -2520,8 +3288,8 @@
         selectHotbarSlot(idx);
       }
 
-      // Inventory Toggle [E]
-      if (e.code === 'KeyE') {
+      // Inventory Toggle [E] or [I]
+      if (e.code === 'KeyE' || e.code === 'KeyI') {
         toggleInventory();
       }
 
@@ -2590,8 +3358,21 @@
       if (!isPointerLocked) return;
 
       if (e.button === 0) {
-        // Left Click: Mine / Break Block
-        breakTargetedBlock();
+        // Check if player clicked near an NPC to talk
+        let talkedToNpc = false;
+        for (let i = 0; i < npcs.length; i++) {
+          const npc = npcs[i];
+          const dist = Math.hypot(player.x - npc.x, player.z - npc.z);
+          if (dist < 3.8) {
+            npc.interact();
+            talkedToNpc = true;
+            break;
+          }
+        }
+        if (!talkedToNpc) {
+          // Left Click: Mine / Break Block
+          breakTargetedBlock();
+        }
       } else if (e.button === 2) {
         // Right Click: Place Block
         e.preventDefault();
