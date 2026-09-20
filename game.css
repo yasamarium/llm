@@ -728,3 +728,89 @@ html, body {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* =========================================================================
+   Death Screen Overlay & Animations (Strictly Zero Emojis)
+   ========================================================================= */
+.death-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle, rgba(140, 0, 0, 0.45) 0%, rgba(20, 0, 0, 0.96) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+  animation: deathFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes deathFadeIn {
+  0% {
+    opacity: 0;
+    background: rgba(180, 0, 0, 0.85);
+  }
+  100% {
+    opacity: 1;
+    background: radial-gradient(circle, rgba(140, 0, 0, 0.45) 0%, rgba(20, 0, 0, 0.96) 100%);
+  }
+}
+
+.death-content {
+  text-align: center;
+  padding: 40px;
+  animation: deathPopUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes deathPopUp {
+  0% {
+    transform: scale(0.7) translateY(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.death-title {
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: #ef4444;
+  text-shadow: 0 0 35px rgba(239, 68, 68, 0.85), 0 6px 20px rgba(0, 0, 0, 0.95);
+  margin-bottom: 14px;
+}
+
+.death-subtitle {
+  font-size: 18px;
+  color: #cbd5e1;
+  margin-bottom: 36px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.death-respawn-btn {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 16px 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  color: #ffffff;
+  border: 2px solid #ef4444;
+  box-shadow: 0 0 28px rgba(220, 38, 38, 0.65), 0 6px 20px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.death-respawn-btn:hover {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  box-shadow: 0 0 38px rgba(239, 68, 68, 0.95), 0 8px 25px rgba(0, 0, 0, 0.75);
+  transform: translateY(-2px) scale(1.04);
+}
+
+.death-respawn-btn:active {
+  transform: translateY(1px) scale(0.98);
+}

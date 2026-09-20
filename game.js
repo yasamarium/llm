@@ -142,6 +142,7 @@
   let dayTime = 0.25; // 0: dawn, 0.25: noon, 0.5: sunset, 0.75: midnight
   let isPaused = true;
   let isInventoryOpen = false;
+  let isDead = false;
 
   // Viewmodel & camera animation timers
   let walkDistance = 0;
@@ -724,6 +725,10 @@
       const tex = new THREE.CanvasTexture(texCanvases[key]);
       tex.magFilter = THREE.NearestFilter;
       tex.minFilter = THREE.NearestMipmapNearestFilter;
+      if (key === 'water') {
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+      }
       threeTextures[key] = tex;
     }
 
@@ -1719,28 +1724,60 @@
 
     // Void fallback check
     if (player.y < -10) {
-      player.x = 8.5;
-      player.y = 42.0;
-      player.z = 8.5;
-      player.vy = 0;
-      showToast('Respawned above world');
+      if (settings.gameMode === 'survival') {
+        damagePlayer(20);
+      } else {
+        player.x = 8.5;
+        player.y = 42.0;
+        player.z = 8.5;
+        player.vy = 0;
+        showToast('Respawned above world');
+      }
     }
   }
 
   function damagePlayer(amount) {
-    if (amount <= 0 || settings.gameMode === 'creative') return;
+    if (amount <= 0 || settings.gameMode === 'creative' || isDead) return;
     player.health = Math.max(0, player.health - amount);
     renderSurvivalMeters();
     playSynthesizedSound('hurt');
-    if (player.health === 0) {
-      showToast('You died! Respawned at spawn.');
-      player.health = 20;
-      player.hunger = 20;
-      player.x = 8.5;
-      player.y = 42.0;
-      player.z = 8.5;
+    if (player.health <= 0) {
+      player.health = 0;
       renderSurvivalMeters();
+      triggerDeath();
     }
+  }
+
+  function triggerDeath() {
+    isDead = true;
+    player.isFlying = false;
+    player.vx = 0;
+    player.vy = 0;
+    player.vz = 0;
+    if (document.exitPointerLock) document.exitPointerLock();
+    const deathModal = document.getElementById('deathModal');
+    if (deathModal) deathModal.style.display = 'flex';
+  }
+
+  function respawnPlayer() {
+    isDead = false;
+    player.health = 20;
+    player.hunger = 20;
+    const spawnH = Math.max(25, getTerrainHeight(8, 8));
+    player.x = 8.5;
+    player.y = spawnH + 1.5;
+    player.z = 8.5;
+    player.vx = 0;
+    player.vy = 0;
+    player.vz = 0;
+    player.isFlying = false;
+    renderSurvivalMeters();
+
+    const deathModal = document.getElementById('deathModal');
+    if (deathModal) deathModal.style.display = 'none';
+
+    showToast('Respawned safely at spawn point!');
+    document.body.requestPointerLock();
   }
 
   // =========================================================================
@@ -2434,9 +2471,15 @@
         }
       }
 
-      // 2. Terrain ground height tracking
-      const groundH = getTerrainHeight(Math.floor(this.x), Math.floor(this.z));
-      const targetY = groundH + 1.0;
+      // 2. Terrain ground height tracking (Cached per block for silky 60fps)
+      const bx = Math.floor(this.x);
+      const bz = Math.floor(this.z);
+      if (this.lastBx !== bx || this.lastBz !== bz) {
+        this.lastBx = bx;
+        this.lastBz = bz;
+        this.cachedGroundH = getTerrainHeight(bx, bz);
+      }
+      const targetY = (this.cachedGroundH || 25) + 1.0;
       this.y += (targetY - this.y) * Math.min(dt * 10.0, 1.0);
 
       // 3. Apply Group Position & Rotation
@@ -3068,7 +3111,7 @@
     // Standard linear pipeline for rich, vibrant voxel colors without washed-out bleaching
     renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.NoToneMapping;
     renderer.shadowMap.enabled = false;
     container.appendChild(renderer.domElement);
@@ -3145,7 +3188,7 @@
       fpsTimer = currentTime;
     }
 
-    if (!isPaused) {
+    if (!isPaused && !isDead) {
       // 1. Update Physics & Player Position
       updatePhysics(dt);
 
@@ -3153,15 +3196,8 @@
       cameraStepOffset *= Math.pow(0.0001, dt);
       if (Math.abs(cameraStepOffset) < 0.002) cameraStepOffset = 0;
 
-      // 2. Sync Three.js Camera to Player
-      // Smooth camera interpolation for premium feel
-      const camLerp = Math.min(dt * 18.0, 1.0);
-      const targetCamX = player.x;
-      const targetCamY = player.y + player.eyeHeight + cameraStepOffset;
-      const targetCamZ = player.z;
-      camera.position.x += (targetCamX - camera.position.x) * camLerp;
-      camera.position.y += (targetCamY - camera.position.y) * camLerp;
-      camera.position.z += (targetCamZ - camera.position.z) * camLerp;
+      // 2. Direct Responsive Camera Positioning (Zero latency, silky-smooth first-person feel)
+      camera.position.set(player.x, player.y + player.eyeHeight + cameraStepOffset, player.z);
       camera.rotation.y = player.yaw;
       camera.rotation.x = player.pitch;
 
@@ -3183,22 +3219,11 @@
       updateClouds(dt);
       updateNPCs(dt);
 
-      // 8.5. Animate Water UV scrolling for realistic shimmer
-      chunks.forEach(chunk => {
-        if (chunk.mesh) {
-          chunk.mesh.traverse(child => {
-            if (child.isMesh && child.renderOrder === 2) {
-              const uvAttr = child.geometry.attributes.uv;
-              if (uvAttr) {
-                for (let i = 0; i < uvAttr.count; i++) {
-                  uvAttr.setX(i, uvAttr.getX(i) + dt * 0.03);
-                }
-                uvAttr.needsUpdate = true;
-              }
-            }
-          });
-        }
-      });
+      // Smooth GPU-accelerated Water Shimmer (Zero CPU buffer uploads)
+      if (threeTextures.water) {
+        threeTextures.water.offset.x = (threeTextures.water.offset.x + dt * 0.04) % 1.0;
+        threeTextures.water.offset.y = (threeTextures.water.offset.y + dt * 0.02) % 1.0;
+      }
 
       // 6. Target Block Raycasting & Outline Box
       const target = raycastBlock();
@@ -3213,14 +3238,12 @@
         if (dbgTarget) dbgTarget.textContent = 'Air';
       }
 
-      // 7. Dynamic Chunk Streaming (Throttled for ultra-smooth 60 FPS)
-      chunkCheckTimer += dt;
+      // 7. Dynamic Chunk Streaming (Only recalculates when entering a new chunk)
       const currentChunkX = Math.floor(player.x / CHUNK_SIZE);
       const currentChunkZ = Math.floor(player.z / CHUNK_SIZE);
-      if (currentChunkX !== lastPlayerChunkX || currentChunkZ !== lastPlayerChunkZ || chunkCheckTimer > 0.35) {
+      if (currentChunkX !== lastPlayerChunkX || currentChunkZ !== lastPlayerChunkZ) {
         lastPlayerChunkX = currentChunkX;
         lastPlayerChunkZ = currentChunkZ;
-        chunkCheckTimer = 0;
         updateLoadedChunks();
       }
 
@@ -3259,23 +3282,28 @@
     window.addEventListener('keydown', e => {
       keys[e.code] = true;
 
-      // Double Space for Flight Mode Toggle
+      // Double Space for Flight Mode Toggle (Creative Mode Only)
       if (e.code === 'Space') {
         const now = performance.now();
         if (!e.repeat) {
           if (now - lastSpacePressTime < 320) {
-            player.isFlying = !player.isFlying;
-            lastSpacePressTime = 0;
-            if (player.isFlying) {
-              player.vy = 4.0;
-              player.onGround = false;
-              showToast('Flight Enabled (Space: Up, Shift: Down)');
+            if (settings.gameMode === 'creative') {
+              player.isFlying = !player.isFlying;
+              lastSpacePressTime = 0;
+              if (player.isFlying) {
+                player.vy = 4.0;
+                player.onGround = false;
+                showToast('Flight Enabled (Space: Up, Shift: Down)');
+              } else {
+                player.vy = 0;
+                showToast('Flight Disabled');
+              }
+              const dbgFlight = document.getElementById('debugFlight');
+              if (dbgFlight) dbgFlight.textContent = player.isFlying ? 'Active' : 'Off';
             } else {
-              player.vy = 0;
-              showToast('Flight Disabled');
+              // Survival mode: Flight is disabled
+              lastSpacePressTime = 0;
             }
-            const dbgFlight = document.getElementById('debugFlight');
-            if (dbgFlight) dbgFlight.textContent = player.isFlying ? 'Active' : 'Off';
           } else {
             lastSpacePressTime = now;
           }
@@ -3293,12 +3321,16 @@
         toggleInventory();
       }
 
-      // Flight Toggle Shortcut [F]
+      // Flight Toggle Shortcut [F] (Creative Mode Only)
       if (e.code === 'KeyF') {
-        player.isFlying = !player.isFlying;
-        showToast(player.isFlying ? 'Flight Enabled (Space: Up, Shift: Down)' : 'Flight Disabled');
-        const dbgFlight = document.getElementById('debugFlight');
-        if (dbgFlight) dbgFlight.textContent = player.isFlying ? 'Active' : 'Off';
+        if (settings.gameMode === 'creative') {
+          player.isFlying = !player.isFlying;
+          showToast(player.isFlying ? 'Flight Enabled (Space: Up, Shift: Down)' : 'Flight Disabled');
+          const dbgFlight = document.getElementById('debugFlight');
+          if (dbgFlight) dbgFlight.textContent = player.isFlying ? 'Active' : 'Off';
+        } else {
+          showToast('Flight is only available in Creative mode');
+        }
       }
 
       // Debug Overlay Toggle [F3]
@@ -3473,6 +3505,12 @@
         showToast('World reset to natural terrain');
       }
     });
+
+    // Respawn Button Listener
+    const btnRespawn = document.getElementById('btnRespawn');
+    if (btnRespawn) {
+      btnRespawn.addEventListener('click', respawnPlayer);
+    }
 
     // HUD Action Buttons
     document.getElementById('hudSoundBtn').addEventListener('click', toggleSound);
