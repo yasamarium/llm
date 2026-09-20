@@ -135,6 +135,7 @@
   let handGroup, handArmMesh, handItemMesh;
   let wireframeTargetBox;
   let chunks = new Map(); // "cx,cz" => Chunk
+  let threeTextures = {};
   let particles = [];
   let isPointerLocked = false;
   let lastFrameTime = performance.now();
@@ -720,7 +721,7 @@
     });
 
     // Convert canvases to Three.js Textures
-    const threeTextures = {};
+    threeTextures = {};
     for (const key in texCanvases) {
       const tex = new THREE.CanvasTexture(texCanvases[key]);
       tex.magFilter = THREE.NearestFilter;
@@ -1585,8 +1586,10 @@
       } else {
         if (player.vy < 0) {
           player.y = Math.ceil(newY);
-          while (checkPlayerCollision(player.x, player.y, player.z) && player.y < CHUNK_HEIGHT) {
+          let flySafety = 0;
+          while (checkPlayerCollision(player.x, player.y, player.z) && player.y < CHUNK_HEIGHT && flySafety < 80) {
             player.y += 0.05;
+            flySafety++;
           }
           player.onGround = true;
         }
@@ -1625,8 +1628,10 @@
         if (player.vy < 0) {
           // Clean landing: snap to top of the block
           player.y = Math.ceil(newY);
-          while (checkPlayerCollision(player.x, player.y, player.z) && player.y < CHUNK_HEIGHT) {
+          let landSafety = 0;
+          while (checkPlayerCollision(player.x, player.y, player.z) && player.y < CHUNK_HEIGHT && landSafety < 80) {
             player.y += 0.05;
+            landSafety++;
           }
           player.onGround = true;
           if (settings.gameMode === 'survival' && player.vy < -16.0) {
@@ -2020,14 +2025,18 @@
   // Procedural Sound Synthesizer (Web Audio API)
   // =========================================================================
   function initAudio() {
-    if (!audioCtx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) {
-        audioCtx = new AudioContext();
+    try {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioCtx = new AudioContext();
+        }
       }
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Audio init deferred:', e);
     }
   }
 
@@ -3190,19 +3199,22 @@
   function gameLoop(currentTime) {
     requestAnimationFrame(gameLoop);
 
-    const dt = Math.min((currentTime - lastFrameTime) / 1000, 0.1);
-    lastFrameTime = currentTime;
+    try {
+      const now = (typeof currentTime === 'number' && Number.isFinite(currentTime)) ? currentTime : performance.now();
+      const rawDt = (typeof lastFrameTime === 'number' && Number.isFinite(lastFrameTime)) ? (now - lastFrameTime) / 1000 : 0.016;
+      const dt = Math.max(0.001, Math.min(rawDt, 0.1));
+      lastFrameTime = now;
 
-    // FPS Counter
-    frameCount++;
-    if (currentTime - fpsTimer >= 1000) {
-      const fpsEl = document.getElementById('debugFPS');
-      if (fpsEl) fpsEl.textContent = frameCount;
-      frameCount = 0;
-      fpsTimer = currentTime;
-    }
+      // FPS Counter
+      frameCount++;
+      if (now - fpsTimer >= 1000) {
+        const fpsEl = document.getElementById('debugFPS');
+        if (fpsEl) fpsEl.textContent = frameCount;
+        frameCount = 0;
+        fpsTimer = now;
+      }
 
-    if (!isPaused && !isDead) {
+      if (!isPaused && !isDead) {
       // 1. Update Physics & Player Position
       updatePhysics(dt);
 
@@ -3234,7 +3246,7 @@
       updateNPCs(dt);
 
       // Smooth GPU-accelerated Water Shimmer (Zero CPU buffer uploads)
-      if (threeTextures.water) {
+      if (threeTextures && threeTextures.water) {
         threeTextures.water.offset.x = (threeTextures.water.offset.x + dt * 0.04) % 1.0;
         threeTextures.water.offset.y = (threeTextures.water.offset.y + dt * 0.02) % 1.0;
       }
@@ -3266,7 +3278,10 @@
     }
 
     // Render 3D Scene
-    renderer.render(scene, camera);
+      renderer.render(scene, camera);
+    } catch (loopErr) {
+      console.error('GameLoop frame error caught:', loopErr);
+    }
   }
 
   function updateDebugOverlay() {
@@ -3371,10 +3386,6 @@
     // Mouse Pointer Lock & Mouse Look
     document.addEventListener('pointerlockchange', () => {
       isPointerLocked = (document.pointerLockElement === document.body);
-      if (!isPointerLocked && !isInventoryOpen && !isDead && hasGameStarted && !isPaused) {
-        // Only pause if the user was actively playing and deliberately exited pointer lock
-        pauseGame();
-      }
       for (const k in keys) keys[k] = false;
       player.vx = 0;
       player.vz = 0;
@@ -3635,6 +3646,7 @@
     document.getElementById('gameHUD').style.display = 'flex';
     isPaused = false;
     hasGameStarted = true;
+    lastFrameTime = performance.now();
 
     // Ensure player is placed safely on top of the solid surface
     const sx = Math.floor(player.x);
