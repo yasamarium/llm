@@ -120,7 +120,7 @@
   // Three.js Core Globals
   let scene, camera, renderer;
   let sunLight, ambientLight, moonLight;
-  let sunMesh, moonMesh, starField;
+  let sunMesh, moonMesh, starField, skyDome;
   let handGroup, handArmMesh, handItemMesh;
   let wireframeTargetBox;
   let chunks = new Map(); // "cx,cz" => Chunk
@@ -1011,21 +1011,71 @@
             const batch = blockBatches[block];
             const vBase = batch.vertCount;
 
-            // Ambient Occlusion calculations per vertex of face
+            // Full 6-Face Ambient Occlusion for premium smooth lighting
             let ao0 = 1.0, ao1 = 1.0, ao2 = 1.0, ao3 = 1.0;
             if (settings.smoothLighting && !isCurrentTransp) {
-              if (face.matIdx === 2) {
-                // Top (+Y)
-                const sN = isBlockSolid(getGlobalBlock(gx, y + 1, gz - 1));
-                const sS = isBlockSolid(getGlobalBlock(gx, y + 1, gz + 1));
-                const sE = isBlockSolid(getGlobalBlock(gx + 1, y + 1, gz));
-                const sW = isBlockSolid(getGlobalBlock(gx - 1, y + 1, gz));
-                ao0 = calculateVertexAO(sW, sS, isBlockSolid(getGlobalBlock(gx - 1, y + 1, gz + 1)));
-                ao1 = calculateVertexAO(sE, sS, isBlockSolid(getGlobalBlock(gx + 1, y + 1, gz + 1)));
-                ao2 = calculateVertexAO(sE, sN, isBlockSolid(getGlobalBlock(gx + 1, y + 1, gz - 1)));
-                ao3 = calculateVertexAO(sW, sN, isBlockSolid(getGlobalBlock(gx - 1, y + 1, gz - 1)));
-              } else {
-                ao0 = 0.92; ao1 = 1.0; ao2 = 0.92; ao3 = 0.88;
+              const d = face.dir;
+              // Calculate AO neighbors based on face direction
+              if (d[1] === 1) {
+                // +Y (Top)
+                const sN = isBlockSolid(getGlobalBlock(gx, y+1, gz-1));
+                const sS = isBlockSolid(getGlobalBlock(gx, y+1, gz+1));
+                const sE = isBlockSolid(getGlobalBlock(gx+1, y+1, gz));
+                const sW = isBlockSolid(getGlobalBlock(gx-1, y+1, gz));
+                ao0 = calculateVertexAO(sW, sS, isBlockSolid(getGlobalBlock(gx-1, y+1, gz+1)));
+                ao1 = calculateVertexAO(sE, sS, isBlockSolid(getGlobalBlock(gx+1, y+1, gz+1)));
+                ao2 = calculateVertexAO(sE, sN, isBlockSolid(getGlobalBlock(gx+1, y+1, gz-1)));
+                ao3 = calculateVertexAO(sW, sN, isBlockSolid(getGlobalBlock(gx-1, y+1, gz-1)));
+              } else if (d[1] === -1) {
+                // -Y (Bottom)
+                const sN = isBlockSolid(getGlobalBlock(gx, y-1, gz-1));
+                const sS = isBlockSolid(getGlobalBlock(gx, y-1, gz+1));
+                const sE = isBlockSolid(getGlobalBlock(gx+1, y-1, gz));
+                const sW = isBlockSolid(getGlobalBlock(gx-1, y-1, gz));
+                ao0 = calculateVertexAO(sW, sN, isBlockSolid(getGlobalBlock(gx-1, y-1, gz-1)));
+                ao1 = calculateVertexAO(sE, sN, isBlockSolid(getGlobalBlock(gx+1, y-1, gz-1)));
+                ao2 = calculateVertexAO(sE, sS, isBlockSolid(getGlobalBlock(gx+1, y-1, gz+1)));
+                ao3 = calculateVertexAO(sW, sS, isBlockSolid(getGlobalBlock(gx-1, y-1, gz+1)));
+              } else if (d[0] === 1) {
+                // +X (East)
+                const sUp = isBlockSolid(getGlobalBlock(gx+1, y+1, gz));
+                const sDn = isBlockSolid(getGlobalBlock(gx+1, y-1, gz));
+                const sN = isBlockSolid(getGlobalBlock(gx+1, y, gz-1));
+                const sS = isBlockSolid(getGlobalBlock(gx+1, y, gz+1));
+                ao0 = calculateVertexAO(sDn, sN, isBlockSolid(getGlobalBlock(gx+1, y-1, gz-1)));
+                ao1 = calculateVertexAO(sUp, sN, isBlockSolid(getGlobalBlock(gx+1, y+1, gz-1)));
+                ao2 = calculateVertexAO(sUp, sS, isBlockSolid(getGlobalBlock(gx+1, y+1, gz+1)));
+                ao3 = calculateVertexAO(sDn, sS, isBlockSolid(getGlobalBlock(gx+1, y-1, gz+1)));
+              } else if (d[0] === -1) {
+                // -X (West)
+                const sUp = isBlockSolid(getGlobalBlock(gx-1, y+1, gz));
+                const sDn = isBlockSolid(getGlobalBlock(gx-1, y-1, gz));
+                const sN = isBlockSolid(getGlobalBlock(gx-1, y, gz-1));
+                const sS = isBlockSolid(getGlobalBlock(gx-1, y, gz+1));
+                ao0 = calculateVertexAO(sDn, sS, isBlockSolid(getGlobalBlock(gx-1, y-1, gz+1)));
+                ao1 = calculateVertexAO(sUp, sS, isBlockSolid(getGlobalBlock(gx-1, y+1, gz+1)));
+                ao2 = calculateVertexAO(sUp, sN, isBlockSolid(getGlobalBlock(gx-1, y+1, gz-1)));
+                ao3 = calculateVertexAO(sDn, sN, isBlockSolid(getGlobalBlock(gx-1, y-1, gz-1)));
+              } else if (d[2] === 1) {
+                // +Z (South)
+                const sUp = isBlockSolid(getGlobalBlock(gx, y+1, gz+1));
+                const sDn = isBlockSolid(getGlobalBlock(gx, y-1, gz+1));
+                const sE = isBlockSolid(getGlobalBlock(gx+1, y, gz+1));
+                const sW = isBlockSolid(getGlobalBlock(gx-1, y, gz+1));
+                ao0 = calculateVertexAO(sDn, sE, isBlockSolid(getGlobalBlock(gx+1, y-1, gz+1)));
+                ao1 = calculateVertexAO(sUp, sE, isBlockSolid(getGlobalBlock(gx+1, y+1, gz+1)));
+                ao2 = calculateVertexAO(sUp, sW, isBlockSolid(getGlobalBlock(gx-1, y+1, gz+1)));
+                ao3 = calculateVertexAO(sDn, sW, isBlockSolid(getGlobalBlock(gx-1, y-1, gz+1)));
+              } else if (d[2] === -1) {
+                // -Z (North)
+                const sUp = isBlockSolid(getGlobalBlock(gx, y+1, gz-1));
+                const sDn = isBlockSolid(getGlobalBlock(gx, y-1, gz-1));
+                const sE = isBlockSolid(getGlobalBlock(gx+1, y, gz-1));
+                const sW = isBlockSolid(getGlobalBlock(gx-1, y, gz-1));
+                ao0 = calculateVertexAO(sDn, sW, isBlockSolid(getGlobalBlock(gx-1, y-1, gz-1)));
+                ao1 = calculateVertexAO(sUp, sW, isBlockSolid(getGlobalBlock(gx-1, y+1, gz-1)));
+                ao2 = calculateVertexAO(sUp, sE, isBlockSolid(getGlobalBlock(gx+1, y+1, gz-1)));
+                ao3 = calculateVertexAO(sDn, sE, isBlockSolid(getGlobalBlock(gx+1, y-1, gz-1)));
               }
             }
 
@@ -1451,7 +1501,7 @@
   // Particle Explosion Effects
   // =========================================================================
   function spawnBreakParticles(bx, by, bz, blockId) {
-    const count = 10;
+    const count = 18;
     const geom = new THREE.BoxGeometry(0.12, 0.12, 0.12);
     const color = getBlockColor(blockId);
     const mat = new THREE.MeshBasicMaterial({ color });
@@ -1519,6 +1569,40 @@
       const scale = p.life / p.maxLife;
       p.mesh.scale.set(scale, scale, scale);
     }
+  }
+
+  // Premium Ambient Dust Motes
+  let ambientDust = null;
+  function setupAmbientDust() {
+    const dustCount = 200;
+    const dustGeom = new THREE.BufferGeometry();
+    const dustPos = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      dustPos[i * 3] = (Math.random() - 0.5) * 60;
+      dustPos[i * 3 + 1] = Math.random() * 30 + 5;
+      dustPos[i * 3 + 2] = (Math.random() - 0.5) * 60;
+    }
+    dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    const dustMat = new THREE.PointsMaterial({ size: 0.12, color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false });
+    ambientDust = new THREE.Points(dustGeom, dustMat);
+    scene.add(ambientDust);
+  }
+
+  function updateAmbientDust(dt) {
+    if (!ambientDust) return;
+    ambientDust.position.set(player.x, player.y, player.z);
+    const posAttr = ambientDust.geometry.attributes.position;
+    for (let i = 0; i < posAttr.count; i++) {
+      let py = posAttr.getY(i);
+      py += dt * (0.15 + Math.sin(i * 0.7) * 0.1);
+      if (py > 35) py -= 30;
+      posAttr.setY(i, py);
+      posAttr.setX(i, posAttr.getX(i) + Math.sin(performance.now() * 0.0003 + i) * dt * 0.3);
+    }
+    posAttr.needsUpdate = true;
+    // Fade dust based on day/night
+    const isDay = (dayTime > 0.10 && dayTime < 0.45);
+    ambientDust.material.opacity = isDay ? 0.35 : 0.12;
   }
 
   // =========================================================================
@@ -1673,7 +1757,9 @@
       bobX = Math.cos(bobTimer) * 0.012;
       bobY = Math.abs(Math.sin(bobTimer)) * 0.015;
     } else {
-      bobTimer = 0;
+      bobTimer += dt * 1.2;
+      bobX = Math.sin(bobTimer * 0.7) * 0.003;
+      bobY = Math.sin(bobTimer * 0.5) * 0.004;
     }
 
     // 2. Arm swing animation
@@ -1694,13 +1780,18 @@
   // =========================================================================
   function setupCelestialSkybox() {
     // 3D Sun
-    const sunGeom = new THREE.BoxGeometry(10, 10, 10);
-    const sunMat = new THREE.MeshBasicMaterial({ color: 0xfff0aa });
+    const sunGeom = new THREE.SphereGeometry(8, 16, 16);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xfffae0 });
     sunMesh = new THREE.Mesh(sunGeom, sunMat);
+    // Sun glow aura
+    const glowGeom = new THREE.SphereGeometry(14, 16, 16);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xfff8cc, transparent: true, opacity: 0.25, side: THREE.BackSide });
+    const sunGlow = new THREE.Mesh(glowGeom, glowMat);
+    sunMesh.add(sunGlow);
     scene.add(sunMesh);
 
     // 3D Moon
-    const moonGeom = new THREE.BoxGeometry(8, 8, 8);
+    const moonGeom = new THREE.SphereGeometry(6, 16, 16);
     const moonMat = new THREE.MeshBasicMaterial({ color: 0xe8eef5 });
     moonMesh = new THREE.Mesh(moonGeom, moonMat);
     scene.add(moonMesh);
@@ -1732,59 +1823,86 @@
 
   function updateDayNightCycle(dt) {
     if (settings.dayCycleSpeed > 0) {
-      const cycleDuration = 240 / settings.dayCycleSpeed; // 240s = 4 min
+      const cycleDuration = 240 / settings.dayCycleSpeed;
       dayTime = (dayTime + (dt / cycleDuration)) % 1.0;
     }
 
-    // Celestial orbital mechanics
     const sunAngle = dayTime * Math.PI * 2 - Math.PI / 2;
     const orbitDist = 140;
     const celestialX = Math.cos(sunAngle) * orbitDist;
     const celestialY = Math.sin(sunAngle) * orbitDist;
     const celestialZ = 30;
 
-    // Lights
     sunLight.position.set(player.x + celestialX, player.y + celestialY, player.z + celestialZ);
     moonLight.position.set(player.x - celestialX, player.y - celestialY, player.z - celestialZ);
-
-    // Meshes
     if (sunMesh) sunMesh.position.set(player.x + celestialX, player.y + celestialY, player.z + celestialZ);
     if (moonMesh) moonMesh.position.set(player.x - celestialX, player.y - celestialY, player.z - celestialZ);
     if (starField) starField.position.set(player.x, player.y, player.z);
+    if (skyDome) skyDome.position.set(player.x, player.y - 10, player.z);
 
-    // Sky colors & Star Opacity
-    let skyColor, fogColor;
-    const hudTime = document.getElementById('hudTimeBadge');
+    // Smooth color keys: [time, skyR,skyG,skyB, fogR,fogG,fogB, sunIntensity, ambIntensity, starOpacity]
+    const colorKeys = [
+      [0.00, 0.88,0.48,0.37,  0.96,0.63,0.38,  0.65,0.42,  0.4],  // Dawn
+      [0.15, 0.47,0.65,1.0,   0.58,0.72,1.0,    0.95,0.55,  0.0],  // Morning
+      [0.25, 0.47,0.65,1.0,   0.58,0.72,1.0,    1.05,0.58,  0.0],  // Noon
+      [0.40, 0.47,0.65,1.0,   0.58,0.72,1.0,    0.90,0.52,  0.0],  // Afternoon
+      [0.50, 0.88,0.48,0.37,  0.96,0.63,0.38,   0.65,0.42,  0.4],  // Sunset
+      [0.60, 0.15,0.10,0.25,  0.10,0.07,0.18,   0.15,0.30,  0.7],  // Dusk
+      [0.75, 0.04,0.05,0.09,  0.03,0.04,0.06,   0.04,0.24,  0.95], // Midnight
+      [0.90, 0.04,0.05,0.09,  0.03,0.04,0.06,   0.04,0.24,  0.95], // Late Night
+      [1.00, 0.88,0.48,0.37,  0.96,0.63,0.38,   0.65,0.42,  0.4],  // Dawn wrap
+    ];
 
-    if (dayTime >= 0.22 && dayTime <= 0.28) {
-      // High Noon
-      skyColor = new THREE.Color(0x78a7ff);
-      fogColor = new THREE.Color(0x94b9ff);
-      sunLight.intensity = 1.05;
-      ambientLight.intensity = 0.58;
-      if (starField) starField.material.opacity = 0;
-      if (hudTime) hudTime.textContent = 'Day';
-    } else if ((dayTime >= 0.45 && dayTime <= 0.55) || (dayTime >= 0.95 || dayTime <= 0.05)) {
-      // Dawn or Sunset
-      skyColor = new THREE.Color(0xe07a5f);
-      fogColor = new THREE.Color(0xf4a261);
-      sunLight.intensity = 0.65;
-      ambientLight.intensity = 0.42;
-      if (starField) starField.material.opacity = 0.4;
-      if (hudTime) hudTime.textContent = (dayTime < 0.2) ? 'Dawn' : 'Sunset';
-    } else {
-      // Midnight
-      skyColor = new THREE.Color(0x0a0c16);
-      fogColor = new THREE.Color(0x070910);
-      sunLight.intensity = 0.04;
-      ambientLight.intensity = 0.24;
-      if (starField) starField.material.opacity = 0.95;
-      if (hudTime) hudTime.textContent = 'Night';
+    let lo = colorKeys[0], hi = colorKeys[1];
+    for (let i = 0; i < colorKeys.length - 1; i++) {
+      if (dayTime >= colorKeys[i][0] && dayTime < colorKeys[i+1][0]) {
+        lo = colorKeys[i];
+        hi = colorKeys[i+1];
+        break;
+      }
     }
+    const range = hi[0] - lo[0];
+    const t = range > 0 ? (dayTime - lo[0]) / range : 0;
 
+    const skyR = lo[1] + (hi[1] - lo[1]) * t;
+    const skyG = lo[2] + (hi[2] - lo[2]) * t;
+    const skyB = lo[3] + (hi[3] - lo[3]) * t;
+    const fogR = lo[4] + (hi[4] - lo[4]) * t;
+    const fogG = lo[5] + (hi[5] - lo[5]) * t;
+    const fogB = lo[6] + (hi[6] - lo[6]) * t;
+    sunLight.intensity = lo[7] + (hi[7] - lo[7]) * t;
+    ambientLight.intensity = lo[8] + (hi[8] - lo[8]) * t;
+    const starOp = lo[9] + (hi[9] - lo[9]) * t;
+    if (starField) starField.material.opacity = starOp;
+
+    const skyColor = new THREE.Color(skyR, skyG, skyB);
+    const fogColor = new THREE.Color(fogR, fogG, fogB);
     renderer.setClearColor(skyColor);
     if (scene.fog && settings.fogEnabled) {
       scene.fog.color = fogColor;
+    }
+
+    // Update sky dome vertex colors
+    if (skyDome) {
+      const posAttr = skyDome.geometry.attributes.position;
+      const colAttr = skyDome.geometry.attributes.color;
+      for (let i = 0; i < posAttr.count; i++) {
+        const ny = posAttr.getY(i) / 400;
+        const nt = Math.max(0, Math.min(1, ny));
+        const zenithMix = 0.7 + nt * 0.3;
+        colAttr.setXYZ(i, skyR * zenithMix, skyG * zenithMix, skyB * (0.85 + nt * 0.15));
+      }
+      colAttr.needsUpdate = true;
+    }
+
+    // HUD time label
+    const hudTime = document.getElementById('hudTimeBadge');
+    if (hudTime) {
+      if (dayTime < 0.06 || dayTime >= 0.94) hudTime.textContent = 'Dawn';
+      else if (dayTime < 0.40) hudTime.textContent = 'Day';
+      else if (dayTime < 0.56) hudTime.textContent = 'Sunset';
+      else if (dayTime < 0.65) hudTime.textContent = 'Dusk';
+      else hudTime.textContent = 'Night';
     }
   }
 
@@ -1980,23 +2098,46 @@
     const container = document.getElementById('gameContainer');
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x78a7ff);
+    // Premium Sky Gradient Dome
+    const skyGeom = new THREE.SphereGeometry(400, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    const skyColors = [];
+    const skyPosAttr = skyGeom.attributes.position;
+    for (let i = 0; i < skyPosAttr.count; i++) {
+      const y = skyPosAttr.getY(i);
+      const t = Math.max(0, Math.min(1, y / 400));
+      // Gradient from horizon light blue to deep zenith blue
+      const r = 0.47 * (1 - t) + 0.20 * t;
+      const g = 0.65 * (1 - t) + 0.40 * t;
+      const b = 1.0 * (1 - t) + 0.95 * t;
+      skyColors.push(r, g, b);
+    }
+    skyGeom.setAttribute('color', new THREE.Float32BufferAttribute(skyColors, 3));
+    const skyMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, depthWrite: false });
+    const skyDome = new THREE.Mesh(skyGeom, skyMat);
+    skyDome.renderOrder = -999;
+    scene.add(skyDome);
 
     if (settings.fogEnabled) {
-      scene.fog = new THREE.Fog(0x94b9ff, 25, settings.renderDistance * CHUNK_SIZE * 0.95);
+      scene.fog = new THREE.FogExp2(0x94b9ff, 0.018);
     }
 
     camera = new THREE.PerspectiveCamera(settings.fov, window.innerWidth / window.innerHeight, 0.1, 500);
     camera.rotation.order = 'YXZ';
 
-    renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
     renderer.shadowMap.enabled = false;
     container.appendChild(renderer.domElement);
 
     // 2. Setup Lighting
     ambientLight = new THREE.AmbientLight(0xffffff, 0.58);
     scene.add(ambientLight);
+    const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x553311, 0.35);
+    scene.add(hemiLight);
 
     sunLight = new THREE.DirectionalLight(0xfff4e0, 1.0);
     sunLight.position.set(40, 80, 20);
@@ -2008,6 +2149,7 @@
 
     // 3. Setup Celestial 3D Skybox (Sun, Moon, Stars)
     setupCelestialSkybox();
+    setupAmbientDust();
 
     // 4. Setup Target Box Outline
     const wireGeom = new THREE.BoxGeometry(1.002, 1.002, 1.002);
@@ -2070,7 +2212,14 @@
       if (Math.abs(cameraStepOffset) < 0.002) cameraStepOffset = 0;
 
       // 2. Sync Three.js Camera to Player
-      camera.position.set(player.x, player.y + player.eyeHeight + cameraStepOffset, player.z);
+      // Smooth camera interpolation for premium feel
+      const camLerp = Math.min(dt * 18.0, 1.0);
+      const targetCamX = player.x;
+      const targetCamY = player.y + player.eyeHeight + cameraStepOffset;
+      const targetCamZ = player.z;
+      camera.position.x += (targetCamX - camera.position.x) * camLerp;
+      camera.position.y += (targetCamY - camera.position.y) * camLerp;
+      camera.position.z += (targetCamZ - camera.position.z) * camLerp;
       camera.rotation.y = player.yaw;
       camera.rotation.x = player.pitch;
 
@@ -2087,6 +2236,25 @@
 
       // 5. Update Particle Explosions
       updateParticles(dt);
+
+      updateAmbientDust(dt);
+
+      // 8.5. Animate Water UV scrolling for realistic shimmer
+      chunks.forEach(chunk => {
+        if (chunk.mesh) {
+          chunk.mesh.traverse(child => {
+            if (child.isMesh && child.renderOrder === 2) {
+              const uvAttr = child.geometry.attributes.uv;
+              if (uvAttr) {
+                for (let i = 0; i < uvAttr.count; i++) {
+                  uvAttr.setX(i, uvAttr.getX(i) + dt * 0.03);
+                }
+                uvAttr.needsUpdate = true;
+              }
+            }
+          });
+        }
+      });
 
       // 6. Target Block Raycasting & Outline Box
       const target = raycastBlock();
@@ -2347,7 +2515,7 @@
         settings.renderDistance = parseInt(e.target.value);
         document.getElementById('valRenderDistance').textContent = `${settings.renderDistance} Chunks`;
         if (scene && scene.fog) {
-          scene.fog.far = settings.renderDistance * CHUNK_SIZE * 0.95;
+          scene.fog.density = 0.85 / (settings.renderDistance * CHUNK_SIZE);
         }
         updateLoadedChunks();
       });
@@ -2393,7 +2561,7 @@
         settings.fogEnabled = e.target.checked;
         if (scene) {
           scene.fog = settings.fogEnabled
-            ? new THREE.Fog(0x94b9ff, 25, settings.renderDistance * CHUNK_SIZE * 0.95)
+            ? new THREE.FogExp2(0x94b9ff, 0.018)
             : null;
         }
       });
