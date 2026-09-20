@@ -90,11 +90,11 @@
     gameMode: 'creative' // 'creative' or 'survival'
   };
 
-  // Player State
+  // Player State (Spawn on open village cobblestone street)
   const player = {
-    x: 8.5,
-    y: 35.0,
-    z: 8.5,
+    x: 7.5,
+    y: 28.0,
+    z: 3.5,
     vx: 0,
     vy: 0,
     vz: 0,
@@ -2405,16 +2405,30 @@
       tagCanvas.width = 256;
       tagCanvas.height = 64;
       const tctx = tagCanvas.getContext('2d');
-      tctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-      tctx.roundRect ? tctx.roundRect(4, 8, 248, 48, 12) : tctx.fillRect(4, 8, 248, 48);
-      tctx.fill();
-      tctx.strokeStyle = '#38bdf8';
-      tctx.lineWidth = 2;
-      tctx.stroke();
-      tctx.fillStyle = '#ffffff';
-      tctx.font = 'bold 20px sans-serif';
-      tctx.textAlign = 'center';
-      tctx.fillText(`${this.preset.name} [${this.preset.role}]`, 128, 40);
+      if (tctx) {
+        tctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        // Safe cross-browser rounded rectangle
+        const rx = 4, ry = 8, rw = 248, rh = 48, rad = 10;
+        tctx.beginPath();
+        tctx.moveTo(rx + rad, ry);
+        tctx.lineTo(rx + rw - rad, ry);
+        tctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rad);
+        tctx.lineTo(rx + rw, ry + rh - rad);
+        tctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rad, ry + rh);
+        tctx.lineTo(rx + rad, ry + rh);
+        tctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rad);
+        tctx.lineTo(rx, ry + rad);
+        tctx.quadraticCurveTo(rx, ry, rx + rad, ry);
+        tctx.closePath();
+        tctx.fill();
+        tctx.strokeStyle = '#38bdf8';
+        tctx.lineWidth = 2;
+        tctx.stroke();
+        tctx.fillStyle = '#ffffff';
+        tctx.font = 'bold 20px sans-serif';
+        tctx.textAlign = 'center';
+        tctx.fillText(`${this.preset.name} [${this.preset.role}]`, 128, 40);
+      }
 
       const tagTex = new THREE.CanvasTexture(tagCanvas);
       const tagMat = new THREE.SpriteMaterial({ map: tagTex, depthWrite: false });
@@ -3357,15 +3371,29 @@
     // Mouse Pointer Lock & Mouse Look
     document.addEventListener('pointerlockchange', () => {
       isPointerLocked = (document.pointerLockElement === document.body);
-      if (!isPointerLocked && !isInventoryOpen) {
+      if (!isPointerLocked && !isInventoryOpen && !isDead && hasGameStarted && !isPaused) {
+        // Only pause if the user was actively playing and deliberately exited pointer lock
         pauseGame();
       }
-      // Reset input keys on pointerlock change to eliminate phantom auto-walking
       for (const k in keys) keys[k] = false;
       player.vx = 0;
       player.vz = 0;
       lastSpacePressTime = 0;
     });
+
+    document.addEventListener('pointerlockerror', () => {
+      // Gracefully continue even if pointer lock is declined or unsupported
+      console.warn('Pointer lock request was declined or unavailable.');
+    });
+
+    // Clicking game canvas requests pointer lock if unlocked
+    if (renderer && renderer.domElement) {
+      renderer.domElement.addEventListener('click', () => {
+        if (!isPaused && !isInventoryOpen && !isDead && !isPointerLocked) {
+          try { document.body.requestPointerLock(); } catch(e) {}
+        }
+      });
+    }
 
     window.addEventListener('blur', () => {
       for (const k in keys) keys[k] = false;
@@ -3600,18 +3628,35 @@
   // =========================================================================
   // Game State Controllers
   // =========================================================================
+  let hasGameStarted = false;
+
   function startGame() {
     document.getElementById('mainMenu').style.display = 'none';
     document.getElementById('gameHUD').style.display = 'flex';
     isPaused = false;
-    // Ensure player is safely above terrain on start
-    const floorH = getTerrainHeight(Math.floor(player.x), Math.floor(player.z));
-    if (player.y < floorH + 1) {
-      player.y = floorH + 1.2;
-      player.vy = 0;
+    hasGameStarted = true;
+
+    // Ensure player is placed safely on top of the solid surface
+    const sx = Math.floor(player.x);
+    const sz = Math.floor(player.z);
+    let surfaceY = Math.max(20, getTerrainHeight(sx, sz));
+    for (let y = CHUNK_HEIGHT - 1; y >= 0; y--) {
+      if (isBlockSolid(getGlobalBlock(sx, y, sz))) {
+        surfaceY = Math.max(surfaceY, y);
+        break;
+      }
     }
+    player.y = surfaceY + 1.2;
+    player.vy = 0;
+    player.vx = 0;
+    player.vz = 0;
+
     syncGameModeUI();
-    document.body.requestPointerLock();
+    try {
+      document.body.requestPointerLock();
+    } catch (e) {
+      console.warn('Pointer lock request was deferred:', e);
+    }
   }
 
   function pauseGame() {
@@ -3708,31 +3753,51 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
       const data = JSON.parse(raw);
-      if (data.player) {
+      if (data && data.player && Number.isFinite(data.player.x) && Number.isFinite(data.player.y) && Number.isFinite(data.player.z)) {
         player.x = data.player.x;
         player.y = data.player.y;
         player.z = data.player.z;
-        player.yaw = data.player.yaw;
-        player.pitch = data.player.pitch;
-        if (data.player.hotbar) player.hotbar = data.player.hotbar;
+        if (Number.isFinite(data.player.yaw)) player.yaw = data.player.yaw;
+        if (Number.isFinite(data.player.pitch)) player.pitch = data.player.pitch;
+        if (Array.isArray(data.player.hotbar) && data.player.hotbar.length === 9) {
+          player.hotbar = data.player.hotbar;
+        }
       }
-      if (typeof data.dayTime === 'number') dayTime = data.dayTime;
-      if (data.modifications) {
+      if (typeof data.dayTime === 'number' && Number.isFinite(data.dayTime)) {
+        dayTime = data.dayTime;
+      }
+      if (data.modifications && Array.isArray(data.modifications)) {
         worldModifications.clear();
         data.modifications.forEach(([k, v]) => worldModifications.set(k, v));
       }
       return true;
     } catch (e) {
+      console.warn('Could not load world save:', e);
       return false;
     }
   }
 
   // =========================================================================
-  // Bootstrapping
+  // Robust Bootstrapping (Runs immediately if DOM is already ready)
   // =========================================================================
-  window.addEventListener('DOMContentLoaded', () => {
-    loadWorldFromStorage();
-    initGame();
-  });
+  function bootstrap() {
+    try {
+      loadWorldFromStorage();
+    } catch (e) {
+      console.warn('Storage load error:', e);
+    }
+    try {
+      initGame();
+    } catch (e) {
+      console.error('Fatal initialization error:', e);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    // DOM already loaded, initialize immediately
+    bootstrap();
+  }
 
 })();
