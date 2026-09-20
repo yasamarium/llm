@@ -124,6 +124,15 @@
           <span>Edit Code</span>
         </button>
 
+        <button id="openCodebarBtn" class="we-action-btn we-action-codebar" title="Open Codebar Project IDE">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+            <polyline points="10 11 8 13 10 15"/>
+            <polyline points="14 11 16 13 14 15"/>
+          </svg>
+          <span>Codebar</span>
+        </button>
+
         <button id="previewBtn" class="we-action-btn we-action-highlight" title="Live Interactive Multi-Page Preview">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="5 3 19 12 5 21 5 3"/>
@@ -457,6 +466,180 @@
                 <textarea id="pluginBodyScript" class="we-textarea we-mono-area" rows="3" placeholder="<!-- e.g. chat widget, tracking -->"></textarea>
               </div>
             </div>
+
+            <!-- Plugin 7: Announcement Top Bar -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Announcement Top Bar</strong>
+                  <span>Sticky dismissible banner at top of site</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginAnnouncementToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginAnnouncementFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginAnnouncementText">Announcement Message</label>
+                <input type="text" id="pluginAnnouncementText" class="we-input" value="Special Launch Offer: Build and launch your website today!">
+                <label class="we-prop-label" for="pluginAnnouncementLinkText" style="margin-top: 6px;">Button / Link Text</label>
+                <input type="text" id="pluginAnnouncementLinkText" class="we-input" value="Learn More">
+                <label class="we-prop-label" for="pluginAnnouncementLink" style="margin-top: 6px;">Target Link URL</label>
+                <input type="url" id="pluginAnnouncementLink" class="we-input" placeholder="https://example.com or about.html">
+                <div class="we-prop-grid-2" style="margin-top: 6px;">
+                  <div class="we-prop-col">
+                    <label class="we-prop-label" for="pluginAnnouncementBg">Bar Background</label>
+                    <input type="color" id="pluginAnnouncementBg" class="we-color-picker" value="#2563eb">
+                  </div>
+                  <div class="we-prop-col">
+                    <label class="we-prop-label" for="pluginAnnouncementTextColor">Text Color</label>
+                    <input type="color" id="pluginAnnouncementTextColor" class="we-color-picker" value="#ffffff">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Plugin 8: Back-to-Top Button -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Back-to-Top Button</strong>
+                  <span>Floating smooth-scroll button when scrolled</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginBackToTopToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginBackToTopFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginBackToTopStyle">Button Style</label>
+                <select id="pluginBackToTopStyle" class="we-select">
+                  <option value="pill">Pill with Arrow & Text</option>
+                  <option value="circle">Minimal Round Circle</option>
+                </select>
+                <label class="we-prop-label" for="pluginBackToTopPos" style="margin-top: 6px;">Screen Position</label>
+                <select id="pluginBackToTopPos" class="we-select">
+                  <option value="right">Bottom Right</option>
+                  <option value="left">Bottom Left</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Plugin 9: Background Music & Audio Player -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Background Audio Player</strong>
+                  <span>Floating music player with direct audio URL</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginAudioToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginAudioFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginAudioUrl">Audio Direct URL (.mp3 / stream)</label>
+                <input type="url" id="pluginAudioUrl" class="we-input" placeholder="https://.../music.mp3">
+                <label class="we-prop-label" for="pluginAudioTitle" style="margin-top: 6px;">Track Title</label>
+                <input type="text" id="pluginAudioTitle" class="we-input" value="Ambient Soundscape">
+                <label class="we-prop-label" style="display: flex; align-items: center; gap: 8px; margin-top: 8px; cursor: pointer;">
+                  <input type="checkbox" id="pluginAudioAutoplay">
+                  <span>Autoplay (Muted by default for browser compliance)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Plugin 10: Animated Particle Background -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Animated Particle Canvas</strong>
+                  <span>Constellation connecting particles background</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginParticleToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginParticleFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginParticleColor">Particle Color</label>
+                <input type="color" id="pluginParticleColor" class="we-color-picker" value="#60a5fa">
+                <label class="we-prop-label" for="pluginParticleDensity" style="margin-top: 6px;">Particle Density</label>
+                <select id="pluginParticleDensity" class="we-select">
+                  <option value="35">Subtle (35 particles)</option>
+                  <option value="70" selected>Balanced (70 particles)</option>
+                  <option value="120">Dense (120 particles)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Plugin 11: Live Social Proof Visitor Counter -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Live Social Proof Counter</strong>
+                  <span>Floating real-time visitor count badge</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginVisitorToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginVisitorFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginVisitorText">Message Label</label>
+                <input type="text" id="pluginVisitorText" class="we-input" value="people are exploring this site right now">
+                <div class="we-prop-grid-2" style="margin-top: 6px;">
+                  <div class="we-prop-col">
+                    <label class="we-prop-label" for="pluginVisitorMin">Min Count</label>
+                    <input type="number" id="pluginVisitorMin" class="we-input" value="18">
+                  </div>
+                  <div class="we-prop-col">
+                    <label class="we-prop-label" for="pluginVisitorMax">Max Count</label>
+                    <input type="number" id="pluginVisitorMax" class="we-input" value="48">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Plugin 12: Newsletter Lead Capture Modal -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Newsletter Popup Modal</strong>
+                  <span>Email capture modal on page load or delay</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginNewsletterToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginNewsletterFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginNewsletterTitle">Modal Headline</label>
+                <input type="text" id="pluginNewsletterTitle" class="we-input" value="Subscribe to Our Newsletter">
+                <label class="we-prop-label" for="pluginNewsletterDesc" style="margin-top: 6px;">Description</label>
+                <input type="text" id="pluginNewsletterDesc" class="we-input" value="Get exclusive updates, insights, and releases delivered to your inbox.">
+                <label class="we-prop-label" for="pluginNewsletterDelay" style="margin-top: 6px;">Trigger Delay (Seconds)</label>
+                <input type="number" id="pluginNewsletterDelay" class="we-input" value="4" min="1" max="60">
+              </div>
+            </div>
+
+            <!-- Plugin 13: Glowing Neon Cursor Follower -->
+            <div class="we-plugin-card">
+              <div class="we-plugin-top">
+                <div class="we-plugin-meta">
+                  <strong>Neon Cursor Follower</strong>
+                  <span>Smooth glowing dot trailing the mouse cursor</span>
+                </div>
+                <label class="we-switch">
+                  <input type="checkbox" id="pluginNeonCursorToggle">
+                  <span class="we-slider"></span>
+                </label>
+              </div>
+              <div id="pluginNeonCursorFields" class="we-plugin-fields" style="display: none;">
+                <label class="we-prop-label" for="pluginNeonCursorColor">Follower Glow Color</label>
+                <input type="color" id="pluginNeonCursorColor" class="we-color-picker" value="#00f0ff">
+              </div>
+            </div>
           </div>
         </div>
       </aside>
@@ -593,31 +776,96 @@
 
             <!-- Section 2: Media Inspector (Shown for Image/Video) -->
             <div class="we-prop-section" id="sectionMedia">
-              <div class="we-prop-section-header">Media Link & Source</div>
+              <div class="we-prop-section-header">Media Link & Crop Framing</div>
+              
               <div class="we-prop-row">
-                <label class="we-prop-label" for="propMediaUrl">Direct Link URL</label>
-                <input type="url" id="propMediaUrl" class="we-input" placeholder="https://images.unsplash.com/...">
+                <label class="we-prop-label" for="propMediaUrl">Direct Link URL (Image or Video)</label>
+                <input type="url" id="propMediaUrl" class="we-input" placeholder="https://.../photo.jpg or https://.../video.mp4">
               </div>
+              
               <div class="we-prop-row" id="rowMediaAlt">
-                <label class="we-prop-label" for="propMediaAlt">Alt / Description</label>
+                <label class="we-prop-label" for="propMediaAlt">Alt / Caption Description</label>
                 <input type="text" id="propMediaAlt" class="we-input" placeholder="Image description">
               </div>
-              <div class="we-prop-row" id="rowMediaFit">
-                <label class="we-prop-label" for="propMediaFit">Object Fit</label>
-                <select id="propMediaFit" class="we-select">
-                  <option value="cover">Cover (Fill & Crop)</option>
-                  <option value="contain">Contain (Full Image)</option>
-                  <option value="fill">Fill (Stretch)</option>
-                </select>
+
+              <!-- Quick Aspect Ratio Presets -->
+              <div class="we-prop-row">
+                <label class="we-prop-label">Aspect Ratio Presets</label>
+                <div class="we-preset-pill-group" id="mediaRatioPresets">
+                  <button type="button" class="we-pill-btn active" data-ratio="auto" title="Natural Intrinsic Ratio">Auto</button>
+                  <button type="button" class="we-pill-btn" data-ratio="16 / 9" title="16:9 Landscape">16:9</button>
+                  <button type="button" class="we-pill-btn" data-ratio="4 / 3" title="4:3 Standard">4:3</button>
+                  <button type="button" class="we-pill-btn" data-ratio="1 / 1" title="1:1 Square">1:1</button>
+                  <button type="button" class="we-pill-btn" data-ratio="4 / 5" title="4:5 Portrait">4:5</button>
+                  <button type="button" class="we-pill-btn" data-ratio="9 / 16" title="9:16 Reel">9:16</button>
+                </div>
               </div>
-              <div class="we-prop-row" id="rowMediaRatio">
-                <label class="we-prop-label" for="propMediaRatio">Aspect Ratio</label>
-                <select id="propMediaRatio" class="we-select">
-                  <option value="auto">Auto</option>
-                  <option value="16 / 9">16:9 (Widescreen)</option>
-                  <option value="4 / 3">4:3 (Standard)</option>
-                  <option value="1 / 1">1:1 (Square)</option>
-                </select>
+
+              <div class="we-prop-grid-2">
+                <div class="we-prop-col">
+                  <label class="we-prop-label" for="propMediaRatio">Custom Ratio</label>
+                  <select id="propMediaRatio" class="we-select">
+                    <option value="auto">Auto (Natural)</option>
+                    <option value="16 / 9">16:9 Landscape</option>
+                    <option value="4 / 3">4:3 Standard</option>
+                    <option value="1 / 1">1:1 Square</option>
+                    <option value="4 / 5">4:5 Portrait</option>
+                    <option value="9 / 16">9:16 Story</option>
+                    <option value="21 / 9">21:9 Ultra-Wide</option>
+                  </select>
+                </div>
+                <div class="we-prop-col">
+                  <label class="we-prop-label" for="propMediaFit">Object Fit / Crop</label>
+                  <select id="propMediaFit" class="we-select">
+                    <option value="contain">Contain (Full / No Crop)</option>
+                    <option value="cover">Cover (Fill & Crop)</option>
+                    <option value="fill">Fill (Stretch)</option>
+                    <option value="scale-down">Scale Down</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="we-prop-grid-2" style="margin-top: 6px;">
+                <div class="we-prop-col">
+                  <label class="we-prop-label" for="propMediaWidthSelect">Width Scale</label>
+                  <select id="propMediaWidthSelect" class="we-select">
+                    <option value="100%">Full (100%)</option>
+                    <option value="75%">Large (75%)</option>
+                    <option value="50%">Medium (50%)</option>
+                    <option value="33%">Small (33%)</option>
+                    <option value="auto">Auto (Intrinsic)</option>
+                  </select>
+                </div>
+                <div class="we-prop-col">
+                  <label class="we-prop-label" for="propMediaHeightSelect">Max Height</label>
+                  <select id="propMediaHeightSelect" class="we-select">
+                    <option value="none">None (Natural)</option>
+                    <option value="260px">Compact (260px)</option>
+                    <option value="380px">Medium (380px)</option>
+                    <option value="520px">Large (520px)</option>
+                    <option value="650px">Hero (650px)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="we-prop-grid-2" style="margin-top: 6px;">
+                <div class="we-prop-col">
+                  <label class="we-prop-label" for="propMediaPosition">Focal Point</label>
+                  <select id="propMediaPosition" class="we-select">
+                    <option value="center">Center</option>
+                    <option value="top">Top</option>
+                    <option value="bottom">Bottom</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+                <div class="we-prop-col">
+                  <div class="we-slider-label-wrap">
+                    <label class="we-prop-label" for="propMediaZoom">Zoom Scale</label>
+                    <span id="valMediaZoom" style="font-size: 11px; color: #60a5fa; font-family: monospace;">100%</span>
+                  </div>
+                  <input type="range" id="propMediaZoom" class="we-range" min="100" max="200" value="100" step="5">
+                </div>
               </div>
             </div>
 
@@ -830,6 +1078,78 @@
         </div>
         <button id="copyCodeBtn" class="we-btn we-btn-secondary">Copy</button>
         <button id="applyCodeBtn" class="we-btn we-btn-primary">Apply Changes to Canvas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Codebar Full Project File Explorer & IDE -->
+  <div id="codebarModal" class="we-modal we-modal-fullscreen">
+    <div class="codebar-shell">
+      <!-- Codebar Top Control Bar -->
+      <div class="codebar-topbar">
+        <div class="codebar-brand">
+          <div class="codebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+              <polyline points="10 11 8 13 10 15"/>
+              <polyline points="14 11 16 13 14 15"/>
+            </svg>
+          </div>
+          <span class="codebar-title">Codebar Project IDE</span>
+          <span class="codebar-path" id="codebarCurrentFilePath">pages / index.html</span>
+        </div>
+
+        <div class="codebar-stats" id="codebarStats">
+          <span id="codebarLineCount">0 lines</span>
+          <span class="codebar-divider">&bull;</span>
+          <span id="codebarByteCount">0 KB</span>
+        </div>
+
+        <div class="codebar-actions">
+          <button id="codebarFormatBtn" class="we-btn we-btn-secondary we-btn-sm" title="Format HTML/CSS Code">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+            <span>Format</span>
+          </button>
+          <button id="codebarCopyBtn" class="we-btn we-btn-secondary we-btn-sm" title="Copy Current File Code">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Copy</span>
+          </button>
+          <button id="applyCodebarBtn" class="we-btn we-btn-primary we-btn-sm" title="Apply Changes & Synchronize with Visual Canvas">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Apply & Sync to Canvas</span>
+          </button>
+          <button class="we-modal-close" data-close="codebarModal" title="Close Codebar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Codebar Split Body: Left Tree + Right Editor -->
+      <div class="codebar-body">
+        <!-- Left Column: File Explorer Tree -->
+        <aside class="codebar-sidebar">
+          <div class="codebar-tree-header">
+            <span>PROJECT FILES</span>
+          </div>
+
+          <div class="codebar-tree-list" id="codebarFileList">
+            <!-- Dynamically populated files -->
+          </div>
+        </aside>
+
+        <!-- Center / Right Column: Syntax Editor -->
+        <div class="codebar-editor-wrap">
+          <div class="codebar-editor-tabstrip" id="codebarTabStrip">
+            <div class="codebar-tab active" id="codebarActiveTab">
+              <span id="codebarTabName">index.html</span>
+              <span class="codebar-tab-dot"></span>
+            </div>
+          </div>
+          <div class="codebar-editor-inner">
+            <div class="codebar-gutter" id="codebarGutter"></div>
+            <textarea id="codebarEditor" class="codebar-textarea" spellcheck="false" placeholder="Select or edit code..."></textarea>
+          </div>
+        </div>
       </div>
     </div>
   </div>

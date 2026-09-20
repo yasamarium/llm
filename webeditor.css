@@ -1736,3 +1736,340 @@ html, body {
   border-radius: 4px;
   font-family: var(--we-font-mono);
 }
+
+/* =========================================================================
+   Codebar Button & IDE Modal
+   ========================================================================= */
+.we-action-codebar {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  color: #a5b4fc !important;
+}
+
+.we-action-codebar:hover {
+  background: rgba(99, 102, 241, 0.22) !important;
+  border-color: #818cf8 !important;
+  color: #ffffff !important;
+}
+
+.codebar-shell {
+  width: 92vw;
+  max-width: 1320px;
+  height: 86vh;
+  max-height: 900px;
+  background: #0d0e15;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.codebar-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #12141f;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.codebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.codebar-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.codebar-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.codebar-path {
+  font-size: 12px;
+  font-family: var(--we-font-mono);
+  color: var(--we-text-dim);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.codebar-stats {
+  font-size: 11px;
+  font-family: var(--we-font-mono);
+  color: var(--we-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.codebar-divider {
+  opacity: 0.4;
+}
+
+.codebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.codebar-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.codebar-sidebar {
+  width: 230px;
+  background: #0f1018;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.codebar-tree-header {
+  padding: 12px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--we-text-dim);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.codebar-tree-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.codebar-category-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 8px 8px 4px;
+  font-weight: 600;
+}
+
+.codebar-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: var(--we-font-mono);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.codebar-file-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.codebar-file-item.active {
+  background: rgba(10, 132, 255, 0.15);
+  color: #60a5fa;
+  border-left: 2px solid #0a84ff;
+}
+
+.codebar-file-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: auto;
+}
+
+.codebar-badge-html {
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+}
+
+.codebar-badge-css {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.codebar-badge-js {
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+}
+
+.codebar-editor-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #090a0f;
+}
+
+.codebar-editor-tabstrip {
+  display: flex;
+  background: #12141f;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 12px;
+}
+
+.codebar-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-family: var(--we-font-mono);
+  color: #94a3b8;
+  border-bottom: 2px solid transparent;
+  cursor: default;
+}
+
+.codebar-tab.active {
+  color: #ffffff;
+  border-bottom-color: #0a84ff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.codebar-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.codebar-editor-inner {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.codebar-gutter {
+  width: 48px;
+  background: #0b0c12;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 14px 6px 14px 0;
+  font-family: var(--we-font-mono);
+  font-size: 12px;
+  line-height: 20px;
+  color: rgba(255, 255, 255, 0.25);
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
+}
+
+.codebar-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 14px 16px;
+  font-family: var(--we-font-mono);
+  font-size: 13px;
+  line-height: 20px;
+  color: #e2e8f0;
+  resize: none;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow: auto;
+  tab-size: 2;
+}
+
+/* =========================================================================
+   Media Crop Presets & Pill Buttons
+   ========================================================================= */
+.we-preset-pill-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.we-pill-btn {
+  flex: 1;
+  min-width: 42px;
+  padding: 5px 6px;
+  background: var(--we-surface-2);
+  border: 1px solid var(--we-border);
+  border-radius: 6px;
+  color: var(--we-text-dim);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.12s ease;
+}
+
+.we-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.we-pill-btn.active {
+  background: rgba(10, 132, 255, 0.2);
+  border-color: #0a84ff;
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.we-slider-label-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.we-range {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  margin-top: 6px;
+}
+
+.we-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0a84ff;
+  cursor: pointer;
+}
+
+/* =========================================================================
+   Universal Responsive Media Elements
+   ========================================================================= */
+.we-canvas img,
+.we-canvas video,
+.we-canvas iframe {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.we-media-frame {
+  position: relative;
+  overflow: hidden;
+  display: block;
+}
+

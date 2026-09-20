@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Square Era • 3D Voxel Sandbox</title>
+  <meta name="description" content="Square Era is a fast, beautiful, procedural 3D voxel sandbox game running natively in your browser with dynamic biomes, day/night cycle, building, and survival.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2216%22 fill=%22%232e7d32%22/><rect y=%2250%22 width=%22100%22 height=%2250%22 fill=%22%23795548%22/><path d=%22M0 50 Q25 40 50 50 T100 50 L100 60 L0 60 Z%22 fill=%22%234caf50%22/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="game.css">
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <!-- Three.js Canvas Container -->
+  <div id="gameContainer"></div>
+
+  <!-- HUD Crosshair -->
+  <div id="crosshair" class="game-crosshair"></div>
+
+  <!-- In-Game Heads-Up Display (HUD) -->
+  <div id="gameHUD" class="game-hud" style="display: none;">
+    <!-- Top-Left Status Bar -->
+    <div class="hud-top-left">
+      <div class="hud-badge mode-badge" id="hudModeBadge">Creative</div>
+      <div class="hud-badge time-badge" id="hudTimeBadge">Day</div>
+      <div class="hud-hint">Press [F3] Coordinates &bull; [E] Inventory &bull; [Esc] Pause</div>
+    </div>
+
+    <!-- Top-Right Actions -->
+    <div class="hud-top-right">
+      <button id="hudSoundBtn" class="hud-icon-btn" title="Toggle Sound (M)" aria-label="Toggle Sound">
+        <svg id="soundIconOn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+        <svg id="soundIconOff" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <line x1="23" y1="9" x2="17" y2="15"/>
+          <line x1="17" y1="9" x2="23" y2="15"/>
+        </svg>
+      </button>
+      <button id="hudFullscreenBtn" class="hud-icon-btn" title="Fullscreen (F11)" aria-label="Toggle Fullscreen">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom Center HUD: Survival Meters + Hotbar -->
+    <div class="hud-bottom-center">
+      <!-- Survival Meters (Hidden in Creative Mode) -->
+      <div id="survivalHUD" class="survival-meters" style="display: none;">
+        <!-- 10 Hearts (Health) -->
+        <div class="meter-bar health-bar" id="healthBar" title="Health">
+          <!-- Populated by JS -->
+        </div>
+        <!-- 10 Drumsticks (Hunger) -->
+        <div class="meter-bar hunger-bar" id="hungerBar" title="Hunger">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- 9-Slot Hotbar -->
+      <div class="hotbar-wrapper">
+        <div id="hotbar" class="hotbar">
+          <!-- 9 Slots generated dynamically -->
+        </div>
+        <div class="hotbar-label" id="hotbarItemName">Grass Block</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debug Overlay (F3) -->
+  <div id="debugOverlay" class="debug-overlay" style="display: none;">
+    <div class="debug-title">Square Era v1.0 • Debug Info</div>
+    <div class="debug-line">FPS: <span id="debugFPS">60</span></div>
+    <div class="debug-line">Position: <span id="debugXYZ">X: 0.0 Y: 64.0 Z: 0.0</span></div>
+    <div class="debug-line">Chunk: <span id="debugChunk">0, 0</span></div>
+    <div class="debug-line">Biome: <span id="debugBiome">Plains</span></div>
+    <div class="debug-line">Looking at: <span id="debugTarget">Air</span></div>
+    <div class="debug-line">Active Chunks: <span id="debugChunkCount">25</span></div>
+    <div class="debug-line">Flight: <span id="debugFlight">Off</span></div>
+  </div>
+
+  <!-- Main Menu Overlay -->
+  <div id="mainMenu" class="game-modal-overlay">
+    <div class="main-menu-card">
+      <div class="menu-brand">
+        <div class="menu-cube-icon">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <h1 class="menu-title">SQUARE ERA</h1>
+        <p class="menu-subtitle">Procedural 3D Voxel Universe</p>
+      </div>
+
+      <div class="menu-actions">
+        <button id="btnPlayGame" class="se-btn se-btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Enter World</span>
+        </button>
+        <button id="btnSelectMode" class="se-btn se-btn-secondary">
+          <span>Game Mode: </span>
+          <strong id="selectedModeText" style="color: #60a5fa; margin-left: 4px;">Creative</strong>
+        </button>
+        <button id="btnOpenControls" class="se-btn se-btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="8" cy="12" r="1"/><circle cx="16" cy="12" r="1"/></svg>
+          <span>Controls & Keys</span>
+        </button>
+        <button id="btnOpenSettings" class="se-btn se-btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </button>
+        <a href="/" class="se-btn se-btn-sub" title="Return to AS Cloud Portal">
+          <span>Return to AS Cloud</span>
+        </a>
+      </div>
+
+      <div class="menu-footer">
+        <span>Press Click anywhere to lock mouse and play</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Menu (Esc) -->
+  <div id="pauseMenu" class="game-modal-overlay" style="display: none;">
+    <div class="pause-menu-card">
+      <h2 class="pause-title">Game Paused</h2>
+      <div class="menu-actions">
+        <button id="btnResumeGame" class="se-btn se-btn-primary">Resume Game</button>
+        <button id="btnSaveWorld" class="se-btn se-btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Save World</span>
+        </button>
+        <button id="btnPauseToggleMode" class="se-btn se-btn-secondary">
+          <span>Switch to </span><span id="pauseNextModeText" style="color: #60a5fa; margin-left: 4px;">Survival</span>
+        </button>
+        <button id="btnPauseSettings" class="se-btn se-btn-secondary">Settings</button>
+        <button id="btnQuitToMenu" class="se-btn se-btn-sub">Quit to Title</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory / Block Palette Modal (E) -->
+  <div id="inventoryModal" class="game-modal-overlay" style="display: none;">
+    <div class="inventory-card">
+      <div class="inventory-header">
+        <h3>Creative Block Palette</h3>
+        <button id="btnCloseInventory" class="inventory-close-btn" title="Close [E]">&times;</button>
+      </div>
+      <p class="inventory-hint">Click any block to place it in your currently selected hotbar slot, or press keys 1-9 while hovering.</p>
+      
+      <div id="inventoryGrid" class="inventory-grid">
+        <!-- Generated dynamically with all block types -->
+      </div>
+
+      <div class="inventory-footer">
+        <button id="btnClearWorldEdits" class="se-btn se-btn-danger se-btn-sm">Reset World Modifications</button>
+        <button id="btnDoneInventory" class="se-btn se-btn-primary se-btn-sm">Close [E]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="game-modal-overlay" style="display: none;">
+    <div class="settings-card">
+      <div class="inventory-header">
+        <h3>Game Settings</h3>
+        <button id="btnCloseSettings" class="inventory-close-btn">&times;</button>
+      </div>
+      
+      <div class="settings-body">
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-name">Render Distance</span>
+            <span class="setting-val" id="valRenderDistance">4 Chunks</span>
+          </div>
+          <input type="range" id="sliderRenderDistance" min="2" max="8" value="4" class="se-slider">
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-name">Mouse Sensitivity</span>
+            <span class="setting-val" id="valSensitivity">Normal (0.0025)</span>
+          </div>
+          <input type="range" id="sliderSensitivity" min="10" max="60" value="25" class="se-slider">
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-name">Field of View (FOV)</span>
+            <span class="setting-val" id="valFOV">75 deg</span>
+          </div>
+          <input type="range" id="sliderFOV" min="60" max="95" value="75" class="se-slider">
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-name">Sound Effects Volume</span>
+            <span class="setting-val" id="valSoundVolume">70%</span>
+          </div>
+          <input type="range" id="sliderSoundVolume" min="0" max="100" value="70" class="se-slider">
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-name">Day / Night Cycle</span>
+            <span class="setting-val" id="valDayCycle">Normal (4 min)</span>
+          </div>
+          <input type="range" id="sliderDayCycle" min="0" max="3" value="1" class="se-slider">
+        </div>
+
+        <div class="setting-row checkbox-row">
+          <label class="setting-checkbox-label">
+            <input type="checkbox" id="checkAtmosphericFog" checked>
+            <span>Atmospheric Distance Fog</span>
+          </label>
+        </div>
+
+        <div class="setting-row checkbox-row">
+          <label class="setting-checkbox-label">
+            <input type="checkbox" id="checkSmoothLighting" checked>
+            <span>Ambient Occlusion Simulation</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-footer">
+        <button id="btnSaveSettings" class="se-btn se-btn-primary se-btn-full">Done & Return</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Guide Modal -->
+  <div id="controlsModal" class="game-modal-overlay" style="display: none;">
+    <div class="controls-card">
+      <div class="inventory-header">
+        <h3>Controls & Hotkeys</h3>
+        <button id="btnCloseControls" class="inventory-close-btn">&times;</button>
+      </div>
+      
+      <div class="controls-grid">
+        <div class="control-item"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Walk / Move</span></div>
+        <div class="control-item"><kbd>Mouse</kbd><span>Look around / Aim</span></div>
+        <div class="control-item"><kbd>Left Click</kbd><span>Break / Mine voxel</span></div>
+        <div class="control-item"><kbd>Right Click</kbd><span>Place selected block</span></div>
+        <div class="control-item"><kbd>Space</kbd><span>Jump / Swim upwards</span></div>
+        <div class="control-item"><kbd>Shift</kbd><span>Sprint / Speed boost</span></div>
+        <div class="control-item"><kbd>1</kbd> - <kbd>9</kbd><span>Select Hotbar Slot</span></div>
+        <div class="control-item"><kbd>Scroll Wheel</kbd><span>Cycle Hotbar Slots</span></div>
+        <div class="control-item"><kbd>E</kbd><span>Open Block Inventory</span></div>
+        <div class="control-item"><kbd>F</kbd><span>Toggle Flight (Creative)</span></div>
+        <div class="control-item"><kbd>F3</kbd><span>Toggle Debug & Coords</span></div>
+        <div class="control-item"><kbd>Esc</kbd><span>Pause / Unlock Cursor</span></div>
+      </div>
+
+      <div class="settings-footer">
+        <button id="btnDoneControls" class="se-btn se-btn-primary se-btn-full">Back to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-Game Floating Toast Notification -->
+  <div id="gameToast" class="game-toast"></div>
+
+  <!-- Game Logic Script -->
+  <script src="game.js"></script>
+</body>
+</html>

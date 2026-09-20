@@ -41,8 +41,17 @@
       themeToggle: { enabled: false },
       form: { enabled: false, endpoint: '' },
       seo: { enabled: false, ogImage: '' },
-      customScript: { enabled: false, head: '', body: '' }
-    }
+      customScript: { enabled: false, head: '', body: '' },
+      announcement: { enabled: false, text: 'Special Launch Offer: Build and launch your website today!', linkText: 'Learn More', link: '', bg: '#2563eb', textColor: '#ffffff' },
+      backToTop: { enabled: false, style: 'pill', position: 'right' },
+      audio: { enabled: false, url: '', title: 'Ambient Soundscape', autoplay: false },
+      particle: { enabled: false, color: '#60a5fa', density: 70 },
+      visitorProof: { enabled: false, text: 'people are exploring this site right now', min: 18, max: 48 },
+      newsletter: { enabled: false, title: 'Subscribe to Our Newsletter', desc: 'Get exclusive updates, insights, and releases delivered to your inbox.', delay: 4 },
+      neonCursor: { enabled: false, color: '#00f0ff' }
+    },
+    customCss: '',
+    customJs: ''
   };
 
   // Undo / Redo History Stack
@@ -87,6 +96,12 @@
   const propMediaAlt = document.getElementById('propMediaAlt');
   const propMediaFit = document.getElementById('propMediaFit');
   const propMediaRatio = document.getElementById('propMediaRatio');
+  const propMediaWidthSelect = document.getElementById('propMediaWidthSelect');
+  const propMediaHeightSelect = document.getElementById('propMediaHeightSelect');
+  const propMediaPosition = document.getElementById('propMediaPosition');
+  const propMediaZoom = document.getElementById('propMediaZoom');
+  const valMediaZoom = document.getElementById('valMediaZoom');
+  const mediaRatioPresets = document.getElementById('mediaRatioPresets');
 
   const sectionTypography = document.getElementById('sectionTypography');
   const propTextContent = document.getElementById('propTextContent');
@@ -129,6 +144,21 @@
   const editElementHtml = document.getElementById('editElementHtml');
   const applyElementCodeBtn = document.getElementById('applyElementCodeBtn');
 
+  // Codebar Project IDE Elements
+  const openCodebarBtn = document.getElementById('openCodebarBtn');
+  const codebarModal = document.getElementById('codebarModal');
+  const codebarEditor = document.getElementById('codebarEditor');
+  const codebarGutter = document.getElementById('codebarGutter');
+  const codebarFileList = document.getElementById('codebarFileList');
+  const codebarTabName = document.getElementById('codebarTabName');
+  const codebarCurrentFilePath = document.getElementById('codebarCurrentFilePath');
+  const codebarLineCount = document.getElementById('codebarLineCount');
+  const codebarByteCount = document.getElementById('codebarByteCount');
+  const codebarFormatBtn = document.getElementById('codebarFormatBtn');
+  const codebarCopyBtn = document.getElementById('codebarCopyBtn');
+  const applyCodebarBtn = document.getElementById('applyCodebarBtn');
+  let activeCodebarFile = 'index.html'; // Tracks currently open file in Codebar
+
   // =========================================================================
   // Initialization & Storage
   // =========================================================================
@@ -138,6 +168,7 @@
     setupEventListeners();
     setupKeyboardShortcuts();
     setupPluginsListeners();
+    setupCodebarEditorEvents();
     renderPageTabs();
     loadPage(project.activePageId);
     recordHistory('Initial Load');
@@ -540,16 +571,49 @@
     }
 
     // Section 2: Media Inspector
-    const isMedia = type === 'image' || type === 'video' || el.tagName === 'IMG' || el.tagName === 'IFRAME';
+    const isMedia = type === 'image' || type === 'video' || el.tagName === 'IMG' || el.tagName === 'IFRAME' || !!el.querySelector('img, video, iframe');
     sectionMedia.style.display = isMedia ? 'block' : 'none';
     if (isMedia) {
-      if (type === 'image' || el.tagName === 'IMG') {
-        propMediaUrl.value = el.getAttribute('src') || '';
-        propMediaAlt.value = el.getAttribute('alt') || '';
-        propMediaFit.value = comp.objectFit || 'cover';
-        propMediaRatio.value = el.style.aspectRatio || 'auto';
-      } else if (type === 'video') {
-        propMediaUrl.value = el.getAttribute('data-we-video-src') || el.getAttribute('src') || '';
+      const mediaEl = (el.tagName === 'IMG' || el.tagName === 'VIDEO' || el.tagName === 'IFRAME') ? el : el.querySelector('img, video, iframe');
+      const mediaComp = mediaEl ? window.getComputedStyle(mediaEl) : comp;
+
+      if (type === 'image' || (mediaEl && mediaEl.tagName === 'IMG')) {
+        propMediaUrl.value = mediaEl ? (mediaEl.getAttribute('src') || '') : '';
+        propMediaAlt.value = mediaEl ? (mediaEl.getAttribute('alt') || '') : '';
+        propMediaFit.value = (mediaEl && mediaEl.style.objectFit) || mediaComp.objectFit || 'contain';
+        const currentRatio = (mediaEl && mediaEl.style.aspectRatio) || 'auto';
+        propMediaRatio.value = currentRatio;
+        if (propMediaWidthSelect) propMediaWidthSelect.value = (mediaEl && mediaEl.style.width) || '100%';
+        if (propMediaHeightSelect) propMediaHeightSelect.value = (mediaEl && mediaEl.style.maxHeight) || 'none';
+        if (propMediaPosition) propMediaPosition.value = (mediaEl && mediaEl.style.objectPosition) || 'center';
+
+        // Zoom scale
+        let zoomVal = 100;
+        if (mediaEl && mediaEl.style.transform) {
+          const match = mediaEl.style.transform.match(/scale\(([^)]+)\)/);
+          if (match) zoomVal = Math.round(parseFloat(match[1]) * 100);
+        }
+        if (propMediaZoom) propMediaZoom.value = zoomVal;
+        if (valMediaZoom) valMediaZoom.textContent = zoomVal + '%';
+
+        // Preset pill sync
+        if (mediaRatioPresets) {
+          mediaRatioPresets.querySelectorAll('.we-pill-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-ratio') === currentRatio);
+          });
+        }
+      } else if (type === 'video' || (mediaEl && (mediaEl.tagName === 'IFRAME' || mediaEl.tagName === 'VIDEO'))) {
+        propMediaUrl.value = el.getAttribute('data-we-video-src') || (mediaEl ? mediaEl.getAttribute('src') : '') || '';
+        const currentRatio = (mediaEl && mediaEl.style.aspectRatio) || (el.style.aspectRatio) || '16 / 9';
+        propMediaRatio.value = currentRatio;
+        if (propMediaWidthSelect) propMediaWidthSelect.value = el.style.width || '100%';
+        if (propMediaHeightSelect) propMediaHeightSelect.value = el.style.maxHeight || 'none';
+
+        if (mediaRatioPresets) {
+          mediaRatioPresets.querySelectorAll('.we-pill-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-ratio') === currentRatio);
+          });
+        }
       }
     }
 
@@ -675,6 +739,221 @@
   }
 
   // =========================================================================
+  // Codebar Project IDE Engine (Full File Explorer & Live Sync)
+  // =========================================================================
+  function openCodebarIDE() {
+    syncCurrentCanvasToPage();
+    renderCodebarFileList();
+    const currentSlug = project.pages[project.activePageId] ? project.pages[project.activePageId].slug : 'index';
+    loadCodebarFile(activeCodebarFile || `${currentSlug}.html`);
+    openModal('codebarModal');
+  }
+
+  function syncCurrentCanvasToPage() {
+    if (project.pages[project.activePageId] && canvas) {
+      const clone = canvas.cloneNode(true);
+      clone.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+      project.pages[project.activePageId].html = clone.innerHTML;
+    }
+  }
+
+  function renderCodebarFileList() {
+    if (!codebarFileList) return;
+    codebarFileList.innerHTML = '';
+
+    // Category 1: Pages (HTML)
+    const catPages = document.createElement('div');
+    catPages.className = 'codebar-category-title';
+    catPages.textContent = 'Pages (HTML)';
+    codebarFileList.appendChild(catPages);
+
+    Object.keys(project.pages).forEach(pageId => {
+      const page = project.pages[pageId];
+      const fileName = `${page.slug}.html`;
+      const item = document.createElement('div');
+      item.className = `codebar-file-item ${activeCodebarFile === fileName ? 'active' : ''}`;
+      item.innerHTML = `
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>${fileName}</span>
+        <span class="codebar-file-badge codebar-badge-html">HTML</span>
+      `;
+      item.addEventListener('click', () => {
+        loadCodebarFile(fileName);
+      });
+      codebarFileList.appendChild(item);
+    });
+
+    // Category 2: Stylesheets
+    const catCss = document.createElement('div');
+    catCss.className = 'codebar-category-title';
+    catCss.textContent = 'Styles (CSS)';
+    codebarFileList.appendChild(catCss);
+
+    const cssItem = document.createElement('div');
+    cssItem.className = `codebar-file-item ${activeCodebarFile === 'style.css' ? 'active' : ''}`;
+    cssItem.innerHTML = `
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      <span>style.css</span>
+      <span class="codebar-file-badge codebar-badge-css">CSS</span>
+    `;
+    cssItem.addEventListener('click', () => {
+      loadCodebarFile('style.css');
+    });
+    codebarFileList.appendChild(cssItem);
+
+    // Category 3: Scripts & Plugins
+    const catJs = document.createElement('div');
+    catJs.className = 'codebar-category-title';
+    catJs.textContent = 'Scripts (JS)';
+    codebarFileList.appendChild(catJs);
+
+    const jsItem = document.createElement('div');
+    jsItem.className = `codebar-file-item ${activeCodebarFile === 'plugins.js' ? 'active' : ''}`;
+    jsItem.innerHTML = `
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <span>plugins.js</span>
+      <span class="codebar-file-badge codebar-badge-js">JS</span>
+    `;
+    jsItem.addEventListener('click', () => {
+      loadCodebarFile('plugins.js');
+    });
+    codebarFileList.appendChild(jsItem);
+  }
+
+  function loadCodebarFile(fileName) {
+    activeCodebarFile = fileName;
+    if (codebarTabName) codebarTabName.textContent = fileName;
+    if (codebarCurrentFilePath) codebarCurrentFilePath.textContent = `project / ${fileName}`;
+
+    document.querySelectorAll('.codebar-file-item').forEach(item => {
+      const isCurrent = item.querySelector('span') && item.querySelector('span').textContent === fileName;
+      item.classList.toggle('active', isCurrent);
+    });
+
+    let content = '';
+    if (fileName.endsWith('.html')) {
+      const slug = fileName.replace('.html', '');
+      const page = Object.values(project.pages).find(p => p.slug === slug) || project.pages[project.activePageId];
+      if (page) {
+        if (page.id === project.activePageId && canvas) {
+          const clone = canvas.cloneNode(true);
+          clone.querySelectorAll('.we-section-insert-bar').forEach(b => b.remove());
+          content = formatHtmlString(clone.innerHTML);
+        } else {
+          content = formatHtmlString(page.html || '');
+        }
+      }
+    } else if (fileName === 'style.css') {
+      content = project.customCss || generateBundledCss();
+    } else if (fileName === 'plugins.js') {
+      content = project.customJs || generateRuntimePluginsJs();
+    }
+
+    if (codebarEditor) {
+      codebarEditor.value = content;
+      updateCodebarStatsAndGutter();
+    }
+  }
+
+  function updateCodebarStatsAndGutter() {
+    if (!codebarEditor || !codebarGutter) return;
+    const lines = codebarEditor.value.split('\n');
+    const lineCount = lines.length;
+    const byteCount = (new Blob([codebarEditor.value]).size / 1024).toFixed(1);
+
+    if (codebarLineCount) codebarLineCount.textContent = `${lineCount} lines`;
+    if (codebarByteCount) codebarByteCount.textContent = `${byteCount} KB`;
+
+    let gutterHtml = '';
+    for (let i = 1; i <= lineCount; i++) {
+      gutterHtml += `<div>${i}</div>`;
+    }
+    codebarGutter.innerHTML = gutterHtml;
+  }
+
+  function formatCodebarCode() {
+    if (!codebarEditor) return;
+    if (activeCodebarFile.endsWith('.html')) {
+      codebarEditor.value = formatHtmlString(codebarEditor.value);
+    }
+    updateCodebarStatsAndGutter();
+  }
+
+  function applyCodebarChanges() {
+    if (!codebarEditor) return;
+    const updatedContent = codebarEditor.value;
+
+    if (activeCodebarFile.endsWith('.html')) {
+      const slug = activeCodebarFile.replace('.html', '');
+      const page = Object.values(project.pages).find(p => p.slug === slug);
+      if (page) {
+        page.html = updatedContent;
+        if (page.id === project.activePageId) {
+          canvas.innerHTML = updatedContent;
+          bindCanvasNodeListeners();
+          renderSectionInsertBars();
+          deselectElement();
+          updateLayersTree();
+        }
+      }
+    } else if (activeCodebarFile === 'style.css') {
+      project.customCss = updatedContent;
+    } else if (activeCodebarFile === 'plugins.js') {
+      project.customJs = updatedContent;
+    }
+
+    saveProjectToStorage();
+    recordHistory(`Codebar Edit ${activeCodebarFile}`);
+    triggerSaveIndicator();
+
+    const applyBtn = document.getElementById('applyCodebarBtn');
+    if (applyBtn) {
+      const originalHtml = applyBtn.innerHTML;
+      applyBtn.innerHTML = '<span>Synced to Canvas!</span>';
+      setTimeout(() => { applyBtn.innerHTML = originalHtml; }, 1400);
+    }
+  }
+
+  function generateRuntimePluginsJs() {
+    return `/**
+ * AS Web Editor • Runtime Plugins Engine
+ * Standalone Client-Side Extensions
+ */
+(function () {
+  'use strict';
+  console.log('AS Web Editor Runtime Plugins active');
+})();
+`;
+  }
+
+  function setupCodebarEditorEvents() {
+    if (!codebarEditor) return;
+    codebarEditor.addEventListener('input', updateCodebarStatsAndGutter);
+    codebarEditor.addEventListener('scroll', () => {
+      if (codebarGutter) codebarGutter.scrollTop = codebarEditor.scrollTop;
+    });
+    codebarEditor.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = codebarEditor.selectionStart;
+        const end = codebarEditor.selectionEnd;
+        codebarEditor.value = codebarEditor.value.substring(0, start) + '  ' + codebarEditor.value.substring(end);
+        codebarEditor.selectionStart = codebarEditor.selectionEnd = start + 2;
+        updateCodebarStatsAndGutter();
+      }
+    });
+
+    if (openCodebarBtn) openCodebarBtn.addEventListener('click', openCodebarIDE);
+    if (applyCodebarBtn) applyCodebarBtn.addEventListener('click', applyCodebarChanges);
+    if (codebarFormatBtn) codebarFormatBtn.addEventListener('click', formatCodebarCode);
+    if (codebarCopyBtn) codebarCopyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(codebarEditor.value);
+      codebarCopyBtn.textContent = 'Copied!';
+      setTimeout(() => { codebarCopyBtn.textContent = 'Copy'; }, 1500);
+    });
+  }
+
+  // =========================================================================
   // Plugins & Integrations Engine
   // =========================================================================
   function setupPluginsListeners() {
@@ -721,6 +1000,70 @@
       saveProjectToStorage();
     });
 
+    // New 7 Plugin Toggles
+    const pAnnounce = document.getElementById('pluginAnnouncementToggle');
+    if (pAnnounce) {
+      pAnnounce.addEventListener('change', (e) => {
+        project.plugins.announcement.enabled = e.target.checked;
+        document.getElementById('pluginAnnouncementFields').style.display = e.target.checked ? 'flex' : 'none';
+        saveProjectToStorage();
+      });
+    }
+
+    const pBackTop = document.getElementById('pluginBackToTopToggle');
+    if (pBackTop) {
+      pBackTop.addEventListener('change', (e) => {
+        project.plugins.backToTop.enabled = e.target.checked;
+        document.getElementById('pluginBackToTopFields').style.display = e.target.checked ? 'flex' : 'none';
+        saveProjectToStorage();
+      });
+    }
+
+    const pAudio = document.getElementById('pluginAudioToggle');
+    if (pAudio) {
+      pAudio.addEventListener('change', (e) => {
+        project.plugins.audio.enabled = e.target.checked;
+        document.getElementById('pluginAudioFields').style.display = e.target.checked ? 'flex' : 'none';
+        saveProjectToStorage();
+      });
+    }
+
+    const pParticle = document.getElementById('pluginParticleToggle');
+    if (pParticle) {
+      pParticle.addEventListener('change', (e) => {
+        project.plugins.particle.enabled = e.target.checked;
+        document.getElementById('pluginParticleFields').style.display = e.target.checked ? 'flex' : 'none';
+        saveProjectToStorage();
+      });
+    }
+
+    const pVisitor = document.getElementById('pluginVisitorToggle');
+    if (pVisitor) {
+      pVisitor.addEventListener('change', (e) => {
+        project.plugins.visitorProof.enabled = e.target.checked;
+        document.getElementById('pluginVisitorFields').style.display = e.target.checked ? 'flex' : 'none';
+        saveProjectToStorage();
+      });
+    }
+
+    const pNewsletter = document.getElementById('pluginNewsletterToggle');
+    if (pNewsletter) {
+      pNewsletter.addEventListener('change', (e) => {
+        project.plugins.newsletter.enabled = e.target.checked;
+        document.getElementById('pluginNewsletterFields').style.display = e.target.checked ? 'flex' : 'none';
+        saveProjectToStorage();
+      });
+    }
+
+    const pNeon = document.getElementById('pluginNeonCursorToggle');
+    if (pNeon) {
+      pNeon.addEventListener('change', (e) => {
+        project.plugins.neonCursor.enabled = e.target.checked;
+        document.getElementById('pluginNeonCursorFields').style.display = e.target.checked ? 'flex' : 'none';
+        saveProjectToStorage();
+      });
+    }
+
     // Inputs
     document.getElementById('pluginWhatsappNumber').addEventListener('input', (e) => {
       project.plugins.whatsapp.number = e.target.value;
@@ -758,6 +1101,42 @@
       project.plugins.customScript.body = e.target.value;
       saveProjectToStorage();
     });
+
+    // New 7 Plugin Inputs
+    const setVal = (id, fn) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', (e) => { fn(e.target.value); saveProjectToStorage(); });
+    };
+
+    setVal('pluginAnnouncementText', v => project.plugins.announcement.text = v);
+    setVal('pluginAnnouncementLinkText', v => project.plugins.announcement.linkText = v);
+    setVal('pluginAnnouncementLink', v => project.plugins.announcement.link = v);
+    setVal('pluginAnnouncementBg', v => project.plugins.announcement.bg = v);
+    setVal('pluginAnnouncementTextColor', v => project.plugins.announcement.textColor = v);
+
+    const bStyle = document.getElementById('pluginBackToTopStyle');
+    if (bStyle) bStyle.addEventListener('change', e => { project.plugins.backToTop.style = e.target.value; saveProjectToStorage(); });
+    const bPos = document.getElementById('pluginBackToTopPos');
+    if (bPos) bPos.addEventListener('change', e => { project.plugins.backToTop.position = e.target.value; saveProjectToStorage(); });
+
+    setVal('pluginAudioUrl', v => project.plugins.audio.url = v);
+    setVal('pluginAudioTitle', v => project.plugins.audio.title = v);
+    const aAuto = document.getElementById('pluginAudioAutoplay');
+    if (aAuto) aAuto.addEventListener('change', e => { project.plugins.audio.autoplay = e.target.checked; saveProjectToStorage(); });
+
+    setVal('pluginParticleColor', v => project.plugins.particle.color = v);
+    const pDense = document.getElementById('pluginParticleDensity');
+    if (pDense) pDense.addEventListener('change', e => { project.plugins.particle.density = parseInt(e.target.value); saveProjectToStorage(); });
+
+    setVal('pluginVisitorText', v => project.plugins.visitorProof.text = v);
+    setVal('pluginVisitorMin', v => project.plugins.visitorProof.min = parseInt(v) || 10);
+    setVal('pluginVisitorMax', v => project.plugins.visitorProof.max = parseInt(v) || 50);
+
+    setVal('pluginNewsletterTitle', v => project.plugins.newsletter.title = v);
+    setVal('pluginNewsletterDesc', v => project.plugins.newsletter.desc = v);
+    setVal('pluginNewsletterDelay', v => project.plugins.newsletter.delay = parseInt(v) || 4);
+
+    setVal('pluginNeonCursorColor', v => project.plugins.neonCursor.color = v);
   }
 
   function syncPluginFieldsFromState() {
@@ -802,6 +1181,58 @@
       document.getElementById('pluginHeadScript').value = project.plugins.customScript.head || '';
       document.getElementById('pluginBodyScript').value = project.plugins.customScript.body || '';
     }
+
+    // Sync new 7 plugins
+    const syncField = (toggleId, fieldsId, stateKey, populateFn) => {
+      const toggle = document.getElementById(toggleId);
+      const fields = document.getElementById(fieldsId);
+      const state = project.plugins[stateKey];
+      if (toggle && state) {
+        toggle.checked = !!state.enabled;
+        if (fields) fields.style.display = state.enabled ? 'flex' : 'none';
+        if (populateFn) populateFn(state);
+      }
+    };
+
+    syncField('pluginAnnouncementToggle', 'pluginAnnouncementFields', 'announcement', s => {
+      const t = document.getElementById('pluginAnnouncementText'); if (t) t.value = s.text || '';
+      const lt = document.getElementById('pluginAnnouncementLinkText'); if (lt) lt.value = s.linkText || '';
+      const l = document.getElementById('pluginAnnouncementLink'); if (l) l.value = s.link || '';
+      const bg = document.getElementById('pluginAnnouncementBg'); if (bg) bg.value = s.bg || '#2563eb';
+      const tc = document.getElementById('pluginAnnouncementTextColor'); if (tc) tc.value = s.textColor || '#ffffff';
+    });
+
+    syncField('pluginBackToTopToggle', 'pluginBackToTopFields', 'backToTop', s => {
+      const st = document.getElementById('pluginBackToTopStyle'); if (st) st.value = s.style || 'pill';
+      const pos = document.getElementById('pluginBackToTopPos'); if (pos) pos.value = s.position || 'right';
+    });
+
+    syncField('pluginAudioToggle', 'pluginAudioFields', 'audio', s => {
+      const u = document.getElementById('pluginAudioUrl'); if (u) u.value = s.url || '';
+      const t = document.getElementById('pluginAudioTitle'); if (t) t.value = s.title || '';
+      const ap = document.getElementById('pluginAudioAutoplay'); if (ap) ap.checked = !!s.autoplay;
+    });
+
+    syncField('pluginParticleToggle', 'pluginParticleFields', 'particle', s => {
+      const c = document.getElementById('pluginParticleColor'); if (c) c.value = s.color || '#60a5fa';
+      const d = document.getElementById('pluginParticleDensity'); if (d) d.value = s.density || 70;
+    });
+
+    syncField('pluginVisitorToggle', 'pluginVisitorFields', 'visitorProof', s => {
+      const t = document.getElementById('pluginVisitorText'); if (t) t.value = s.text || '';
+      const mi = document.getElementById('pluginVisitorMin'); if (mi) mi.value = s.min || 18;
+      const ma = document.getElementById('pluginVisitorMax'); if (ma) ma.value = s.max || 48;
+    });
+
+    syncField('pluginNewsletterToggle', 'pluginNewsletterFields', 'newsletter', s => {
+      const t = document.getElementById('pluginNewsletterTitle'); if (t) t.value = s.title || '';
+      const d = document.getElementById('pluginNewsletterDesc'); if (d) d.value = s.desc || '';
+      const dl = document.getElementById('pluginNewsletterDelay'); if (dl) dl.value = s.delay || 4;
+    });
+
+    syncField('pluginNeonCursorToggle', 'pluginNeonCursorFields', 'neonCursor', s => {
+      const c = document.getElementById('pluginNeonCursorColor'); if (c) c.value = s.color || '#00f0ff';
+    });
   }
 
   // =========================================================================
@@ -931,36 +1362,144 @@
       recordHistory('Update Button Target Window');
     });
 
-    // Inspector Events: Media
-    propMediaUrl.addEventListener('input', (e) => {
-      if (!selectedElement) return;
-      const url = e.target.value;
-      if (selectedElement.tagName === 'IMG') {
-        selectedElement.src = url;
-      } else if (selectedElement.tagName === 'IFRAME') {
-        selectedElement.src = convertVideoUrlToEmbed(url);
-        selectedElement.setAttribute('data-we-video-src', url);
+    // Inspector Events: Media (Natural Ratio, Resizing & Crop)
+    function getSelectedMediaTarget() {
+      if (!selectedElement) return null;
+      if (selectedElement.tagName === 'IMG' || selectedElement.tagName === 'VIDEO' || selectedElement.tagName === 'IFRAME') {
+        return selectedElement;
       }
-      recordHistory('Update Media URL');
-    });
+      return selectedElement.querySelector('img, video, iframe') || selectedElement;
+    }
 
-    propMediaAlt.addEventListener('input', (e) => {
-      if (!selectedElement) return;
-      selectedElement.setAttribute('alt', e.target.value);
-      recordHistory('Update Media Alt');
-    });
+    if (propMediaUrl) {
+      propMediaUrl.addEventListener('input', (e) => {
+        if (!selectedElement) return;
+        const target = getSelectedMediaTarget();
+        const url = e.target.value.trim();
 
-    propMediaFit.addEventListener('change', (e) => {
-      if (!selectedElement) return;
-      selectedElement.style.objectFit = e.target.value;
-      recordHistory('Update Object Fit');
-    });
+        if (target.tagName === 'IMG') {
+          target.src = url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80';
+        } else if (target.tagName === 'IFRAME' || target.tagName === 'VIDEO') {
+          // If direct mp4/webm video, use <video> tag
+          if (url.endsWith('.mp4') || url.endsWith('.webm') || url.includes('.mp4?')) {
+            const vid = document.createElement('video');
+            vid.src = url;
+            vid.controls = true;
+            vid.style.width = '100%';
+            vid.style.height = 'auto';
+            vid.style.borderRadius = target.style.borderRadius || '12px';
+            vid.style.display = 'block';
+            target.parentNode.replaceChild(vid, target);
+          } else {
+            target.src = convertVideoUrlToEmbed(url);
+            selectedElement.setAttribute('data-we-video-src', url);
+          }
+        }
+        recordHistory('Update Media URL');
+      });
+    }
 
-    propMediaRatio.addEventListener('change', (e) => {
-      if (!selectedElement) return;
-      selectedElement.style.aspectRatio = e.target.value;
-      recordHistory('Update Aspect Ratio');
-    });
+    if (propMediaAlt) {
+      propMediaAlt.addEventListener('input', (e) => {
+        const target = getSelectedMediaTarget();
+        if (target) {
+          target.setAttribute('alt', e.target.value);
+          recordHistory('Update Media Alt');
+        }
+      });
+    }
+
+    if (propMediaFit) {
+      propMediaFit.addEventListener('change', (e) => {
+        const target = getSelectedMediaTarget();
+        if (target) {
+          target.style.objectFit = e.target.value;
+          recordHistory('Update Media Object Fit');
+        }
+      });
+    }
+
+    function applyMediaRatio(ratio) {
+      const target = getSelectedMediaTarget();
+      if (!target) return;
+      target.style.aspectRatio = ratio;
+      if (selectedElement && selectedElement !== target) {
+        selectedElement.style.aspectRatio = ratio;
+      }
+      if (propMediaRatio) propMediaRatio.value = ratio;
+      if (mediaRatioPresets) {
+        mediaRatioPresets.querySelectorAll('.we-pill-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-ratio') === ratio);
+        });
+      }
+      recordHistory(`Update Aspect Ratio (${ratio})`);
+    }
+
+    if (propMediaRatio) {
+      propMediaRatio.addEventListener('change', (e) => {
+        applyMediaRatio(e.target.value);
+      });
+    }
+
+    if (mediaRatioPresets) {
+      mediaRatioPresets.querySelectorAll('.we-pill-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const ratio = this.getAttribute('data-ratio');
+          applyMediaRatio(ratio);
+        });
+      });
+    }
+
+    if (propMediaWidthSelect) {
+      propMediaWidthSelect.addEventListener('change', (e) => {
+        const target = getSelectedMediaTarget();
+        if (!target) return;
+        target.style.width = e.target.value;
+        if (selectedElement && selectedElement !== target) {
+          selectedElement.style.width = e.target.value;
+        }
+        recordHistory('Update Media Width');
+      });
+    }
+
+    if (propMediaHeightSelect) {
+      propMediaHeightSelect.addEventListener('change', (e) => {
+        const target = getSelectedMediaTarget();
+        if (!target) return;
+        target.style.maxHeight = e.target.value;
+        if (selectedElement && selectedElement !== target) {
+          selectedElement.style.maxHeight = e.target.value;
+        }
+        recordHistory('Update Media Max Height');
+      });
+    }
+
+    if (propMediaPosition) {
+      propMediaPosition.addEventListener('change', (e) => {
+        const target = getSelectedMediaTarget();
+        if (target) {
+          target.style.objectPosition = e.target.value;
+          recordHistory('Update Media Focal Position');
+        }
+      });
+    }
+
+    if (propMediaZoom) {
+      propMediaZoom.addEventListener('input', (e) => {
+        const target = getSelectedMediaTarget();
+        const scale = (parseInt(e.target.value) / 100).toFixed(2);
+        if (valMediaZoom) valMediaZoom.textContent = `${e.target.value}%`;
+        if (target) {
+          target.style.transform = `scale(${scale})`;
+          target.style.transformOrigin = 'center center';
+          if (target.parentNode) target.parentNode.style.overflow = 'hidden';
+          saveProjectToStorage();
+        }
+      });
+      propMediaZoom.addEventListener('change', () => {
+        recordHistory('Update Media Zoom Scale');
+      });
+    }
 
     // Inspector Events: Typography
     propTextContent.addEventListener('input', (e) => {
@@ -1326,9 +1865,11 @@
         img.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80';
         img.alt = 'Modern Abstract Artwork';
         img.style.width = '100%';
+        img.style.maxWidth = '100%';
         img.style.height = 'auto';
-        img.style.maxHeight = '420px';
-        img.style.objectFit = 'cover';
+        img.style.maxHeight = 'none';
+        img.style.aspectRatio = 'auto';
+        img.style.objectFit = 'contain';
         img.style.borderRadius = '12px';
         img.style.display = 'block';
         el.appendChild(img);
@@ -1336,14 +1877,22 @@
         break;
 
       case 'video':
+        const videoWrapper = document.createElement('div');
+        videoWrapper.className = 'we-media-frame';
+        videoWrapper.style.width = '100%';
+        videoWrapper.style.maxWidth = '100%';
+        videoWrapper.style.aspectRatio = '16 / 9';
+        videoWrapper.style.borderRadius = '12px';
+        videoWrapper.style.overflow = 'hidden';
         const iframe = document.createElement('iframe');
         iframe.src = 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ';
         iframe.style.width = '100%';
-        iframe.style.aspectRatio = '16 / 9';
+        iframe.style.height = '100%';
         iframe.style.border = 'none';
-        iframe.style.borderRadius = '12px';
+        iframe.style.display = 'block';
         iframe.setAttribute('allowfullscreen', 'true');
-        el.appendChild(iframe);
+        videoWrapper.appendChild(iframe);
+        el.appendChild(videoWrapper);
         el.setAttribute('data-we-video-src', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
         el.style.marginBottom = '20px';
         break;
@@ -1992,6 +2541,153 @@ ${pluginBodyTags}
     // 4. Custom Body Scripts
     if (plugins.customScript && plugins.customScript.enabled && plugins.customScript.body) {
       out += `  ${plugins.customScript.body}\n`;
+    }
+
+    // 5. Announcement Top Bar
+    if (plugins.announcement && plugins.announcement.enabled) {
+      const ann = plugins.announcement;
+      const msg = escapeHtml(ann.text || 'Special Announcement');
+      const bg = ann.bg || '#2563eb';
+      const tc = ann.textColor || '#ffffff';
+      const linkHtml = ann.link ? `<a href="${escapeHtml(ann.link)}" style="background: rgba(255,255,255,0.2); color: inherit; padding: 3px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; margin-left: 8px;">${escapeHtml(ann.linkText || 'Learn More')}</a>` : '';
+      out += `
+  <!-- Announcement Top Bar (AS Plugin) -->
+  <div id="asAnnouncementBar" style="background: ${bg}; color: ${tc}; padding: 10px 20px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; position: sticky; top: 0; z-index: 9997;">
+    <span>${msg}</span>${linkHtml}
+    <button onclick="document.getElementById('asAnnouncementBar').style.display='none'" style="margin-left: 14px; background: transparent; border: none; color: inherit; font-size: 16px; cursor: pointer; line-height: 1;">&times;</button>
+  </div>\n`;
+    }
+
+    // 6. Back-to-Top Button
+    if (plugins.backToTop && plugins.backToTop.enabled) {
+      const posStyle = plugins.backToTop.position === 'left' ? 'left: 24px;' : 'right: 24px;';
+      const isPill = plugins.backToTop.style !== 'circle';
+      out += `
+  <!-- Back-to-Top Button (AS Plugin) -->
+  <button id="asBackToTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="display: none; position: fixed; bottom: 24px; ${posStyle} z-index: 9996; background: #0a84ff; color: #fff; border: none; padding: ${isPill ? '8px 18px' : '12px'}; border-radius: ${isPill ? '999px' : '50%'}; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 16px rgba(10, 132, 255, 0.45); align-items: center; gap: 6px;">
+    <span>Top &uarr;</span>
+  </button>
+  <script>
+    window.addEventListener('scroll', function() {
+      var btn = document.getElementById('asBackToTop');
+      if (btn) btn.style.display = window.scrollY > 280 ? 'flex' : 'none';
+    });
+  </script>\n`;
+    }
+
+    // 7. Background Audio Player
+    if (plugins.audio && plugins.audio.enabled && plugins.audio.url) {
+      const aud = plugins.audio;
+      out += `
+  <!-- Background Audio Player (AS Plugin) -->
+  <div id="asAudioWidget" style="position: fixed; bottom: 24px; left: 24px; z-index: 9995; background: rgba(18, 19, 24, 0.9); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 999px; padding: 6px 16px 6px 10px; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+    <audio id="asAudioTrack" src="${escapeHtml(aud.url)}" ${aud.autoplay ? 'autoplay muted' : ''} loop></audio>
+    <button id="asAudioToggleBtn" onclick="var a=document.getElementById('asAudioTrack'); if(a.paused){a.play();this.textContent='Pause';}else{a.pause();this.textContent='Play';}" style="background: #0a84ff; color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 10px; font-weight: 700;">Play</button>
+    <span style="font-size: 12px; color: #e2e8f0; font-weight: 500;">${escapeHtml(aud.title || 'Audio')}</span>
+  </div>\n`;
+    }
+
+    // 8. Animated Particle Background
+    if (plugins.particle && plugins.particle.enabled) {
+      const part = plugins.particle;
+      out += `
+  <!-- Animated Particle Canvas (AS Plugin) -->
+  <canvas id="asParticleCanvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 0;"></canvas>
+  <script>
+    (function(){
+      var cv = document.getElementById('asParticleCanvas');
+      if(!cv) return;
+      var ctx = cv.getContext('2d');
+      var w, h;
+      function resize(){ w = cv.width = window.innerWidth; h = cv.height = window.innerHeight; }
+      window.addEventListener('resize', resize);
+      resize();
+      var pts = [];
+      var count = ${part.density || 70};
+      for(var i=0; i<count; i++) pts.push({x: Math.random()*w, y: Math.random()*h, vx: (Math.random()-0.5)*0.8, vy: (Math.random()-0.5)*0.8});
+      function frame(){
+        ctx.clearRect(0,0,w,h);
+        ctx.fillStyle = '${part.color || '#60a5fa'}';
+        for(var i=0; i<pts.length; i++){
+          var p = pts[i];
+          p.x += p.vx; p.y += p.vy;
+          if(p.x<0) p.x=w; if(p.x>w) p.x=0;
+          if(p.y<0) p.y=h; if(p.y>h) p.y=0;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+          for(var j=i+1; j<pts.length; j++){
+            var p2 = pts[j];
+            var d = Math.hypot(p.x-p2.x, p.y-p2.y);
+            if(d < 100){
+              ctx.strokeStyle = '${part.color || '#60a5fa'}';
+              ctx.globalAlpha = (1 - d/100) * 0.25;
+              ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+              ctx.globalAlpha = 1;
+            }
+          }
+        }
+        requestAnimationFrame(frame);
+      }
+      frame();
+    })();
+  </script>\n`;
+    }
+
+    // 9. Live Social Proof Visitor Counter
+    if (plugins.visitorProof && plugins.visitorProof.enabled) {
+      const vis = plugins.visitorProof;
+      out += `
+  <!-- Live Social Proof Counter (AS Plugin) -->
+  <div id="asVisitorBadge" style="position: fixed; bottom: 24px; left: 24px; z-index: 9994; background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(10px); padding: 8px 14px; border-radius: 999px; font-size: 12px; color: #fff; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(0,0,0,0.4);">
+    <span style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
+    <span><strong id="asVisitorCountVal">${vis.min || 24}</strong> ${escapeHtml(vis.text || 'people browsing right now')}</span>
+  </div>
+  <script>
+    setInterval(function(){
+      var el = document.getElementById('asVisitorCountVal');
+      if(el){
+        var min = ${vis.min || 18}, max = ${vis.max || 48};
+        el.textContent = Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+    }, 6000);
+  </script>\n`;
+    }
+
+    // 10. Newsletter Lead Capture Modal
+    if (plugins.newsletter && plugins.newsletter.enabled) {
+      const news = plugins.newsletter;
+      out += `
+  <!-- Newsletter Lead Capture Modal (AS Plugin) -->
+  <div id="asNewsletterModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #12141f; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 32px 28px; max-width: 440px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+      <h3 style="color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 8px;">${escapeHtml(news.title || 'Subscribe')}</h3>
+      <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 20px;">${escapeHtml(news.desc || 'Stay up to date with our newsletter.')}</p>
+      <form onsubmit="event.preventDefault(); document.getElementById('asNewsletterModal').style.display='none'; alert('Thank you for subscribing!');" style="display: flex; flex-direction: column; gap: 10px;">
+        <input type="email" placeholder="Enter your email address..." required style="padding: 12px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 13px; outline: none;">
+        <button type="submit" style="background: #0a84ff; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer;">Subscribe</button>
+      </form>
+      <button onclick="document.getElementById('asNewsletterModal').style.display='none'" style="margin-top: 14px; background: transparent; border: none; color: #64748b; font-size: 12px; cursor: pointer;">No thanks, close window</button>
+    </div>
+  </div>
+  <script>
+    setTimeout(function(){
+      var modal = document.getElementById('asNewsletterModal');
+      if(modal) modal.style.display = 'flex';
+    }, ${(news.delay || 4) * 1000});
+  </script>\n`;
+    }
+
+    // 11. Glowing Neon Cursor Follower
+    if (plugins.neonCursor && plugins.neonCursor.enabled) {
+      const neon = plugins.neonCursor;
+      out += `
+  <!-- Neon Cursor Follower (AS Plugin) -->
+  <div id="asNeonCursor" style="position: fixed; pointer-events: none; width: 16px; height: 16px; border-radius: 50%; background: ${neon.color || '#00f0ff'}; box-shadow: 0 0 16px ${neon.color || '#00f0ff'}; transform: translate(-50%, -50%); transition: transform 0.08s ease-out; z-index: 10001;"></div>
+  <script>
+    window.addEventListener('mousemove', function(e){
+      var cur = document.getElementById('asNeonCursor');
+      if(cur){ cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px'; }
+    });
+  </script>\n`;
     }
 
     return out;
