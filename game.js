@@ -131,9 +131,11 @@
   let isPaused = true;
   let isInventoryOpen = false;
 
-  // Viewmodel animation timers
+  // Viewmodel & camera animation timers
   let walkDistance = 0;
   let armSwingProgress = 0;
+  let bobTimer = 0;
+  let cameraStepOffset = 0;
 
   // Chunk streaming throttling
   let chunkCheckTimer = 0;
@@ -1092,13 +1094,13 @@
   }
 
   function checkPlayerCollision(px, py, pz) {
-    const hw = player.width / 2;
-    const minX = Math.floor(px - hw);
-    const maxX = Math.floor(px + hw);
-    const minY = Math.floor(py);
-    const maxY = Math.floor(py + player.height);
-    const minZ = Math.floor(pz - hw);
-    const maxZ = Math.floor(pz + hw);
+    const hw = 0.28; // Slightly narrower than block so player moves freely through 1-block corridors
+    const minX = Math.floor(px - hw + 0.001);
+    const maxX = Math.floor(px + hw - 0.001);
+    const minY = Math.floor(py + 0.001);
+    const maxY = Math.floor(py + player.height - 0.001);
+    const minZ = Math.floor(pz - hw + 0.001);
+    const maxZ = Math.floor(pz + hw - 0.001);
 
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {
@@ -1117,105 +1119,186 @@
     const currentBlock = getGlobalBlock(Math.floor(player.x), Math.floor(player.y + 0.5), Math.floor(player.z));
     player.inWater = (currentBlock === BLOCKS.WATER);
 
-    // 2. Movement Inputs
+    // 2. Movement Inputs (Support both WASD and Arrow Keys)
     let forward = 0;
     let right = 0;
-    if (keys['KeyW']) forward += 1;
-    if (keys['KeyS']) forward -= 1;
-    if (keys['KeyA']) right -= 1;
-    if (keys['KeyD']) right += 1;
+    if (keys['KeyW'] || keys['ArrowUp']) forward += 1;
+    if (keys['KeyS'] || keys['ArrowDown']) forward -= 1;
+    if (keys['KeyA'] || keys['ArrowLeft']) right -= 1;
+    if (keys['KeyD'] || keys['ArrowRight']) right += 1;
 
-    player.isSprinting = !!keys['ShiftLeft'] || !!keys['ShiftRight'];
+    player.isSprinting = !!keys['ShiftLeft'] || !!keys['ShiftRight'] || !!keys['ControlLeft'] || !!keys['ControlRight'];
 
-    let moveSpeed = 4.3;
-    if (player.isSprinting) moveSpeed *= 1.35;
-    if (player.isFlying) moveSpeed *= 2.2;
-    if (player.inWater) moveSpeed *= 0.65;
+    let moveSpeed = 4.6;
+    if (player.isSprinting) moveSpeed = 6.8;
+    if (player.isFlying) moveSpeed = 8.8;
+    if (player.inWater) moveSpeed = 2.9;
 
-    const sinY = Math.sin(player.yaw);
-    const cosY = Math.cos(player.yaw);
+    // True First-Person Camera Vectors
+    // In Three.js with order 'YXZ' and camera.rotation.y = yaw:
+    // Forward look on XZ plane is (-sin(yaw), -cos(yaw))
+    // Right strafe on XZ plane is (cos(yaw), -sin(yaw))
+    const fx = -Math.sin(player.yaw);
+    const fz = -Math.cos(player.yaw);
+    const rx = Math.cos(player.yaw);
+    const rz = -Math.sin(player.yaw);
 
-    const inputLen = Math.hypot(forward, right);
+    const moveX = forward * fx + right * rx;
+    const moveZ = forward * fz + right * rz;
+    const inputLen = Math.hypot(moveX, moveZ);
+
     let targetVx = 0;
     let targetVz = 0;
-    if (inputLen > 0) {
-      const normF = forward / inputLen;
-      const normR = right / inputLen;
-      targetVx = (normR * cosY - normF * sinY) * moveSpeed;
-      targetVz = (normR * sinY + normF * cosY) * moveSpeed;
+    if (inputLen > 1e-4) {
+      targetVx = (moveX / inputLen) * moveSpeed;
+      targetVz = (moveZ / inputLen) * moveSpeed;
     }
 
-    // Inertia & acceleration
-    const accel = player.onGround ? 12.0 : 4.0;
+    // High-responsiveness acceleration and snappy braking
+    const hasInput = (forward !== 0 || right !== 0);
+    const accel = player.onGround ? (hasInput ? 28.0 : 20.0) : 7.0;
     player.vx += (targetVx - player.vx) * Math.min(dt * accel, 1.0);
     player.vz += (targetVz - player.vz) * Math.min(dt * accel, 1.0);
 
-    // 3. Vertical Physics (Gravity & Jumping)
+    // Zero out tiny residual velocities to prevent micro-drifting
+    if (!hasInput && Math.hypot(player.vx, player.vz) < 0.05) {
+      player.vx = 0;
+      player.vz = 0;
+    }
+
+    // 3. Vertical Physics (Gravity, Jumping, Water & Flight)
     if (player.isFlying) {
       player.vy = 0;
-      if (keys['Space']) player.vy = moveSpeed * 0.8;
-      if (keys['ShiftLeft']) player.vy = -moveSpeed * 0.8;
+      if (keys['Space']) player.vy = moveSpeed * 0.85;
+      if (keys['ShiftLeft'] || keys['KeyC']) player.vy = -moveSpeed * 0.85;
+      player.y += player.vy * dt;
+      player.onGround = false;
     } else if (player.inWater) {
-      player.vy -= 8.0 * dt; // Light water gravity
+      player.vy -= 7.0 * dt; // Fluid buoyancy
       player.vy *= Math.pow(0.5, dt * 5.0); // Water drag
-      if (keys['Space']) player.vy = 2.5; // Swimming up
+      if (keys['Space']) player.vy = 3.2; // Swimming up smoothly
+      if (keys['ShiftLeft'] || keys['KeyC']) player.vy = -3.2; // Swimming down
+      const newY = player.y + player.vy * dt;
+      if (!checkPlayerCollision(player.x, newY, player.z)) {
+        player.y = newY;
+      } else {
+        player.vy = 0;
+      }
+      player.onGround = false;
     } else {
-      player.vy -= 26.0 * dt; // Regular gravity
+      // Normal Gravity
+      player.vy -= 28.0 * dt;
+      player.vy = Math.max(player.vy, -38.0); // Terminal fall velocity
+
+      // Jump
       if (keys['Space'] && player.onGround) {
-        player.vy = 8.5; // Jump impulse
+        player.vy = 8.8; // Crisp, responsive jump
         player.onGround = false;
         playSynthesizedSound('jump');
       }
-    }
 
-    // 4. Collision Resolution with Auto Step-Up
-    const newX = player.x + player.vx * dt;
-    if (!checkPlayerCollision(newX, player.y, player.z)) {
-      player.x = newX;
-    } else {
-      // Try step up (0.5 block max)
-      if (player.onGround && !checkPlayerCollision(newX, player.y + 0.6, player.z)) {
-        player.x = newX;
-        player.y += 0.6;
+      // Vertical movement & collision
+      const newY = player.y + player.vy * dt;
+      if (!checkPlayerCollision(player.x, newY, player.z)) {
+        player.y = newY;
+        player.onGround = false;
       } else {
-        player.vx = 0;
+        if (player.vy < 0) {
+          // Clean landing: snap to top of the block
+          player.y = Math.ceil(newY);
+          while (checkPlayerCollision(player.x, player.y, player.z) && player.y < CHUNK_HEIGHT) {
+            player.y += 0.05;
+          }
+          player.onGround = true;
+          if (settings.gameMode === 'survival' && player.vy < -16.0) {
+            damagePlayer(Math.floor((-player.vy - 16.0) / 2.5));
+          }
+        } else if (player.vy > 0) {
+          // Ceiling collision
+          player.y = Math.floor(newY + player.height) - player.height - 0.001;
+        }
+        player.vy = 0;
       }
     }
 
-    const newZ = player.z + player.vz * dt;
-    if (!checkPlayerCollision(player.x, player.y, newZ)) {
-      player.z = newZ;
-    } else {
-      // Try step up
-      if (player.onGround && !checkPlayerCollision(player.x, player.y + 0.6, newZ)) {
-        player.z = newZ;
-        player.y += 0.6;
-      } else {
-        player.vz = 0;
-      }
-    }
+    // 4. Smooth Horizontal Movement & Intelligent 1-Block Auto Step-Up
+    const stepHeight = 1.05; // Can smoothly step over 1-block terrain elevation
+    const dx = player.vx * dt;
+    const dz = player.vz * dt;
 
-    // Vertical Movement
-    const newY = player.y + player.vy * dt;
-    if (!checkPlayerCollision(player.x, newY, player.z)) {
-      player.y = newY;
-      player.onGround = false;
-    } else {
-      if (player.vy < 0) {
-        player.onGround = true;
-        // Check fall damage in survival mode
-        if (settings.gameMode === 'survival' && player.vy < -15.0) {
-          damagePlayer(Math.floor((-player.vy - 15.0) / 2));
+    if (Math.abs(dx) > 1e-5 || Math.abs(dz) > 1e-5) {
+      // Try direct diagonal movement
+      if (!checkPlayerCollision(player.x + dx, player.y, player.z + dz)) {
+        player.x += dx;
+        player.z += dz;
+      } else {
+        // Try stepping up if on ground
+        let stepped = false;
+        if (player.onGround) {
+          for (let sh = 0.25; sh <= stepHeight; sh += 0.25) {
+            if (!checkPlayerCollision(player.x, player.y + sh, player.z) &&
+                !checkPlayerCollision(player.x + dx, player.y + sh, player.z + dz)) {
+              player.x += dx;
+              player.z += dz;
+              player.y += sh;
+              cameraStepOffset -= sh;
+              stepped = true;
+              break;
+            }
+          }
+        }
+
+        if (!stepped) {
+          // Slide along X axis
+          if (!checkPlayerCollision(player.x + dx, player.y, player.z)) {
+            player.x += dx;
+          } else {
+            // Try step up on X
+            let steppedX = false;
+            if (player.onGround) {
+              for (let sh = 0.25; sh <= stepHeight; sh += 0.25) {
+                if (!checkPlayerCollision(player.x, player.y + sh, player.z) &&
+                    !checkPlayerCollision(player.x + dx, player.y + sh, player.z)) {
+                  player.x += dx;
+                  player.y += sh;
+                  cameraStepOffset -= sh;
+                  steppedX = true;
+                  break;
+                }
+              }
+            }
+            if (!steppedX) player.vx = 0;
+          }
+
+          // Slide along Z axis
+          if (!checkPlayerCollision(player.x, player.y, player.z + dz)) {
+            player.z += dz;
+          } else {
+            // Try step up on Z
+            let steppedZ = false;
+            if (player.onGround) {
+              for (let sh = 0.25; sh <= stepHeight; sh += 0.25) {
+                if (!checkPlayerCollision(player.x, player.y + sh, player.z) &&
+                    !checkPlayerCollision(player.x, player.y + sh, player.z + dz)) {
+                  player.z += dz;
+                  player.y += sh;
+                  cameraStepOffset -= sh;
+                  steppedZ = true;
+                  break;
+                }
+              }
+            }
+            if (!steppedZ) player.vz = 0;
+          }
         }
       }
-      player.vy = 0;
     }
 
     // Footstep Sound & Walk Distance Tracking
     const horizSpeed = Math.hypot(player.vx, player.vz);
     if (player.onGround && horizSpeed > 0.8) {
       walkDistance += horizSpeed * dt;
-      if (Math.floor(walkDistance * 1.8) > Math.floor((walkDistance - horizSpeed * dt) * 1.8)) {
+      if (Math.floor(walkDistance * 1.6) > Math.floor((walkDistance - horizSpeed * dt) * 1.6)) {
         playSynthesizedSound('step');
       }
     }
@@ -1586,14 +1669,16 @@
     let bobX = 0;
     let bobY = 0;
     if (player.onGround && horizSpeed > 0.5) {
-      const bobFreq = player.isSprinting ? 14 : 9;
-      bobX = Math.cos(walkDistance * bobFreq) * 0.018;
-      bobY = Math.abs(Math.sin(walkDistance * bobFreq)) * 0.022;
+      bobTimer += dt * (player.isSprinting ? 12.0 : 8.0);
+      bobX = Math.cos(bobTimer) * 0.012;
+      bobY = Math.abs(Math.sin(bobTimer)) * 0.015;
+    } else {
+      bobTimer = 0;
     }
 
     // 2. Arm swing animation
     if (armSwingProgress > 0) {
-      armSwingProgress = Math.max(0, armSwingProgress - dt * 4.5);
+      armSwingProgress = Math.max(0, armSwingProgress - dt * 4.8);
     }
     const swingSin = Math.sin(armSwingProgress * Math.PI);
     const swingAngleX = swingSin * 0.55;
@@ -1980,10 +2065,19 @@
       // 1. Update Physics & Player Position
       updatePhysics(dt);
 
+      // Smooth step-up camera glide
+      cameraStepOffset *= Math.pow(0.0001, dt);
+      if (Math.abs(cameraStepOffset) < 0.002) cameraStepOffset = 0;
+
       // 2. Sync Three.js Camera to Player
-      camera.position.set(player.x, player.y + player.eyeHeight, player.z);
+      camera.position.set(player.x, player.y + player.eyeHeight + cameraStepOffset, player.z);
       camera.rotation.y = player.yaw;
       camera.rotation.x = player.pitch;
+
+      // Dynamic Sprint FOV transition
+      const targetFOV = player.isSprinting ? settings.fov + 6 : settings.fov;
+      camera.fov += (targetFOV - camera.fov) * Math.min(dt * 8.0, 1.0);
+      camera.updateProjectionMatrix();
 
       // 3. Update Viewmodel Animation (bobbing & swing)
       updateViewmodelAnimation(dt);
@@ -2099,12 +2193,25 @@
       if (!isPointerLocked && !isInventoryOpen) {
         pauseGame();
       }
+      // Reset input keys on pointerlock change to eliminate phantom auto-walking
+      for (const k in keys) keys[k] = false;
+      player.vx = 0;
+      player.vz = 0;
+    });
+
+    window.addEventListener('blur', () => {
+      for (const k in keys) keys[k] = false;
+      player.vx = 0;
+      player.vz = 0;
     });
 
     window.addEventListener('mousemove', e => {
       if (!isPointerLocked) return;
-      player.yaw -= e.movementX * settings.mouseSensitivity;
-      player.pitch -= e.movementY * settings.mouseSensitivity;
+      // Clamp extreme mouse movement spikes for ultra-smooth aiming
+      const dx = Math.max(-100, Math.min(100, e.movementX));
+      const dy = Math.max(-100, Math.min(100, e.movementY));
+      player.yaw -= dx * settings.mouseSensitivity;
+      player.pitch -= dy * settings.mouseSensitivity;
       // Clamp pitch (-89 to +89 degrees)
       player.pitch = Math.max(-Math.PI / 2 + 0.02, Math.min(Math.PI / 2 - 0.02, player.pitch));
     });
@@ -2307,6 +2414,12 @@
     document.getElementById('mainMenu').style.display = 'none';
     document.getElementById('gameHUD').style.display = 'flex';
     isPaused = false;
+    // Ensure player is safely above terrain on start
+    const floorH = getTerrainHeight(Math.floor(player.x), Math.floor(player.z));
+    if (player.y < floorH + 1) {
+      player.y = floorH + 1.2;
+      player.vy = 0;
+    }
     syncGameModeUI();
     document.body.requestPointerLock();
   }
