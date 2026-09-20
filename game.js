@@ -132,6 +132,7 @@
   let sunMesh, moonMesh, starField, skyDome;
   let cloudMesh, cloudTex;
   let npcs = [];
+  let mobs = [];
   let handGroup, handArmMesh, handItemMesh;
   let wireframeTargetBox;
   let chunks = new Map(); // "cx,cz" => Chunk
@@ -876,36 +877,60 @@
     return { noise2D };
   })();
 
+  function isCityChunk(cx, cz) {
+    return (cx >= -1 && cx <= 2 && cz >= -1 && cz <= 2);
+  }
+
   function getTerrainHeight(wx, wz) {
-    const scale1 = 0.015;
-    const scale2 = 0.04;
-    const scale3 = 0.08;
+    // 1. Dedicated Grand City Zone: Uniform level 25 plateau for cohesive metropolis
+    if (wx >= -16 && wx < 48 && wz >= -16 && wz < 48) {
+      return 25;
+    }
+
+    // City edge slope blend
+    const distToCityX = Math.max(0, -16 - wx, wx - 47);
+    const distToCityZ = Math.max(0, -16 - wz, wz - 47);
+    const edgeDist = Math.hypot(distToCityX, distToCityZ);
+
+    const scale1 = 0.012;
+    const scale2 = 0.035;
     const n1 = SimplexNoise.noise2D(wx * scale1, wz * scale1);
     const n2 = SimplexNoise.noise2D(wx * scale2, wz * scale2) * 0.5;
-    const n3 = SimplexNoise.noise2D(wx * scale3, wz * scale3) * 0.25;
-    const combined = (n1 + n2 + n3) / 1.75; // -1 to +1
+    const combined = (n1 + n2) / 1.5;
 
-    // Biome height base
-    const biomeVal = SimplexNoise.noise2D(wx * 0.005, wz * 0.005);
-    let base = 26;
-    let amp = 10;
-    if (biomeVal > 0.3) {
-      // Mountains
-      base = 32; amp = 14;
-    } else if (biomeVal < -0.3) {
-      // Ocean / Lake
-      base = 16; amp = 6;
+    // 2. Focused Mountain Ranges: Only in rare, dedicated mountain ridges ("kahi kahi pe mountains")
+    const mountainNoise = SimplexNoise.noise2D(wx * 0.003 + 77.7, wz * 0.003 + 33.3);
+    let naturalH;
+    if (mountainNoise > 0.56) {
+      // True towering mountain peaks
+      const mFactor = (mountainNoise - 0.56) / 0.44; // 0 to 1
+      const mountainBase = 28 + mFactor * 24;
+      const peaks = Math.abs(SimplexNoise.noise2D(wx * 0.024, wz * 0.024)) * 14;
+      naturalH = Math.floor(mountainBase + peaks);
+    } else {
+      // Gentle rolling natural plains, forests, and calm riverbeds
+      const base = 25;
+      const amp = 4.5;
+      naturalH = Math.floor(base + combined * amp);
     }
-    return Math.floor(base + combined * amp);
+
+    // Smooth transition from city edge to wild terrain
+    if (edgeDist < 12) {
+      const t = edgeDist / 12;
+      return Math.floor(25 * (1 - t) + naturalH * t);
+    }
+
+    return naturalH;
   }
 
   function getBiome(wx, wz) {
-    const val = SimplexNoise.noise2D(wx * 0.005, wz * 0.005);
-    if (val > 0.35) return 'Mountains';
-    if (val > 0.05) return 'Forest';
-    if (val > -0.2) return 'Plains';
-    if (val > -0.45) return 'Desert';
-    return 'Ocean';
+    if (wx >= -16 && wx < 48 && wz >= -16 && wz < 48) return 'City';
+    const mountainNoise = SimplexNoise.noise2D(wx * 0.003 + 77.7, wz * 0.003 + 33.3);
+    if (mountainNoise > 0.56) return 'Mountains';
+    const val = SimplexNoise.noise2D(wx * 0.006, wz * 0.006);
+    if (val > 0.18) return 'Forest';
+    if (val < -0.38) return 'Desert';
+    return 'Plains';
   }
 
   // =========================================================================
@@ -986,13 +1011,11 @@
             }
           }
 
-          // Check if this chunk is reserved for a village or city
-          const isVillageChunk = (Math.abs(this.cx % 5) === 0 && Math.abs(this.cz % 5) === 0);
-          const isCityChunk = (Math.abs(this.cx % 8) === 3 && Math.abs(this.cz % 8) === 3);
-
-          // Procedural Trees (Only grow trees outside village/city centers)
-          if (!isVillageChunk && !isCityChunk) {
-            if ((biome === 'Forest' || biome === 'Plains') && height > WATER_LEVEL + 1 && height < CHUNK_HEIGHT - 8) {
+          // Only grow trees outside the city zone and off roadways
+          const inCity = isCityChunk(this.cx, this.cz);
+          if (!inCity) {
+            const isRoadPath = (this.cx === 0 && (x === 7 || x === 8)) || (this.cz === 0 && (z === 7 || z === 8));
+            if (!isRoadPath && (biome === 'Forest' || biome === 'Plains') && height > WATER_LEVEL + 1 && height < CHUNK_HEIGHT - 8) {
               const treeChance = (biome === 'Forest') ? 0.045 : 0.012;
               if (seededNoise(wx, wz, 555) < treeChance && x >= 2 && x <= CHUNK_SIZE - 3 && z >= 2 && z <= CHUNK_SIZE - 3) {
                 this.growTree(x, height + 1, z);
@@ -1002,16 +1025,12 @@
         }
       }
 
-      // Procedural Village Generation
-      const isVillage = (Math.abs(this.cx % 5) === 0 && Math.abs(this.cz % 5) === 0);
-      if (isVillage) {
-        this.generateVillage();
-      }
-
-      // Procedural City Generation
-      const isCity = (Math.abs(this.cx % 8) === 3 && Math.abs(this.cz % 8) === 3);
-      if (isCity) {
-        this.generateCity();
+      // Generate Grand City Sector if inside the 4x4 Metropolis Zone
+      if (isCityChunk(this.cx, this.cz)) {
+        this.generateGrandCitySector(this.cx, this.cz);
+      } else {
+        // Outside City: Pure natural wilderness + connecting highways leading into nature
+        this.generateExitRoads(this.cx, this.cz);
       }
 
       // Re-apply saved user modifications for this chunk
@@ -1048,72 +1067,302 @@
       }
     }
 
-    generateVillage() {
-      const originX = this.cx * CHUNK_SIZE;
-      const originZ = this.cz * CHUNK_SIZE;
-      const baseH = Math.min(28, Math.max(19, getTerrainHeight(originX + 8, originZ + 8)));
+    // =======================================================================
+    // Grand Metropolis Generator (Single large cohesive city spanning 4x4 chunks)
+    // =======================================================================
+    generateGrandCitySector(cx, cz) {
+      const baseH = 25;
 
-      // 1. Cobblestone Pathways (Cross roads through the village)
-      for (let i = 0; i < CHUNK_SIZE; i++) {
-        // East-West road
-        this.setBlock(i, baseH, 7, BLOCKS.COBBLESTONE);
-        this.setBlock(i, baseH, 8, BLOCKS.COBBLESTONE);
-        // North-South road
-        this.setBlock(7, baseH, i, BLOCKS.COBBLESTONE);
-        this.setBlock(8, baseH, i, BLOCKS.COBBLESTONE);
-      }
-
-      // 2. Central Village Well with Water Pool (x:6..9, z:6..9)
-      for (let x = 6; x <= 9; x++) {
-        for (let z = 6; z <= 9; z++) {
-          const isRim = (x === 6 || x === 9 || z === 6 || z === 9);
-          if (isRim) {
-            this.setBlock(x, baseH + 1, z, BLOCKS.COBBLESTONE);
-          } else {
-            this.setBlock(x, baseH, z, BLOCKS.WATER);
-            this.setBlock(x, baseH - 1, z, BLOCKS.COBBLESTONE);
+      // 1. Continuous Avenue and Road Network throughout the metropolis
+      for (let x = 0; x < CHUNK_SIZE; x++) {
+        for (let z = 0; z < CHUNK_SIZE; z++) {
+          // East-West Central Avenue
+          if (cz === 0 && (z === 7 || z === 8)) {
+            this.setBlock(x, baseH, z, BLOCKS.POLISHED_STONE);
+          } else if (cz === 0 && (z === 6 || z === 9)) {
+            this.setBlock(x, baseH, z, BLOCKS.COBBLESTONE); // Road Curb
+          } else if (cz === 0 && (z === 5 || z === 10)) {
+            this.setBlock(x, baseH, z, BLOCKS.STONE_BRICKS); // Sidewalk
           }
-        }
-      }
-      // Well roof pillars & canopy
-      const wellCorners = [[6, 6], [9, 6], [6, 9], [9, 9]];
-      wellCorners.forEach(([wx, wz]) => {
-        this.setBlock(wx, baseH + 2, wz, BLOCKS.WOOD);
-        this.setBlock(wx, baseH + 3, wz, BLOCKS.WOOD);
-      });
-      for (let rx = 6; rx <= 9; rx++) {
-        for (let rz = 6; rz <= 9; rz++) {
-          this.setBlock(rx, baseH + 4, rz, BLOCKS.PLANKS);
-        }
-      }
-      this.setBlock(7, baseH + 3, 7, BLOCKS.GLOWSTONE);
 
-      // 3. Cozy Village Cottage 1 (North-West: x:1..5, z:1..5)
-      this.buildCottage(1, baseH, 1, 5, 5, 4);
+          // North-South Central Avenue
+          if (cx === 0 && (x === 7 || x === 8)) {
+            this.setBlock(x, baseH, z, BLOCKS.POLISHED_STONE);
+          } else if (cx === 0 && (x === 6 || x === 9)) {
+            this.setBlock(x, baseH, z, BLOCKS.COBBLESTONE); // Road Curb
+          } else if (cx === 0 && (x === 5 || x === 10)) {
+            this.setBlock(x, baseH, z, BLOCKS.STONE_BRICKS); // Sidewalk
+          }
 
-      // 4. Cozy Village Cottage 2 (South-East: x:10..14, z:10..14)
-      this.buildCottage(10, baseH, 10, 5, 5, 4);
-
-      // 5. Village Farm Plot (South-West: x:1..5, z:10..14)
-      for (let x = 1; x <= 5; x++) {
-        for (let z = 10; z <= 14; z++) {
-          this.setBlock(x, baseH, z, BLOCKS.DIRT);
-          if (x === 3) {
-            this.setBlock(x, baseH, z, BLOCKS.WATER);
-          } else {
-            // Flowers and crops
-            this.setBlock(x, baseH + 1, z, (x % 2 === 0) ? BLOCKS.ROSE : BLOCKS.LEAVES);
+          // Internal grid cross-streets on sector boundaries
+          if ((x === 1 || x === 14) && (z >= 3 && z <= 12)) {
+            this.setBlock(x, baseH, z, BLOCKS.COBBLESTONE);
+          }
+          if ((z === 1 || z === 14) && (x >= 3 && x <= 12)) {
+            this.setBlock(x, baseH, z, BLOCKS.COBBLESTONE);
           }
         }
       }
 
-      // 6. Village Street Lamps with Glowstone
-      const lampPos = [[5, 6], [10, 9], [6, 10], [9, 5]];
-      lampPos.forEach(([lx, lz]) => {
-        this.setBlock(lx, baseH + 1, lz, BLOCKS.WOOD);
-        this.setBlock(lx, baseH + 2, lz, BLOCKS.WOOD);
-        this.setBlock(lx, baseH + 3, lz, BLOCKS.GLOWSTONE);
-      });
+      // Streetlamp Posts along the avenue
+      if (cx === 0) {
+        this.buildStreetlamp(5, baseH, 3);
+        this.buildStreetlamp(10, baseH, 3);
+        this.buildStreetlamp(5, baseH, 12);
+        this.buildStreetlamp(10, baseH, 12);
+      }
+      if (cz === 0) {
+        this.buildStreetlamp(3, baseH, 5);
+        this.buildStreetlamp(3, baseH, 10);
+        this.buildStreetlamp(12, baseH, 5);
+        this.buildStreetlamp(12, baseH, 10);
+      }
+
+      // 2. District Specific Architecture
+      if (cx === 0 && cz === 0) {
+        // Sector (0, 0): Grand Central Plaza & Monumental Fountain
+        // Player spawns on open cobblestone avenue at (7.5, 3.5)
+        // Grand Fountain in center (x:6..9, z:6..9)
+        for (let x = 6; x <= 9; x++) {
+          for (let z = 6; z <= 9; z++) {
+            const isRim = (x === 6 || x === 9 || z === 6 || z === 9);
+            if (isRim) {
+              this.setBlock(x, baseH + 1, z, BLOCKS.STONE_BRICKS);
+            } else {
+              this.setBlock(x, baseH, z, BLOCKS.WATER);
+              this.setBlock(x, baseH - 1, z, BLOCKS.POLISHED_STONE);
+              this.setBlock(x, baseH - 2, z, BLOCKS.GLOWSTONE);
+            }
+          }
+        }
+        // Fountain Center Spire
+        this.setBlock(7, baseH + 1, 7, BLOCKS.STONE_BRICKS);
+        this.setBlock(7, baseH + 2, 7, BLOCKS.GLOWSTONE);
+        this.setBlock(7, baseH + 3, 7, BLOCKS.WATER);
+
+        // North-West Town Hall / Guildhall
+        this.buildTownHall(1, baseH, 1, 5, 5, 5);
+
+        // Rose Gardens on Plaza Corners
+        this.buildGardenBed(11, baseH, 1, 4, 3);
+        this.buildGardenBed(1, baseH, 11, 4, 3);
+      } else if (cx === 1 && cz === 0) {
+        // Sector (1, 0): Commercial Market District & Bakeries
+        this.buildMarketStall(2, baseH, 2, BLOCKS.BRICKS);
+        this.buildMarketStall(2, baseH, 11, BLOCKS.WOOD);
+        this.buildCottage(9, baseH, 1, 6, 5, 4, 'Bakery');
+        this.buildCottage(9, baseH, 10, 6, 5, 4, 'Merchant');
+      } else if (cx === 0 && cz === 1) {
+        // Sector (0, 1): Financial District (North Skyscraper)
+        this.buildSkyscraper(1, baseH, 1, 6, 6, 20, BLOCKS.STONE_BRICKS, BLOCKS.GLASS);
+        this.buildCottage(10, baseH, 2, 5, 5, 4, 'Office');
+        this.buildGardenBed(10, baseH, 10, 4, 4);
+      } else if (cx === 1 && cz === 1) {
+        // Sector (1, 1): Modern Highrise Twin Tower (South Skyscraper)
+        this.buildSkyscraper(8, baseH, 8, 7, 7, 24, BLOCKS.POLISHED_STONE, BLOCKS.GLASS);
+        this.buildSkyscraper(1, baseH, 2, 5, 5, 14, BLOCKS.BRICKS, BLOCKS.GLASS);
+      } else if (cx === -1 && cz === 0) {
+        // Sector (-1, 0): Old Town Residential Quarter
+        this.buildCottage(2, baseH, 1, 5, 6, 4, 'Townhouse 1');
+        this.buildCottage(9, baseH, 1, 5, 6, 4, 'Townhouse 2');
+        this.buildCottage(2, baseH, 9, 6, 6, 5, 'Manor');
+      } else if (cx === -1 && cz === 1) {
+        // Sector (-1, 1): Suburban Villa & Orchard
+        this.buildCottage(3, baseH, 3, 7, 6, 5, 'Villa');
+        this.buildGardenBed(11, baseH, 3, 3, 8);
+      } else if (cx === 0 && cz === -1) {
+        // Sector (0, -1): Grand Clocktower Plaza
+        this.buildClocktower(2, baseH, 2);
+        this.buildGardenBed(9, baseH, 2, 5, 4);
+        this.buildGardenBed(9, baseH, 9, 5, 4);
+      } else if (cx === 1 && cz === -1) {
+        // Sector (1, -1): City Library & Botanical Conservatory
+        this.buildLibrary(2, baseH, 2, 12, 10, 6);
+      } else {
+        // Outer Suburban Chunks: Perimeter Cottages, Watchposts & Town Gates
+        this.buildCottage(4, baseH, 4, 6, 6, 4, 'Perimeter Home');
+        this.buildGardenBed(11, baseH, 4, 4, 4);
+      }
+    }
+
+    // =======================================================================
+    // Connecting Highway Roads leading into the wild
+    // =======================================================================
+    generateExitRoads(cx, cz) {
+      // North & South Highway
+      if (cx === 0 && Math.abs(cz) <= 6) {
+        const originX = cx * CHUNK_SIZE;
+        const originZ = cz * CHUNK_SIZE;
+        for (let z = 0; z < CHUNK_SIZE; z++) {
+          const wz = originZ + z;
+          const h = getTerrainHeight(originX + 7, wz);
+          this.setBlock(7, h, z, BLOCKS.COBBLESTONE);
+          this.setBlock(8, h, z, BLOCKS.COBBLESTONE);
+          this.setBlock(6, h, z, BLOCKS.DIRT);
+          this.setBlock(9, h, z, BLOCKS.DIRT);
+          // Lantern posts every 10 blocks
+          if (z % 10 === 0) {
+            this.setBlock(5, h + 1, z, BLOCKS.WOOD);
+            this.setBlock(5, h + 2, z, BLOCKS.GLOWSTONE);
+          }
+        }
+      }
+
+      // East & West Highway
+      if (cz === 0 && Math.abs(cx) <= 6) {
+        const originX = cx * CHUNK_SIZE;
+        const originZ = cz * CHUNK_SIZE;
+        for (let x = 0; x < CHUNK_SIZE; x++) {
+          const wx = originX + x;
+          const h = getTerrainHeight(wx, originZ + 7);
+          this.setBlock(x, h, 7, BLOCKS.COBBLESTONE);
+          this.setBlock(x, h, 8, BLOCKS.COBBLESTONE);
+          this.setBlock(x, h, 6, BLOCKS.DIRT);
+          this.setBlock(x, h, 9, BLOCKS.DIRT);
+          // Lantern posts every 10 blocks
+          if (x % 10 === 0) {
+            this.setBlock(x, h + 1, 5, BLOCKS.WOOD);
+            this.setBlock(x, h + 2, 5, BLOCKS.GLOWSTONE);
+          }
+        }
+      }
+    }
+
+    buildStreetlamp(lx, ly, lz) {
+      this.setBlock(lx, ly + 1, lz, BLOCKS.STONE_BRICKS);
+      this.setBlock(lx, ly + 2, lz, BLOCKS.STONE_BRICKS);
+      this.setBlock(lx, ly + 3, lz, BLOCKS.GLOWSTONE);
+      this.setBlock(lx, ly + 4, lz, BLOCKS.POLISHED_STONE);
+    }
+
+    buildGardenBed(gx, gy, gz, w, d) {
+      for (let x = gx; x < gx + w; x++) {
+        for (let z = gz; z < gz + d; z++) {
+          this.setBlock(x, gy, z, BLOCKS.DIRT);
+          this.setBlock(x, gy + 1, z, (x + z) % 2 === 0 ? BLOCKS.ROSE : BLOCKS.LEAVES);
+        }
+      }
+    }
+
+    buildMarketStall(sx, sy, sz, roofBlock) {
+      // 4 wooden corner posts
+      this.setBlock(sx, sy + 1, sz, BLOCKS.WOOD);
+      this.setBlock(sx, sy + 2, sz, BLOCKS.WOOD);
+      this.setBlock(sx + 3, sy + 1, sz, BLOCKS.WOOD);
+      this.setBlock(sx + 3, sy + 2, sz, BLOCKS.WOOD);
+      this.setBlock(sx, sy + 1, sz + 3, BLOCKS.WOOD);
+      this.setBlock(sx, sy + 2, sz + 3, BLOCKS.WOOD);
+      this.setBlock(sx + 3, sy + 1, sz + 3, BLOCKS.WOOD);
+      this.setBlock(sx + 3, sy + 2, sz + 3, BLOCKS.WOOD);
+
+      // Plank counter
+      this.setBlock(sx + 1, sy + 1, sz, BLOCKS.PLANKS);
+      this.setBlock(sx + 2, sy + 1, sz, BLOCKS.PLANKS);
+      this.setBlock(sx + 1, sy + 1, sz + 1, BLOCKS.BOOKSHELF);
+
+      // Canopy roof & glowing lantern
+      for (let x = sx; x <= sx + 3; x++) {
+        for (let z = sz; z <= sz + 3; z++) {
+          this.setBlock(x, sy + 3, z, roofBlock);
+        }
+      }
+      this.setBlock(sx + 1, sy + 2, sz + 1, BLOCKS.GLOWSTONE);
+    }
+
+    buildClocktower(sx, sy, sz) {
+      const w = 5, d = 5, h = 24;
+      for (let y = sy + 1; y <= sy + h; y++) {
+        for (let x = sx; x < sx + w; x++) {
+          for (let z = sz; z < sz + d; z++) {
+            const isCorner = (x === sx || x === sx + w - 1) && (z === sz || z === sz + d - 1);
+            const isEdge = (x === sx || x === sx + w - 1 || z === sz || z === sz + d - 1);
+            if (isCorner) {
+              this.setBlock(x, y, z, BLOCKS.STONE_BRICKS);
+            } else if (isEdge) {
+              if (y >= sy + h - 4 && y <= sy + h - 2) {
+                // Clock faces on top
+                this.setBlock(x, y, z, BLOCKS.GLOWSTONE);
+              } else {
+                this.setBlock(x, y, z, (y % 4 === 0) ? BLOCKS.POLISHED_STONE : BLOCKS.STONE_BRICKS);
+              }
+            } else {
+              this.setBlock(x, y, z, BLOCKS.AIR);
+            }
+          }
+        }
+      }
+      // Spire roof
+      for (let x = sx; x < sx + w; x++) {
+        for (let z = sz; z < sz + d; z++) {
+          this.setBlock(x, sy + h + 1, z, BLOCKS.BRICKS);
+        }
+      }
+      this.setBlock(sx + 2, sy + h + 2, sz + 2, BLOCKS.STONE_BRICKS);
+      this.setBlock(sx + 2, sy + h + 3, sz + 2, BLOCKS.GLOWSTONE);
+    }
+
+    buildLibrary(sx, sy, sz, w, d, h) {
+      for (let y = sy + 1; y <= sy + h; y++) {
+        for (let x = sx; x < sx + w; x++) {
+          for (let z = sz; z < sz + d; z++) {
+            const isEdge = (x === sx || x === sx + w - 1 || z === sz || z === sz + d - 1);
+            if (isEdge) {
+              if (y === sy + 2 || y === sy + 3) {
+                this.setBlock(x, y, z, BLOCKS.GLASS);
+              } else {
+                this.setBlock(x, y, z, BLOCKS.STONE_BRICKS);
+              }
+            } else {
+              // Interior bookshelves and study halls
+              if ((x % 3 === 0) && (z >= sz + 2 && z <= sz + d - 3) && y <= sy + 3) {
+                this.setBlock(x, y, z, BLOCKS.BOOKSHELF);
+              } else {
+                this.setBlock(x, y, z, BLOCKS.AIR);
+              }
+            }
+          }
+        }
+      }
+      // Roof and chandeliers
+      for (let x = sx; x < sx + w; x++) {
+        for (let z = sz; z < sz + d; z++) {
+          this.setBlock(x, sy + h + 1, z, BLOCKS.POLISHED_STONE);
+        }
+      }
+      this.setBlock(sx + 3, sy + h, sz + 4, BLOCKS.GLOWSTONE);
+      this.setBlock(sx + 8, sy + h, sz + 4, BLOCKS.GLOWSTONE);
+    }
+
+    buildTownHall(sx, sy, sz, w, d, h) {
+      for (let y = sy + 1; y <= sy + h; y++) {
+        for (let x = sx; x < sx + w; x++) {
+          for (let z = sz; z < sz + d; z++) {
+            const isCorner = (x === sx || x === sx + w - 1) && (z === sz || z === sz + d - 1);
+            const isEdge = (x === sx || x === sx + w - 1 || z === sz || z === sz + d - 1);
+            if (isCorner) {
+              this.setBlock(x, y, z, BLOCKS.STONE_BRICKS);
+            } else if (isEdge) {
+              if (y === sy + 2 && (x === sx + 2 || z === sz + 2)) {
+                this.setBlock(x, y, z, BLOCKS.GLASS);
+              } else {
+                this.setBlock(x, y, z, BLOCKS.BRICKS);
+              }
+            } else {
+              this.setBlock(x, y, z, BLOCKS.AIR);
+            }
+          }
+        }
+      }
+      // Front entrance
+      this.setBlock(sx + 2, sy + 1, sz, BLOCKS.AIR);
+      this.setBlock(sx + 2, sy + 2, sz, BLOCKS.AIR);
+      // Roof
+      for (let x = sx; x < sx + w; x++) {
+        for (let z = sz; z < sz + d; z++) {
+          this.setBlock(x, sy + h + 1, z, BLOCKS.STONE_BRICKS);
+        }
+      }
+      this.setBlock(sx + 2, sy + h, sz + 2, BLOCKS.GLOWSTONE);
     }
 
     buildCottage(sx, sy, sz, w, d, h) {
@@ -1133,9 +1382,8 @@
             const isCorner = (x === sx || x === sx + w - 1) && (z === sz || z === sz + d - 1);
             const isEdge = (x === sx || x === sx + w - 1 || z === sz || z === sz + d - 1);
             if (isCorner) {
-              this.setBlock(x, y, z, BLOCKS.WOOD); // Oak log corner pillars
+              this.setBlock(x, y, z, BLOCKS.WOOD);
             } else if (isEdge) {
-              // Windows on side walls
               if (y === sy + 2 && (x === sx + 2 || z === sz + 2)) {
                 this.setBlock(x, y, z, BLOCKS.GLASS);
               } else {
@@ -1149,55 +1397,17 @@
       this.setBlock(sx + 2, sy + 1, sz, BLOCKS.AIR);
       this.setBlock(sx + 2, sy + 2, sz, BLOCKS.AIR);
 
-      // Pitched Roof (Brick & Planks)
+      // Pitched Roof
       for (let x = sx; x < sx + w; x++) {
         for (let z = sz; z < sz + d; z++) {
           this.setBlock(x, sy + h + 1, z, BLOCKS.BRICKS);
         }
       }
-      // Cozy Interior Bookshelf & Lantern
       this.setBlock(sx + 1, sy + 1, sz + d - 2, BLOCKS.BOOKSHELF);
-      this.setBlock(sx + 1, sy + 2, sz + d - 2, BLOCKS.BOOKSHELF);
       this.setBlock(sx + w - 2, sy + h, sz + d - 2, BLOCKS.GLOWSTONE);
     }
 
-    generateCity() {
-      const originX = this.cx * CHUNK_SIZE;
-      const originZ = this.cz * CHUNK_SIZE;
-      const baseH = Math.min(27, Math.max(19, getTerrainHeight(originX + 8, originZ + 8)));
-
-      // 1. Polished Stone Urban Avenues
-      for (let x = 0; x < CHUNK_SIZE; x++) {
-        for (let z = 0; z < CHUNK_SIZE; z++) {
-          if (x === 7 || x === 8 || z === 7 || z === 8) {
-            this.setBlock(x, baseH, z, BLOCKS.POLISHED_STONE);
-          } else if (x === 6 || x === 9 || z === 6 || z === 9) {
-            this.setBlock(x, baseH, z, BLOCKS.COBBLESTONE); // Curb
-          }
-        }
-      }
-
-      // 2. City Skyscraper Tower A (North-West: 6x6, 16 blocks tall)
-      this.buildSkyscraper(0, baseH, 0, 6, 6, 16, BLOCKS.STONE_BRICKS, BLOCKS.GLASS);
-
-      // 3. City Skyscraper Tower B (South-East: 6x6, 18 blocks tall)
-      this.buildSkyscraper(10, baseH, 10, 6, 6, 18, BLOCKS.BRICKS, BLOCKS.GLASS);
-
-      // 4. City Commercial Plaza (North-East: 5x5, 10 blocks tall)
-      this.buildSkyscraper(10, baseH, 1, 5, 5, 10, BLOCKS.POLISHED_STONE, BLOCKS.STONE_BRICKS);
-
-      // 5. Urban Streetlights (4 blocks high with Glowstone Lanterns)
-      const streetLights = [[5, 5], [10, 5], [5, 10], [10, 10]];
-      streetLights.forEach(([lx, lz]) => {
-        this.setBlock(lx, baseH + 1, lz, BLOCKS.STONE_BRICKS);
-        this.setBlock(lx, baseH + 2, lz, BLOCKS.STONE_BRICKS);
-        this.setBlock(lx, baseH + 3, lz, BLOCKS.GLOWSTONE);
-        this.setBlock(lx, baseH + 4, lz, BLOCKS.POLISHED_STONE);
-      });
-    }
-
     buildSkyscraper(sx, sy, sz, w, d, h, wallBlock, accentBlock) {
-      // Clear space above
       for (let x = sx; x < sx + w; x++) {
         for (let z = sz; z < sz + d; z++) {
           this.setBlock(x, sy, z, BLOCKS.POLISHED_STONE);
@@ -1206,7 +1416,6 @@
           }
         }
       }
-      // Multi-story floors with glass windows & glowing floors
       for (let y = sy + 1; y <= sy + h; y++) {
         const isFloorSlab = ((y - sy) % 4 === 0);
         for (let x = sx; x < sx + w; x++) {
@@ -1218,7 +1427,6 @@
             } else if (isCorner) {
               this.setBlock(x, y, z, wallBlock);
             } else if (isEdge) {
-              // Alternating glass window rows
               if ((y - sy) % 4 === 2 || (y - sy) % 4 === 3) {
                 this.setBlock(x, y, z, BLOCKS.GLASS);
               } else {
@@ -1228,17 +1436,16 @@
           }
         }
       }
-      // Rooftop terrace with observation railing & antenna spire
+      // Rooftop terrace
       for (let x = sx; x < sx + w; x++) {
         for (let z = sz; z < sz + d; z++) {
           this.setBlock(x, sy + h + 1, z, BLOCKS.POLISHED_STONE);
           const isEdge = (x === sx || x === sx + w - 1 || z === sz || z === sz + d - 1);
           if (isEdge) {
-            this.setBlock(x, sy + h + 2, z, BLOCKS.STONE_BRICKS); // Railing
+            this.setBlock(x, sy + h + 2, z, BLOCKS.STONE_BRICKS);
           }
         }
       }
-      // Glowing Rooftop Antenna
       const midX = sx + Math.floor(w / 2);
       const midZ = sz + Math.floor(d / 2);
       this.setBlock(midX, sy + h + 2, midZ, BLOCKS.STONE_BRICKS);
@@ -2101,6 +2308,43 @@
         gain.connect(master);
         osc.start(now);
         osc.stop(now + 0.14);
+      } else if (type === 'mob_sheep') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(240, now + 0.35);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'mob_cow') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(115, now);
+        osc.frequency.linearRampToValueAtTime(80, now + 0.45);
+        gain.gain.setValueAtTime(0.6, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      } else if (type === 'mob_pig') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.linearRampToValueAtTime(180, now + 0.08);
+        osc.frequency.linearRampToValueAtTime(310, now + 0.18);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now);
+        osc.stop(now + 0.18);
       } else if (type === 'hurt') {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -2137,9 +2381,8 @@
         const n2 = Math.sin(x * 0.35 + 1.2) * Math.cos(y * 0.35 + 0.8) * 0.5;
         const val = n1 + n2;
         if (val > 0.18) {
-          cctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+          cctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
           cctx.fillRect(x, y, 2, 2);
-          // Highlight edges
           if (val > 0.42) {
             cctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
             cctx.fillRect(x, y, 1, 1);
@@ -2153,46 +2396,60 @@
     cloudTex.minFilter = THREE.NearestFilter;
     cloudTex.wrapS = THREE.RepeatWrapping;
     cloudTex.wrapT = THREE.RepeatWrapping;
-    cloudTex.repeat.set(12, 12);
+    cloudTex.repeat.set(16, 16);
 
-    const cloudGeom = new THREE.PlaneGeometry(600, 600);
+    // Massive 1600x1600 high altitude cloud layer
+    const cloudGeom = new THREE.PlaneGeometry(1600, 1600);
     const cloudMat = new THREE.MeshBasicMaterial({
       map: cloudTex,
       transparent: true,
-      opacity: 0.78,
+      opacity: 0.82,
       depthWrite: false,
       side: THREE.DoubleSide,
-      fog: true // Seamless fade into distant horizon
+      fog: false
     });
 
     cloudMesh = new THREE.Mesh(cloudGeom, cloudMat);
     cloudMesh.rotation.x = Math.PI / 2; // Flat horizontal plane
-    cloudMesh.position.set(player.x, 46.5, player.z);
+    cloudMesh.position.set(player.x, 115.0, player.z); // High in the stratosphere above mountains
     cloudMesh.renderOrder = -400;
     scene.add(cloudMesh);
   }
 
+  let cloudWindWorldX = 0;
+  let cloudWindWorldZ = 0;
+
   function updateClouds(dt) {
     if (!cloudMesh || !cloudTex) return;
-    // Slow gentle wind drift across the sky
-    cloudTex.offset.x = (cloudTex.offset.x + dt * 0.005) % 1.0;
-    cloudTex.offset.y = (cloudTex.offset.y + dt * 0.003) % 1.0;
-    // Follow player XZ so clouds stretch to the horizon
+
+    // Wind moves clouds at a slow, majestic pace (~1.4 blocks/sec)
+    cloudWindWorldX += dt * 1.4;
+    cloudWindWorldZ += dt * 0.7;
+
+    // Cloud plane follows player so the sky is always covered to the horizon
     cloudMesh.position.x = player.x;
+    cloudMesh.position.y = 115.0; // Stays high above mountains
     cloudMesh.position.z = player.z;
 
-    // Tint clouds smoothly with Day/Night cycle
+    // True world-space UV compensation:
+    // With plane size 1600 and repeat 16, 1 UV tile = 100 world blocks.
+    // By offsetting (-player.x / tileSize), clouds stay STATIONARY in world space when player moves!
+    const tileSize = 100.0;
+    cloudTex.offset.x = ((cloudWindWorldX - player.x) / tileSize) % 1.0;
+    cloudTex.offset.y = ((cloudWindWorldZ - player.z) / tileSize) % 1.0;
+
+    // Dynamic Day/Night cloud color tinting
     const isDay = (dayTime >= 0.12 && dayTime <= 0.45);
     const isDawnDusk = ((dayTime >= 0.00 && dayTime < 0.12) || (dayTime > 0.45 && dayTime <= 0.58));
     if (isDay) {
       cloudMesh.material.color.setRGB(1.0, 1.0, 1.0);
-      cloudMesh.material.opacity = 0.78;
-    } else if (isDawnDusk) {
-      cloudMesh.material.color.setRGB(1.0, 0.75, 0.55); // Golden peach sunset
       cloudMesh.material.opacity = 0.82;
+    } else if (isDawnDusk) {
+      cloudMesh.material.color.setRGB(1.0, 0.75, 0.58); // Sunset peach/gold
+      cloudMesh.material.opacity = 0.86;
     } else {
-      cloudMesh.material.color.setRGB(0.18, 0.22, 0.35); // Moonlit dark indigo
-      cloudMesh.material.opacity = 0.45;
+      cloudMesh.material.color.setRGB(0.18, 0.22, 0.35); // Moonlit indigo
+      cloudMesh.material.opacity = 0.52;
     }
   }
 
@@ -2538,23 +2795,278 @@
 
   function spawnInitialNPCs() {
     npcs = [];
-    // Spawn friendly cute NPCs near spawn area (x:8.5, z:8.5)
-    npcs.push(new NPC(NPC_PRESETS[0], 11.5, 9.5));  // Sakura (Florist)
-    npcs.push(new NPC(NPC_PRESETS[1], 7.0, 12.5));  // Aoi (Architect)
-    npcs.push(new NPC(NPC_PRESETS[2], 13.0, 14.0)); // Lily (Baker)
-
-    // Spawn NPCs in Village center (chunk cx:0, cz:0 is around 0..15)
-    npcs.push(new NPC(NPC_PRESETS[3], 4.5, 5.5));   // Hana (Botanist)
-    npcs.push(new NPC(NPC_PRESETS[4], 8.5, 4.5));   // Rin (Merchant)
-
-    // Spawn explorer NPCs towards city (chunk cx:3, cz:3 is around 48..63)
-    npcs.push(new NPC(NPC_PRESETS[5], 52.0, 52.0)); // Maya (Explorer)
-    npcs.push(new NPC(NPC_PRESETS[6], 55.0, 54.0)); // Noah (Villager)
+    // Place cute NPCs into their themed sectors in the Grand City
+    npcs.push(new NPC(NPC_PRESETS[0], 11.5, 3.5));  // Sakura (Florist at Plaza Rose Garden)
+    npcs.push(new NPC(NPC_PRESETS[1], 4.5, 18.5));  // Aoi (Architect at Skyscraper Plaza)
+    npcs.push(new NPC(NPC_PRESETS[2], 22.5, 5.5));  // Lily (Baker at Market District)
+    npcs.push(new NPC(NPC_PRESETS[3], 18.5, -6.5)); // Hana (Botanist at Library Conservatory)
+    npcs.push(new NPC(NPC_PRESETS[4], 19.5, 11.5)); // Rin (Merchant at Market Stalls)
+    npcs.push(new NPC(NPC_PRESETS[5], 7.5, -14.5)); // Maya (Explorer at City North Gate)
+    npcs.push(new NPC(NPC_PRESETS[6], -6.5, 7.5));  // Noah (Villager at Old Town Quarter)
   }
 
   function updateNPCs(dt) {
     for (let i = 0; i < npcs.length; i++) {
       npcs[i].update(dt);
+    }
+  }
+
+  // =========================================================================
+  // Animal Mobs System (Sheep, Cow, Pig with 4-leg walk & sounds)
+  // =========================================================================
+  class Mob {
+    constructor(type, x, z) {
+      this.type = type; // 'sheep', 'cow', 'pig'
+      this.x = x;
+      this.z = z;
+      this.y = Math.max(20, getTerrainHeight(Math.floor(x), Math.floor(z)) + 0.4);
+      this.targetX = x;
+      this.targetZ = z;
+      this.yaw = Math.random() * Math.PI * 2;
+      this.walkTimer = Math.random() * 10;
+      this.idleTimer = 1.0 + Math.random() * 3.0;
+      this.isWalking = false;
+      this.moveSpeed = (type === 'pig') ? 1.7 : 1.25;
+      this.legs = [];
+      this.head = null;
+      this.createModel();
+    }
+
+    createModel() {
+      this.group = new THREE.Group();
+      this.group.position.set(this.x, this.y, this.z);
+
+      if (this.type === 'sheep') {
+        // Sheep: White fluffy wool body, beige face with black eyes, 4 legs
+        const woolMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f5 });
+        const faceMat = new THREE.MeshLambertMaterial({ color: 0xdfcca8 });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0xcfbaa0 });
+
+        // Fluffy Wool Body
+        const bodyGeom = new THREE.BoxGeometry(0.85, 0.75, 1.25);
+        const bodyMesh = new THREE.Mesh(bodyGeom, woolMat);
+        bodyMesh.position.set(0, 0.75, 0);
+        this.group.add(bodyMesh);
+
+        // Head Group
+        this.head = new THREE.Group();
+        this.head.position.set(0, 0.95, 0.68);
+        const headGeom = new THREE.BoxGeometry(0.42, 0.42, 0.46);
+        const headMesh = new THREE.Mesh(headGeom, faceMat);
+        this.head.add(headMesh);
+        // Wool cap on head
+        const capGeom = new THREE.BoxGeometry(0.44, 0.22, 0.35);
+        const capMesh = new THREE.Mesh(capGeom, woolMat);
+        capMesh.position.set(0, 0.16, -0.05);
+        this.head.add(capMesh);
+        this.group.add(this.head);
+
+        // 4 Legs
+        const legGeom = new THREE.BoxGeometry(0.22, 0.55, 0.22);
+        const legOffsets = [[-0.3, 0.28, 0.45], [0.3, 0.28, 0.45], [-0.3, 0.28, -0.45], [0.3, 0.28, -0.45]];
+        this.legs = legOffsets.map(([lx, ly, lz]) => {
+          const leg = new THREE.Mesh(legGeom, legMat);
+          leg.position.set(lx, ly, lz);
+          this.group.add(leg);
+          return leg;
+        });
+      } else if (this.type === 'cow') {
+        // Cow: Spotted brown/white body, horns, pink snout, 4 sturdy legs
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x5c3a21 });
+        const spotMat = new THREE.MeshLambertMaterial({ color: 0xf1f5f9 });
+        const snoutMat = new THREE.MeshLambertMaterial({ color: 0xfda4af });
+        const hornMat = new THREE.MeshLambertMaterial({ color: 0xd6d3d1 });
+
+        // Body
+        const bodyGeom = new THREE.BoxGeometry(0.95, 0.85, 1.35);
+        const bodyMesh = new THREE.Mesh(bodyGeom, bodyMat);
+        bodyMesh.position.set(0, 0.85, 0);
+        this.group.add(bodyMesh);
+
+        // White Belly Patch
+        const patchGeom = new THREE.BoxGeometry(0.97, 0.45, 0.65);
+        const patchMesh = new THREE.Mesh(patchGeom, spotMat);
+        patchMesh.position.set(0, 0.85, 0.1);
+        this.group.add(patchMesh);
+
+        // Head
+        this.head = new THREE.Group();
+        this.head.position.set(0, 1.15, 0.8);
+        const headGeom = new THREE.BoxGeometry(0.48, 0.48, 0.48);
+        const headMesh = new THREE.Mesh(headGeom, bodyMat);
+        this.head.add(headMesh);
+        // Snout
+        const snoutGeom = new THREE.BoxGeometry(0.4, 0.24, 0.2);
+        const snoutMesh = new THREE.Mesh(snoutGeom, snoutMat);
+        snoutMesh.position.set(0, -0.12, 0.28);
+        this.head.add(snoutMesh);
+        // Horns
+        const hornGeom = new THREE.BoxGeometry(0.1, 0.2, 0.1);
+        const hornL = new THREE.Mesh(hornGeom, hornMat);
+        hornL.position.set(-0.28, 0.28, -0.05);
+        this.head.add(hornL);
+        const hornR = new THREE.Mesh(hornGeom, hornMat);
+        hornR.position.set(0.28, 0.28, -0.05);
+        this.head.add(hornR);
+        this.group.add(this.head);
+
+        // 4 Legs
+        const legGeom = new THREE.BoxGeometry(0.24, 0.60, 0.24);
+        const legOffsets = [[-0.34, 0.30, 0.48], [0.34, 0.30, 0.48], [-0.34, 0.30, -0.48], [0.34, 0.30, -0.48]];
+        this.legs = legOffsets.map(([lx, ly, lz]) => {
+          const leg = new THREE.Mesh(legGeom, bodyMat);
+          leg.position.set(lx, ly, lz);
+          this.group.add(leg);
+          return leg;
+        });
+      } else {
+        // Pig: Cute pink body, snout, floppy ears, stubby legs
+        const pigMat = new THREE.MeshLambertMaterial({ color: 0xf472b6 });
+        const darkPigMat = new THREE.MeshLambertMaterial({ color: 0xdb2777 });
+
+        // Body
+        const bodyGeom = new THREE.BoxGeometry(0.80, 0.70, 1.15);
+        const bodyMesh = new THREE.Mesh(bodyGeom, pigMat);
+        bodyMesh.position.set(0, 0.65, 0);
+        this.group.add(bodyMesh);
+
+        // Head
+        this.head = new THREE.Group();
+        this.head.position.set(0, 0.85, 0.65);
+        const headGeom = new THREE.BoxGeometry(0.44, 0.44, 0.44);
+        const headMesh = new THREE.Mesh(headGeom, pigMat);
+        this.head.add(headMesh);
+        // Snout
+        const snoutGeom = new THREE.BoxGeometry(0.28, 0.18, 0.16);
+        const snoutMesh = new THREE.Mesh(snoutGeom, darkPigMat);
+        snoutMesh.position.set(0, -0.08, 0.26);
+        this.head.add(snoutMesh);
+        this.group.add(this.head);
+
+        // 4 Legs
+        const legGeom = new THREE.BoxGeometry(0.20, 0.45, 0.20);
+        const legOffsets = [[-0.28, 0.22, 0.38], [0.28, 0.22, 0.38], [-0.28, 0.22, -0.38], [0.28, 0.22, -0.38]];
+        this.legs = legOffsets.map(([lx, ly, lz]) => {
+          const leg = new THREE.Mesh(legGeom, pigMat);
+          leg.position.set(lx, ly, lz);
+          this.group.add(leg);
+          return leg;
+        });
+      }
+
+      scene.add(this.group);
+    }
+
+    update(dt) {
+      this.idleTimer -= dt;
+      if (this.idleTimer <= 0) {
+        if (this.isWalking) {
+          this.isWalking = false;
+          this.idleTimer = 2.0 + Math.random() * 4.0;
+        } else {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 3.0 + Math.random() * 6.0;
+          this.targetX = this.x + Math.cos(angle) * dist;
+          this.targetZ = this.z + Math.sin(angle) * dist;
+          this.isWalking = true;
+          this.idleTimer = 3.5 + Math.random() * 3.0;
+        }
+      }
+
+      if (this.isWalking) {
+        const tdx = this.targetX - this.x;
+        const tdz = this.targetZ - this.z;
+        const tdist = Math.hypot(tdx, tdz);
+        if (tdist > 0.3) {
+          const targetYaw = Math.atan2(tdx, tdz);
+          let dyaw = targetYaw - this.yaw;
+          while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+          while (dyaw > Math.PI) dyaw -= Math.PI * 2;
+          this.yaw += dyaw * Math.min(dt * 5.0, 1.0);
+
+          const step = Math.min(this.moveSpeed * dt, tdist);
+          this.x += (tdx / tdist) * step;
+          this.z += (tdz / tdist) * step;
+
+          // 4-legged alternating walk cycle
+          this.walkTimer += dt * 7.5;
+          const legSwing = Math.sin(this.walkTimer) * 0.45;
+          if (this.legs.length === 4) {
+            this.legs[0].rotation.x = legSwing;
+            this.legs[1].rotation.x = -legSwing;
+            this.legs[2].rotation.x = -legSwing;
+            this.legs[3].rotation.x = legSwing;
+          }
+          if (this.head) this.head.rotation.x = Math.sin(this.walkTimer * 2) * 0.08;
+        } else {
+          this.isWalking = false;
+        }
+      } else {
+        if (this.legs.length === 4) {
+          this.legs.forEach(l => l.rotation.x *= 0.85);
+        }
+        if (this.head) {
+          const pDist = Math.hypot(player.x - this.x, player.z - this.z);
+          if (pDist < 4.5) {
+            const pYaw = Math.atan2(player.x - this.x, player.z - this.z);
+            let dyaw = pYaw - this.yaw;
+            while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+            while (dyaw > Math.PI) dyaw -= Math.PI * 2;
+            this.head.rotation.y = Math.max(-0.6, Math.min(0.6, dyaw));
+            this.head.rotation.x = 0;
+          } else {
+            this.head.rotation.y *= 0.9;
+            this.head.rotation.x = 0.15 + Math.sin(performance.now() * 0.002) * 0.08;
+          }
+        }
+      }
+
+      const targetY = Math.max(WATER_LEVEL + 0.1, getTerrainHeight(Math.floor(this.x), Math.floor(this.z)));
+      this.y += (targetY - this.y) * Math.min(dt * 8.0, 1.0);
+
+      this.group.position.set(this.x, this.y, this.z);
+      this.group.rotation.y = this.yaw;
+    }
+
+    interact() {
+      if (this.type === 'sheep') {
+        showToast('Fluffy Sheep: Baaa! <3');
+        playSynthesizedSound('mob_sheep');
+      } else if (this.type === 'cow') {
+        showToast('Spotted Cow: Mooo~');
+        playSynthesizedSound('mob_cow');
+      } else {
+        showToast('Pink Pig: Oink oink!');
+        playSynthesizedSound('mob_pig');
+      }
+      createParticleExplosion(this.x, this.y + 1.0, this.z, BLOCKS.ROSE, 10);
+    }
+  }
+
+  function spawnInitialMobs() {
+    mobs = [];
+    // Spawn Sheep in Western Meadows
+    mobs.push(new Mob('sheep', -24, 8));
+    mobs.push(new Mob('sheep', -28, 14));
+    mobs.push(new Mob('sheep', -20, -5));
+    mobs.push(new Mob('sheep', -32, 2));
+
+    // Spawn Cows in Southern River Valley
+    mobs.push(new Mob('cow', 26, 28));
+    mobs.push(new Mob('cow', 32, 25));
+    mobs.push(new Mob('cow', -18, -22));
+    mobs.push(new Mob('cow', -25, -26));
+
+    // Spawn Pigs in Eastern Plains
+    mobs.push(new Mob('pig', 34, 10));
+    mobs.push(new Mob('pig', 38, 15));
+    mobs.push(new Mob('pig', -12, 28));
+    mobs.push(new Mob('pig', 14, 36));
+  }
+
+  function updateMobs(dt) {
+    for (let i = 0; i < mobs.length; i++) {
+      mobs[i].update(dt);
     }
   }
 
@@ -3158,6 +3670,7 @@
     setupAmbientDust();
     setupCloudLayer();
     spawnInitialNPCs();
+    spawnInitialMobs();
 
     // 4. Setup Target Box Outline
     const wireGeom = new THREE.BoxGeometry(1.002, 1.002, 1.002);
@@ -3244,6 +3757,7 @@
       updateAmbientDust(dt);
       updateClouds(dt);
       updateNPCs(dt);
+        updateMobs(dt);
 
       // Smooth GPU-accelerated Water Shimmer (Zero CPU buffer uploads)
       if (threeTextures && threeTextures.water) {
@@ -3429,18 +3943,29 @@
       if (!isPointerLocked) return;
 
       if (e.button === 0) {
-        // Check if player clicked near an NPC to talk
-        let talkedToNpc = false;
+        // Check if player clicked near an NPC or Mob to interact
+        let interacted = false;
         for (let i = 0; i < npcs.length; i++) {
           const npc = npcs[i];
           const dist = Math.hypot(player.x - npc.x, player.z - npc.z);
           if (dist < 3.8) {
             npc.interact();
-            talkedToNpc = true;
+            interacted = true;
             break;
           }
         }
-        if (!talkedToNpc) {
+        if (!interacted && typeof mobs !== 'undefined') {
+          for (let i = 0; i < mobs.length; i++) {
+            const mob = mobs[i];
+            const dist = Math.hypot(player.x - mob.x, player.z - mob.z);
+            if (dist < 3.8) {
+              mob.interact();
+              interacted = true;
+              break;
+            }
+          }
+        }
+        if (!interacted) {
           // Left Click: Mine / Break Block
           breakTargetedBlock();
         }
