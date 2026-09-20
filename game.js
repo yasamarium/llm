@@ -127,6 +127,7 @@
   let particles = [];
   let isPointerLocked = false;
   let lastFrameTime = performance.now();
+  let lastSpacePressTime = 0;
   let dayTime = 0.25; // 0: dawn, 0.25: noon, 0.5: sunset, 0.75: midnight
   let isPaused = true;
   let isInventoryOpen = false;
@@ -1177,12 +1178,15 @@
     if (keys['KeyA'] || keys['ArrowLeft']) right -= 1;
     if (keys['KeyD'] || keys['ArrowRight']) right += 1;
 
-    player.isSprinting = !!keys['ShiftLeft'] || !!keys['ShiftRight'] || !!keys['ControlLeft'] || !!keys['ControlRight'];
+    player.isSprinting = !player.isFlying && (!!keys['ShiftLeft'] || !!keys['ShiftRight'] || !!keys['ControlLeft'] || !!keys['ControlRight']);
 
     let moveSpeed = 4.6;
-    if (player.isSprinting) moveSpeed = 6.8;
-    if (player.isFlying) moveSpeed = 8.8;
-    if (player.inWater) moveSpeed = 2.9;
+    if (player.isFlying) {
+      moveSpeed = (keys['ControlLeft'] || keys['ControlRight']) ? 12.0 : 8.8;
+    } else {
+      if (player.isSprinting) moveSpeed = 6.8;
+      if (player.inWater) moveSpeed = 2.9;
+    }
 
     // True First-Person Camera Vectors
     // In Three.js with order 'YXZ' and camera.rotation.y = yaw:
@@ -1219,10 +1223,24 @@
     // 3. Vertical Physics (Gravity, Jumping, Water & Flight)
     if (player.isFlying) {
       player.vy = 0;
-      if (keys['Space']) player.vy = moveSpeed * 0.85;
-      if (keys['ShiftLeft'] || keys['KeyC']) player.vy = -moveSpeed * 0.85;
-      player.y += player.vy * dt;
-      player.onGround = false;
+      const flyVerticalSpeed = 7.8;
+      // Space moves up, Shift or KeyC moves down
+      if (keys['Space']) player.vy = flyVerticalSpeed;
+      if (keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyC']) player.vy = -flyVerticalSpeed;
+      const newY = player.y + player.vy * dt;
+      if (!checkPlayerCollision(player.x, newY, player.z)) {
+        player.y = newY;
+        player.onGround = false;
+      } else {
+        if (player.vy < 0) {
+          player.y = Math.ceil(newY);
+          while (checkPlayerCollision(player.x, player.y, player.z) && player.y < CHUNK_HEIGHT) {
+            player.y += 0.05;
+          }
+          player.onGround = true;
+        }
+        player.vy = 0;
+      }
     } else if (player.inWater) {
       player.vy -= 7.0 * dt; // Fluid buoyancy
       player.vy *= Math.pow(0.5, dt * 5.0); // Water drag
@@ -1571,19 +1589,26 @@
     }
   }
 
-  // Premium Ambient Dust Motes
+  // Atmospheric Ambient Dust Motes (Subtle, warm, non-whitish)
   let ambientDust = null;
   function setupAmbientDust() {
-    const dustCount = 200;
+    const dustCount = 120;
     const dustGeom = new THREE.BufferGeometry();
     const dustPos = new Float32Array(dustCount * 3);
     for (let i = 0; i < dustCount; i++) {
-      dustPos[i * 3] = (Math.random() - 0.5) * 60;
-      dustPos[i * 3 + 1] = Math.random() * 30 + 5;
-      dustPos[i * 3 + 2] = (Math.random() - 0.5) * 60;
+      dustPos[i * 3] = (Math.random() - 0.5) * 50;
+      dustPos[i * 3 + 1] = Math.random() * 25 + 4;
+      dustPos[i * 3 + 2] = (Math.random() - 0.5) * 50;
     }
     dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-    const dustMat = new THREE.PointsMaterial({ size: 0.12, color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false });
+    const dustMat = new THREE.PointsMaterial({
+      size: 0.05,
+      color: 0xffdfaa,
+      transparent: true,
+      opacity: 0.12,
+      depthWrite: false,
+      fog: false
+    });
     ambientDust = new THREE.Points(dustGeom, dustMat);
     scene.add(ambientDust);
   }
@@ -1595,14 +1620,13 @@
     for (let i = 0; i < posAttr.count; i++) {
       let py = posAttr.getY(i);
       py += dt * (0.15 + Math.sin(i * 0.7) * 0.1);
-      if (py > 35) py -= 30;
+      if (py > 30) py -= 25;
       posAttr.setY(i, py);
       posAttr.setX(i, posAttr.getX(i) + Math.sin(performance.now() * 0.0003 + i) * dt * 0.3);
     }
     posAttr.needsUpdate = true;
-    // Fade dust based on day/night
     const isDay = (dayTime > 0.10 && dayTime < 0.45);
-    ambientDust.material.opacity = isDay ? 0.35 : 0.12;
+    ambientDust.material.opacity = isDay ? 0.12 : 0.03;
   }
 
   // =========================================================================
@@ -1779,24 +1803,166 @@
   // Celestial 3D Skybox, Lighting & Day/Night Cycle
   // =========================================================================
   function setupCelestialSkybox() {
-    // 3D Sun
-    const sunGeom = new THREE.SphereGeometry(8, 16, 16);
-    const sunMat = new THREE.MeshBasicMaterial({ color: 0xfffae0 });
-    sunMesh = new THREE.Mesh(sunGeom, sunMat);
-    // Sun glow aura
-    const glowGeom = new THREE.SphereGeometry(14, 16, 16);
-    const glowMat = new THREE.MeshBasicMaterial({ color: 0xfff8cc, transparent: true, opacity: 0.25, side: THREE.BackSide });
-    const sunGlow = new THREE.Mesh(glowGeom, glowMat);
-    sunMesh.add(sunGlow);
+    // 1. Procedural High-Fidelity Square Sun with Layered Radiant Glow
+    const sunGroup = new THREE.Group();
+
+    // 64x64 Pixel Art Solar Core
+    const sunCanvas = document.createElement('canvas');
+    sunCanvas.width = 64;
+    sunCanvas.height = 64;
+    const sctx = sunCanvas.getContext('2d');
+    sctx.clearRect(0, 0, 64, 64);
+    // Outer flame border
+    sctx.fillStyle = '#ff7b00';
+    sctx.fillRect(4, 4, 56, 56);
+    // Corona ring
+    sctx.fillStyle = '#ffaa00';
+    sctx.fillRect(8, 8, 48, 48);
+    // Vivid warm gold body
+    sctx.fillStyle = '#ffcf33';
+    sctx.fillRect(14, 14, 36, 36);
+    // Blazing white-gold center
+    sctx.fillStyle = '#fff8bd';
+    sctx.fillRect(20, 20, 24, 24);
+    sctx.fillStyle = '#ffffff';
+    sctx.fillRect(24, 24, 16, 16);
+
+    const sunTex = new THREE.CanvasTexture(sunCanvas);
+    sunTex.magFilter = THREE.NearestFilter;
+    sunTex.minFilter = THREE.NearestFilter;
+
+    const sunCoreGeom = new THREE.PlaneGeometry(16, 16);
+    const sunCoreMat = new THREE.MeshBasicMaterial({
+      map: sunTex,
+      transparent: true,
+      depthWrite: false,
+      fog: false
+    });
+    const sunCoreMesh = new THREE.Mesh(sunCoreGeom, sunCoreMat);
+    sunGroup.add(sunCoreMesh);
+
+    // Radial Golden Halo Canvas
+    const glowCanvas = document.createElement('canvas');
+    glowCanvas.width = 128;
+    glowCanvas.height = 128;
+    const gctx = glowCanvas.getContext('2d');
+    const grad = gctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+    grad.addColorStop(0, 'rgba(255, 235, 140, 0.85)');
+    grad.addColorStop(0.25, 'rgba(255, 175, 40, 0.45)');
+    grad.addColorStop(0.65, 'rgba(255, 110, 10, 0.12)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    gctx.fillStyle = grad;
+    gctx.fillRect(0, 0, 128, 128);
+
+    const sunGlowTex = new THREE.CanvasTexture(glowCanvas);
+    const glowGeom1 = new THREE.PlaneGeometry(34, 34);
+    const glowMat1 = new THREE.MeshBasicMaterial({
+      map: sunGlowTex,
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      fog: false
+    });
+    const glowMesh1 = new THREE.Mesh(glowGeom1, glowMat1);
+    glowMesh1.position.z = -0.1;
+    sunGroup.add(glowMesh1);
+
+    const glowGeom2 = new THREE.PlaneGeometry(58, 58);
+    const glowMat2 = new THREE.MeshBasicMaterial({
+      map: sunGlowTex,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      fog: false
+    });
+    const glowMesh2 = new THREE.Mesh(glowGeom2, glowMat2);
+    glowMesh2.position.z = -0.2;
+    sunGroup.add(glowMesh2);
+
+    sunMesh = sunGroup;
     scene.add(sunMesh);
 
-    // 3D Moon
-    const moonGeom = new THREE.SphereGeometry(6, 16, 16);
-    const moonMat = new THREE.MeshBasicMaterial({ color: 0xe8eef5 });
-    moonMesh = new THREE.Mesh(moonGeom, moonMat);
+    // 2. Procedural High-Fidelity Square Moon with Detailed Craters & Seas
+    const moonGroup = new THREE.Group();
+
+    const moonCanvas = document.createElement('canvas');
+    moonCanvas.width = 64;
+    moonCanvas.height = 64;
+    const mctx = moonCanvas.getContext('2d');
+    mctx.clearRect(0, 0, 64, 64);
+    // Stylized lunar bevel border
+    mctx.fillStyle = '#64748b';
+    mctx.fillRect(6, 6, 52, 52);
+    mctx.fillStyle = '#94a3b8';
+    mctx.fillRect(10, 10, 44, 44);
+    // Lunar surface body
+    mctx.fillStyle = '#e2e8f0';
+    mctx.fillRect(14, 14, 36, 36);
+    // Dark lunar maria (basalt plains)
+    mctx.fillStyle = '#94a3b8';
+    mctx.fillRect(18, 20, 10, 8);
+    mctx.fillRect(22, 30, 12, 10);
+    mctx.fillRect(34, 20, 8, 12);
+    mctx.fillRect(32, 34, 10, 6);
+    // Craters with shadows
+    mctx.fillStyle = '#475569';
+    mctx.fillRect(22, 22, 3, 3);
+    mctx.fillRect(36, 24, 4, 4);
+    mctx.fillRect(26, 36, 5, 5);
+    // Bright crater rim highlights
+    mctx.fillStyle = '#ffffff';
+    mctx.fillRect(21, 21, 3, 1);
+    mctx.fillRect(21, 21, 1, 3);
+    mctx.fillRect(35, 23, 4, 1);
+    mctx.fillRect(35, 23, 1, 4);
+
+    const moonTex = new THREE.CanvasTexture(moonCanvas);
+    moonTex.magFilter = THREE.NearestFilter;
+    moonTex.minFilter = THREE.NearestFilter;
+
+    const moonCoreGeom = new THREE.PlaneGeometry(14, 14);
+    const moonCoreMat = new THREE.MeshBasicMaterial({
+      map: moonTex,
+      transparent: true,
+      depthWrite: false,
+      fog: false
+    });
+    const moonCoreMesh = new THREE.Mesh(moonCoreGeom, moonCoreMat);
+    moonGroup.add(moonCoreMesh);
+
+    // Moon silver-blue glow aura
+    const moonGlowCanvas = document.createElement('canvas');
+    moonGlowCanvas.width = 128;
+    moonGlowCanvas.height = 128;
+    const mgctx = moonGlowCanvas.getContext('2d');
+    const mgrad = mgctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+    mgrad.addColorStop(0, 'rgba(190, 220, 255, 0.7)');
+    mgrad.addColorStop(0.35, 'rgba(140, 180, 245, 0.3)');
+    mgrad.addColorStop(0.7, 'rgba(100, 140, 220, 0.08)');
+    mgrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    mgctx.fillStyle = mgrad;
+    mgctx.fillRect(0, 0, 128, 128);
+
+    const moonGlowTex = new THREE.CanvasTexture(moonGlowCanvas);
+    const moonGlowGeom = new THREE.PlaneGeometry(30, 30);
+    const moonGlowMat = new THREE.MeshBasicMaterial({
+      map: moonGlowTex,
+      transparent: true,
+      opacity: 0.55,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      fog: false
+    });
+    const moonGlowMesh = new THREE.Mesh(moonGlowGeom, moonGlowMat);
+    moonGlowMesh.position.z = -0.1;
+    moonGroup.add(moonGlowMesh);
+
+    moonMesh = moonGroup;
     scene.add(moonMesh);
 
-    // 800 Twinkling Stars
+    // 3. 800 Twinkling Stars
     const starCount = 800;
     const starGeom = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
@@ -1815,7 +1981,8 @@
       size: 1.8,
       color: 0xffffff,
       transparent: true,
-      opacity: 0.0
+      opacity: 0.0,
+      fog: false
     });
     starField = new THREE.Points(starGeom, starMat);
     scene.add(starField);
@@ -1835,22 +2002,28 @@
 
     sunLight.position.set(player.x + celestialX, player.y + celestialY, player.z + celestialZ);
     moonLight.position.set(player.x - celestialX, player.y - celestialY, player.z - celestialZ);
-    if (sunMesh) sunMesh.position.set(player.x + celestialX, player.y + celestialY, player.z + celestialZ);
-    if (moonMesh) moonMesh.position.set(player.x - celestialX, player.y - celestialY, player.z - celestialZ);
+    if (sunMesh) {
+      sunMesh.position.set(player.x + celestialX, player.y + celestialY, player.z + celestialZ);
+      sunMesh.lookAt(player.x, player.y, player.z);
+    }
+    if (moonMesh) {
+      moonMesh.position.set(player.x - celestialX, player.y - celestialY, player.z - celestialZ);
+      moonMesh.lookAt(player.x, player.y, player.z);
+    }
     if (starField) starField.position.set(player.x, player.y, player.z);
     if (skyDome) skyDome.position.set(player.x, player.y - 10, player.z);
 
-    // Smooth color keys: [time, skyR,skyG,skyB, fogR,fogG,fogB, sunIntensity, ambIntensity, starOpacity]
+    // Balanced color keys: [time, skyR,skyG,skyB, fogR,fogG,fogB, sunIntensity, ambIntensity, starOpacity]
     const colorKeys = [
-      [0.00, 0.88,0.48,0.37,  0.96,0.63,0.38,  0.65,0.42,  0.4],  // Dawn
-      [0.15, 0.47,0.65,1.0,   0.58,0.72,1.0,    0.95,0.55,  0.0],  // Morning
-      [0.25, 0.47,0.65,1.0,   0.58,0.72,1.0,    1.05,0.58,  0.0],  // Noon
-      [0.40, 0.47,0.65,1.0,   0.58,0.72,1.0,    0.90,0.52,  0.0],  // Afternoon
-      [0.50, 0.88,0.48,0.37,  0.96,0.63,0.38,   0.65,0.42,  0.4],  // Sunset
-      [0.60, 0.15,0.10,0.25,  0.10,0.07,0.18,   0.15,0.30,  0.7],  // Dusk
-      [0.75, 0.04,0.05,0.09,  0.03,0.04,0.06,   0.04,0.24,  0.95], // Midnight
-      [0.90, 0.04,0.05,0.09,  0.03,0.04,0.06,   0.04,0.24,  0.95], // Late Night
-      [1.00, 0.88,0.48,0.37,  0.96,0.63,0.38,   0.65,0.42,  0.4],  // Dawn wrap
+      [0.00, 0.85,0.44,0.30,  0.88,0.50,0.35,  0.60,0.30,  0.35], // Dawn
+      [0.12, 0.38,0.60,0.95,  0.46,0.66,0.95,  0.78,0.34,  0.0],  // Morning
+      [0.25, 0.35,0.58,0.98,  0.42,0.64,0.96,  0.82,0.36,  0.0],  // Noon
+      [0.40, 0.38,0.60,0.95,  0.46,0.66,0.95,  0.78,0.34,  0.0],  // Afternoon
+      [0.50, 0.86,0.40,0.24,  0.88,0.46,0.28,  0.60,0.30,  0.35], // Sunset
+      [0.60, 0.12,0.08,0.20,  0.10,0.06,0.16,  0.14,0.20,  0.70], // Dusk
+      [0.75, 0.03,0.04,0.08,  0.02,0.03,0.06,  0.02,0.15,  0.95], // Midnight
+      [0.90, 0.03,0.04,0.08,  0.02,0.03,0.06,  0.02,0.15,  0.95], // Late Night
+      [1.00, 0.85,0.44,0.30,  0.88,0.50,0.35,  0.60,0.30,  0.35], // Dawn wrap
     ];
 
     let lo = colorKeys[0], hi = colorKeys[1];
@@ -1882,15 +2055,17 @@
       scene.fog.color = fogColor;
     }
 
-    // Update sky dome vertex colors
+    // Update sky dome vertex colors (smooth zenith to horizon gradient)
     if (skyDome) {
       const posAttr = skyDome.geometry.attributes.position;
       const colAttr = skyDome.geometry.attributes.color;
       for (let i = 0; i < posAttr.count; i++) {
         const ny = posAttr.getY(i) / 400;
         const nt = Math.max(0, Math.min(1, ny));
-        const zenithMix = 0.7 + nt * 0.3;
-        colAttr.setXYZ(i, skyR * zenithMix, skyG * zenithMix, skyB * (0.85 + nt * 0.15));
+        const zR = skyR * (0.65 + nt * 0.35);
+        const zG = skyG * (0.65 + nt * 0.35);
+        const zB = skyB * (0.75 + nt * 0.25);
+        colAttr.setXYZ(i, zR, zG, zB);
       }
       colAttr.needsUpdate = true;
     }
@@ -2097,53 +2272,54 @@
     // 1. Setup Three.js Scene, Camera, Renderer
     const container = document.getElementById('gameContainer');
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x78a7ff);
-    // Premium Sky Gradient Dome
+    scene.background = new THREE.Color(0x5a92ee);
+    // Premium Sky Gradient Dome (fog: false ensures sky is always vivid)
     const skyGeom = new THREE.SphereGeometry(400, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
     const skyColors = [];
     const skyPosAttr = skyGeom.attributes.position;
     for (let i = 0; i < skyPosAttr.count; i++) {
       const y = skyPosAttr.getY(i);
       const t = Math.max(0, Math.min(1, y / 400));
-      // Gradient from horizon light blue to deep zenith blue
-      const r = 0.47 * (1 - t) + 0.20 * t;
-      const g = 0.65 * (1 - t) + 0.40 * t;
-      const b = 1.0 * (1 - t) + 0.95 * t;
+      const r = 0.42 * (1 - t) + 0.15 * t;
+      const g = 0.64 * (1 - t) + 0.35 * t;
+      const b = 0.96 * (1 - t) + 0.90 * t;
       skyColors.push(r, g, b);
     }
     skyGeom.setAttribute('color', new THREE.Float32BufferAttribute(skyColors, 3));
-    const skyMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, depthWrite: false });
+    const skyMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, depthWrite: false, fog: false });
     const skyDome = new THREE.Mesh(skyGeom, skyMat);
     skyDome.renderOrder = -999;
     scene.add(skyDome);
 
+    // Linear Fog: Near starts at 65% of chunk distance, meaning ZERO fog anywhere near player!
     if (settings.fogEnabled) {
-      scene.fog = new THREE.FogExp2(0x94b9ff, 0.018);
+      const fogNear = Math.max(16, settings.renderDistance * CHUNK_SIZE * 0.65);
+      const fogFar = settings.renderDistance * CHUNK_SIZE;
+      scene.fog = new THREE.Fog(0x6ca0f5, fogNear, fogFar);
     }
 
     camera = new THREE.PerspectiveCamera(settings.fov, window.innerWidth / window.innerHeight, 0.1, 500);
     camera.rotation.order = 'YXZ';
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false });
+    // Standard linear pipeline for rich, vibrant voxel colors without washed-out bleaching
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
+    renderer.toneMapping = THREE.NoToneMapping;
     renderer.shadowMap.enabled = false;
     container.appendChild(renderer.domElement);
 
-    // 2. Setup Lighting
-    ambientLight = new THREE.AmbientLight(0xffffff, 0.58);
+    // 2. Setup Balanced Lighting
+    ambientLight = new THREE.AmbientLight(0xffffff, 0.36);
     scene.add(ambientLight);
-    const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x553311, 0.35);
+    const hemiLight = new THREE.HemisphereLight(0x78a7ff, 0x3d2b1f, 0.22);
     scene.add(hemiLight);
 
-    sunLight = new THREE.DirectionalLight(0xfff4e0, 1.0);
+    sunLight = new THREE.DirectionalLight(0xfff6e6, 0.82);
     sunLight.position.set(40, 80, 20);
     scene.add(sunLight);
 
-    moonLight = new THREE.DirectionalLight(0x8aa8ff, 0.2);
+    moonLight = new THREE.DirectionalLight(0x7290d8, 0.18);
     moonLight.position.set(-40, -80, -20);
     scene.add(moonLight);
 
@@ -2315,6 +2491,29 @@
     window.addEventListener('keydown', e => {
       keys[e.code] = true;
 
+      // Double Space for Flight Mode Toggle
+      if (e.code === 'Space') {
+        const now = performance.now();
+        if (!e.repeat) {
+          if (now - lastSpacePressTime < 320) {
+            player.isFlying = !player.isFlying;
+            lastSpacePressTime = 0;
+            if (player.isFlying) {
+              player.vy = 4.0;
+              player.onGround = false;
+              showToast('Flight Enabled (Space: Up, Shift: Down)');
+            } else {
+              player.vy = 0;
+              showToast('Flight Disabled');
+            }
+            const dbgFlight = document.getElementById('debugFlight');
+            if (dbgFlight) dbgFlight.textContent = player.isFlying ? 'Active' : 'Off';
+          } else {
+            lastSpacePressTime = now;
+          }
+        }
+      }
+
       // Hotbar Slot Numbers 1-9
       if (e.code >= 'Digit1' && e.code <= 'Digit9') {
         const idx = parseInt(e.code.replace('Digit', '')) - 1;
@@ -2326,12 +2525,12 @@
         toggleInventory();
       }
 
-      // Creative Flight Toggle [F]
+      // Flight Toggle Shortcut [F]
       if (e.code === 'KeyF') {
-        if (settings.gameMode === 'creative') {
-          player.isFlying = !player.isFlying;
-          showToast(player.isFlying ? 'Flight Enabled' : 'Flight Disabled');
-        }
+        player.isFlying = !player.isFlying;
+        showToast(player.isFlying ? 'Flight Enabled (Space: Up, Shift: Down)' : 'Flight Disabled');
+        const dbgFlight = document.getElementById('debugFlight');
+        if (dbgFlight) dbgFlight.textContent = player.isFlying ? 'Active' : 'Off';
       }
 
       // Debug Overlay Toggle [F3]
@@ -2365,6 +2564,7 @@
       for (const k in keys) keys[k] = false;
       player.vx = 0;
       player.vz = 0;
+      lastSpacePressTime = 0;
     });
 
     window.addEventListener('blur', () => {
@@ -2515,7 +2715,8 @@
         settings.renderDistance = parseInt(e.target.value);
         document.getElementById('valRenderDistance').textContent = `${settings.renderDistance} Chunks`;
         if (scene && scene.fog) {
-          scene.fog.density = 0.85 / (settings.renderDistance * CHUNK_SIZE);
+          scene.fog.near = Math.max(16, settings.renderDistance * CHUNK_SIZE * 0.65);
+          scene.fog.far = settings.renderDistance * CHUNK_SIZE;
         }
         updateLoadedChunks();
       });
@@ -2560,8 +2761,10 @@
       cFog.addEventListener('change', e => {
         settings.fogEnabled = e.target.checked;
         if (scene) {
+          const fn = Math.max(16, settings.renderDistance * CHUNK_SIZE * 0.65);
+          const ff = settings.renderDistance * CHUNK_SIZE;
           scene.fog = settings.fogEnabled
-            ? new THREE.FogExp2(0x94b9ff, 0.018)
+            ? new THREE.Fog(renderer.getClearColor(new THREE.Color()), fn, ff)
             : null;
         }
       });
