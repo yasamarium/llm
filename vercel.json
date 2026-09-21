@@ -9,7 +9,6 @@
     "api/proxy-image.js": { "maxDuration": 60 },
     "api/i.js": { "maxDuration": 60 },
     "api/s.js": { "maxDuration": 60 },
-    "api/paste.js": { "maxDuration": 60 },
     "api/msg.js": { "maxDuration": 60 }
   },
   "rewrites": [
@@ -17,7 +16,6 @@
     { "source": "/webeditor", "destination": "/webeditor.html" },
     { "source": "/game", "destination": "/game.html" },
     { "source": "/i/:id*", "destination": "/api/i?id=:id*" },
-    { "source": "/s/:id*", "destination": "/api/s?id=:id*" },
-    { "source": "/p/:id*", "destination": "/api/paste?id=:id*" }
+    { "source": "/s/:id*", "destination": "/api/s?id=:id*" }
   ]
 }

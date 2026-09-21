@@ -1,8 +1,3 @@
-// api/paste.js - AS Cloud Pastebin API
-export const config = {
-  maxDuration: 45,
-};
-
 const pastesCache = new Map();
 
 export default async function handler(req, res) {

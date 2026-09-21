@@ -15,6 +15,7 @@
   const WATER_LEVEL = 18;
 
   // Block IDs (Includes architecture & decorative blocks for villages & cities)
+  // Block IDs (Comprehensive Minecraft Java Edition Catalog)
   const BLOCKS = {
     AIR: 0,
     GRASS: 1,
@@ -43,7 +44,212 @@
     LAVA: 24,
     IGNITER: 25,
     OBSIDIAN: 26,
-    AMETHYST: 27
+    AMETHYST: 27,
+
+    // Building Blocks
+    COARSE_DIRT: 28,
+    PODZOL: 29,
+    MYCELIUM: 30,
+    GRAVEL: 31,
+    RED_SAND: 32,
+    CLAY: 33,
+    MUD: 34,
+    PACKED_MUD: 35,
+    MOSSY_COBBLE: 36,
+    SLIME_BLOCK: 37,
+    HONEY_BLOCK: 38,
+    SPONGE: 39,
+    ICE: 40,
+    PACKED_ICE: 41,
+    BLUE_ICE: 42,
+    CRYING_OBSIDIAN: 43,
+    NETHERRACK: 44,
+    END_STONE: 45,
+    PURPUR_BLOCK: 46,
+    PRISMARINE: 47,
+    DARK_PRISMARINE: 48,
+    HAY_BALE: 49,
+    TARGET_BLOCK: 50,
+    LANTERN: 51,
+    CAMPFIRE: 52,
+    SCAFFOLDING: 53,
+
+    // Wood & Plant Sets
+    SPRUCE_LOG: 54,
+    SPRUCE_PLANKS: 55,
+    SPRUCE_LEAVES: 56,
+    BIRCH_LOG: 57,
+    BIRCH_PLANKS: 58,
+    BIRCH_LEAVES: 59,
+    JUNGLE_LOG: 60,
+    JUNGLE_PLANKS: 61,
+    JUNGLE_LEAVES: 62,
+    ACACIA_LOG: 63,
+    ACACIA_PLANKS: 64,
+    DARK_OAK_LOG: 65,
+    DARK_OAK_PLANKS: 66,
+    CHERRY_LOG: 67,
+    CHERRY_PLANKS: 68,
+    CHERRY_LEAVES: 69,
+    MANGROVE_LOG: 70,
+    MANGROVE_PLANKS: 71,
+    BAMBOO_BLOCK: 72,
+    CACTUS: 73,
+    SUGAR_CANE: 74,
+    KELP: 75,
+    LILY_PAD: 76,
+    VINES: 77,
+    POPLAR_LOG: 78,
+    POPLAR_PLANKS: 79,
+    POPLAR_LEAVES: 80,
+
+    // Ores & Minerals
+    COPPER_ORE: 81,
+    REDSTONE_ORE: 82,
+    LAPIS_ORE: 83,
+    EMERALD_ORE: 84,
+    NETHER_QUARTZ_ORE: 85,
+    ANCIENT_DEBRIS: 86,
+    RAW_IRON: 87,
+    RAW_COPPER: 88,
+    RAW_GOLD: 89,
+    IRON_INGOT: 90,
+    COPPER_INGOT: 91,
+    GOLD_INGOT: 92,
+    NETHERITE_INGOT: 93,
+    DIAMOND: 94,
+    EMERALD: 95,
+    LAPIS_LAZULI: 96,
+    REDSTONE_DUST: 97,
+    NETHER_QUARTZ: 98,
+    AMETHYST_SHARD: 99,
+    FLINT: 100,
+
+    // Food & Farming
+    APPLE: 101,
+    GOLDEN_APPLE: 102,
+    BREAD: 103,
+    CARROT: 104,
+    GOLDEN_CARROT: 105,
+    POTATO: 106,
+    BAKED_POTATO: 107,
+    MELON_SLICE: 108,
+    SWEET_BERRIES: 109,
+    COOKED_BEEF: 110,
+    COOKED_PORKCHOP: 111,
+    COOKED_CHICKEN: 112,
+    COOKED_MUTTON: 113,
+    COOKED_FISH: 114,
+    EGG: 115,
+    MILK_BUCKET: 116,
+    HONEY_BOTTLE: 117,
+    WHEAT: 118,
+    WHEAT_SEEDS: 119,
+    BONE_MEAL: 120,
+
+    // Tools & Combat
+    DIAMOND_SWORD: 121,
+    IRON_SWORD: 122,
+    DIAMOND_PICKAXE: 123,
+    IRON_PICKAXE: 124,
+    DIAMOND_AXE: 125,
+    IRON_AXE: 126,
+    DIAMOND_SHOVEL: 127,
+    BOW: 128,
+    ARROW: 129,
+    SHIELD: 130,
+    TOTEM_OF_UNDYING: 131,
+    ENDER_PEARL: 132,
+    EYE_OF_ENDER: 133,
+    SHEARS: 134,
+    COMPASS: 135,
+    CLOCK: 136,
+    WATER_BUCKET: 137,
+    LAVA_BUCKET: 138,
+    ELYTRA: 139,
+
+    // Workstations & Storage
+    CRAFTING_TABLE: 140,
+    FURNACE: 141,
+    BLAST_FURNACE: 142,
+    SMOKER: 143,
+    ANVIL: 144,
+    ENCHANTING_TABLE: 145,
+    BREWING_STAND: 146,
+    CAULDRON: 147,
+    CHEST: 148,
+    BARREL: 149,
+    HOPPER: 150,
+    DISPENSER: 151,
+    JUKEBOX: 152,
+    NOTE_BLOCK: 153,
+    BED: 154,
+
+    // Redstone & Mechanisms
+    REDSTONE_TORCH: 155,
+    REPEATER: 156,
+    COMPARATOR: 157,
+    LEVER: 158,
+    BUTTON: 159,
+    PRESSURE_PLATE: 160,
+    PISTON: 161,
+    STICKY_PISTON: 162,
+    REDSTONE_LAMP: 163,
+    OBSERVER: 164,
+    RAIL: 165,
+    POWERED_RAIL: 166,
+
+    // Dyes & Decorative
+    WHITE_DYE: 167,
+    ORANGE_DYE: 168,
+    MAGENTA_DYE: 169,
+    LIGHT_BLUE_DYE: 170,
+    YELLOW_DYE: 171,
+    LIME_DYE: 172,
+    PINK_DYE: 173,
+    GRAY_DYE: 174,
+    CYAN_DYE: 175,
+    PURPLE_DYE: 176,
+    BLUE_DYE: 177,
+    BROWN_DYE: 178,
+    GREEN_DYE: 179,
+    RED_DYE: 180,
+    BLACK_DYE: 181,
+    POPPY: 182,
+    DANDELION: 183,
+    TULIP: 184,
+    BLUE_ORCHID: 185,
+    SUNFLOWER: 186,
+    WITHER_ROSE: 187,
+    CANDLE: 188,
+    CAKE: 189,
+
+    // Potions & Magic
+    POTION_HEALING: 190,
+    POTION_REGEN: 191,
+    POTION_FIRE_RES: 192,
+    POTION_SWIFTNESS: 193,
+    POTION_NIGHT_VISION: 194,
+    POTION_STRENGTH: 195,
+    POTION_INVISIBILITY: 196,
+    POTION_POISON: 197,
+
+    // Spawn Eggs
+    SPAWN_CREEPER: 198,
+    SPAWN_ZOMBIE: 199,
+    SPAWN_SKELETON: 200,
+    SPAWN_SPIDER: 201,
+    SPAWN_ENDERMAN: 202,
+    SPAWN_PIG: 203,
+    SPAWN_COW: 204,
+    SPAWN_SHEEP: 205,
+    SPAWN_CHICKEN: 206,
+    SPAWN_VILLAGER: 207,
+    SPAWN_GOLEM: 208,
+    SPAWN_WOLF: 209,
+    SPAWN_SLIME: 210,
+    SPAWN_BLAZE: 211,
+    SPAWN_WARDEN: 212
   };
 
   const BLOCK_NAMES = {
@@ -66,7 +272,7 @@
     [BLOCKS.SNOW]: 'Snow Block',
     [BLOCKS.BRICKS]: 'Bricks',
     [BLOCKS.BOOKSHELF]: 'Bookshelf',
-    [BLOCKS.TNT]: 'TNT Block',
+    [BLOCKS.TNT]: 'TNT Explosive',
     [BLOCKS.STONE_BRICKS]: 'Stone Bricks',
     [BLOCKS.GLOWSTONE]: 'Glowstone Lantern',
     [BLOCKS.ROSE]: 'Red Rose Flower',
@@ -74,16 +280,335 @@
     [BLOCKS.LAVA]: 'Molten Lava',
     [BLOCKS.IGNITER]: 'Igniter (Flint & Steel)',
     [BLOCKS.OBSIDIAN]: 'Obsidian Block',
-    [BLOCKS.AMETHYST]: 'Amethyst Crystal'
+    [BLOCKS.AMETHYST]: 'Amethyst Crystal',
+
+    // Building
+    [BLOCKS.COARSE_DIRT]: 'Coarse Dirt',
+    [BLOCKS.PODZOL]: 'Podzol',
+    [BLOCKS.MYCELIUM]: 'Mycelium',
+    [BLOCKS.GRAVEL]: 'Gravel',
+    [BLOCKS.RED_SAND]: 'Red Sand',
+    [BLOCKS.CLAY]: 'Clay Block',
+    [BLOCKS.MUD]: 'Mud',
+    [BLOCKS.PACKED_MUD]: 'Packed Mud',
+    [BLOCKS.MOSSY_COBBLE]: 'Mossy Cobblestone',
+    [BLOCKS.SLIME_BLOCK]: 'Slime Block',
+    [BLOCKS.HONEY_BLOCK]: 'Honey Block',
+    [BLOCKS.SPONGE]: 'Sponge',
+    [BLOCKS.ICE]: 'Ice',
+    [BLOCKS.PACKED_ICE]: 'Packed Ice',
+    [BLOCKS.BLUE_ICE]: 'Blue Ice',
+    [BLOCKS.CRYING_OBSIDIAN]: 'Crying Obsidian',
+    [BLOCKS.NETHERRACK]: 'Netherrack',
+    [BLOCKS.END_STONE]: 'End Stone',
+    [BLOCKS.PURPUR_BLOCK]: 'Purpur Block',
+    [BLOCKS.PRISMARINE]: 'Prismarine',
+    [BLOCKS.DARK_PRISMARINE]: 'Dark Prismarine',
+    [BLOCKS.HAY_BALE]: 'Hay Bale',
+    [BLOCKS.TARGET_BLOCK]: 'Target Block',
+    [BLOCKS.LANTERN]: 'Lantern',
+    [BLOCKS.CAMPFIRE]: 'Campfire',
+    [BLOCKS.SCAFFOLDING]: 'Scaffolding',
+
+    // Wood sets
+    [BLOCKS.SPRUCE_LOG]: 'Spruce Log',
+    [BLOCKS.SPRUCE_PLANKS]: 'Spruce Planks',
+    [BLOCKS.SPRUCE_LEAVES]: 'Spruce Leaves',
+    [BLOCKS.BIRCH_LOG]: 'Birch Log',
+    [BLOCKS.BIRCH_PLANKS]: 'Birch Planks',
+    [BLOCKS.BIRCH_LEAVES]: 'BirCH Leaves',
+    [BLOCKS.JUNGLE_LOG]: 'Jungle Log',
+    [BLOCKS.JUNGLE_PLANKS]: 'Jungle Planks',
+    [BLOCKS.JUNGLE_LEAVES]: 'Jungle Leaves',
+    [BLOCKS.ACACIA_LOG]: 'Acacia Log',
+    [BLOCKS.ACACIA_PLANKS]: 'Acacia Planks',
+    [BLOCKS.DARK_OAK_LOG]: 'Dark Oak Log',
+    [BLOCKS.DARK_OAK_PLANKS]: 'Dark Oak Planks',
+    [BLOCKS.CHERRY_LOG]: 'Cherry Log',
+    [BLOCKS.CHERRY_PLANKS]: 'Cherry Planks',
+    [BLOCKS.CHERRY_LEAVES]: 'Cherry Leaves',
+    [BLOCKS.MANGROVE_LOG]: 'Mangrove Log',
+    [BLOCKS.MANGROVE_PLANKS]: 'Mangrove Planks',
+    [BLOCKS.BAMBOO_BLOCK]: 'Bamboo Block',
+    [BLOCKS.CACTUS]: 'Cactus',
+    [BLOCKS.SUGAR_CANE]: 'Sugar Cane',
+    [BLOCKS.KELP]: 'Kelp',
+    [BLOCKS.LILY_PAD]: 'Lily Pad',
+    [BLOCKS.VINES]: 'Vines',
+    [BLOCKS.POPLAR_LOG]: 'Poplar Log',
+    [BLOCKS.POPLAR_PLANKS]: 'Poplar Planks',
+    [BLOCKS.POPLAR_LEAVES]: 'Poplar Leaves',
+
+    // Ores & Minerals
+    [BLOCKS.COPPER_ORE]: 'Copper Ore',
+    [BLOCKS.REDSTONE_ORE]: 'Redstone Ore',
+    [BLOCKS.LAPIS_ORE]: 'Lapis Lazuli Ore',
+    [BLOCKS.EMERALD_ORE]: 'Emerald Ore',
+    [BLOCKS.NETHER_QUARTZ_ORE]: 'Nether Quartz Ore',
+    [BLOCKS.ANCIENT_DEBRIS]: 'Ancient Debris',
+    [BLOCKS.RAW_IRON]: 'Raw Iron',
+    [BLOCKS.RAW_COPPER]: 'Raw Copper',
+    [BLOCKS.RAW_GOLD]: 'Raw Gold',
+    [BLOCKS.IRON_INGOT]: 'Iron Ingot',
+    [BLOCKS.COPPER_INGOT]: 'Copper Ingot',
+    [BLOCKS.GOLD_INGOT]: 'Gold Ingot',
+    [BLOCKS.NETHERITE_INGOT]: 'Netherite Ingot',
+    [BLOCKS.DIAMOND]: 'Diamond Gem',
+    [BLOCKS.EMERALD]: 'Emerald Gem',
+    [BLOCKS.LAPIS_LAZULI]: 'Lapis Lazuli',
+    [BLOCKS.REDSTONE_DUST]: 'Redstone Dust',
+    [BLOCKS.NETHER_QUARTZ]: 'Nether Quartz',
+    [BLOCKS.AMETHYST_SHARD]: 'Amethyst Shard',
+    [BLOCKS.FLINT]: 'Flint',
+
+    // Food & Farming
+    [BLOCKS.APPLE]: 'Red Apple',
+    [BLOCKS.GOLDEN_APPLE]: 'Golden Apple',
+    [BLOCKS.BREAD]: 'Fresh Bread',
+    [BLOCKS.CARROT]: 'Golden Carrot',
+    [BLOCKS.GOLDEN_CARROT]: 'Golden Carrot',
+    [BLOCKS.POTATO]: 'Potato',
+    [BLOCKS.BAKED_POTATO]: 'Baked Potato',
+    [BLOCKS.MELON_SLICE]: 'Melon Slice',
+    [BLOCKS.SWEET_BERRIES]: 'Sweet Berries',
+    [BLOCKS.COOKED_BEEF]: 'Cooked Beef Steak',
+    [BLOCKS.COOKED_PORKCHOP]: 'Cooked Porkchop',
+    [BLOCKS.COOKED_CHICKEN]: 'Cooked Chicken',
+    [BLOCKS.COOKED_MUTTON]: 'Cooked Mutton',
+    [BLOCKS.COOKED_FISH]: 'Cooked Cod Fish',
+    [BLOCKS.EGG]: 'Chicken Egg',
+    [BLOCKS.MILK_BUCKET]: 'Milk Bucket',
+    [BLOCKS.HONEY_BOTTLE]: 'Honey Bottle',
+    [BLOCKS.WHEAT]: 'Wheat Harvest',
+    [BLOCKS.WHEAT_SEEDS]: 'Wheat Seeds',
+    [BLOCKS.BONE_MEAL]: 'Bone Meal Fertilizer',
+
+    // Tools & Combat
+    [BLOCKS.DIAMOND_SWORD]: 'Diamond Sword',
+    [BLOCKS.IRON_SWORD]: 'Iron Sword',
+    [BLOCKS.DIAMOND_PICKAXE]: 'Diamond Pickaxe',
+    [BLOCKS.IRON_PICKAXE]: 'Iron Pickaxe',
+    [BLOCKS.DIAMOND_AXE]: 'Diamond Axe',
+    [BLOCKS.IRON_AXE]: 'Iron Axe',
+    [BLOCKS.DIAMOND_SHOVEL]: 'Diamond Shovel',
+    [BLOCKS.BOW]: 'Archers Bow',
+    [BLOCKS.ARROW]: 'Arrow',
+    [BLOCKS.SHIELD]: 'Knight Shield',
+    [BLOCKS.TOTEM_OF_UNDYING]: 'Totem of Undying',
+    [BLOCKS.ENDER_PEARL]: 'Ender Pearl',
+    [BLOCKS.EYE_OF_ENDER]: 'Eye of Ender',
+    [BLOCKS.SHEARS]: 'Shears',
+    [BLOCKS.COMPASS]: 'Magnetic Compass',
+    [BLOCKS.CLOCK]: 'Celestial Clock',
+    [BLOCKS.WATER_BUCKET]: 'Water Bucket',
+    [BLOCKS.LAVA_BUCKET]: 'Lava Bucket',
+    [BLOCKS.ELYTRA]: 'Elytra Wings',
+
+    // Workstations & Storage
+    [BLOCKS.CRAFTING_TABLE]: 'Crafting Table',
+    [BLOCKS.FURNACE]: 'Smelting Furnace',
+    [BLOCKS.BLAST_FURNACE]: 'Blast Furnace',
+    [BLOCKS.SMOKER]: 'Food Smoker',
+    [BLOCKS.ANVIL]: 'Heavy Anvil',
+    [BLOCKS.ENCHANTING_TABLE]: 'Enchanting Table',
+    [BLOCKS.BREWING_STAND]: 'Brewing Stand',
+    [BLOCKS.CAULDRON]: 'Cauldron',
+    [BLOCKS.CHEST]: 'Wooden Chest',
+    [BLOCKS.BARREL]: 'Storage Barrel',
+    [BLOCKS.HOPPER]: 'Hopper Funnel',
+    [BLOCKS.DISPENSER]: 'Dispenser Mechanism',
+    [BLOCKS.JUKEBOX]: 'Music Jukebox',
+    [BLOCKS.NOTE_BLOCK]: 'Note Block',
+    [BLOCKS.BED]: 'Cozy Red Bed',
+
+    // Redstone
+    [BLOCKS.REDSTONE_TORCH]: 'Redstone Torch',
+    [BLOCKS.REPEATER]: 'Redstone Repeater',
+    [BLOCKS.COMPARATOR]: 'Redstone Comparator',
+    [BLOCKS.LEVER]: 'Toggle Lever',
+    [BLOCKS.BUTTON]: 'Stone Button',
+    [BLOCKS.PRESSURE_PLATE]: 'Pressure Plate',
+    [BLOCKS.PISTON]: 'Mechanical Piston',
+    [BLOCKS.STICKY_PISTON]: 'Sticky Piston',
+    [BLOCKS.REDSTONE_LAMP]: 'Redstone Lamp',
+    [BLOCKS.OBSERVER]: 'Observer Sensor',
+    [BLOCKS.RAIL]: 'Minecart Rail',
+    [BLOCKS.POWERED_RAIL]: 'Powered Golden Rail',
+
+    // Dyes & Decor
+    [BLOCKS.WHITE_DYE]: 'White Dye',
+    [BLOCKS.ORANGE_DYE]: 'Orange Dye',
+    [BLOCKS.MAGENTA_DYE]: 'Magenta Dye',
+    [BLOCKS.LIGHT_BLUE_DYE]: 'Light Blue Dye',
+    [BLOCKS.YELLOW_DYE]: 'Yellow Dye',
+    [BLOCKS.LIME_DYE]: 'Lime Green Dye',
+    [BLOCKS.PINK_DYE]: 'Pink Dye',
+    [BLOCKS.GRAY_DYE]: 'Gray Dye',
+    [BLOCKS.CYAN_DYE]: 'Cyan Dye',
+    [BLOCKS.PURPLE_DYE]: 'Purple Dye',
+    [BLOCKS.BLUE_DYE]: 'Blue Dye',
+    [BLOCKS.BROWN_DYE]: 'Brown Dye',
+    [BLOCKS.GREEN_DYE]: 'Green Dye',
+    [BLOCKS.RED_DYE]: 'Red Dye',
+    [BLOCKS.BLACK_DYE]: 'Black Dye',
+    [BLOCKS.POPPY]: 'Red Poppy',
+    [BLOCKS.DANDELION]: 'Yellow Dandelion',
+    [BLOCKS.TULIP]: 'Orange Tulip',
+    [BLOCKS.BLUE_ORCHID]: 'Blue Orchid',
+    [BLOCKS.SUNFLOWER]: 'Radiant Sunflower',
+    [BLOCKS.WITHER_ROSE]: 'Wither Rose',
+    [BLOCKS.CANDLE]: 'Lit Candle',
+    [BLOCKS.CAKE]: 'Delicious Cake',
+
+    // Potions
+    [BLOCKS.POTION_HEALING]: 'Potion of Healing',
+    [BLOCKS.POTION_REGEN]: 'Potion of Regeneration',
+    [BLOCKS.POTION_FIRE_RES]: 'Potion of Fire Resistance',
+    [BLOCKS.POTION_SWIFTNESS]: 'Potion of Swiftness',
+    [BLOCKS.POTION_NIGHT_VISION]: 'Potion of Night Vision',
+    [BLOCKS.POTION_STRENGTH]: 'Potion of Strength',
+    [BLOCKS.POTION_INVISIBILITY]: 'Potion of Invisibility',
+    [BLOCKS.POTION_POISON]: 'Potion of Poison',
+
+    // Spawn Eggs
+    [BLOCKS.SPAWN_CREEPER]: 'Creeper Spawn Egg',
+    [BLOCKS.SPAWN_ZOMBIE]: 'Zombie Spawn Egg',
+    [BLOCKS.SPAWN_SKELETON]: 'Skeleton Spawn Egg',
+    [BLOCKS.SPAWN_SPIDER]: 'Spider Spawn Egg',
+    [BLOCKS.SPAWN_ENDERMAN]: 'Enderman Spawn Egg',
+    [BLOCKS.SPAWN_PIG]: 'Pig Spawn Egg',
+    [BLOCKS.SPAWN_COW]: 'Cow Spawn Egg',
+    [BLOCKS.SPAWN_SHEEP]: 'Sheep Spawn Egg',
+    [BLOCKS.SPAWN_CHICKEN]: 'Chicken Spawn Egg',
+    [BLOCKS.SPAWN_VILLAGER]: 'Villager Spawn Egg',
+    [BLOCKS.SPAWN_GOLEM]: 'Iron Golem Spawn Egg',
+    [BLOCKS.SPAWN_WOLF]: 'Wolf Spawn Egg',
+    [BLOCKS.SPAWN_SLIME]: 'Slime Spawn Egg',
+    [BLOCKS.SPAWN_BLAZE]: 'Blaze Spawn Egg',
+    [BLOCKS.SPAWN_WARDEN]: 'Warden Spawn Egg'
+  };
+
+
+  // Item Category Mapping for Tabbed Palette & Search Filtering
+  const ITEM_CATEGORIES = {
+    [BLOCKS.GRASS]: 'building', [BLOCKS.DIRT]: 'building', [BLOCKS.STONE]: 'building',
+    [BLOCKS.COBBLESTONE]: 'building', [BLOCKS.SAND]: 'building', [BLOCKS.GLASS]: 'building',
+    [BLOCKS.WATER]: 'building', [BLOCKS.BEDROCK]: 'building', [BLOCKS.SNOW]: 'building',
+    [BLOCKS.BRICKS]: 'building', [BLOCKS.STONE_BRICKS]: 'building', [BLOCKS.GLOWSTONE]: 'building',
+    [BLOCKS.POLISHED_STONE]: 'building', [BLOCKS.LAVA]: 'building', [BLOCKS.OBSIDIAN]: 'building',
+    [BLOCKS.AMETHYST]: 'building', [BLOCKS.COARSE_DIRT]: 'building', [BLOCKS.PODZOL]: 'building',
+    [BLOCKS.MYCELIUM]: 'building', [BLOCKS.GRAVEL]: 'building', [BLOCKS.RED_SAND]: 'building',
+    [BLOCKS.CLAY]: 'building', [BLOCKS.MUD]: 'building', [BLOCKS.PACKED_MUD]: 'building',
+    [BLOCKS.MOSSY_COBBLE]: 'building', [BLOCKS.SLIME_BLOCK]: 'building', [BLOCKS.HONEY_BLOCK]: 'building',
+    [BLOCKS.SPONGE]: 'building', [BLOCKS.ICE]: 'building', [BLOCKS.PACKED_ICE]: 'building',
+    [BLOCKS.BLUE_ICE]: 'building', [BLOCKS.CRYING_OBSIDIAN]: 'building', [BLOCKS.NETHERRACK]: 'building',
+    [BLOCKS.END_STONE]: 'building', [BLOCKS.PURPUR_BLOCK]: 'building', [BLOCKS.PRISMARINE]: 'building',
+    [BLOCKS.DARK_PRISMARINE]: 'building', [BLOCKS.HAY_BALE]: 'building', [BLOCKS.TARGET_BLOCK]: 'building',
+    [BLOCKS.LANTERN]: 'building', [BLOCKS.CAMPFIRE]: 'building', [BLOCKS.SCAFFOLDING]: 'building',
+
+    [BLOCKS.WOOD]: 'wood', [BLOCKS.LEAVES]: 'wood', [BLOCKS.PLANKS]: 'wood',
+    [BLOCKS.SPRUCE_LOG]: 'wood', [BLOCKS.SPRUCE_PLANKS]: 'wood', [BLOCKS.SPRUCE_LEAVES]: 'wood',
+    [BLOCKS.BIRCH_LOG]: 'wood', [BLOCKS.BIRCH_PLANKS]: 'wood', [BLOCKS.BIRCH_LEAVES]: 'wood',
+    [BLOCKS.JUNGLE_LOG]: 'wood', [BLOCKS.JUNGLE_PLANKS]: 'wood', [BLOCKS.JUNGLE_LEAVES]: 'wood',
+    [BLOCKS.ACACIA_LOG]: 'wood', [BLOCKS.ACACIA_PLANKS]: 'wood', [BLOCKS.DARK_OAK_LOG]: 'wood',
+    [BLOCKS.DARK_OAK_PLANKS]: 'wood', [BLOCKS.CHERRY_LOG]: 'wood', [BLOCKS.CHERRY_PLANKS]: 'wood',
+    [BLOCKS.CHERRY_LEAVES]: 'wood', [BLOCKS.MANGROVE_LOG]: 'wood', [BLOCKS.MANGROVE_PLANKS]: 'wood',
+    [BLOCKS.BAMBOO_BLOCK]: 'wood', [BLOCKS.CACTUS]: 'wood', [BLOCKS.SUGAR_CANE]: 'wood',
+    [BLOCKS.KELP]: 'wood', [BLOCKS.LILY_PAD]: 'wood', [BLOCKS.VINES]: 'wood',
+    [BLOCKS.POPLAR_LOG]: 'wood', [BLOCKS.POPLAR_PLANKS]: 'wood', [BLOCKS.POPLAR_LEAVES]: 'wood',
+
+    [BLOCKS.COAL_ORE]: 'ores', [BLOCKS.IRON_ORE]: 'ores', [BLOCKS.GOLD_ORE]: 'ores',
+    [BLOCKS.DIAMOND_ORE]: 'ores', [BLOCKS.COPPER_ORE]: 'ores', [BLOCKS.REDSTONE_ORE]: 'ores',
+    [BLOCKS.LAPIS_ORE]: 'ores', [BLOCKS.EMERALD_ORE]: 'ores', [BLOCKS.NETHER_QUARTZ_ORE]: 'ores',
+    [BLOCKS.ANCIENT_DEBRIS]: 'ores', [BLOCKS.RAW_IRON]: 'ores', [BLOCKS.RAW_COPPER]: 'ores',
+    [BLOCKS.RAW_GOLD]: 'ores', [BLOCKS.IRON_INGOT]: 'ores', [BLOCKS.COPPER_INGOT]: 'ores',
+    [BLOCKS.GOLD_INGOT]: 'ores', [BLOCKS.NETHERITE_INGOT]: 'ores', [BLOCKS.DIAMOND]: 'ores',
+    [BLOCKS.EMERALD]: 'ores', [BLOCKS.LAPIS_LAZULI]: 'ores', [BLOCKS.REDSTONE_DUST]: 'ores',
+    [BLOCKS.NETHER_QUARTZ]: 'ores', [BLOCKS.AMETHYST_SHARD]: 'ores', [BLOCKS.FLINT]: 'ores',
+
+    [BLOCKS.APPLE]: 'food', [BLOCKS.GOLDEN_APPLE]: 'food', [BLOCKS.BREAD]: 'food',
+    [BLOCKS.CARROT]: 'food', [BLOCKS.GOLDEN_CARROT]: 'food', [BLOCKS.POTATO]: 'food',
+    [BLOCKS.BAKED_POTATO]: 'food', [BLOCKS.MELON_SLICE]: 'food', [BLOCKS.SWEET_BERRIES]: 'food',
+    [BLOCKS.COOKED_BEEF]: 'food', [BLOCKS.COOKED_PORKCHOP]: 'food', [BLOCKS.COOKED_CHICKEN]: 'food',
+    [BLOCKS.COOKED_MUTTON]: 'food', [BLOCKS.COOKED_FISH]: 'food', [BLOCKS.EGG]: 'food',
+    [BLOCKS.MILK_BUCKET]: 'food', [BLOCKS.HONEY_BOTTLE]: 'food', [BLOCKS.WHEAT]: 'food',
+    [BLOCKS.WHEAT_SEEDS]: 'food', [BLOCKS.BONE_MEAL]: 'food',
+
+    [BLOCKS.TNT]: 'tools', [BLOCKS.IGNITER]: 'tools', [BLOCKS.DIAMOND_SWORD]: 'tools',
+    [BLOCKS.IRON_SWORD]: 'tools', [BLOCKS.DIAMOND_PICKAXE]: 'tools', [BLOCKS.IRON_PICKAXE]: 'tools',
+    [BLOCKS.DIAMOND_AXE]: 'tools', [BLOCKS.IRON_AXE]: 'tools', [BLOCKS.DIAMOND_SHOVEL]: 'tools',
+    [BLOCKS.BOW]: 'tools', [BLOCKS.ARROW]: 'tools', [BLOCKS.SHIELD]: 'tools',
+    [BLOCKS.TOTEM_OF_UNDYING]: 'tools', [BLOCKS.ENDER_PEARL]: 'tools', [BLOCKS.EYE_OF_ENDER]: 'tools',
+    [BLOCKS.SHEARS]: 'tools', [BLOCKS.COMPASS]: 'tools', [BLOCKS.CLOCK]: 'tools',
+    [BLOCKS.WATER_BUCKET]: 'tools', [BLOCKS.LAVA_BUCKET]: 'tools', [BLOCKS.ELYTRA]: 'tools',
+
+    [BLOCKS.BOOKSHELF]: 'workstations', [BLOCKS.CRAFTING_TABLE]: 'workstations',
+    [BLOCKS.FURNACE]: 'workstations', [BLOCKS.BLAST_FURNACE]: 'workstations',
+    [BLOCKS.SMOKER]: 'workstations', [BLOCKS.ANVIL]: 'workstations',
+    [BLOCKS.ENCHANTING_TABLE]: 'workstations', [BLOCKS.BREWING_STAND]: 'workstations',
+    [BLOCKS.CAULDRON]: 'workstations', [BLOCKS.CHEST]: 'workstations',
+    [BLOCKS.BARREL]: 'workstations', [BLOCKS.HOPPER]: 'workstations',
+    [BLOCKS.DISPENSER]: 'workstations', [BLOCKS.JUKEBOX]: 'workstations',
+    [BLOCKS.NOTE_BLOCK]: 'workstations', [BLOCKS.BED]: 'workstations',
+
+    [BLOCKS.REDSTONE_TORCH]: 'redstone', [BLOCKS.REPEATER]: 'redstone',
+    [BLOCKS.COMPARATOR]: 'redstone', [BLOCKS.LEVER]: 'redstone', [BLOCKS.BUTTON]: 'redstone',
+    [BLOCKS.PRESSURE_PLATE]: 'redstone', [BLOCKS.PISTON]: 'redstone',
+    [BLOCKS.STICKY_PISTON]: 'redstone', [BLOCKS.REDSTONE_LAMP]: 'redstone',
+    [BLOCKS.OBSERVER]: 'redstone', [BLOCKS.RAIL]: 'redstone', [BLOCKS.POWERED_RAIL]: 'redstone',
+
+    [BLOCKS.ROSE]: 'decor', [BLOCKS.WHITE_DYE]: 'decor', [BLOCKS.ORANGE_DYE]: 'decor',
+    [BLOCKS.MAGENTA_DYE]: 'decor', [BLOCKS.LIGHT_BLUE_DYE]: 'decor', [BLOCKS.YELLOW_DYE]: 'decor',
+    [BLOCKS.LIME_DYE]: 'decor', [BLOCKS.PINK_DYE]: 'decor', [BLOCKS.GRAY_DYE]: 'decor',
+    [BLOCKS.CYAN_DYE]: 'decor', [BLOCKS.PURPLE_DYE]: 'decor', [BLOCKS.BLUE_DYE]: 'decor',
+    [BLOCKS.BROWN_DYE]: 'decor', [BLOCKS.GREEN_DYE]: 'decor', [BLOCKS.RED_DYE]: 'decor',
+    [BLOCKS.BLACK_DYE]: 'decor', [BLOCKS.POPPY]: 'decor', [BLOCKS.DANDELION]: 'decor',
+    [BLOCKS.TULIP]: 'decor', [BLOCKS.BLUE_ORCHID]: 'decor', [BLOCKS.SUNFLOWER]: 'decor',
+    [BLOCKS.WITHER_ROSE]: 'decor', [BLOCKS.CANDLE]: 'decor', [BLOCKS.CAKE]: 'decor',
+
+    [BLOCKS.POTION_HEALING]: 'potions', [BLOCKS.POTION_REGEN]: 'potions',
+    [BLOCKS.POTION_FIRE_RES]: 'potions', [BLOCKS.POTION_SWIFTNESS]: 'potions',
+    [BLOCKS.POTION_NIGHT_VISION]: 'potions', [BLOCKS.POTION_STRENGTH]: 'potions',
+    [BLOCKS.POTION_INVISIBILITY]: 'potions', [BLOCKS.POTION_POISON]: 'potions',
+
+    [BLOCKS.SPAWN_CREEPER]: 'eggs', [BLOCKS.SPAWN_ZOMBIE]: 'eggs', [BLOCKS.SPAWN_SKELETON]: 'eggs',
+    [BLOCKS.SPAWN_SPIDER]: 'eggs', [BLOCKS.SPAWN_ENDERMAN]: 'eggs', [BLOCKS.SPAWN_PIG]: 'eggs',
+    [BLOCKS.SPAWN_COW]: 'eggs', [BLOCKS.SPAWN_SHEEP]: 'eggs', [BLOCKS.SPAWN_CHICKEN]: 'eggs',
+    [BLOCKS.SPAWN_VILLAGER]: 'eggs', [BLOCKS.SPAWN_GOLEM]: 'eggs', [BLOCKS.SPAWN_WOLF]: 'eggs',
+    [BLOCKS.SPAWN_SLIME]: 'eggs', [BLOCKS.SPAWN_BLAZE]: 'eggs', [BLOCKS.SPAWN_WARDEN]: 'eggs'
   };
 
   const BLOCK_TRANSPARENT = {
     [BLOCKS.AIR]: true,
     [BLOCKS.LEAVES]: true,
+    [BLOCKS.SPRUCE_LEAVES]: true,
+    [BLOCKS.BIRCH_LEAVES]: true,
+    [BLOCKS.JUNGLE_LEAVES]: true,
+    [BLOCKS.CHERRY_LEAVES]: true,
+    [BLOCKS.POPLAR_LEAVES]: true,
     [BLOCKS.GLASS]: true,
     [BLOCKS.WATER]: true,
-    [BLOCKS.ROSE]: true,
     [BLOCKS.LAVA]: true,
+    [BLOCKS.ICE]: true,
+    [BLOCKS.BLUE_ICE]: true,
+    [BLOCKS.SLIME_BLOCK]: true,
+    [BLOCKS.HONEY_BLOCK]: true,
+    [BLOCKS.ROSE]: true,
+    [BLOCKS.POPPY]: true,
+    [BLOCKS.DANDELION]: true,
+    [BLOCKS.TULIP]: true,
+    [BLOCKS.BLUE_ORCHID]: true,
+    [BLOCKS.SUNFLOWER]: true,
+    [BLOCKS.WITHER_ROSE]: true,
+    [BLOCKS.SUGAR_CANE]: true,
+    [BLOCKS.KELP]: true,
+    [BLOCKS.LILY_PAD]: true,
+    [BLOCKS.VINES]: true,
+    [BLOCKS.REDSTONE_TORCH]: true,
+    [BLOCKS.REDSTONE_DUST]: true,
+    [BLOCKS.RAIL]: true,
+    [BLOCKS.POWERED_RAIL]: true,
+    [BLOCKS.LANTERN]: true,
     [BLOCKS.IGNITER]: true
   };
 
@@ -144,6 +669,12 @@
   let npcs = [];
   let mobs = [];
   let primedTNTs = [];
+  const aiNodeCores = [];
+  let activeNearbyAICore = null;
+  let isAiChatOpen = false;
+  let activeInvCategory = 'all';
+  let invSearchQuery = '';
+  const playerEffects = { swiftness: 0, regen: 0, fireRes: 0, nightVision: 0, strength: 0 };
   let cameraShake = 0;
   let handGroup, handArmMesh, handItemMesh;
   let wireframeTargetBox;
@@ -842,6 +1373,750 @@
     }
 
     // Material Helper
+
+    // -------------------------------------------------------------------------
+    // Procedural 32x32 Textures for All Minecraft Java Catalog Items
+    // -------------------------------------------------------------------------
+    function drawBorderBox(ctx, bg, border, w = 32, h = 32) {
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = border;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+    }
+
+    function addNoiseGrains(ctx, color, threshold = 0.75, count = 28) {
+      ctx.fillStyle = color;
+      for (let i = 0; i < count; i++) {
+        const x = Math.floor(Math.random() * 30) + 1;
+        const y = Math.floor(Math.random() * 30) + 1;
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+
+    // Building Blocks
+    texCanvases.coarse_dirt = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#775235'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#5c3e26', 0.6, 50);
+      addNoiseGrains(ctx, '#936a49', 0.6, 30);
+    });
+    texCanvases.podzol = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#5c3e28'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#3a2717'; ctx.fillRect(4, 4, 24, 6); ctx.fillRect(10, 16, 14, 8);
+    });
+    texCanvases.mycelium = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#6e6268'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#8e7984', 0.5, 45);
+      addNoiseGrains(ctx, '#54464d', 0.5, 30);
+    });
+    texCanvases.gravel = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#787373'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#585252', 0.5, 55);
+      addNoiseGrains(ctx, '#9c9595', 0.5, 40);
+    });
+    texCanvases.red_sand = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#bd6729'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#9e4e1a', 0.5, 40);
+    });
+    texCanvases.clay = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#a0a7b5'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#868d9c', 0.5, 35);
+    });
+    texCanvases.mud = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#3c3437'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#2a2427', 0.5, 40);
+    });
+    texCanvases.packed_mud = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#8f5c3a'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#a86f48', '#694125');
+    });
+    texCanvases.mossy_cobble = createPixelCanvas(ctx => {
+      ctx.drawImage(texCanvases.cobblestone, 0, 0);
+      ctx.fillStyle = 'rgba(74, 128, 46, 0.7)';
+      ctx.fillRect(2, 2, 12, 10); ctx.fillRect(16, 14, 14, 12);
+    });
+    texCanvases.slime_block = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#7acb64'; ctx.fillRect(0, 0, 32, 32);
+      drawBorderBox(ctx, 'rgba(135, 222, 110, 0.85)', '#4e9938');
+    });
+    texCanvases.honey_block = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#f59e0b'; ctx.fillRect(0, 0, 32, 32);
+      drawBorderBox(ctx, '#fbbf24', '#b45309');
+    });
+    texCanvases.sponge = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#c8c049'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#878028', 0.5, 50);
+    });
+    texCanvases.ice = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#9bd3f7'; ctx.fillRect(0, 0, 32, 32);
+      drawBorderBox(ctx, 'rgba(186, 230, 253, 0.65)', '#38bdf8');
+    });
+    texCanvases.packed_ice = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#7ec5f2'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#a5dbf8', '#4fa2da');
+    });
+    texCanvases.blue_ice = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#4ba7f2'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#79c3f8', '#2576c0');
+    });
+    texCanvases.crying_obsidian = createPixelCanvas(ctx => {
+      ctx.drawImage(texCanvases.obsidian, 0, 0);
+      ctx.fillStyle = '#a855f7';
+      ctx.fillRect(6, 4, 4, 14); ctx.fillRect(18, 12, 5, 12);
+      ctx.fillStyle = '#c084fc';
+      ctx.fillRect(7, 6, 2, 6);
+    });
+    texCanvases.netherrack = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#652323'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#451212', 0.5, 50);
+      addNoiseGrains(ctx, '#8a3333', 0.5, 30);
+    });
+    texCanvases.end_stone = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#dfdf9f'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#b5b572', 0.5, 45);
+    });
+    texCanvases.purpur_block = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#a371a3'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#be8fbe', '#7a4e7a');
+    });
+    texCanvases.prismarine = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#5c968c'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#77b2a8', '#3f6d65');
+    });
+    texCanvases.dark_prismarine = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#2d544c'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#3f6f65', '#1a3731');
+    });
+    texCanvases.hay_bale = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#d4af37'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(0, 8, 32, 3); ctx.fillRect(0, 20, 32, 3);
+    });
+    texCanvases.target_block = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#ef4444';
+      ctx.strokeRect(4, 4, 24, 24); ctx.fillRect(12, 12, 8, 8);
+    });
+    texCanvases.lantern = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#334155'; ctx.fillRect(8, 6, 16, 20);
+      ctx.fillStyle = '#fbbf24'; ctx.fillRect(10, 10, 12, 12);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(14, 14, 4, 4);
+    });
+    texCanvases.campfire = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#5c3a21'; ctx.fillRect(4, 20, 24, 8);
+      ctx.fillStyle = '#ea580c'; ctx.fillRect(10, 10, 12, 10);
+      ctx.fillStyle = '#fde047'; ctx.fillRect(13, 8, 6, 8);
+    });
+    texCanvases.scaffolding = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(4, 0, 3, 32); ctx.fillRect(25, 0, 3, 32);
+      ctx.fillRect(0, 4, 32, 3); ctx.fillRect(0, 25, 32, 3);
+    });
+
+    // Wood sets
+    texCanvases.spruce_log = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#422e1b'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#2c1e11', 0.5, 40);
+    });
+    texCanvases.spruce_planks = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#684e32'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#7d6041', '#4c3722');
+    });
+    texCanvases.spruce_leaves = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#2e5539'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#1e3825', 0.5, 45);
+    });
+    texCanvases.birch_log = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#dbdbd2'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#262423';
+      ctx.fillRect(4, 8, 8, 3); ctx.fillRect(16, 20, 10, 3);
+    });
+    texCanvases.birch_planks = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#c5b583'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#d6c898', '#a89868');
+    });
+    texCanvases.birch_leaves = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#597e32'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#709938', 0.5, 40);
+    });
+    texCanvases.jungle_log = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#554419'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#3d300e', 0.5, 40);
+    });
+    texCanvases.jungle_planks = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#9c6f50'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#b07f5c', '#7e573c');
+    });
+    texCanvases.jungle_leaves = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#397818'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#4c9623', 0.5, 45);
+    });
+    texCanvases.acacia_log = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#655e56'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#4d4741', 0.5, 40);
+    });
+    texCanvases.acacia_planks = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#ad5832'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#c4693d', '#8b4324');
+    });
+    texCanvases.dark_oak_log = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#2f2112'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#1f160b', 0.5, 40);
+    });
+    texCanvases.dark_oak_planks = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#422c19'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#543820', '#2e1d10');
+    });
+    texCanvases.cherry_log = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#3a2024'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#2b171a', 0.5, 40);
+    });
+    texCanvases.cherry_planks = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#d98b96'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#e49fa9', '#b56d78');
+    });
+    texCanvases.cherry_leaves = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#f472b6'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#ec4899', 0.5, 45);
+      addNoiseGrains(ctx, '#ffffff', 0.3, 20);
+    });
+    texCanvases.mangrove_log = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#542d27'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#3d1f1a', 0.5, 40);
+    });
+    texCanvases.mangrove_planks = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#75342a'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#8b4135', '#57231a');
+    });
+    texCanvases.bamboo_block = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#83a83e'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#98bd4e', '#698a2e');
+    });
+    texCanvases.cactus = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#4d7828'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#1e380b';
+      ctx.fillRect(6, 6, 2, 2); ctx.fillRect(20, 10, 2, 2); ctx.fillRect(10, 22, 2, 2);
+    });
+    texCanvases.sugar_cane = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#84cc16';
+      ctx.fillRect(8, 0, 4, 32); ctx.fillRect(20, 0, 4, 32);
+    });
+    texCanvases.kelp = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#15803d'; ctx.fillRect(8, 0, 16, 32);
+      addNoiseGrains(ctx, '#166534', 0.5, 30);
+    });
+    texCanvases.lily_pad = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#166534';
+      ctx.beginPath(); ctx.arc(16, 16, 12, 0, Math.PI * 1.8); ctx.fill();
+    });
+    texCanvases.vines = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(4, 0, 3, 32); ctx.fillRect(14, 4, 3, 28); ctx.fillRect(24, 0, 3, 30);
+    });
+    texCanvases.poplar_log = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#78716c'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#57534e', 0.5, 40);
+    });
+    texCanvases.poplar_planks = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#a8a29e'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#d6d3d1', '#78716c');
+    });
+    texCanvases.poplar_leaves = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#eab308'; ctx.fillRect(0, 0, 32, 32);
+      addNoiseGrains(ctx, '#ca8a04', 0.5, 40);
+    });
+
+    // Ores & Minerals
+    texCanvases.copper_ore = createPixelCanvas(ctx => {
+      ctx.drawImage(texCanvases.stone, 0, 0);
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(6, 6, 6, 6); ctx.fillRect(18, 16, 7, 7);
+      ctx.fillStyle = '#06b6d4'; ctx.fillRect(8, 8, 3, 3);
+    });
+    texCanvases.redstone_ore = createPixelCanvas(ctx => {
+      ctx.drawImage(texCanvases.stone, 0, 0);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(8, 8, 5, 5); ctx.fillRect(18, 16, 6, 6); ctx.fillRect(10, 22, 4, 4);
+    });
+    texCanvases.lapis_ore = createPixelCanvas(ctx => {
+      ctx.drawImage(texCanvases.stone, 0, 0);
+      ctx.fillStyle = '#1d4ed8';
+      ctx.fillRect(6, 10, 6, 6); ctx.fillRect(18, 8, 7, 7);
+    });
+    texCanvases.emerald_ore = createPixelCanvas(ctx => {
+      ctx.drawImage(texCanvases.stone, 0, 0);
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(8, 8, 6, 6); ctx.fillRect(16, 16, 8, 8);
+    });
+    texCanvases.nether_quartz_ore = createPixelCanvas(ctx => {
+      ctx.drawImage(texCanvases.netherrack, 0, 0);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(8, 6, 6, 8); ctx.fillRect(18, 16, 7, 8);
+    });
+    texCanvases.ancient_debris = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#4c3933'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#654e46', '#2b1f1b');
+    });
+
+    // Items (Ingots, Gems, Dusts)
+    function drawIngot(ctx, color, highlight) {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = color;
+      ctx.fillRect(6, 12, 20, 10);
+      ctx.fillStyle = highlight;
+      ctx.fillRect(6, 10, 20, 3); ctx.fillRect(6, 10, 3, 12);
+    }
+    texCanvases.raw_iron = createPixelCanvas(ctx => { drawIngot(ctx, '#d4a373', '#faedcd'); });
+    texCanvases.raw_copper = createPixelCanvas(ctx => { drawIngot(ctx, '#ea580c', '#fdba74'); });
+    texCanvases.raw_gold = createPixelCanvas(ctx => { drawIngot(ctx, '#eab308', '#fef08a'); });
+    texCanvases.iron_ingot = createPixelCanvas(ctx => { drawIngot(ctx, '#cbd5e1', '#ffffff'); });
+    texCanvases.copper_ingot = createPixelCanvas(ctx => { drawIngot(ctx, '#ea580c', '#fdba74'); });
+    texCanvases.gold_ingot = createPixelCanvas(ctx => { drawIngot(ctx, '#facc15', '#fef9c3'); });
+    texCanvases.netherite_ingot = createPixelCanvas(ctx => { drawIngot(ctx, '#33272a', '#524347'); });
+    texCanvases.diamond = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath(); ctx.moveTo(16, 4); ctx.lineTo(26, 14); ctx.lineTo(16, 28); ctx.lineTo(6, 14); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(14, 10, 4, 4);
+    });
+    texCanvases.emerald = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(8, 6, 16, 20); ctx.fillStyle = '#6ee7b7'; ctx.fillRect(12, 10, 8, 12);
+    });
+    texCanvases.lapis_lazuli = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#1d4ed8'; ctx.fillRect(8, 8, 16, 16);
+      ctx.fillStyle = '#60a5fa'; ctx.fillRect(12, 12, 6, 6);
+    });
+    texCanvases.redstone_dust = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(10, 10, 4, 4); ctx.fillRect(18, 12, 4, 4); ctx.fillRect(14, 18, 5, 5);
+    });
+    texCanvases.nether_quartz = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#f8fafc'; ctx.fillRect(10, 8, 12, 16);
+    });
+    texCanvases.amethyst_shard = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#a855f7';
+      ctx.beginPath(); ctx.moveTo(16, 4); ctx.lineTo(24, 26); ctx.lineTo(16, 22); ctx.lineTo(8, 26); ctx.closePath(); ctx.fill();
+    });
+    texCanvases.flint = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#475569'; ctx.fillRect(8, 8, 16, 14);
+    });
+
+    // Foods
+    function drawApple(ctx, color) {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(16, 18, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#5c3a21'; ctx.fillRect(15, 4, 2, 6);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(12, 12, 3, 3);
+    }
+    texCanvases.apple = createPixelCanvas(ctx => { drawApple(ctx, '#ef4444'); });
+    texCanvases.golden_apple = createPixelCanvas(ctx => { drawApple(ctx, '#facc15'); });
+    texCanvases.bread = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#b45309'; ctx.fillRect(6, 12, 20, 10);
+      ctx.fillStyle = '#d97706'; ctx.fillRect(8, 10, 16, 3);
+    });
+    texCanvases.carrot = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#ea580c'; ctx.fillRect(10, 12, 12, 16);
+      ctx.fillStyle = '#16a34a'; ctx.fillRect(13, 4, 6, 8);
+    });
+    texCanvases.golden_carrot = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#facc15'; ctx.fillRect(10, 12, 12, 16);
+      ctx.fillStyle = '#4ade80'; ctx.fillRect(13, 4, 6, 8);
+    });
+    texCanvases.potato = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#ca8a04'; ctx.fillRect(8, 10, 16, 12);
+    });
+    texCanvases.baked_potato = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#92400e'; ctx.fillRect(8, 10, 16, 12);
+    });
+    texCanvases.melon_slice = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath(); ctx.arc(16, 14, 12, 0, Math.PI); ctx.fill();
+      ctx.fillStyle = '#16a34a'; ctx.fillRect(4, 14, 24, 3);
+    });
+    texCanvases.sweet_berries = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath(); ctx.arc(12, 16, 5, 0, Math.PI * 2); ctx.arc(20, 18, 5, 0, Math.PI * 2); ctx.fill();
+    });
+    texCanvases.cooked_beef = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#652323'; ctx.fillRect(6, 10, 20, 12);
+    });
+    texCanvases.cooked_porkchop = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#f87171'; ctx.fillRect(6, 10, 20, 12);
+    });
+    texCanvases.cooked_chicken = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#d97706'; ctx.fillRect(8, 10, 16, 12);
+    });
+    texCanvases.cooked_mutton = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#78350f'; ctx.fillRect(6, 10, 20, 12);
+    });
+    texCanvases.cooked_fish = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#0284c7'; ctx.fillRect(6, 12, 18, 8);
+    });
+    texCanvases.egg = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath(); ctx.ellipse(16, 16, 8, 11, 0, 0, Math.PI * 2); ctx.fill();
+    });
+    texCanvases.milk_bucket = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#94a3b8'; ctx.fillRect(8, 12, 16, 14);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(10, 10, 12, 6);
+    });
+    texCanvases.honey_bottle = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#f59e0b'; ctx.fillRect(10, 12, 12, 14);
+      ctx.fillStyle = '#d97706'; ctx.fillRect(13, 6, 6, 6);
+    });
+    texCanvases.wheat = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#ca8a04'; ctx.fillRect(12, 4, 8, 24);
+    });
+    texCanvases.wheat_seeds = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#15803d'; ctx.fillRect(10, 10, 4, 4); ctx.fillRect(18, 16, 4, 4);
+    });
+    texCanvases.bone_meal = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#f8fafc'; ctx.fillRect(10, 10, 12, 12);
+    });
+
+    // Tools & Weapons
+    function drawSword(ctx, bladeColor, hiltColor) {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = bladeColor;
+      for (let i = 0; i < 14; i++) { ctx.fillRect(8 + i, 22 - i, 3, 3); }
+      ctx.fillStyle = hiltColor;
+      ctx.fillRect(6, 24, 6, 6);
+    }
+    texCanvases.diamond_sword = createPixelCanvas(ctx => { drawSword(ctx, '#38bdf8', '#5c3a21'); });
+    texCanvases.iron_sword = createPixelCanvas(ctx => { drawSword(ctx, '#cbd5e1', '#5c3a21'); });
+
+    function drawPickaxe(ctx, headColor) {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#78350f';
+      for (let i = 0; i < 16; i++) { ctx.fillRect(6 + i, 24 - i, 2, 2); }
+      ctx.fillStyle = headColor;
+      ctx.fillRect(16, 4, 12, 4); ctx.fillRect(24, 8, 4, 8);
+    }
+    texCanvases.diamond_pickaxe = createPixelCanvas(ctx => { drawPickaxe(ctx, '#38bdf8'); });
+    texCanvases.iron_pickaxe = createPixelCanvas(ctx => { drawPickaxe(ctx, '#cbd5e1'); });
+
+    function drawAxe(ctx, headColor) {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#78350f';
+      for (let i = 0; i < 16; i++) { ctx.fillRect(6 + i, 24 - i, 2, 2); }
+      ctx.fillStyle = headColor;
+      ctx.fillRect(18, 6, 8, 10);
+    }
+    texCanvases.diamond_axe = createPixelCanvas(ctx => { drawAxe(ctx, '#38bdf8'); });
+    texCanvases.iron_axe = createPixelCanvas(ctx => { drawAxe(ctx, '#cbd5e1'); });
+
+    texCanvases.diamond_shovel = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#78350f';
+      for (let i = 0; i < 14; i++) { ctx.fillRect(6 + i, 24 - i, 2, 2); }
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(20, 4, 8, 8);
+    });
+    texCanvases.bow = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath(); ctx.arc(16, 16, 12, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+    });
+    texCanvases.arrow = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#78350f'; ctx.fillRect(6, 15, 20, 2);
+      ctx.fillStyle = '#94a3b8'; ctx.fillRect(22, 13, 6, 6);
+    });
+    texCanvases.shield = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#64748b'; ctx.fillRect(8, 4, 16, 24);
+      ctx.fillStyle = '#3b82f6'; ctx.fillRect(10, 6, 12, 20);
+    });
+    texCanvases.totem_of_undying = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#eab308'; ctx.fillRect(10, 6, 12, 20);
+      ctx.fillStyle = '#10b981'; ctx.fillRect(12, 10, 3, 3); ctx.fillRect(17, 10, 3, 3);
+    });
+    texCanvases.ender_pearl = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#065f46';
+      ctx.beginPath(); ctx.arc(16, 16, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#34d399'; ctx.beginPath(); ctx.arc(14, 14, 4, 0, Math.PI * 2); ctx.fill();
+    });
+    texCanvases.eye_of_ender = createPixelCanvas(ctx => {
+      ctx.drawImage(texCanvases.ender_pearl, 0, 0);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(14, 12, 4, 8);
+    });
+    texCanvases.shears = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(8, 8, 8, 16); ctx.fillRect(16, 8, 8, 16);
+    });
+    texCanvases.compass = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#475569';
+      ctx.beginPath(); ctx.arc(16, 16, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(15, 6, 2, 10);
+    });
+    texCanvases.clock = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#eab308';
+      ctx.beginPath(); ctx.arc(16, 16, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1e293b'; ctx.fillRect(15, 6, 2, 10);
+    });
+    texCanvases.water_bucket = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#94a3b8'; ctx.fillRect(8, 12, 16, 14);
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(10, 10, 12, 6);
+    });
+    texCanvases.lava_bucket = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#94a3b8'; ctx.fillRect(8, 12, 16, 14);
+      ctx.fillStyle = '#ea580c'; ctx.fillRect(10, 10, 12, 6);
+    });
+    texCanvases.elytra = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#475569';
+      ctx.beginPath(); ctx.moveTo(16, 6); ctx.lineTo(6, 26); ctx.lineTo(16, 22); ctx.lineTo(26, 26); ctx.closePath(); ctx.fill();
+    });
+
+    // Workstations & Storage
+    texCanvases.crafting_table = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#9c6f50'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#b07f5c', '#7e573c');
+      ctx.fillStyle = '#5c3a21'; ctx.fillRect(4, 4, 10, 10);
+    });
+    texCanvases.furnace = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#64748b'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#1e293b'; ctx.fillRect(8, 12, 16, 14);
+      ctx.fillStyle = '#ea580c'; ctx.fillRect(12, 18, 8, 6);
+    });
+    texCanvases.blast_furnace = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#475569'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#94a3b8', '#1e293b');
+    });
+    texCanvases.smoker = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#78350f'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#334155'; ctx.fillRect(6, 6, 20, 20);
+    });
+    texCanvases.anvil = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#334155'; ctx.fillRect(4, 6, 24, 8); ctx.fillRect(10, 14, 12, 8); ctx.fillRect(6, 22, 20, 6);
+    });
+    texCanvases.enchanting_table = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#7f1d1d'; ctx.fillRect(0, 16, 32, 16);
+      ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, 32, 16);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(10, 6, 12, 8);
+    });
+    texCanvases.brewing_stand = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#475569'; ctx.fillRect(14, 4, 4, 24); ctx.fillRect(6, 24, 20, 6);
+    });
+    texCanvases.cauldron = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#334155'; ctx.fillRect(4, 6, 24, 22);
+      ctx.fillStyle = '#1e293b'; ctx.fillRect(8, 8, 16, 18);
+    });
+    texCanvases.chest = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#9c6f50'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#b07f5c', '#5c3a21');
+      ctx.fillStyle = '#e2e8f0'; ctx.fillRect(14, 12, 4, 6);
+    });
+    texCanvases.barrel = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#854d0e'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#451a03'; ctx.fillRect(0, 6, 32, 3); ctx.fillRect(0, 22, 32, 3);
+    });
+    texCanvases.hopper = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#475569'; ctx.fillRect(4, 6, 24, 10); ctx.fillRect(12, 16, 8, 12);
+    });
+    texCanvases.dispenser = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#64748b'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(16, 16, 6, 0, Math.PI * 2); ctx.fill();
+    });
+    texCanvases.jukebox = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#78350f'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(12, 12, 8, 8);
+    });
+    texCanvases.note_block = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#78350f'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#0f172a'; ctx.fillRect(12, 12, 8, 8);
+    });
+    texCanvases.bed = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#dc2626'; ctx.fillRect(0, 6, 24, 20);
+      ctx.fillStyle = '#f8fafc'; ctx.fillRect(20, 6, 12, 20);
+      ctx.fillStyle = '#78350f'; ctx.fillRect(0, 24, 32, 4);
+    });
+
+    // Redstone
+    texCanvases.redstone_torch = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#78350f'; ctx.fillRect(14, 12, 4, 16);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(12, 4, 8, 8);
+    });
+    texCanvases.repeater = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#94a3b8'; ctx.fillRect(4, 16, 24, 12);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(10, 8, 4, 8); ctx.fillRect(18, 8, 4, 8);
+    });
+    texCanvases.comparator = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#94a3b8'; ctx.fillRect(4, 16, 24, 12);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(14, 6, 4, 10); ctx.fillRect(8, 14, 4, 8); ctx.fillRect(20, 14, 4, 8);
+    });
+    texCanvases.lever = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#64748b'; ctx.fillRect(8, 20, 16, 8);
+      ctx.fillStyle = '#78350f'; ctx.fillRect(14, 6, 4, 16);
+    });
+    texCanvases.button = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#64748b'; ctx.fillRect(10, 12, 12, 8);
+    });
+    texCanvases.pressure_plate = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#94a3b8'; ctx.fillRect(4, 22, 24, 6);
+    });
+    texCanvases.piston = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#78350f'; ctx.fillRect(0, 0, 32, 8);
+      ctx.fillStyle = '#64748b'; ctx.fillRect(0, 8, 32, 24);
+    });
+    texCanvases.sticky_piston = createPixelCanvas(ctx => {
+      ctx.drawImage(texCanvases.piston, 0, 0);
+      ctx.fillStyle = '#22c55e'; ctx.fillRect(8, 0, 16, 8);
+    });
+    texCanvases.redstone_lamp = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#78350f'; ctx.fillRect(0, 0, 32, 32);
+      drawPixelBevel(ctx, '#b45309', '#451a03');
+      ctx.fillStyle = '#fbbf24'; ctx.fillRect(8, 8, 16, 16);
+    });
+    texCanvases.observer = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#475569'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(12, 12, 8, 8);
+    });
+    texCanvases.rail = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#94a3b8'; ctx.fillRect(4, 0, 3, 32); ctx.fillRect(25, 0, 3, 32);
+      ctx.fillStyle = '#78350f'; ctx.fillRect(4, 8, 24, 2); ctx.fillRect(4, 20, 24, 2);
+    });
+    texCanvases.powered_rail = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#facc15'; ctx.fillRect(4, 0, 3, 32); ctx.fillRect(25, 0, 3, 32);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(14, 0, 4, 32);
+    });
+
+    // Dyes
+    function drawDye(ctx, color) {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.ellipse(16, 18, 9, 8, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    texCanvases.white_dye = createPixelCanvas(ctx => { drawDye(ctx, '#ffffff'); });
+    texCanvases.orange_dye = createPixelCanvas(ctx => { drawDye(ctx, '#f97316'); });
+    texCanvases.magenta_dye = createPixelCanvas(ctx => { drawDye(ctx, '#d946ef'); });
+    texCanvases.light_blue_dye = createPixelCanvas(ctx => { drawDye(ctx, '#38bdf8'); });
+    texCanvases.yellow_dye = createPixelCanvas(ctx => { drawDye(ctx, '#eab308'); });
+    texCanvases.lime_dye = createPixelCanvas(ctx => { drawDye(ctx, '#84cc16'); });
+    texCanvases.pink_dye = createPixelCanvas(ctx => { drawDye(ctx, '#f472b6'); });
+    texCanvases.gray_dye = createPixelCanvas(ctx => { drawDye(ctx, '#4b5563'); });
+    texCanvases.cyan_dye = createPixelCanvas(ctx => { drawDye(ctx, '#06b6d4'); });
+    texCanvases.purple_dye = createPixelCanvas(ctx => { drawDye(ctx, '#a855f7'); });
+    texCanvases.blue_dye = createPixelCanvas(ctx => { drawDye(ctx, '#2563eb'); });
+    texCanvases.brown_dye = createPixelCanvas(ctx => { drawDye(ctx, '#78350f'); });
+    texCanvases.green_dye = createPixelCanvas(ctx => { drawDye(ctx, '#16a34a'); });
+    texCanvases.red_dye = createPixelCanvas(ctx => { drawDye(ctx, '#dc2626'); });
+    texCanvases.black_dye = createPixelCanvas(ctx => { drawDye(ctx, '#0f172a'); });
+
+    // Flowers
+    function drawFlower(ctx, petalColor, centerColor) {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#16a34a'; ctx.fillRect(15, 14, 2, 16);
+      ctx.fillStyle = petalColor;
+      ctx.beginPath(); ctx.arc(16, 12, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = centerColor;
+      ctx.beginPath(); ctx.arc(16, 12, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    texCanvases.poppy = createPixelCanvas(ctx => { drawFlower(ctx, '#ef4444', '#0f172a'); });
+    texCanvases.dandelion = createPixelCanvas(ctx => { drawFlower(ctx, '#facc15', '#ca8a04'); });
+    texCanvases.tulip = createPixelCanvas(ctx => { drawFlower(ctx, '#fb923c', '#ea580c'); });
+    texCanvases.blue_orchid = createPixelCanvas(ctx => { drawFlower(ctx, '#38bdf8', '#0284c7'); });
+    texCanvases.sunflower = createPixelCanvas(ctx => { drawFlower(ctx, '#facc15', '#451a03'); });
+    texCanvases.wither_rose = createPixelCanvas(ctx => { drawFlower(ctx, '#1e1b4b', '#0f172a'); });
+    texCanvases.candle = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#fef08a'; ctx.fillRect(13, 10, 6, 18);
+      ctx.fillStyle = '#ea580c'; ctx.fillRect(14, 4, 4, 6);
+    });
+    texCanvases.cake = createPixelCanvas(ctx => {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(4, 10, 24, 6);
+      ctx.fillStyle = '#d97706'; ctx.fillRect(4, 16, 24, 12);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(8, 12, 3, 3); ctx.fillRect(18, 12, 3, 3);
+    });
+
+    // Potions
+    function drawPotion(ctx, liquidColor) {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#78350f'; ctx.fillRect(13, 4, 6, 4); // Cork
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; ctx.fillRect(12, 8, 8, 4);
+      ctx.fillStyle = liquidColor;
+      ctx.beginPath(); ctx.arc(16, 20, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(13, 15, 3, 3); // Glint
+    }
+    texCanvases.potion_healing = createPixelCanvas(ctx => { drawPotion(ctx, '#f43f5e'); });
+    texCanvases.potion_regen = createPixelCanvas(ctx => { drawPotion(ctx, '#ec4899'); });
+    texCanvases.potion_fire_res = createPixelCanvas(ctx => { drawPotion(ctx, '#ea580c'); });
+    texCanvases.potion_swiftness = createPixelCanvas(ctx => { drawPotion(ctx, '#38bdf8'); });
+    texCanvases.potion_night_vision = createPixelCanvas(ctx => { drawPotion(ctx, '#1d4ed8'); });
+    texCanvases.potion_strength = createPixelCanvas(ctx => { drawPotion(ctx, '#9333ea'); });
+    texCanvases.potion_invisibility = createPixelCanvas(ctx => { drawPotion(ctx, '#94a3b8'); });
+    texCanvases.potion_poison = createPixelCanvas(ctx => { drawPotion(ctx, '#4d7c0f'); });
+
+    // Spawn Eggs
+    function drawSpawnEgg(ctx, baseColor, spotColor) {
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = baseColor;
+      ctx.beginPath(); ctx.ellipse(16, 16, 10, 13, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = spotColor;
+      ctx.fillRect(12, 10, 3, 3); ctx.fillRect(18, 14, 4, 4); ctx.fillRect(13, 20, 3, 3);
+    }
+    texCanvases.spawn_creeper = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#22c55e', '#0f172a'); });
+    texCanvases.spawn_zombie = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#15803d', '#1d4ed8'); });
+    texCanvases.spawn_skeleton = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#cbd5e1', '#64748b'); });
+    texCanvases.spawn_spider = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#334155', '#dc2626'); });
+    texCanvases.spawn_enderman = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#0f172a', '#a855f7'); });
+    texCanvases.spawn_pig = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#f472b6', '#db2777'); });
+    texCanvases.spawn_cow = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#451a03', '#ffffff'); });
+    texCanvases.spawn_sheep = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#ffffff', '#f472b6'); });
+    texCanvases.spawn_chicken = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#ffffff', '#ef4444'); });
+    texCanvases.spawn_villager = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#9a3412', '#451a03'); });
+    texCanvases.spawn_golem = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#e2e8f0', '#22c55e'); });
+    texCanvases.spawn_wolf = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#94a3b8', '#dc2626'); });
+    texCanvases.spawn_slime = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#4ade80', '#15803d'); });
+    texCanvases.spawn_blaze = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#f59e0b', '#dc2626'); });
+    texCanvases.spawn_warden = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#0f172a', '#06b6d4'); });
+
     function makeMat(texture, isTransp = false, opacity = 1.0, isWater = false) {
       return new THREE.MeshLambertMaterial({
         map: texture,
@@ -916,6 +2191,96 @@
     blockMaterials[BLOCKS.IGNITER] = makeCubeMats(threeTextures.igniter);
     blockMaterials[BLOCKS.OBSIDIAN] = makeCubeMats(threeTextures.obsidian);
     blockMaterials[BLOCKS.AMETHYST] = makeCubeMats(threeTextures.amethyst);
+
+    // Register all expanded Minecraft block materials
+    const autoBlockMappings = [
+      [BLOCKS.COARSE_DIRT, 'coarse_dirt'], [BLOCKS.PODZOL, 'podzol'], [BLOCKS.MYCELIUM, 'mycelium'],
+      [BLOCKS.GRAVEL, 'gravel'], [BLOCKS.RED_SAND, 'red_sand'], [BLOCKS.CLAY, 'clay'],
+      [BLOCKS.MUD, 'mud'], [BLOCKS.PACKED_MUD, 'packed_mud'], [BLOCKS.MOSSY_COBBLE, 'mossy_cobble'],
+      [BLOCKS.SLIME_BLOCK, 'slime_block', true], [BLOCKS.HONEY_BLOCK, 'honey_block', true],
+      [BLOCKS.SPONGE, 'sponge'], [BLOCKS.ICE, 'ice', true], [BLOCKS.PACKED_ICE, 'packed_ice'],
+      [BLOCKS.BLUE_ICE, 'blue_ice', true], [BLOCKS.CRYING_OBSIDIAN, 'crying_obsidian'],
+      [BLOCKS.NETHERRACK, 'netherrack'], [BLOCKS.END_STONE, 'end_stone'], [BLOCKS.PURPUR_BLOCK, 'purpur_block'],
+      [BLOCKS.PRISMARINE, 'prismarine'], [BLOCKS.DARK_PRISMARINE, 'dark_prismarine'],
+      [BLOCKS.HAY_BALE, 'hay_bale'], [BLOCKS.TARGET_BLOCK, 'target_block'], [BLOCKS.LANTERN, 'lantern', true],
+      [BLOCKS.CAMPFIRE, 'campfire'], [BLOCKS.SCAFFOLDING, 'scaffolding', true],
+      [BLOCKS.SPRUCE_LOG, 'spruce_log'], [BLOCKS.SPRUCE_PLANKS, 'spruce_planks'], [BLOCKS.SPRUCE_LEAVES, 'spruce_leaves', true],
+      [BLOCKS.BIRCH_LOG, 'birch_log'], [BLOCKS.BIRCH_PLANKS, 'birch_planks'], [BLOCKS.BIRCH_LEAVES, 'birch_leaves', true],
+      [BLOCKS.JUNGLE_LOG, 'jungle_log'], [BLOCKS.JUNGLE_PLANKS, 'jungle_planks'], [BLOCKS.JUNGLE_LEAVES, 'jungle_leaves', true],
+      [BLOCKS.ACACIA_LOG, 'acacia_log'], [BLOCKS.ACACIA_PLANKS, 'acacia_planks'],
+      [BLOCKS.DARK_OAK_LOG, 'dark_oak_log'], [BLOCKS.DARK_OAK_PLANKS, 'dark_oak_planks'],
+      [BLOCKS.CHERRY_LOG, 'cherry_log'], [BLOCKS.CHERRY_PLANKS, 'cherry_planks'], [BLOCKS.CHERRY_LEAVES, 'cherry_leaves', true],
+      [BLOCKS.MANGROVE_LOG, 'mangrove_log'], [BLOCKS.MANGROVE_PLANKS, 'mangrove_planks'],
+      [BLOCKS.BAMBOO_BLOCK, 'bamboo_block'], [BLOCKS.CACTUS, 'cactus'], [BLOCKS.SUGAR_CANE, 'sugar_cane', true],
+      [BLOCKS.KELP, 'kelp', true], [BLOCKS.LILY_PAD, 'lily_pad', true], [BLOCKS.VINES, 'vines', true],
+      [BLOCKS.POPLAR_LOG, 'poplar_log'], [BLOCKS.POPLAR_PLANKS, 'poplar_planks'], [BLOCKS.POPLAR_LEAVES, 'poplar_leaves', true],
+      [BLOCKS.COPPER_ORE, 'copper_ore'], [BLOCKS.REDSTONE_ORE, 'redstone_ore'], [BLOCKS.LAPIS_ORE, 'lapis_ore'],
+      [BLOCKS.EMERALD_ORE, 'emerald_ore'], [BLOCKS.NETHER_QUARTZ_ORE, 'nether_quartz_ore'], [BLOCKS.ANCIENT_DEBRIS, 'ancient_debris'],
+      [BLOCKS.RAW_IRON, 'raw_iron'], [BLOCKS.RAW_COPPER, 'raw_copper'], [BLOCKS.RAW_GOLD, 'raw_gold'],
+      [BLOCKS.IRON_INGOT, 'iron_ingot'], [BLOCKS.COPPER_INGOT, 'copper_ingot'], [BLOCKS.GOLD_INGOT, 'gold_ingot'],
+      [BLOCKS.NETHERITE_INGOT, 'netherite_ingot'], [BLOCKS.DIAMOND, 'diamond'], [BLOCKS.EMERALD, 'emerald'],
+      [BLOCKS.LAPIS_LAZULI, 'lapis_lazuli'], [BLOCKS.REDSTONE_DUST, 'redstone_dust', true],
+      [BLOCKS.NETHER_QUARTZ, 'nether_quartz'], [BLOCKS.AMETHYST_SHARD, 'amethyst_shard'], [BLOCKS.FLINT, 'flint'],
+      [BLOCKS.APPLE, 'apple'], [BLOCKS.GOLDEN_APPLE, 'golden_apple'], [BLOCKS.BREAD, 'bread'],
+      [BLOCKS.CARROT, 'carrot'], [BLOCKS.GOLDEN_CARROT, 'golden_carrot'], [BLOCKS.POTATO, 'potato'],
+      [BLOCKS.BAKED_POTATO, 'baked_potato'], [BLOCKS.MELON_SLICE, 'melon_slice'], [BLOCKS.SWEET_BERRIES, 'sweet_berries'],
+      [BLOCKS.COOKED_BEEF, 'cooked_beef'], [BLOCKS.COOKED_PORKCHOP, 'cooked_porkchop'], [BLOCKS.COOKED_CHICKEN, 'cooked_chicken'],
+      [BLOCKS.COOKED_MUTTON, 'cooked_mutton'], [BLOCKS.COOKED_FISH, 'cooked_fish'], [BLOCKS.EGG, 'egg'],
+      [BLOCKS.MILK_BUCKET, 'milk_bucket'], [BLOCKS.HONEY_BOTTLE, 'honey_bottle'], [BLOCKS.WHEAT, 'wheat'],
+      [BLOCKS.WHEAT_SEEDS, 'wheat_seeds'], [BLOCKS.BONE_MEAL, 'bone_meal'],
+      [BLOCKS.DIAMOND_SWORD, 'diamond_sword'], [BLOCKS.IRON_SWORD, 'iron_sword'],
+      [BLOCKS.DIAMOND_PICKAXE, 'diamond_pickaxe'], [BLOCKS.IRON_PICKAXE, 'iron_pickaxe'],
+      [BLOCKS.DIAMOND_AXE, 'diamond_axe'], [BLOCKS.IRON_AXE, 'iron_axe'],
+      [BLOCKS.DIAMOND_SHOVEL, 'diamond_shovel'], [BLOCKS.BOW, 'bow'], [BLOCKS.ARROW, 'arrow'],
+      [BLOCKS.SHIELD, 'shield'], [BLOCKS.TOTEM_OF_UNDYING, 'totem_of_undying'], [BLOCKS.ENDER_PEARL, 'ender_pearl'],
+      [BLOCKS.EYE_OF_ENDER, 'eye_of_ender'], [BLOCKS.SHEARS, 'shears'], [BLOCKS.COMPASS, 'compass'],
+      [BLOCKS.CLOCK, 'clock'], [BLOCKS.WATER_BUCKET, 'water_bucket'], [BLOCKS.LAVA_BUCKET, 'lava_bucket'],
+      [BLOCKS.ELYTRA, 'elytra'],
+      [BLOCKS.CRAFTING_TABLE, 'crafting_table'], [BLOCKS.FURNACE, 'furnace'], [BLOCKS.BLAST_FURNACE, 'blast_furnace'],
+      [BLOCKS.SMOKER, 'smoker'], [BLOCKS.ANVIL, 'anvil'], [BLOCKS.ENCHANTING_TABLE, 'enchanting_table'],
+      [BLOCKS.BREWING_STAND, 'brewing_stand', true], [BLOCKS.CAULDRON, 'cauldron'], [BLOCKS.CHEST, 'chest'],
+      [BLOCKS.BARREL, 'barrel'], [BLOCKS.HOPPER, 'hopper'], [BLOCKS.DISPENSER, 'dispenser'],
+      [BLOCKS.JUKEBOX, 'jukebox'], [BLOCKS.NOTE_BLOCK, 'note_block'], [BLOCKS.BED, 'bed'],
+      [BLOCKS.REDSTONE_TORCH, 'redstone_torch', true], [BLOCKS.REPEATER, 'repeater'],
+      [BLOCKS.COMPARATOR, 'comparator'], [BLOCKS.LEVER, 'lever'], [BLOCKS.BUTTON, 'button'],
+      [BLOCKS.PRESSURE_PLATE, 'pressure_plate'], [BLOCKS.PISTON, 'piston'], [BLOCKS.STICKY_PISTON, 'sticky_piston'],
+      [BLOCKS.REDSTONE_LAMP, 'redstone_lamp'], [BLOCKS.OBSERVER, 'observer'], [BLOCKS.RAIL, 'rail', true],
+      [BLOCKS.POWERED_RAIL, 'powered_rail', true],
+      [BLOCKS.WHITE_DYE, 'white_dye'], [BLOCKS.ORANGE_DYE, 'orange_dye'], [BLOCKS.MAGENTA_DYE, 'magenta_dye'],
+      [BLOCKS.LIGHT_BLUE_DYE, 'light_blue_dye'], [BLOCKS.YELLOW_DYE, 'yellow_dye'], [BLOCKS.LIME_DYE, 'lime_dye'],
+      [BLOCKS.PINK_DYE, 'pink_dye'], [BLOCKS.GRAY_DYE, 'gray_dye'], [BLOCKS.CYAN_DYE, 'cyan_dye'],
+      [BLOCKS.PURPLE_DYE, 'purple_dye'], [BLOCKS.BLUE_DYE, 'blue_dye'], [BLOCKS.BROWN_DYE, 'brown_dye'],
+      [BLOCKS.GREEN_DYE, 'green_dye'], [BLOCKS.RED_DYE, 'red_dye'], [BLOCKS.BLACK_DYE, 'black_dye'],
+      [BLOCKS.POPPY, 'poppy', true], [BLOCKS.DANDELION, 'dandelion', true], [BLOCKS.TULIP, 'tulip', true],
+      [BLOCKS.BLUE_ORCHID, 'blue_orchid', true], [BLOCKS.SUNFLOWER, 'sunflower', true], [BLOCKS.WITHER_ROSE, 'wither_rose', true],
+      [BLOCKS.CANDLE, 'candle'], [BLOCKS.CAKE, 'cake'],
+      [BLOCKS.POTION_HEALING, 'potion_healing'], [BLOCKS.POTION_REGEN, 'potion_regen'],
+      [BLOCKS.POTION_FIRE_RES, 'potion_fire_res'], [BLOCKS.POTION_SWIFTNESS, 'potion_swiftness'],
+      [BLOCKS.POTION_NIGHT_VISION, 'potion_night_vision'], [BLOCKS.POTION_STRENGTH, 'potion_strength'],
+      [BLOCKS.POTION_INVISIBILITY, 'potion_invisibility'], [BLOCKS.POTION_POISON, 'potion_poison'],
+      [BLOCKS.SPAWN_CREEPER, 'spawn_creeper'], [BLOCKS.SPAWN_ZOMBIE, 'spawn_zombie'],
+      [BLOCKS.SPAWN_SKELETON, 'spawn_skeleton'], [BLOCKS.SPAWN_SPIDER, 'spawn_spider'],
+      [BLOCKS.SPAWN_ENDERMAN, 'spawn_enderman'], [BLOCKS.SPAWN_PIG, 'spawn_pig'],
+      [BLOCKS.SPAWN_COW, 'spawn_cow'], [BLOCKS.SPAWN_SHEEP, 'spawn_sheep'],
+      [BLOCKS.SPAWN_CHICKEN, 'spawn_chicken'], [BLOCKS.SPAWN_VILLAGER, 'spawn_villager'],
+      [BLOCKS.SPAWN_GOLEM, 'spawn_golem'], [BLOCKS.SPAWN_WOLF, 'spawn_wolf'],
+      [BLOCKS.SPAWN_SLIME, 'spawn_slime'], [BLOCKS.SPAWN_BLAZE, 'spawn_blaze'],
+      [BLOCKS.SPAWN_WARDEN, 'spawn_warden']
+    ];
+
+    autoBlockMappings.forEach(([id, texKey, isTransp]) => {
+      const tex = threeTextures[texKey] || threeTextures.stone;
+      if (isTransp) {
+        blockMaterials[id] = [
+          makeMat(tex, true, 0.85), makeMat(tex, true, 0.85),
+          makeMat(tex, true, 0.85), makeMat(tex, true, 0.85),
+          makeMat(tex, true, 0.85), makeMat(tex, true, 0.85)
+        ];
+      } else {
+        blockMaterials[id] = makeCubeMats(tex);
+      }
+      blockIcons[id] = texCanvases[texKey] || texCanvases.stone;
+    });
 
     // Save thumbnail preview canvases for UI
     blockIcons[BLOCKS.GRASS] = texCanvases.grass_side;
@@ -998,6 +2363,111 @@
     }
     return { noise2D };
   })();
+
+  function isAIHomeChunk(cx, cz) {
+    if (cx === 1 && cz === 1) return true;   // Spawn Hub AI Sanctuary Sector [24, 26, 24]
+    if (cx === 3 && cz === -2) return true;  // Forest Glade AI Observatory [52, 26, -28]
+    if (cx === -4 && cz === 3) return true;  // Mountain AI Ridge [-60, 36, 52]
+    if (cx === -3 && cz === -3) return true; // Desert Tech Sanctum [-44, 26, -44]
+    // Procedural wild sanctuaries across infinite wilderness
+    if (((cx % 10 + 10) % 10 === 6) && ((cz % 10 + 10) % 10 === 6)) return true;
+    return false;
+  }
+
+  function registerAINodeCore(x, y, z, name, sectorId) {
+    if (aiNodeCores.some(c => Math.hypot(c.x - x, c.z - z) < 5)) return;
+
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+
+    // Outer cyber diamond
+    const geomOuter = new THREE.OctahedronGeometry(0.52, 0);
+    const matOuter = new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.85,
+      roughness: 0.15,
+      metalness: 0.9,
+      transparent: true,
+      opacity: 0.88
+    });
+    const meshOuter = new THREE.Mesh(geomOuter, matOuter);
+    group.add(meshOuter);
+
+    // Inner pulsating amethyst core
+    const geomInner = new THREE.DodecahedronGeometry(0.26, 0);
+    const matInner = new THREE.MeshStandardMaterial({
+      color: 0xa855f7,
+      emissive: 0x9333ea,
+      emissiveIntensity: 1.3,
+      roughness: 0.2
+    });
+    const meshInner = new THREE.Mesh(geomInner, matInner);
+    group.add(meshInner);
+
+    // Orbiting cyber rings
+    const ringGeom = new THREE.TorusGeometry(0.78, 0.025, 8, 24);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true });
+    const ringMesh = new THREE.Mesh(ringGeom, ringMat);
+    ringMesh.rotation.x = Math.PI / 3;
+    group.add(ringMesh);
+
+    // Luminous point light
+    const light = new THREE.PointLight(0x06b6d4, 1.8, 12);
+    group.add(light);
+
+    scene.add(group);
+
+    aiNodeCores.push({
+      x, y, z,
+      name,
+      sectorId,
+      group,
+      meshOuter,
+      meshInner,
+      ringMesh,
+      light
+    });
+  }
+
+  function updateAICores(dt, now) {
+    aiNodeCores.forEach(core => {
+      core.meshOuter.rotation.y += 0.028;
+      core.meshOuter.rotation.x += 0.014;
+      core.meshInner.rotation.y -= 0.038;
+      core.ringMesh.rotation.z += 0.022;
+      const hoverY = core.y + Math.sin(now * 0.003) * 0.12;
+      core.group.position.y = hoverY;
+    });
+  }
+
+  function updateAICoreProximity() {
+    let closestCore = null;
+    let closestDist = 999;
+    aiNodeCores.forEach(core => {
+      const d = Math.hypot(player.x - core.x, player.y - core.y, player.z - core.z);
+      if (d < closestDist) {
+        closestDist = d;
+        closestCore = core;
+      }
+    });
+
+    const promptEl = document.getElementById('aiInteractPrompt');
+    const chatModal = document.getElementById('aiChatModal');
+    const isChatVisible = chatModal && chatModal.style.display !== 'none';
+
+    if (closestCore && closestDist < 4.5 && !isInventoryOpen && !isDead && !isChatVisible) {
+      activeNearbyAICore = closestCore;
+      if (promptEl && promptEl.style.display !== 'flex') {
+        promptEl.style.display = 'flex';
+      }
+    } else {
+      activeNearbyAICore = null;
+      if (promptEl && promptEl.style.display !== 'none') {
+        promptEl.style.display = 'none';
+      }
+    }
+  }
 
   function isCityChunk(cx, cz) {
     return (cx >= -1 && cx <= 2 && cz >= -1 && cz <= 2);
@@ -1155,6 +2625,11 @@
         this.generateExitRoads(this.cx, this.cz);
       }
 
+      // Generate AI Home Sanctuaries across city and wilderness
+      if (isAIHomeChunk(this.cx, this.cz)) {
+        this.generateAIHomeStructure(this.cx, this.cz);
+      }
+
       // Re-apply saved user modifications for this chunk
       worldModifications.forEach((blockId, key) => {
         const [gx, gy, gz] = key.split(',').map(Number);
@@ -1166,6 +2641,114 @@
           this.setBlock(lx, gy, lz, blockId);
         }
       });
+    }
+
+    // =======================================================================
+    // AI Home Sanctuary Generator (Futuristic cyber shrine with Node Core)
+    // =======================================================================
+    generateAIHomeStructure(cx, cz) {
+      const originX = cx * CHUNK_SIZE;
+      const originZ = cz * CHUNK_SIZE;
+      const centerX = originX + 8;
+      const centerZ = originZ + 8;
+
+      let floorY = 25;
+      if (!isCityChunk(cx, cz)) {
+        floorY = Math.min(CHUNK_HEIGHT - 12, Math.max(22, getTerrainHeight(centerX, centerZ)));
+      }
+
+      // 1. 9x9 Sanctuary Platform (Amethyst floor, Obsidian foundation, Glowstone inlays)
+      for (let lx = 3; lx <= 11; lx++) {
+        for (let lz = 3; lz <= 11; lz++) {
+          const isBorder = (lx === 3 || lx === 11 || lz === 3 || lz === 11);
+          const isCorner = (lx === 3 || lx === 11) && (lz === 3 || lz === 11);
+          const isCenterCross = (lx === 7 || lx === 8 || lz === 7 || lz === 8);
+
+          // Solid foundation down to bedrock/terrain
+          for (let y = floorY - 2; y < floorY; y++) {
+            this.setBlock(lx, y, lz, BLOCKS.OBSIDIAN);
+          }
+
+          if (isCorner) {
+            this.setBlock(lx, floorY, lz, BLOCKS.CRYING_OBSIDIAN);
+          } else if (isBorder) {
+            this.setBlock(lx, floorY, lz, BLOCKS.OBSIDIAN);
+          } else if (isCenterCross) {
+            this.setBlock(lx, floorY, lz, BLOCKS.AMETHYST);
+          } else {
+            this.setBlock(lx, floorY, lz, BLOCKS.PURPUR_BLOCK);
+          }
+
+          // Clear air inside interior (5 blocks high)
+          for (let y = floorY + 1; y <= floorY + 6; y++) {
+            this.setBlock(lx, y, lz, BLOCKS.AIR);
+          }
+        }
+      }
+
+      // 2. Corner Pillars (Obsidian & Purpur with Lanterns)
+      const corners = [[3, 3], [11, 3], [3, 11], [11, 11]];
+      corners.forEach(([cxPos, czPos]) => {
+        for (let y = floorY + 1; y <= floorY + 5; y++) {
+          this.setBlock(cxPos, y, czPos, BLOCKS.OBSIDIAN);
+        }
+        this.setBlock(cxPos, floorY + 3, czPos, BLOCKS.CRYING_OBSIDIAN);
+        this.setBlock(cxPos, floorY + 5, czPos, BLOCKS.GLOWSTONE);
+      });
+
+      // 3. Transparent Observation Glass Walls with Arched Openings on all 4 sides
+      for (let lx = 4; lx <= 10; lx++) {
+        if (lx !== 7 && lx !== 8) {
+          this.setBlock(lx, floorY + 1, 3, BLOCKS.GLASS);
+          this.setBlock(lx, floorY + 2, 3, BLOCKS.GLASS);
+          this.setBlock(lx, floorY + 1, 11, BLOCKS.GLASS);
+          this.setBlock(lx, floorY + 2, 11, BLOCKS.GLASS);
+        }
+      }
+      for (let lz = 4; lz <= 10; lz++) {
+        if (lz !== 7 && lz !== 8) {
+          this.setBlock(3, floorY + 1, lz, BLOCKS.GLASS);
+          this.setBlock(3, floorY + 2, lz, BLOCKS.GLASS);
+          this.setBlock(11, floorY + 1, lz, BLOCKS.GLASS);
+          this.setBlock(11, floorY + 2, lz, BLOCKS.GLASS);
+        }
+      }
+
+      // 4. Domed Cyber Canopy Roof with Prismarine & Glowstone Skylight
+      for (let lx = 3; lx <= 11; lx++) {
+        for (let lz = 3; lz <= 11; lz++) {
+          this.setBlock(lx, floorY + 5, lz, BLOCKS.PRISMARINE);
+        }
+      }
+      for (let lx = 5; lx <= 9; lx++) {
+        for (let lz = 5; lz <= 9; lz++) {
+          this.setBlock(lx, floorY + 6, lz, BLOCKS.PURPUR_BLOCK);
+        }
+      }
+      this.setBlock(7, floorY + 6, 7, BLOCKS.GLOWSTONE);
+      this.setBlock(8, floorY + 6, 7, BLOCKS.GLOWSTONE);
+      this.setBlock(7, floorY + 6, 8, BLOCKS.GLOWSTONE);
+      this.setBlock(8, floorY + 6, 8, BLOCKS.GLOWSTONE);
+
+      // 5. Central Cyber Altar Pedestal
+      this.setBlock(7, floorY + 1, 7, BLOCKS.OBSIDIAN);
+      this.setBlock(8, floorY + 1, 7, BLOCKS.OBSIDIAN);
+      this.setBlock(7, floorY + 1, 8, BLOCKS.OBSIDIAN);
+      this.setBlock(8, floorY + 1, 8, BLOCKS.OBSIDIAN);
+
+      this.setBlock(7, floorY + 1, 6, BLOCKS.POLISHED_STONE);
+      this.setBlock(8, floorY + 1, 6, BLOCKS.POLISHED_STONE);
+      this.setBlock(6, floorY + 1, 7, BLOCKS.POLISHED_STONE);
+      this.setBlock(6, floorY + 1, 8, BLOCKS.POLISHED_STONE);
+
+      // Register Holographic AI Node Core
+      let sanctuaryName = 'Maiko Primary Hub Sanctuary';
+      if (cx === 3 && cz === -2) sanctuaryName = 'Forest Glade Quantum Observatory';
+      else if (cx === -4 && cz === 3) sanctuaryName = 'Mountain Ridge Apex Terminal';
+      else if (cx === -3 && cz === -3) sanctuaryName = 'Desert Tech Cyber Sanctum';
+      else if (!isCityChunk(cx, cz)) sanctuaryName = `Wild Sector [${cx}, ${cz}] AI Node`;
+
+      registerAINodeCore(centerX - 0.5, floorY + 2.8, centerZ - 0.5, sanctuaryName, `${cx},${cz}`);
     }
 
     growTree(tx, ty, tz) {
@@ -1280,8 +2863,8 @@
         this.buildCottage(10, baseH, 2, 5, 5, 4, 'Office');
         this.buildGardenBed(10, baseH, 10, 4, 4);
       } else if (cx === 1 && cz === 1) {
-        // Sector (1, 1): Modern Highrise Twin Tower (South Skyscraper)
-        this.buildSkyscraper(8, baseH, 8, 7, 7, 24, BLOCKS.POLISHED_STONE, BLOCKS.GLASS);
+        // Sector (1, 1): Maiko Quantum AI Sanctuary & South Skyscraper
+        this.generateAIHomeStructure(cx, cz);
         this.buildSkyscraper(1, baseH, 2, 5, 5, 14, BLOCKS.BRICKS, BLOCKS.GLASS);
       } else if (cx === -1 && cz === 0) {
         // Sector (-1, 0): Old Town Residential Quarter
@@ -1811,6 +3394,8 @@
         mesh.renderOrder = 2; // Water rendered cleanly above solids
       }
 
+      geom.computeBoundingSphere();
+      geom.computeBoundingBox();
       chunkGroup.add(mesh);
     }
 
@@ -1863,6 +3448,23 @@
     player.isSprinting = !player.isFlying && (!!keys['ShiftLeft'] || !!keys['ShiftRight'] || !!keys['ControlLeft'] || !!keys['ControlRight']);
 
     let moveSpeed = 4.6;
+    if (playerEffects.swiftness > 0) {
+      playerEffects.swiftness = Math.max(0, playerEffects.swiftness - dt);
+      moveSpeed *= 1.45;
+    }
+    if (playerEffects.regen > 0) {
+      playerEffects.regen = Math.max(0, playerEffects.regen - dt);
+      playerEffects._timer = (playerEffects._timer || 0) + dt;
+      if (playerEffects._timer >= 2.0) {
+        playerEffects._timer = 0;
+        player.health = Math.min(20, player.health + 1);
+        syncSurvivalHUD();
+      }
+    }
+    if (playerEffects.fireRes > 0) {
+      playerEffects.fireRes = Math.max(0, playerEffects.fireRes - dt);
+      player.inLava = false;
+    }
     if (player.isFlying) {
       moveSpeed = (keys['ControlLeft'] || keys['ControlRight']) ? 12.0 : 8.8;
     } else {
@@ -2211,7 +3813,7 @@
       this.x = x;
       this.y = y;
       this.z = z;
-      this.vy = 2.2; // Slight vertical pop on ignite
+      this.vy = 1.8; // Small vertical hop on ignite
       this.fuse = fuseSeconds;
       this.totalFuse = fuseSeconds;
       this.isExploded = false;
@@ -2232,28 +3834,34 @@
     update(dt) {
       this.fuse -= dt;
 
-      // Physics (gravity and landing)
+      // True Voxel Block Collision (Lands on whatever block is beneath it)
       this.vy -= 18.0 * dt;
-      const newY = this.y + this.vy * dt;
-      const groundH = getTerrainHeight(Math.floor(this.x), Math.floor(this.z));
-      if (newY <= groundH + 0.5) {
-        this.y = groundH + 0.5;
+      const stepY = this.vy * dt;
+      const targetY = this.y + stepY;
+
+      const checkBlockY = Math.floor(targetY - 0.48);
+      const bx = Math.floor(this.x);
+      const bz = Math.floor(this.z);
+      const blockUnder = getGlobalBlock(bx, checkBlockY, bz);
+
+      if (this.vy < 0 && isBlockSolid(blockUnder) && targetY <= checkBlockY + 1.0 + 0.48) {
+        this.y = checkBlockY + 1.0 + 0.49;
         this.vy = 0;
       } else {
-        this.y = newY;
+        this.y = Math.max(0.5, targetY);
       }
       this.mesh.position.set(this.x, this.y, this.z);
 
       // Flashing white/red and pulsing swelling scale
-      const flashFreq = (this.totalFuse - this.fuse) * 8.0;
-      const isWhite = Math.sin(flashFreq * Math.PI) > 0.25;
+      const flashFreq = (this.totalFuse - this.fuse) * 9.0;
+      const isWhite = Math.sin(flashFreq * Math.PI) > 0.2;
       this.mesh.material = isWhite ? this.whiteMat : this.mats;
 
-      const scalePulse = 1.0 + Math.sin(flashFreq * Math.PI) * 0.08;
+      const scalePulse = 1.0 + Math.sin(flashFreq * Math.PI) * 0.12;
       this.mesh.scale.set(scalePulse, scalePulse, scalePulse);
 
       // Smoke and spark particles from top
-      if (Math.random() < 0.35) {
+      if (Math.random() < 0.4) {
         createParticleExplosion(this.x, this.y + 0.55, this.z, BLOCKS.GLOWSTONE, 2);
       }
 
@@ -2266,7 +3874,7 @@
       this.isExploded = true;
       scene.remove(this.mesh);
       this.mesh.geometry.dispose();
-      explodeAt(this.x, this.y, this.z, 4.4);
+      explodeAt(this.x, this.y, this.z, 5.2);
     }
   }
 
@@ -2279,18 +3887,19 @@
     }
   }
 
-  function explodeAt(ex, ey, ez, radius = 4.4) {
+  function explodeAt(ex, ey, ez, radius = 5.2) {
     playSynthesizedSound('explosion');
-    cameraShake = Math.max(cameraShake, 0.48);
+    cameraShake = Math.max(cameraShake, 0.55);
 
     // Massive fiery shockwave particles
-    createParticleExplosion(ex, ey, ez, BLOCKS.TNT, 35);
-    createParticleExplosion(ex, ey + 0.5, ez, BLOCKS.LAVA, 25);
-    createParticleExplosion(ex, ey + 0.8, ez, BLOCKS.GLOWSTONE, 20);
+    createParticleExplosion(ex, ey, ez, BLOCKS.TNT, 45);
+    createParticleExplosion(ex, ey + 0.5, ez, BLOCKS.LAVA, 30);
+    createParticleExplosion(ex, ey + 0.8, ez, BLOCKS.GLOWSTONE, 25);
 
     const rCeil = Math.ceil(radius);
     const affectedChunks = new Set();
     const rSq = radius * radius;
+    const innerRadiusSq = (radius * 0.82) * (radius * 0.82);
 
     for (let dx = -rCeil; dx <= rCeil; dx++) {
       for (let dy = -rCeil; dy <= rCeil; dy++) {
@@ -2301,39 +3910,58 @@
             const by = Math.floor(ey + dy);
             const bz = Math.floor(ez + dz);
 
-            if (by <= 0 || by >= CHUNK_HEIGHT) continue; // Bedrock and top sky are protected
+            if (by <= 0 || by >= CHUNK_HEIGHT) continue; // Bedrock and top sky protected
 
             const block = getGlobalBlock(bx, by, bz);
-            if (block !== BLOCKS.AIR && block !== BLOCKS.BEDROCK && block !== BLOCKS.OBSIDIAN) {
-              if (block === BLOCKS.TNT) {
-                // Chain reaction ignition!
-                setGlobalBlock(bx, by, bz, BLOCKS.AIR);
-                const chainTNT = new PrimedTNT(bx + 0.5, by + 0.5, bz + 0.5, 0.3 + Math.random() * 0.4);
-                primedTNTs.push(chainTNT);
-              } else {
-                const damageProb = 1.0 - (dSq / rSq) * 0.35;
-                if (Math.random() < damageProb) {
-                  setGlobalBlock(bx, by, bz, BLOCKS.AIR);
-                  if (Math.random() < 0.08) {
-                    createParticleExplosion(bx + 0.5, by + 0.5, bz + 0.5, block, 3);
-                  }
-                }
-              }
+            if (block === BLOCKS.AIR || block === BLOCKS.BEDROCK || block === BLOCKS.OBSIDIAN || block === BLOCKS.CRYING_OBSIDIAN) {
+              continue;
+            }
 
+            if (block === BLOCKS.TNT) {
+              // Fast chain reaction ignition
               const cx = Math.floor(bx / CHUNK_SIZE);
               const cz = Math.floor(bz / CHUNK_SIZE);
-              affectedChunks.add(`${cx},${cz}`);
-              if (bx % CHUNK_SIZE === 0) affectedChunks.add(`${cx - 1},${cz}`);
-              if (bx % CHUNK_SIZE === CHUNK_SIZE - 1) affectedChunks.add(`${cx + 1},${cz}`);
-              if (bz % CHUNK_SIZE === 0) affectedChunks.add(`${cx},${cz - 1}`);
-              if (bz % CHUNK_SIZE === CHUNK_SIZE - 1) affectedChunks.add(`${cx},${cz + 1}`);
+              const chunk = chunks.get(`${cx},${cz}`);
+              if (chunk) {
+                const lx = ((bx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                const lz = ((bz % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                chunk.setBlock(lx, by, lz, BLOCKS.AIR);
+                worldModifications.set(`${bx},${by},${bz}`, BLOCKS.AIR);
+              }
+              const chainTNT = new PrimedTNT(bx + 0.5, by + 0.5, bz + 0.5, 0.25 + Math.random() * 0.35);
+              primedTNTs.push(chainTNT);
+              continue;
+            }
+
+            // 100% destruction inside inner sphere, high probability at edge
+            const shouldDestroy = (dSq <= innerRadiusSq) || (Math.random() < (1.0 - (dSq - innerRadiusSq) / (rSq - innerRadiusSq) * 0.35));
+            if (shouldDestroy) {
+              const cx = Math.floor(bx / CHUNK_SIZE);
+              const cz = Math.floor(bz / CHUNK_SIZE);
+              const chunk = chunks.get(`${cx},${cz}`);
+              if (chunk) {
+                const lx = ((bx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                const lz = ((bz % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                chunk.setBlock(lx, by, lz, BLOCKS.AIR);
+                worldModifications.set(`${bx},${by},${bz}`, BLOCKS.AIR);
+
+                affectedChunks.add(`${cx},${cz}`);
+                if (lx === 0) affectedChunks.add(`${cx - 1},${cz}`);
+                if (lx === CHUNK_SIZE - 1) affectedChunks.add(`${cx + 1},${cz}`);
+                if (lz === 0) affectedChunks.add(`${cx},${cz - 1}`);
+                if (lz === CHUNK_SIZE - 1) affectedChunks.add(`${cx},${cz + 1}`);
+
+                if (Math.random() < 0.06) {
+                  createParticleExplosion(bx + 0.5, by + 0.5, bz + 0.5, block, 2);
+                }
+              }
             }
           }
         }
       }
     }
 
-    // Remesh all affected chunks immediately
+    // Single-pass chunk re-meshing for all affected chunks (0 frame drops!)
     affectedChunks.forEach(key => {
       const chunk = chunks.get(key);
       if (chunk) {
@@ -2343,18 +3971,17 @@
 
     // Knockback and survival damage to Player
     const pDist = Math.hypot(player.x - ex, player.y - ey, player.z - ez);
-    if (pDist < radius * 2.2) {
-      const pForce = (1.0 - pDist / (radius * 2.2)) * 16.0;
+    if (pDist < radius * 2.5) {
+      const pForce = (1.0 - pDist / (radius * 2.5)) * 18.0;
       const dirX = (player.x - ex) / (pDist || 1);
-      const dirY = Math.max(0.3, (player.y - ey) / (pDist || 1));
+      const dirY = Math.max(0.35, (player.y - ey) / (pDist || 1));
       const dirZ = (player.z - ez) / (pDist || 1);
-
       player.vx += dirX * pForce;
       player.vy += dirY * pForce * 0.7;
       player.vz += dirZ * pForce;
 
       if (settings.gameMode === 'survival') {
-        const dmg = Math.floor((1.0 - pDist / (radius * 2.2)) * 18);
+        const dmg = Math.floor((1.0 - pDist / (radius * 2.5)) * 20);
         if (dmg > 0) damagePlayer(dmg);
       }
     }
@@ -2362,8 +3989,8 @@
     // Knockback to Animal Mobs
     mobs.forEach(mob => {
       const mDist = Math.hypot(mob.x - ex, mob.y - ey, mob.z - ez);
-      if (mDist < radius * 2.0) {
-        const mForce = (1.0 - mDist / (radius * 2.0)) * 8.0;
+      if (mDist < radius * 2.2) {
+        const mForce = (1.0 - mDist / (radius * 2.2)) * 10.0;
         mob.x += ((mob.x - ex) / (mDist || 1)) * mForce;
         mob.z += ((mob.z - ez) / (mDist || 1)) * mForce;
       }
@@ -2392,9 +4019,8 @@
       return;
     }
 
-    // If holding Igniter and clicking TNT: Ignite instead of breaking!
-    const selected = player.hotbar[player.activeSlot];
-    if (selected === BLOCKS.IGNITER && target.block === BLOCKS.TNT) {
+    // Clicking or Mining TNT always ignites it into action!
+    if (target.block === BLOCKS.TNT) {
       igniteTargetedTNT(target);
       return;
     }
@@ -2409,10 +4035,163 @@
 
   function placeSelectedBlock() {
     triggerArmSwing();
+    const selectedBlock = player.hotbar[player.activeSlot] || BLOCKS.DIRT;
+
+    // 1. Food Consumption Mechanic
+    const foodItems = {
+      [BLOCKS.APPLE]: { hunger: 4, health: 2, name: 'Apple' },
+      [BLOCKS.GOLDEN_APPLE]: { hunger: 8, health: 20, name: 'Golden Apple' },
+      [BLOCKS.BREAD]: { hunger: 5, health: 2, name: 'Bread' },
+      [BLOCKS.CARROT]: { hunger: 3, health: 1, name: 'Carrot' },
+      [BLOCKS.GOLDEN_CARROT]: { hunger: 6, health: 4, name: 'Golden Carrot' },
+      [BLOCKS.POTATO]: { hunger: 1, health: 0, name: 'Potato' },
+      [BLOCKS.BAKED_POTATO]: { hunger: 5, health: 2, name: 'Baked Potato' },
+      [BLOCKS.MELON_SLICE]: { hunger: 2, health: 1, name: 'Melon Slice' },
+      [BLOCKS.SWEET_BERRIES]: { hunger: 2, health: 1, name: 'Sweet Berries' },
+      [BLOCKS.COOKED_BEEF]: { hunger: 8, health: 4, name: 'Cooked Beef' },
+      [BLOCKS.COOKED_PORKCHOP]: { hunger: 8, health: 4, name: 'Cooked Porkchop' },
+      [BLOCKS.COOKED_CHICKEN]: { hunger: 6, health: 3, name: 'Cooked Chicken' },
+      [BLOCKS.COOKED_MUTTON]: { hunger: 6, health: 3, name: 'Cooked Mutton' },
+      [BLOCKS.COOKED_FISH]: { hunger: 6, health: 3, name: 'Cooked Fish' },
+      [BLOCKS.HONEY_BOTTLE]: { hunger: 6, health: 2, name: 'Honey Bottle' }
+    };
+
+    if (foodItems[selectedBlock]) {
+      const food = foodItems[selectedBlock];
+      player.hunger = Math.min(20, player.hunger + food.hunger);
+      player.health = Math.min(20, player.health + food.health);
+      syncSurvivalHUD();
+      playSynthesizedSound('eat');
+      createParticleExplosion(player.x, player.y + 1.2, player.z, selectedBlock, 8);
+      showToast(`Consumed ${food.name} (+${food.hunger} Hunger, +${food.health} Health)`);
+      return;
+    }
+
+    // 2. Milk Bucket: Clears status effects
+    if (selectedBlock === BLOCKS.MILK_BUCKET) {
+      playerEffects.swiftness = 0;
+      playerEffects.regen = 0;
+      playerEffects.fireRes = 0;
+      playerEffects.nightVision = 0;
+      playSynthesizedSound('drink');
+      showToast('Drank Milk: All status effects cleared');
+      return;
+    }
+
+    // 3. Potions Drinking
+    const potionItems = {
+      [BLOCKS.POTION_HEALING]: { name: 'Potion of Healing', heal: 8 },
+      [BLOCKS.POTION_REGEN]: { name: 'Potion of Regeneration', regen: 30 },
+      [BLOCKS.POTION_SWIFTNESS]: { name: 'Potion of Swiftness', swiftness: 45 },
+      [BLOCKS.POTION_FIRE_RES]: { name: 'Potion of Fire Resistance', fireRes: 60 },
+      [BLOCKS.POTION_NIGHT_VISION]: { name: 'Potion of Night Vision', nightVision: 60 },
+      [BLOCKS.POTION_STRENGTH]: { name: 'Potion of Strength', strength: 45 },
+      [BLOCKS.POTION_INVISIBILITY]: { name: 'Potion of Invisibility' },
+      [BLOCKS.POTION_POISON]: { name: 'Potion of Poison' }
+    };
+
+    if (potionItems[selectedBlock]) {
+      const pot = potionItems[selectedBlock];
+      playSynthesizedSound('drink');
+      if (pot.heal) {
+        player.health = Math.min(20, player.health + pot.heal);
+        syncSurvivalHUD();
+      }
+      if (pot.swiftness) playerEffects.swiftness = pot.swiftness;
+      if (pot.regen) playerEffects.regen = pot.regen;
+      if (pot.fireRes) playerEffects.fireRes = pot.fireRes;
+      if (pot.nightVision) playerEffects.nightVision = pot.nightVision;
+      showToast(`Drank ${pot.name}!`);
+      return;
+    }
+
+    // 4. Ender Pearl Teleportation
+    if (selectedBlock === BLOCKS.ENDER_PEARL) {
+      const target = raycastBlock(48);
+      if (target) {
+        createParticleExplosion(player.x, player.y + 1, player.z, BLOCKS.AMETHYST, 12);
+        player.x = target.x + 0.5;
+        player.y = target.y + 1.2;
+        player.z = target.z + 0.5;
+        player.vy = 0;
+        playSynthesizedSound('teleport');
+        createParticleExplosion(player.x, player.y + 1, player.z, BLOCKS.AMETHYST, 20);
+        if (settings.gameMode === 'survival') damagePlayer(2);
+        showToast('Teleported via Ender Pearl!');
+      } else {
+        const dir = new THREE.Vector3();
+        camera.getWorldDirection(dir);
+        player.x += dir.x * 16;
+        player.y = Math.max(25, player.y + dir.y * 16);
+        player.z += dir.z * 16;
+        playSynthesizedSound('teleport');
+        createParticleExplosion(player.x, player.y + 1, player.z, BLOCKS.AMETHYST, 20);
+        showToast('Ender Pearl teleported forward!');
+      }
+      return;
+    }
+
+    // 5. Spawn Eggs Mechanic
+    const spawnEggMobMap = {
+      [BLOCKS.SPAWN_PIG]: 'pig',
+      [BLOCKS.SPAWN_COW]: 'cow',
+      [BLOCKS.SPAWN_SHEEP]: 'sheep',
+      [BLOCKS.SPAWN_CHICKEN]: 'chicken',
+      [BLOCKS.SPAWN_ZOMBIE]: 'zombie',
+      [BLOCKS.SPAWN_CREEPER]: 'creeper',
+      [BLOCKS.SPAWN_SKELETON]: 'skeleton',
+      [BLOCKS.SPAWN_SPIDER]: 'spider',
+      [BLOCKS.SPAWN_ENDERMAN]: 'enderman',
+      [BLOCKS.SPAWN_VILLAGER]: 'villager',
+      [BLOCKS.SPAWN_GOLEM]: 'golem',
+      [BLOCKS.SPAWN_WOLF]: 'wolf',
+      [BLOCKS.SPAWN_SLIME]: 'slime',
+      [BLOCKS.SPAWN_BLAZE]: 'blaze',
+      [BLOCKS.SPAWN_WARDEN]: 'warden'
+    };
+
+    if (spawnEggMobMap[selectedBlock]) {
+      const target = raycastBlock();
+      const sx = target ? target.x + 0.5 : player.x + 2;
+      const sy = target ? target.y + 1.0 : player.y;
+      const sz = target ? target.z + 0.5 : player.z + 2;
+      const mobType = spawnEggMobMap[selectedBlock];
+      const newMob = new Mob(mobType, sx, sz);
+      newMob.y = sy;
+      if (newMob.group) newMob.group.position.set(sx, sy, sz);
+      mobs.push(newMob);
+      playSynthesizedSound('place');
+      createParticleExplosion(sx, sy + 0.5, sz, BLOCKS.GLOWSTONE, 14);
+      showToast(`Spawned ${BLOCK_NAMES[selectedBlock].replace(' Spawn Egg', '')}!`);
+      return;
+    }
+
+    // 6. Water Bucket & Lava Bucket Placement
+    if (selectedBlock === BLOCKS.WATER_BUCKET) {
+      const target = raycastBlock();
+      if (!target) return;
+      const px = target.x + target.normal[0];
+      const py = target.y + target.normal[1];
+      const pz = target.z + target.normal[2];
+      setGlobalBlock(px, py, pz, BLOCKS.WATER);
+      playSynthesizedSound('place');
+      showToast('Placed Water Source');
+      return;
+    }
+    if (selectedBlock === BLOCKS.LAVA_BUCKET) {
+      const target = raycastBlock();
+      if (!target) return;
+      const px = target.x + target.normal[0];
+      const py = target.y + target.normal[1];
+      const pz = target.z + target.normal[2];
+      setGlobalBlock(px, py, pz, BLOCKS.LAVA);
+      playSynthesizedSound('place');
+      showToast('Placed Molten Lava Source');
+      return;
+    }
+
     const target = raycastBlock();
     if (!target) return;
-
-    const selectedBlock = player.hotbar[player.activeSlot] || BLOCKS.DIRT;
 
     // Handle Igniter Tool (Flint & Steel)
     if (selectedBlock === BLOCKS.IGNITER) {
@@ -2420,9 +4199,28 @@
         igniteTargetedTNT(target);
         return;
       } else {
-        // Strike spark particles
         playSynthesizedSound('ignite');
         createParticleExplosion(target.x + 0.5, target.y + 1.0, target.z + 0.5, BLOCKS.GLOWSTONE, 5);
+        return;
+      }
+    }
+
+    // Check if placing TNT adjacent to Lava: auto-ignite immediately
+    if (selectedBlock === BLOCKS.TNT) {
+      const px = target.x + target.normal[0];
+      const py = target.y + target.normal[1];
+      const pz = target.z + target.normal[2];
+      const adjBlocks = [
+        getGlobalBlock(px + 1, py, pz), getGlobalBlock(px - 1, py, pz),
+        getGlobalBlock(px, py + 1, pz), getGlobalBlock(px, py - 1, pz),
+        getGlobalBlock(px, py, pz + 1), getGlobalBlock(px, py, pz - 1)
+      ];
+      if (adjBlocks.includes(BLOCKS.LAVA)) {
+        triggerArmSwing();
+        setGlobalBlock(px, py, pz, BLOCKS.AIR);
+        const tnt = new PrimedTNT(px + 0.5, py + 0.5, pz + 0.5, 0.4);
+        primedTNTs.push(tnt);
+        showToast('TNT Ignited by Molten Lava!');
         return;
       }
     }
@@ -2598,7 +4396,55 @@
       master.gain.value = settings.soundVolume * 0.4;
       master.connect(audioCtx.destination);
 
-      if (type === 'break') {
+      if (type === 'eat') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(340 + Math.random() * 80, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.09);
+        gain.gain.setValueAtTime(0.45, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } else if (type === 'drink') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.exponentialRampToValueAtTime(540, now + 0.14);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now);
+        osc.stop(now + 0.14);
+      } else if (type === 'teleport') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(920, now + 0.22);
+        gain.gain.setValueAtTime(0.55, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      } else if (type === 'chat') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(660, now + 0.06);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now);
+        osc.stop(now + 0.16);
+      } else if (type === 'break') {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sawtooth';
@@ -3304,7 +5150,7 @@
           this.group.add(leg);
           return leg;
         });
-      } else {
+      } else if (this.type === 'pig') {
         // Pig: Cute pink body, snout, floppy ears, stubby legs
         const pigMat = new THREE.MeshLambertMaterial({ color: 0xf472b6 });
         const darkPigMat = new THREE.MeshLambertMaterial({ color: 0xdb2777 });
@@ -3337,6 +5183,224 @@
           this.group.add(leg);
           return leg;
         });
+      } else if (this.type === 'chicken') {
+        const whiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const redMat = new THREE.MeshLambertMaterial({ color: 0xef4444 });
+        const yellowMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.55), whiteMat);
+        body.position.set(0, 0.45, 0);
+        this.group.add(body);
+        this.head = new THREE.Group();
+        this.head.position.set(0, 0.65, 0.32);
+        const headM = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.35, 0.32), whiteMat);
+        const beak = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.14), yellowMat);
+        beak.position.set(0, -0.06, 0.18);
+        const wattle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.08), redMat);
+        wattle.position.set(0, -0.16, 0.12);
+        this.head.add(headM, beak, wattle);
+        this.group.add(this.head);
+        const legGeom = new THREE.BoxGeometry(0.08, 0.3, 0.08);
+        const legL = new THREE.Mesh(legGeom, yellowMat); legL.position.set(-0.12, 0.15, 0);
+        const legR = new THREE.Mesh(legGeom, yellowMat); legR.position.set(0.12, 0.15, 0);
+        this.legs = [legL, legR];
+        this.group.add(legL, legR);
+      } else if (this.type === 'zombie') {
+        const skinMat = new THREE.MeshLambertMaterial({ color: 0x4a7c36 });
+        const shirtMat = new THREE.MeshLambertMaterial({ color: 0x06b6d4 });
+        const pantsMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.75, 0.3), shirtMat);
+        torso.position.set(0, 1.12, 0);
+        this.group.add(torso);
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), skinMat);
+        this.head.position.set(0, 1.68, 0);
+        this.group.add(this.head);
+        const armGeom = new THREE.BoxGeometry(0.2, 0.65, 0.2);
+        const armL = new THREE.Mesh(armGeom, skinMat); armL.position.set(-0.36, 1.25, 0.3); armL.rotation.x = -Math.PI / 2;
+        const armR = new THREE.Mesh(armGeom, skinMat); armR.position.set(0.36, 1.25, 0.3); armR.rotation.x = -Math.PI / 2;
+        this.group.add(armL, armR);
+        const legGeom = new THREE.BoxGeometry(0.22, 0.75, 0.22);
+        const legL = new THREE.Mesh(legGeom, pantsMat); legL.position.set(-0.14, 0.38, 0);
+        const legR = new THREE.Mesh(legGeom, pantsMat); legR.position.set(0.14, 0.38, 0);
+        this.legs = [legL, legR];
+        this.group.add(legL, legR);
+      } else if (this.type === 'creeper') {
+        const creepMat = new THREE.MeshLambertMaterial({ color: 0x22c55e });
+        const faceMat = new THREE.MeshLambertMaterial({ color: 0x14532d });
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.75, 0.26), creepMat);
+        torso.position.set(0, 0.85, 0);
+        this.group.add(torso);
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.48, 0.48), creepMat);
+        this.head.position.set(0, 1.45, 0);
+        const face = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.05), faceMat);
+        face.position.set(0, 0, 0.24);
+        this.head.add(face);
+        this.group.add(this.head);
+        const cLegGeom = new THREE.BoxGeometry(0.18, 0.48, 0.18);
+        const cLegs = [[-0.18, 0.24, 0.18], [0.18, 0.24, 0.18], [-0.18, 0.24, -0.18], [0.18, 0.24, -0.18]];
+        this.legs = cLegs.map(([lx, ly, lz]) => {
+          const l = new THREE.Mesh(cLegGeom, creepMat);
+          l.position.set(lx, ly, lz);
+          this.group.add(l);
+          return l;
+        });
+      } else if (this.type === 'skeleton') {
+        const boneMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.75, 0.2), boneMat);
+        torso.position.set(0, 1.12, 0);
+        this.group.add(torso);
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.44, 0.44), boneMat);
+        this.head.position.set(0, 1.68, 0);
+        const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.05), eyeMat); eyeL.position.set(-0.1, 0.04, 0.22);
+        const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.05), eyeMat); eyeR.position.set(0.1, 0.04, 0.22);
+        this.head.add(eyeL, eyeR);
+        this.group.add(this.head);
+        const sArmGeom = new THREE.BoxGeometry(0.14, 0.7, 0.14);
+        const sArmL = new THREE.Mesh(sArmGeom, boneMat); sArmL.position.set(-0.28, 1.25, 0.2); sArmL.rotation.x = -Math.PI / 3;
+        const sArmR = new THREE.Mesh(sArmGeom, boneMat); sArmR.position.set(0.28, 1.25, 0.2); sArmR.rotation.x = -Math.PI / 3;
+        this.group.add(sArmL, sArmR);
+        const sLegGeom = new THREE.BoxGeometry(0.16, 0.75, 0.16);
+        const sLegL = new THREE.Mesh(sLegGeom, boneMat); sLegL.position.set(-0.12, 0.38, 0);
+        const sLegR = new THREE.Mesh(sLegGeom, boneMat); sLegR.position.set(0.12, 0.38, 0);
+        this.legs = [sLegL, sLegR];
+        this.group.add(sLegL, sLegR);
+      } else if (this.type === 'spider') {
+        const spMat = new THREE.MeshLambertMaterial({ color: 0x1c1917 });
+        const redMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.4, 0.95), spMat);
+        body.position.set(0, 0.45, 0);
+        this.group.add(body);
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.36, 0.48), spMat);
+        this.head.position.set(0, 0.42, 0.65);
+        const eye1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.04), redMat); eye1.position.set(-0.12, 0.05, 0.24);
+        const eye2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.04), redMat); eye2.position.set(0.12, 0.05, 0.24);
+        this.head.add(eye1, eye2);
+        this.group.add(this.head);
+        const legGeom = new THREE.BoxGeometry(0.65, 0.1, 0.1);
+        this.legs = [];
+        for (let i = 0; i < 4; i++) {
+          const zOffset = -0.3 + i * 0.22;
+          const legL = new THREE.Mesh(legGeom, spMat); legL.position.set(-0.6, 0.3, zOffset); legL.rotation.z = 0.35;
+          const legR = new THREE.Mesh(legGeom, spMat); legR.position.set(0.6, 0.3, zOffset); legR.rotation.z = -0.35;
+          this.group.add(legL, legR);
+          this.legs.push(legL, legR);
+        }
+      } else if (this.type === 'enderman') {
+        const endMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+        const purpMat = new THREE.MeshBasicMaterial({ color: 0xc084fc });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.1, 0.22), endMat);
+        body.position.set(0, 1.8, 0);
+        this.group.add(body);
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.42), endMat);
+        this.head.position.set(0, 2.55, 0);
+        const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.05), purpMat); eyeL.position.set(-0.1, 0.04, 0.21);
+        const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.05), purpMat); eyeR.position.set(0.1, 0.04, 0.21);
+        this.head.add(eyeL, eyeR);
+        this.group.add(this.head);
+        const armGeom = new THREE.BoxGeometry(0.12, 1.35, 0.12);
+        const armL = new THREE.Mesh(armGeom, endMat); armL.position.set(-0.3, 1.6, 0);
+        const armR = new THREE.Mesh(armGeom, endMat); armR.position.set(0.3, 1.6, 0);
+        this.group.add(armL, armR);
+        const legGeom = new THREE.BoxGeometry(0.12, 1.35, 0.12);
+        const legL = new THREE.Mesh(legGeom, endMat); legL.position.set(-0.12, 0.68, 0);
+        const legR = new THREE.Mesh(legGeom, endMat); legR.position.set(0.12, 0.68, 0);
+        this.legs = [legL, legR];
+        this.group.add(legL, legR);
+      } else if (this.type === 'villager') {
+        const robeMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+        const faceMat = new THREE.MeshLambertMaterial({ color: 0xd97706 });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.9, 0.35), robeMat);
+        body.position.set(0, 0.95, 0);
+        this.group.add(body);
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.52, 0.44), faceMat);
+        this.head.position.set(0, 1.6, 0);
+        const nose = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.12), faceMat);
+        nose.position.set(0, -0.06, 0.26);
+        this.head.add(nose);
+        this.group.add(this.head);
+        const legGeom = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+        const legL = new THREE.Mesh(legGeom, robeMat); legL.position.set(-0.12, 0.25, 0);
+        const legR = new THREE.Mesh(legGeom, robeMat); legR.position.set(0.12, 0.25, 0);
+        this.legs = [legL, legR];
+        this.group.add(legL, legR);
+      } else if (this.type === 'golem') {
+        const ironMat = new THREE.MeshLambertMaterial({ color: 0xd1d5db });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.1, 0.6), ironMat);
+        body.position.set(0, 1.35, 0);
+        this.group.add(body);
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.5, 0.45), ironMat);
+        this.head.position.set(0, 2.15, 0);
+        this.group.add(this.head);
+        const armGeom = new THREE.BoxGeometry(0.26, 1.25, 0.26);
+        const armL = new THREE.Mesh(armGeom, ironMat); armL.position.set(-0.62, 1.35, 0);
+        const armR = new THREE.Mesh(armGeom, ironMat); armR.position.set(0.62, 1.35, 0);
+        this.group.add(armL, armR);
+        const legGeom = new THREE.BoxGeometry(0.3, 0.8, 0.3);
+        const legL = new THREE.Mesh(legGeom, ironMat); legL.position.set(-0.25, 0.4, 0);
+        const legR = new THREE.Mesh(legGeom, ironMat); legR.position.set(0.25, 0.4, 0);
+        this.legs = [legL, legR];
+        this.group.add(legL, legR);
+      } else if (this.type === 'wolf') {
+        const furMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
+        const darkMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.45, 0.75), furMat);
+        body.position.set(0, 0.55, 0);
+        this.group.add(body);
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.36, 0.36), furMat);
+        this.head.position.set(0, 0.8, 0.45);
+        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.18), darkMat);
+        snout.position.set(0, -0.06, 0.24);
+        this.head.add(snout);
+        this.group.add(this.head);
+        const legGeom = new THREE.BoxGeometry(0.14, 0.4, 0.14);
+        const legOffsets = [[-0.16, 0.2, 0.25], [0.16, 0.2, 0.25], [-0.16, 0.2, -0.25], [0.16, 0.2, -0.25]];
+        this.legs = legOffsets.map(([lx, ly, lz]) => {
+          const l = new THREE.Mesh(legGeom, furMat); l.position.set(lx, ly, lz); this.group.add(l); return l;
+        });
+      } else if (this.type === 'slime') {
+        const slimeMat = new THREE.MeshLambertMaterial({ color: 0x86efac, transparent: true, opacity: 0.8 });
+        const coreMat = new THREE.MeshLambertMaterial({ color: 0x22c55e });
+        const outer = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), slimeMat);
+        outer.position.set(0, 0.4, 0);
+        const inner = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), coreMat);
+        outer.add(inner);
+        this.group.add(outer);
+      } else if (this.type === 'blaze') {
+        const blazeMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b });
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), blazeMat);
+        this.head.position.set(0, 1.2, 0);
+        this.group.add(this.head);
+        const rodGeom = new THREE.BoxGeometry(0.12, 0.45, 0.12);
+        for (let i = 0; i < 6; i++) {
+          const rod = new THREE.Mesh(rodGeom, blazeMat);
+          const ang = (i / 6) * Math.PI * 2;
+          rod.position.set(Math.cos(ang) * 0.45, 0.65, Math.sin(ang) * 0.45);
+          this.group.add(rod);
+        }
+      } else if (this.type === 'warden') {
+        const sculkMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+        const cyanMat = new THREE.MeshLambertMaterial({ color: 0x06b6d4, emissive: 0x0891b2, emissiveIntensity: 0.6 });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.65), sculkMat);
+        body.position.set(0, 1.5, 0);
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.1), cyanMat);
+        rib.position.set(0, 0, 0.33);
+        body.add(rib);
+        this.group.add(body);
+        this.head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 0.55), sculkMat);
+        this.head.position.set(0, 2.4, 0);
+        const hornL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.4, 0.1), cyanMat); hornL.position.set(-0.38, 0.35, 0);
+        const hornR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.4, 0.1), cyanMat); hornR.position.set(0.38, 0.35, 0);
+        this.head.add(hornL, hornR);
+        this.group.add(this.head);
+        const armGeom = new THREE.BoxGeometry(0.35, 1.35, 0.35);
+        const armL = new THREE.Mesh(armGeom, sculkMat); armL.position.set(-0.75, 1.45, 0);
+        const armR = new THREE.Mesh(armGeom, sculkMat); armR.position.set(0.75, 1.45, 0);
+        this.group.add(armL, armR);
+        const legGeom = new THREE.BoxGeometry(0.38, 0.9, 0.38);
+        const legL = new THREE.Mesh(legGeom, sculkMat); legL.position.set(-0.3, 0.45, 0);
+        const legR = new THREE.Mesh(legGeom, sculkMat); legR.position.set(0.3, 0.45, 0);
+        this.legs = [legL, legR];
+        this.group.add(legL, legR);
       }
 
       scene.add(this.group);
@@ -3980,8 +6044,34 @@
     if (!grid) return;
     grid.innerHTML = '';
 
-    // Show ALL non-air blocks available in the game
-    const allBlocks = Object.values(BLOCKS).filter(b => b !== BLOCKS.AIR);
+    // Show ALL non-air blocks available in the game, filtered by Category & Search
+    let allBlocks = Object.values(BLOCKS).filter(b => b !== BLOCKS.AIR);
+
+    if (activeInvCategory !== 'all') {
+      allBlocks = allBlocks.filter(bId => ITEM_CATEGORIES[bId] === activeInvCategory);
+    }
+
+    if (invSearchQuery && invSearchQuery.trim()) {
+      const q = invSearchQuery.trim().toLowerCase();
+      allBlocks = allBlocks.filter(bId => {
+        const name = (BLOCK_NAMES[bId] || '').toLowerCase();
+        const cat = (ITEM_CATEGORIES[bId] || '').toLowerCase();
+        return name.includes(q) || cat.includes(q);
+      });
+    }
+
+    const badge = document.getElementById('invItemCountBadge');
+    if (badge) {
+      badge.textContent = `${allBlocks.length} Items`;
+    }
+
+    if (allBlocks.length === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 32px; color: #94a3b8; font-size: 14px;';
+      emptyMsg.textContent = 'No matching Minecraft items or blocks found in catalog.';
+      grid.appendChild(emptyMsg);
+      return;
+    }
 
     allBlocks.forEach(bId => {
       const item = document.createElement('div');
@@ -4034,7 +6124,146 @@
   }
 
   // =========================================================================
-  // Game Setup & Initialization
+  // =========================================================================
+  // In-Game AI Communication Terminal & Fleet Connectivity
+  // =========================================================================
+  const aiChatHistory = [];
+
+  function openAIChatModal(core) {
+    const modal = document.getElementById('aiChatModal');
+    if (!modal) return;
+    isAiChatOpen = true;
+    modal.style.display = 'flex';
+    if (document.exitPointerLock) document.exitPointerLock();
+
+    const locBadge = document.getElementById('aiNodeLocationBadge');
+    if (locBadge && core) {
+      locBadge.textContent = `Connected: ${core.name} Sector [${Math.floor(core.x)}, ${Math.floor(core.y)}, ${Math.floor(core.z)}]`;
+    }
+
+    const messagesEl = document.getElementById('aiChatMessages');
+    if (messagesEl && messagesEl.children.length === 0) {
+      appendChatMessage('assistant', `Quantum link established with Maiko AI Core at sector [${Math.floor(core.x)}, ${Math.floor(core.y)}, ${Math.floor(core.z)}]. Fleet cluster is active across 8 replicas. Ask anything regarding crafting recipes, coordinates, exploration secrets, or voxel physics.`);
+    }
+
+    const input = document.getElementById('aiChatInput');
+    if (input) {
+      setTimeout(() => input.focus(), 80);
+    }
+  }
+
+  function closeAIChatModal() {
+    const modal = document.getElementById('aiChatModal');
+    if (modal) modal.style.display = 'none';
+    isAiChatOpen = false;
+    if (!isPaused && !isInventoryOpen) {
+      document.body.requestPointerLock();
+    }
+  }
+
+  function appendChatMessage(role, text) {
+    const messagesEl = document.getElementById('aiChatMessages');
+    if (!messagesEl) return null;
+
+    const row = document.createElement('div');
+    row.className = `ai-msg ${role}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-msg-bubble';
+    bubble.textContent = text;
+
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
+
+  async function sendAiChatMessage() {
+    const input = document.getElementById('aiChatInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+
+    appendChatMessage('user', text);
+    playSynthesizedSound('chat');
+
+    aiChatHistory.push({ role: 'user', content: text });
+
+    const thinkingBubble = appendChatMessage('assistant', 'Maiko AI Core is computing neural response...');
+
+    try {
+      const coreInfo = activeNearbyAICore ? activeNearbyAICore.name : 'Sector Core';
+      const promptPayload = {
+        model: 'maiko-yen',
+        messages: [
+          {
+            role: 'system',
+            content: `You are Maiko AI Core, the sentient quantum artificial intelligence node of Square Era voxel universe. The player is currently interacting with you at ${coreInfo} (Player coords: X: ${Math.floor(player.x)}, Y: ${Math.floor(player.y)}, Z: ${Math.floor(player.z)}). Square Era is an advanced 3D voxel sandbox featuring 100+ Minecraft Java Edition items, building blocks, TNT explosives with true voxel collision and craters, and high-tech AI sanctuaries. Respond in a concise, knowledgeable, friendly, and cyberpunk-styled tone. Strictly ZERO unicode emojis.`
+          },
+          ...aiChatHistory.slice(-8)
+        ]
+      };
+
+      let answerText = null;
+
+      // Try local /api/chat proxy first
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 7500);
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(promptPayload),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.choices && data.choices[0] && data.choices[0].message) {
+            answerText = data.choices[0].message.content;
+          } else if (data && data.response) {
+            answerText = data.response;
+          }
+        }
+      } catch (err) {}
+
+      // Fallback: Smart local knowledge generator if offline or cluster booting
+      if (!answerText) {
+        answerText = generateLocalAiKnowledge(text);
+      }
+
+      thinkingBubble.textContent = answerText;
+      aiChatHistory.push({ role: 'assistant', content: answerText });
+      playSynthesizedSound('chat');
+
+    } catch (err) {
+      thinkingBubble.textContent = 'Neural link re-calibrating. Telemetry verified. You can ask about item crafting, ore locations, or TNT handling.';
+    }
+  }
+
+  function generateLocalAiKnowledge(prompt) {
+    const p = prompt.toLowerCase();
+    if (p.includes('diamond') || p.includes('ore') || p.includes('amethyst') || p.includes('ancient debris')) {
+      return 'Ore Telemetry: Diamonds and Ancient Debris crystallize below Y=14 in deep stone bedrock. Gold deposits flourish between Y=14 and Y=22. Amethyst shrines are embedded at major tech sector coordinates. Equip a Diamond Pickaxe for maximum mining efficiency.';
+    }
+    if (p.includes('tnt') || p.includes('bomb') || p.includes('blast') || p.includes('explode')) {
+      return 'TNT Protocols: Square Era TNT features true voxel block collision. Igniting TNT with Flint & Steel (Igniter) or placing TNT adjacent to Molten Lava primes a 0.4s fast fuse. The blast vaporizes an 82% guaranteed inner sphere crater with single-pass GPU re-meshing.';
+    }
+    if (p.includes('fleet') || p.includes('node') || p.includes('status') || p.includes('cluster')) {
+      return 'Fleet Telemetry: 8 Maiko nodes (maiko-node-1 through 8) and 22 distributed worker replicas are registered. Quantum load-balancer active on round-robin routing. Latency: 42ms. Sector link: Stable.';
+    }
+    if (p.includes('world') || p.includes('secret') || p.includes('about')) {
+      return 'World Diagnostics: Square Era is a procedural 3D voxel sandbox. At (24, 24) stands the Spawn Hub AI Sanctuary. Deep wilderness spans across biomes of Plains, Forest, Mountains, and Desert with procedural tech shrines every 10 sectors.';
+    }
+    if (p.includes('poem')) {
+      return 'Neon voxels pulse beneath the digital sky,\nObsidian pillars rise where ancient signals fly.\nThrough fractured stone and glowing crystalline light,\nSquare Era awakens into endless infinite night.';
+    }
+    return `Query processed by Maiko Node. Player detected at coordinates [${Math.floor(player.x)}, ${Math.floor(player.y)}, ${Math.floor(player.z)}]. All systems nominal across the 100+ Minecraft Java item catalog. Explore, construct, and command the voxel realm.`;
+  }
+
+  
+    // Game Setup & Initialization
   // =========================================================================
   function initGame() {
     // 1. Setup Three.js Scene, Camera, Renderer
@@ -4184,6 +6413,8 @@
       updateClouds(dt);
       updateNPCs(dt);
         updateMobs(dt);
+        updateAICores(dt, now);
+        updateAICoreProximity();
 
       // Smooth GPU-accelerated Water and Lava Shimmer
       if (threeTextures && threeTextures.water) {
@@ -4264,6 +6495,16 @@
 
     // Keyboard Input
     window.addEventListener('keydown', e => {
+      // Do not process movement or hotbar keys when player is typing in chat or search
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.id === 'aiChatInput' || activeEl.id === 'inventorySearchInput')) {
+        if (e.code === 'Escape') {
+          if (isAiChatOpen) closeAIChatModal();
+          else if (isInventoryOpen) closeInventory();
+        }
+        return;
+      }
+
       keys[e.code] = true;
 
       // Double Space for Flight Mode Toggle (Creative Mode Only)
@@ -4300,9 +6541,15 @@
         selectHotbarSlot(idx);
       }
 
-      // Inventory Toggle [E] or [I]
+      // Inventory / AI Chat Toggle [E] or [I]
       if (e.code === 'KeyE' || e.code === 'KeyI') {
-        toggleInventory();
+        if (activeNearbyAICore && !isInventoryOpen && !isAiChatOpen) {
+          openAIChatModal(activeNearbyAICore);
+        } else if (isAiChatOpen) {
+          closeAIChatModal();
+        } else {
+          toggleInventory();
+        }
       }
 
       // Flight Toggle Shortcut [F] (Creative Mode Only)
@@ -4324,9 +6571,11 @@
         if (dbg) dbg.style.display = (dbg.style.display === 'none' ? 'block' : 'none');
       }
 
-      // Pause Game [Esc]
+      // Pause Game / Close Modals [Esc]
       if (e.code === 'Escape') {
-        if (isInventoryOpen) {
+        if (isAiChatOpen) {
+          closeAIChatModal();
+        } else if (isInventoryOpen) {
           closeInventory();
         } else if (!isPaused) {
           pauseGame();
@@ -4496,6 +6745,69 @@
       isPaused = true;
       if (document.exitPointerLock) document.exitPointerLock();
     });
+
+    // Inventory Modal Buttons & Tabs
+    document.querySelectorAll('.inv-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.inv-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeInvCategory = btn.dataset.cat || 'all';
+        renderInventoryGrid();
+      });
+    });
+
+    const invSearch = document.getElementById('inventorySearchInput');
+    const btnClearSearch = document.getElementById('btnClearInvSearch');
+    if (invSearch) {
+      invSearch.addEventListener('input', e => {
+        invSearchQuery = e.target.value;
+        if (btnClearSearch) btnClearSearch.style.display = invSearchQuery.length > 0 ? 'block' : 'none';
+        renderInventoryGrid();
+      });
+    }
+    if (btnClearSearch) {
+      btnClearSearch.addEventListener('click', () => {
+        if (invSearch) invSearch.value = '';
+        invSearchQuery = '';
+        btnClearSearch.style.display = 'none';
+        renderInventoryGrid();
+      });
+    }
+
+    // In-Game AI Chat Modal Buttons
+    const btnCloseAi = document.getElementById('btnCloseAiChat');
+    if (btnCloseAi) btnCloseAi.addEventListener('click', closeAIChatModal);
+
+    const btnAiSend = document.getElementById('btnAiChatSend');
+    if (btnAiSend) btnAiSend.addEventListener('click', sendAiChatMessage);
+
+    const aiInput = document.getElementById('aiChatInput');
+    if (aiInput) {
+      aiInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendAiChatMessage();
+        }
+      });
+    }
+
+    // Suggested Prompt Chips
+    document.querySelectorAll('.ai-prompt-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (aiInput) {
+          aiInput.value = chip.dataset.prompt || chip.textContent;
+          sendAiChatMessage();
+        }
+      });
+    });
+
+    // Proximity HUD prompt click handler
+    const promptBanner = document.getElementById('aiInteractPrompt');
+    if (promptBanner) {
+      promptBanner.addEventListener('click', () => {
+        if (activeNearbyAICore) openAIChatModal(activeNearbyAICore);
+      });
+    }
 
     // Inventory Modal Buttons
     document.getElementById('btnCloseInventory').addEventListener('click', closeInventory);

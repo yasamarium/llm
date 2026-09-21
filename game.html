@@ -187,10 +187,35 @@
   <div id="inventoryModal" class="game-modal-overlay" style="display: none;">
     <div class="inventory-card">
       <div class="inventory-header">
-        <h3>Creative Block Palette</h3>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h3>Minecraft Java Catalog & Palette</h3>
+          <span id="invItemCountBadge" class="inv-count-badge">100+ Items</span>
+        </div>
         <button id="btnCloseInventory" class="inventory-close-btn" title="Close [E / I]">&times;</button>
       </div>
-      <p class="inventory-hint">Click any block to place it in your currently selected hotbar slot, or press keys 1-9 while hovering.</p>
+
+      <!-- Live Search & Category Filter Tabs -->
+      <div class="inventory-controls-bar">
+        <div class="inventory-search-wrap">
+          <input type="text" id="inventorySearchInput" class="inventory-search-input" placeholder="Search Minecraft items, blocks, tools, foods..." autocomplete="off">
+          <button id="btnClearInvSearch" class="btn-clear-search" style="display: none;">&times;</button>
+        </div>
+        <div class="inventory-tabs-scroll">
+          <button class="inv-tab-btn active" data-cat="all">All</button>
+          <button class="inv-tab-btn" data-cat="building">Building</button>
+          <button class="inv-tab-btn" data-cat="wood">Wood & Plants</button>
+          <button class="inv-tab-btn" data-cat="ores">Ores & Minerals</button>
+          <button class="inv-tab-btn" data-cat="food">Food & Farming</button>
+          <button class="inv-tab-btn" data-cat="tools">Tools & Combat</button>
+          <button class="inv-tab-btn" data-cat="workstations">Workstations</button>
+          <button class="inv-tab-btn" data-cat="redstone">Redstone</button>
+          <button class="inv-tab-btn" data-cat="decor">Dyes & Flowers</button>
+          <button class="inv-tab-btn" data-cat="potions">Potions</button>
+          <button class="inv-tab-btn" data-cat="eggs">Spawn Eggs</button>
+        </div>
+      </div>
+
+      <p class="inventory-hint">Click any block/item to assign to active hotbar slot, drag to specific slot, or press 1-9 while hovering.</p>
       
       <div id="inventoryGrid" class="inventory-grid">
         <!-- Generated dynamically with all block types -->
@@ -841,6 +866,57 @@
 
   <!-- In-Game Floating Toast Notification -->
   <div id="gameToast" class="game-toast"></div>
+
+  <!-- In-Game AI Interaction HUD Prompt -->
+  <div id="aiInteractPrompt" class="ai-interact-prompt" style="display: none;">
+    <div class="ai-prompt-key-badge">E</div>
+    <div class="ai-prompt-content">
+      <span class="ai-prompt-title">TALK TO MAIKO AI CORE</span>
+      <span class="ai-prompt-subtitle">Quantum Neural Fleet Terminal</span>
+    </div>
+  </div>
+
+  <!-- In-Game AI Home Communication Terminal Modal -->
+  <div id="aiChatModal" class="game-modal-overlay" style="display: none;">
+    <div class="ai-chat-card">
+      <!-- Terminal Header -->
+      <div class="ai-chat-header">
+        <div class="ai-chat-header-info">
+          <div class="ai-node-status-dot"></div>
+          <div>
+            <div class="ai-chat-node-title">MAIKO AI CORE &bull; FLEET NODE TERMINAL</div>
+            <div id="aiNodeLocationBadge" class="ai-chat-node-sub">Connected: AI Sanctuary Sector [24, 26, 24]</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="aiNodeFleetBadge" class="ai-fleet-ping-badge">8 Fleet Nodes Online</span>
+          <button id="btnCloseAiChat" class="inventory-close-btn" title="Close Terminal [Esc]">&times;</button>
+        </div>
+      </div>
+
+      <!-- Quick Suggested Prompt Chips -->
+      <div class="ai-suggested-prompts">
+        <button class="ai-prompt-chip" data-prompt="Tell me about this voxel world and what secrets exist here.">About World</button>
+        <button class="ai-prompt-chip" data-prompt="Where can I find diamonds, amethyst crystals and ancient debris?">Find Ores</button>
+        <button class="ai-prompt-chip" data-prompt="How do I ignite TNT safely with flint and steel or lava?">TNT Guide</button>
+        <button class="ai-prompt-chip" data-prompt="Show telemetry status of the AI fleet cluster nodes.">Fleet Status</button>
+        <button class="ai-prompt-chip" data-prompt="Write a short cyberpunk poem about Square Era voxels.">Cyber Poem</button>
+      </div>
+
+      <!-- Scrollable Message Log -->
+      <div id="aiChatMessages" class="ai-chat-messages">
+        <!-- Initial welcome message rendered here -->
+      </div>
+
+      <!-- Input Bar -->
+      <div class="ai-chat-input-bar">
+        <input type="text" id="aiChatInput" class="ai-chat-input" placeholder="Ask Maiko AI anything about Square Era, exploration, or technology..." autocomplete="off">
+        <button id="btnAiChatSend" class="se-btn se-btn-primary se-btn-sm ai-chat-send-btn">
+          <span>Send</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Game Logic Script -->
   <script src="/game.js"></script>
