@@ -39,7 +39,11 @@
     STONE_BRICKS: 20,
     GLOWSTONE: 21,
     ROSE: 22,
-    POLISHED_STONE: 23
+    POLISHED_STONE: 23,
+    LAVA: 24,
+    IGNITER: 25,
+    OBSIDIAN: 26,
+    AMETHYST: 27
   };
 
   const BLOCK_NAMES = {
@@ -62,11 +66,15 @@
     [BLOCKS.SNOW]: 'Snow Block',
     [BLOCKS.BRICKS]: 'Bricks',
     [BLOCKS.BOOKSHELF]: 'Bookshelf',
-    [BLOCKS.TNT]: 'TNT',
+    [BLOCKS.TNT]: 'TNT Block',
     [BLOCKS.STONE_BRICKS]: 'Stone Bricks',
     [BLOCKS.GLOWSTONE]: 'Glowstone Lantern',
     [BLOCKS.ROSE]: 'Red Rose Flower',
-    [BLOCKS.POLISHED_STONE]: 'Polished Stone'
+    [BLOCKS.POLISHED_STONE]: 'Polished Stone',
+    [BLOCKS.LAVA]: 'Molten Lava',
+    [BLOCKS.IGNITER]: 'Igniter (Flint & Steel)',
+    [BLOCKS.OBSIDIAN]: 'Obsidian Block',
+    [BLOCKS.AMETHYST]: 'Amethyst Crystal'
   };
 
   const BLOCK_TRANSPARENT = {
@@ -74,7 +82,9 @@
     [BLOCKS.LEAVES]: true,
     [BLOCKS.GLASS]: true,
     [BLOCKS.WATER]: true,
-    [BLOCKS.ROSE]: true
+    [BLOCKS.ROSE]: true,
+    [BLOCKS.LAVA]: true,
+    [BLOCKS.IGNITER]: true
   };
 
   // User Settings State
@@ -133,6 +143,8 @@
   let cloudMesh, cloudTex;
   let npcs = [];
   let mobs = [];
+  let primedTNTs = [];
+  let cameraShake = 0;
   let handGroup, handArmMesh, handItemMesh;
   let wireframeTargetBox;
   let chunks = new Map(); // "cx,cz" => Chunk
@@ -721,13 +733,108 @@
       }
     });
 
+    // 23. Molten Lava (32x32 Magma with Radiant Heat Crust)
+    texCanvases.lava = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(0, 0, 32, 32);
+      for (let x = 0; x < 32; x++) {
+        for (let y = 0; y < 32; y++) {
+          const n = seededNoise(x, y, 99);
+          if (n > 0.72) {
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(x, y, 1, 1);
+          } else if (n > 0.45) {
+            ctx.fillStyle = '#ea580c';
+            ctx.fillRect(x, y, 1, 1);
+          } else if (n > 0.25) {
+            ctx.fillStyle = '#b91c1c';
+            ctx.fillRect(x, y, 1, 1);
+          } else {
+            ctx.fillStyle = '#7f1d1d';
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(6, 8, 8, 2);
+      ctx.fillRect(18, 20, 10, 2);
+      ctx.fillRect(12, 14, 4, 4);
+    });
+
+    // 24. Igniter / Flint and Steel (32x32 Metallic Striker & Fire Spark)
+    texCanvases.igniter = createPixelCanvas(ctx => {
+      ctx.clearRect(0, 0, 32, 32);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(8, 6, 12, 4);
+      ctx.fillRect(6, 8, 4, 14);
+      ctx.fillRect(8, 20, 12, 4);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(8, 7, 10, 2);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(14, 12, 8, 8);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(16, 14, 6, 6);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(21, 10, 4, 4);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(23, 8, 3, 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(22, 11, 2, 2);
+    });
+
+    // 25. Obsidian (32x32 Deep Violet-Black Blast-Resistant Basalt)
+    texCanvases.obsidian = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#120b1e';
+      ctx.fillRect(0, 0, 32, 32);
+      for (let x = 0; x < 32; x++) {
+        for (let y = 0; y < 32; y++) {
+          const r = seededNoise(x, y, 105);
+          if (r > 0.85) {
+            ctx.fillStyle = '#3b1d60';
+            ctx.fillRect(x, y, 1, 1);
+          } else if (r > 0.65) {
+            ctx.fillStyle = '#221138';
+            ctx.fillRect(x, y, 1, 1);
+          } else if (r < 0.15) {
+            ctx.fillStyle = '#0a0512';
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+    });
+
+    // 26. Amethyst (32x32 Radiant Crystalline Gemstone)
+    texCanvases.amethyst = createPixelCanvas(ctx => {
+      ctx.fillStyle = '#7c3aed';
+      ctx.fillRect(0, 0, 32, 32);
+      for (let x = 0; x < 32; x++) {
+        for (let y = 0; y < 32; y++) {
+          const r = seededNoise(x, y, 112);
+          if (r > 0.82) {
+            ctx.fillStyle = '#c084fc';
+            ctx.fillRect(x, y, 1, 1);
+          } else if (r > 0.5) {
+            ctx.fillStyle = '#9333ea';
+            ctx.fillRect(x, y, 1, 1);
+          } else if (r < 0.2) {
+            ctx.fillStyle = '#581c87';
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+      ctx.fillStyle = '#f3e8ff';
+      ctx.fillRect(8, 8, 3, 3);
+      ctx.fillRect(20, 18, 4, 4);
+      drawPixelBevel(ctx, 'rgba(255,255,255,0.4)', 'rgba(0,0,0,0.4)');
+    });
+
     // Convert canvases to Three.js Textures
     threeTextures = {};
     for (const key in texCanvases) {
       const tex = new THREE.CanvasTexture(texCanvases[key]);
       tex.magFilter = THREE.NearestFilter;
       tex.minFilter = THREE.NearestMipmapNearestFilter;
-      if (key === 'water') {
+      if (key === 'water' || key === 'lava') {
         tex.wrapS = THREE.RepeatWrapping;
         tex.wrapT = THREE.RepeatWrapping;
       }
@@ -798,6 +905,17 @@
       makeMat(threeTextures.rose, true, 0.95)
     ];
     blockMaterials[BLOCKS.POLISHED_STONE] = makeCubeMats(threeTextures.polished_stone);
+    blockMaterials[BLOCKS.LAVA] = [
+      makeMat(threeTextures.lava, true, 0.90, true),
+      makeMat(threeTextures.lava, true, 0.90, true),
+      makeMat(threeTextures.lava, true, 0.90, true),
+      makeMat(threeTextures.lava, true, 0.90, true),
+      makeMat(threeTextures.lava, true, 0.90, true),
+      makeMat(threeTextures.lava, true, 0.90, true)
+    ];
+    blockMaterials[BLOCKS.IGNITER] = makeCubeMats(threeTextures.igniter);
+    blockMaterials[BLOCKS.OBSIDIAN] = makeCubeMats(threeTextures.obsidian);
+    blockMaterials[BLOCKS.AMETHYST] = makeCubeMats(threeTextures.amethyst);
 
     // Save thumbnail preview canvases for UI
     blockIcons[BLOCKS.GRASS] = texCanvases.grass_side;
@@ -823,6 +941,10 @@
     blockIcons[BLOCKS.GLOWSTONE] = texCanvases.glowstone;
     blockIcons[BLOCKS.ROSE] = texCanvases.rose;
     blockIcons[BLOCKS.POLISHED_STONE] = texCanvases.polished_stone;
+    blockIcons[BLOCKS.LAVA] = texCanvases.lava;
+    blockIcons[BLOCKS.IGNITER] = texCanvases.igniter;
+    blockIcons[BLOCKS.OBSIDIAN] = texCanvases.obsidian;
+    blockIcons[BLOCKS.AMETHYST] = texCanvases.amethyst;
   }
 
   // =========================================================================
@@ -1700,7 +1822,7 @@
   // Player Controls & Physics Engine
   // =========================================================================
   function isBlockSolid(b) {
-    return b !== BLOCKS.AIR && b !== BLOCKS.WATER;
+    return b !== BLOCKS.AIR && b !== BLOCKS.WATER && b !== BLOCKS.LAVA && b !== BLOCKS.ROSE && b !== BLOCKS.IGNITER;
   }
 
   function checkPlayerCollision(px, py, pz) {
@@ -1725,9 +1847,10 @@
   }
 
   function updatePhysics(dt) {
-    // 1. In-water check
+    // 1. In-water & In-lava check
     const currentBlock = getGlobalBlock(Math.floor(player.x), Math.floor(player.y + 0.5), Math.floor(player.z));
     player.inWater = (currentBlock === BLOCKS.WATER);
+    player.inLava = (currentBlock === BLOCKS.LAVA);
 
     // 2. Movement Inputs (Support both WASD and Arrow Keys)
     let forward = 0;
@@ -1745,6 +1868,7 @@
     } else {
       if (player.isSprinting) moveSpeed = 6.8;
       if (player.inWater) moveSpeed = 2.9;
+      if (player.inLava) moveSpeed = 1.8;
     }
 
     // True First-Person Camera Vectors
@@ -1802,11 +1926,12 @@
         }
         player.vy = 0;
       }
-    } else if (player.inWater) {
-      player.vy -= 7.0 * dt; // Fluid buoyancy
-      player.vy *= Math.pow(0.5, dt * 5.0); // Water drag
-      if (keys['Space']) player.vy = 3.2; // Swimming up smoothly
-      if (keys['ShiftLeft'] || keys['KeyC']) player.vy = -3.2; // Swimming down
+    } else if (player.inWater || player.inLava) {
+      const isLava = player.inLava;
+      player.vy -= (isLava ? 10.0 : 7.0) * dt;
+      player.vy *= Math.pow(isLava ? 0.2 : 0.5, dt * 5.0);
+      if (keys['Space']) player.vy = (isLava ? 2.4 : 3.2);
+      if (keys['ShiftLeft'] || keys['KeyC']) player.vy = (isLava ? -2.0 : -3.2);
       const newY = player.y + player.vy * dt;
       if (!checkPlayerCollision(player.x, newY, player.z)) {
         player.y = newY;
@@ -1814,6 +1939,15 @@
         player.vy = 0;
       }
       player.onGround = false;
+
+      // Lava burn damage in survival mode
+      if (isLava && settings.gameMode === 'survival') {
+        damagePlayer(1);
+        if (Math.random() < 0.25) {
+          createParticleExplosion(player.x, player.y + 0.5, player.z, BLOCKS.LAVA, 2);
+          playSynthesizedSound('hurt');
+        }
+      }
     } else {
       // Normal Gravity
       player.vy -= 28.0 * dt;
@@ -2069,10 +2203,201 @@
   // =========================================================================
   // Block Breaking & Placing
   // =========================================================================
+  // =========================================================================
+  // Primed TNT Entity & Explosion Physics Engine
+  // =========================================================================
+  class PrimedTNT {
+    constructor(x, y, z, fuseSeconds = 2.4) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+      this.vy = 2.2; // Slight vertical pop on ignite
+      this.fuse = fuseSeconds;
+      this.totalFuse = fuseSeconds;
+      this.isExploded = false;
+
+      const geom = new THREE.BoxGeometry(0.98, 0.98, 0.98);
+      const sideMat = blockMaterials[BLOCKS.TNT][0].clone();
+      const topMat = blockMaterials[BLOCKS.TNT][2].clone();
+      const btmMat = blockMaterials[BLOCKS.TNT][3].clone();
+      this.mats = [sideMat, sideMat, topMat, btmMat, sideMat, sideMat];
+      this.whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      this.mesh = new THREE.Mesh(geom, this.mats);
+      this.mesh.position.set(this.x, this.y, this.z);
+      scene.add(this.mesh);
+
+      playSynthesizedSound('ignite');
+    }
+
+    update(dt) {
+      this.fuse -= dt;
+
+      // Physics (gravity and landing)
+      this.vy -= 18.0 * dt;
+      const newY = this.y + this.vy * dt;
+      const groundH = getTerrainHeight(Math.floor(this.x), Math.floor(this.z));
+      if (newY <= groundH + 0.5) {
+        this.y = groundH + 0.5;
+        this.vy = 0;
+      } else {
+        this.y = newY;
+      }
+      this.mesh.position.set(this.x, this.y, this.z);
+
+      // Flashing white/red and pulsing swelling scale
+      const flashFreq = (this.totalFuse - this.fuse) * 8.0;
+      const isWhite = Math.sin(flashFreq * Math.PI) > 0.25;
+      this.mesh.material = isWhite ? this.whiteMat : this.mats;
+
+      const scalePulse = 1.0 + Math.sin(flashFreq * Math.PI) * 0.08;
+      this.mesh.scale.set(scalePulse, scalePulse, scalePulse);
+
+      // Smoke and spark particles from top
+      if (Math.random() < 0.35) {
+        createParticleExplosion(this.x, this.y + 0.55, this.z, BLOCKS.GLOWSTONE, 2);
+      }
+
+      if (this.fuse <= 0 && !this.isExploded) {
+        this.explode();
+      }
+    }
+
+    explode() {
+      this.isExploded = true;
+      scene.remove(this.mesh);
+      this.mesh.geometry.dispose();
+      explodeAt(this.x, this.y, this.z, 4.4);
+    }
+  }
+
+  function updatePrimedTNTs(dt) {
+    for (let i = primedTNTs.length - 1; i >= 0; i--) {
+      primedTNTs[i].update(dt);
+      if (primedTNTs[i].isExploded) {
+        primedTNTs.splice(i, 1);
+      }
+    }
+  }
+
+  function explodeAt(ex, ey, ez, radius = 4.4) {
+    playSynthesizedSound('explosion');
+    cameraShake = Math.max(cameraShake, 0.48);
+
+    // Massive fiery shockwave particles
+    createParticleExplosion(ex, ey, ez, BLOCKS.TNT, 35);
+    createParticleExplosion(ex, ey + 0.5, ez, BLOCKS.LAVA, 25);
+    createParticleExplosion(ex, ey + 0.8, ez, BLOCKS.GLOWSTONE, 20);
+
+    const rCeil = Math.ceil(radius);
+    const affectedChunks = new Set();
+    const rSq = radius * radius;
+
+    for (let dx = -rCeil; dx <= rCeil; dx++) {
+      for (let dy = -rCeil; dy <= rCeil; dy++) {
+        for (let dz = -rCeil; dz <= rCeil; dz++) {
+          const dSq = dx * dx + dy * dy + dz * dz;
+          if (dSq <= rSq) {
+            const bx = Math.floor(ex + dx);
+            const by = Math.floor(ey + dy);
+            const bz = Math.floor(ez + dz);
+
+            if (by <= 0 || by >= CHUNK_HEIGHT) continue; // Bedrock and top sky are protected
+
+            const block = getGlobalBlock(bx, by, bz);
+            if (block !== BLOCKS.AIR && block !== BLOCKS.BEDROCK && block !== BLOCKS.OBSIDIAN) {
+              if (block === BLOCKS.TNT) {
+                // Chain reaction ignition!
+                setGlobalBlock(bx, by, bz, BLOCKS.AIR);
+                const chainTNT = new PrimedTNT(bx + 0.5, by + 0.5, bz + 0.5, 0.3 + Math.random() * 0.4);
+                primedTNTs.push(chainTNT);
+              } else {
+                const damageProb = 1.0 - (dSq / rSq) * 0.35;
+                if (Math.random() < damageProb) {
+                  setGlobalBlock(bx, by, bz, BLOCKS.AIR);
+                  if (Math.random() < 0.08) {
+                    createParticleExplosion(bx + 0.5, by + 0.5, bz + 0.5, block, 3);
+                  }
+                }
+              }
+
+              const cx = Math.floor(bx / CHUNK_SIZE);
+              const cz = Math.floor(bz / CHUNK_SIZE);
+              affectedChunks.add(`${cx},${cz}`);
+              if (bx % CHUNK_SIZE === 0) affectedChunks.add(`${cx - 1},${cz}`);
+              if (bx % CHUNK_SIZE === CHUNK_SIZE - 1) affectedChunks.add(`${cx + 1},${cz}`);
+              if (bz % CHUNK_SIZE === 0) affectedChunks.add(`${cx},${cz - 1}`);
+              if (bz % CHUNK_SIZE === CHUNK_SIZE - 1) affectedChunks.add(`${cx},${cz + 1}`);
+            }
+          }
+        }
+      }
+    }
+
+    // Remesh all affected chunks immediately
+    affectedChunks.forEach(key => {
+      const chunk = chunks.get(key);
+      if (chunk) {
+        meshChunk(chunk);
+      }
+    });
+
+    // Knockback and survival damage to Player
+    const pDist = Math.hypot(player.x - ex, player.y - ey, player.z - ez);
+    if (pDist < radius * 2.2) {
+      const pForce = (1.0 - pDist / (radius * 2.2)) * 16.0;
+      const dirX = (player.x - ex) / (pDist || 1);
+      const dirY = Math.max(0.3, (player.y - ey) / (pDist || 1));
+      const dirZ = (player.z - ez) / (pDist || 1);
+
+      player.vx += dirX * pForce;
+      player.vy += dirY * pForce * 0.7;
+      player.vz += dirZ * pForce;
+
+      if (settings.gameMode === 'survival') {
+        const dmg = Math.floor((1.0 - pDist / (radius * 2.2)) * 18);
+        if (dmg > 0) damagePlayer(dmg);
+      }
+    }
+
+    // Knockback to Animal Mobs
+    mobs.forEach(mob => {
+      const mDist = Math.hypot(mob.x - ex, mob.y - ey, mob.z - ez);
+      if (mDist < radius * 2.0) {
+        const mForce = (1.0 - mDist / (radius * 2.0)) * 8.0;
+        mob.x += ((mob.x - ex) / (mDist || 1)) * mForce;
+        mob.z += ((mob.z - ez) / (mDist || 1)) * mForce;
+      }
+    });
+  }
+
+  function igniteTargetedTNT(target) {
+    if (!target || target.block !== BLOCKS.TNT) return false;
+    setGlobalBlock(target.x, target.y, target.z, BLOCKS.AIR);
+    const chunk = chunks.get(`${Math.floor(target.x / CHUNK_SIZE)},${Math.floor(target.z / CHUNK_SIZE)}`);
+    if (chunk) meshChunk(chunk);
+    const tnt = new PrimedTNT(target.x + 0.5, target.y + 0.5, target.z + 0.5, 2.4);
+    primedTNTs.push(tnt);
+    triggerArmSwing();
+    showToast('TNT Ignited! FUSE LIT!');
+    return true;
+  }
   function breakTargetedBlock() {
     triggerArmSwing();
     const target = raycastBlock();
     if (!target) return;
+
+    // Bedrock is indestructible
+    if (target.block === BLOCKS.BEDROCK) {
+      showToast('Bedrock is indestructible!');
+      return;
+    }
+
+    // If holding Igniter and clicking TNT: Ignite instead of breaking!
+    const selected = player.hotbar[player.activeSlot];
+    if (selected === BLOCKS.IGNITER && target.block === BLOCKS.TNT) {
+      igniteTargetedTNT(target);
+      return;
+    }
 
     // Spawn particle burst
     spawnBreakParticles(target.x, target.y, target.z, target.block);
@@ -2086,6 +2411,21 @@
     triggerArmSwing();
     const target = raycastBlock();
     if (!target) return;
+
+    const selectedBlock = player.hotbar[player.activeSlot] || BLOCKS.DIRT;
+
+    // Handle Igniter Tool (Flint & Steel)
+    if (selectedBlock === BLOCKS.IGNITER) {
+      if (target.block === BLOCKS.TNT) {
+        igniteTargetedTNT(target);
+        return;
+      } else {
+        // Strike spark particles
+        playSynthesizedSound('ignite');
+        createParticleExplosion(target.x + 0.5, target.y + 1.0, target.z + 0.5, BLOCKS.GLOWSTONE, 5);
+        return;
+      }
+    }
 
     const px = target.x + target.normal[0];
     const py = target.y + target.normal[1];
@@ -2105,7 +2445,6 @@
       return; // Cannot place inside player
     }
 
-    const selectedBlock = player.hotbar[player.activeSlot] || BLOCKS.DIRT;
     setGlobalBlock(px, py, pz, selectedBlock);
     playSynthesizedSound('place');
   }
@@ -2165,6 +2504,10 @@
       case BLOCKS.GLOWSTONE: return 0xeab308;
       case BLOCKS.ROSE: return 0xdc2626;
       case BLOCKS.POLISHED_STONE: return 0x94a3b8;
+      case BLOCKS.LAVA: return 0xea580c;
+      case BLOCKS.IGNITER: return 0x94a3b8;
+      case BLOCKS.OBSIDIAN: return 0x1f1435;
+      case BLOCKS.AMETHYST: return 0xa855f7;
       default: return 0xaaaaaa;
     }
   }
@@ -2345,6 +2688,50 @@
         gain.connect(master);
         osc.start(now);
         osc.stop(now + 0.18);
+      } else if (type === 'ignite') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1400, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.09);
+        gain.gain.setValueAtTime(0.6, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } else if (type === 'explosion') {
+        const bufferSize = Math.floor(audioCtx.sampleRate * 0.7);
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.20));
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(400, now);
+        filter.frequency.exponentialRampToValueAtTime(50, now + 0.65);
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(1.0, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(master);
+        noise.start(now);
+
+        const sub = audioCtx.createOscillator();
+        const subGain = audioCtx.createGain();
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(95, now);
+        sub.frequency.exponentialRampToValueAtTime(25, now + 0.4);
+        subGain.gain.setValueAtTime(0.9, now);
+        subGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        sub.connect(subGain);
+        subGain.connect(master);
+        sub.start(now);
+        sub.stop(now + 0.4);
       } else if (type === 'hurt') {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -2416,27 +2803,25 @@
     scene.add(cloudMesh);
   }
 
-  let cloudWindWorldX = 0;
-  let cloudWindWorldZ = 0;
+  let cloudWindX = 0;
+  let cloudWindZ = 0;
 
   function updateClouds(dt) {
     if (!cloudMesh || !cloudTex) return;
 
-    // Wind moves clouds at a slow, majestic pace (~1.4 blocks/sec)
-    cloudWindWorldX += dt * 1.4;
-    cloudWindWorldZ += dt * 0.7;
+    // Continuous natural wind drift (100% independent of player movement)
+    cloudWindX += dt * 0.0025;
+    cloudWindZ += dt * 0.0010;
+    cloudTex.offset.x = cloudWindX;
+    cloudTex.offset.y = cloudWindZ;
 
-    // Cloud plane follows player so the sky is always covered to the horizon
-    cloudMesh.position.x = player.x;
-    cloudMesh.position.y = 115.0; // Stays high above mountains
-    cloudMesh.position.z = player.z;
-
-    // True world-space UV compensation:
-    // With plane size 1600 and repeat 16, 1 UV tile = 100 world blocks.
-    // By offsetting (-player.x / tileSize), clouds stay STATIONARY in world space when player moves!
-    const tileSize = 100.0;
-    cloudTex.offset.x = ((cloudWindWorldX - player.x) / tileSize) % 1.0;
-    cloudTex.offset.y = ((cloudWindWorldZ - player.z) / tileSize) % 1.0;
+    // Discretely snap the mesh position to 100-block intervals around the player
+    // Because the texture repeats every 100 blocks, snapping by 100 blocks is 100% seamless and imperceptible.
+    // While moving within any 100-block zone, the mesh is COMPLETELY STATIONARY in world space!
+    const step = 100.0;
+    cloudMesh.position.x = Math.floor(player.x / step) * step;
+    cloudMesh.position.y = 125.0; // High in the sky far above mountains
+    cloudMesh.position.z = Math.floor(player.z / step) * step;
 
     // Dynamic Day/Night cloud color tinting
     const isDay = (dayTime >= 0.12 && dayTime <= 0.45);
@@ -3472,10 +3857,9 @@
   // =========================================================================
   // UI & HUD Rendering
   // =========================================================================
-  function renderHotbarUI() {
-    const hotbarEl = document.getElementById('hotbar');
-    if (!hotbarEl) return;
-    hotbarEl.innerHTML = '';
+  function populateHotbarContainer(containerEl, isModal = false) {
+    if (!containerEl) return;
+    containerEl.innerHTML = '';
 
     for (let i = 0; i < 9; i++) {
       const slot = document.createElement('div');
@@ -3501,7 +3885,39 @@
         selectHotbarSlot(i);
       });
 
-      hotbarEl.appendChild(slot);
+      // Drag and drop target support
+      slot.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+        slot.classList.add('drag-over');
+      });
+      slot.addEventListener('dragleave', () => {
+        slot.classList.remove('drag-over');
+      });
+      slot.addEventListener('drop', e => {
+        e.preventDefault();
+        slot.classList.remove('drag-over');
+        const rawId = e.dataTransfer ? e.dataTransfer.getData('text/plain') : null;
+        const bId = parseInt(rawId);
+        if (Number.isFinite(bId) && bId in BLOCK_NAMES) {
+          player.hotbar[i] = bId;
+          renderHotbarUI();
+          playSynthesizedSound('place');
+          showToast(`Assigned ${BLOCK_NAMES[bId]} to Slot ${i + 1}`);
+        }
+      });
+
+      containerEl.appendChild(slot);
+    }
+  }
+
+  function renderHotbarUI() {
+    const hotbarEl = document.getElementById('hotbar');
+    populateHotbarContainer(hotbarEl, false);
+
+    const modalHotbarEl = document.getElementById('modalHotbar');
+    if (modalHotbarEl) {
+      populateHotbarContainer(modalHotbarEl, true);
     }
 
     updateHotbarLabel();
@@ -3570,7 +3986,8 @@
     allBlocks.forEach(bId => {
       const item = document.createElement('div');
       item.className = 'inventory-item';
-      item.title = BLOCK_NAMES[bId];
+      item.title = `Drag to Hotbar or Click to Equip: ${BLOCK_NAMES[bId]}`;
+      item.draggable = true;
 
       if (blockIcons[bId]) {
         const canvas = document.createElement('canvas');
@@ -3586,10 +4003,19 @@
       name.textContent = BLOCK_NAMES[bId];
       item.appendChild(name);
 
+      // Drag and drop initiation
+      item.addEventListener('dragstart', e => {
+        if (e.dataTransfer) {
+          e.dataTransfer.setData('text/plain', String(bId));
+          e.dataTransfer.effectAllowed = 'copy';
+        }
+      });
+
       item.addEventListener('click', () => {
         player.hotbar[player.activeSlot] = bId;
         renderHotbarUI();
-        showToast(`Assigned ${BLOCK_NAMES[bId]} to slot ${player.activeSlot + 1}`);
+        playSynthesizedSound('place');
+        showToast(`Equipped ${BLOCK_NAMES[bId]} to Slot ${player.activeSlot + 1}`);
       });
 
       grid.appendChild(item);
@@ -3759,10 +4185,25 @@
       updateNPCs(dt);
         updateMobs(dt);
 
-      // Smooth GPU-accelerated Water Shimmer (Zero CPU buffer uploads)
+      // Smooth GPU-accelerated Water and Lava Shimmer
       if (threeTextures && threeTextures.water) {
         threeTextures.water.offset.x = (threeTextures.water.offset.x + dt * 0.04) % 1.0;
         threeTextures.water.offset.y = (threeTextures.water.offset.y + dt * 0.02) % 1.0;
+      }
+      if (threeTextures && threeTextures.lava) {
+        threeTextures.lava.offset.x = (threeTextures.lava.offset.x + dt * 0.02) % 1.0;
+        threeTextures.lava.offset.y = (threeTextures.lava.offset.y + dt * 0.01) % 1.0;
+      }
+
+      // Update active Primed TNT fuses and explosions
+      updatePrimedTNTs(dt);
+
+      // Dynamic Camera Explosion Shake
+      if (cameraShake > 0.001) {
+        camera.position.x += (Math.random() - 0.5) * cameraShake;
+        camera.position.y += (Math.random() - 0.5) * cameraShake;
+        camera.position.z += (Math.random() - 0.5) * cameraShake;
+        cameraShake *= Math.pow(0.01, dt);
       }
 
       // 6. Target Block Raycasting & Outline Box
@@ -4217,6 +4658,7 @@
 
   function openInventory() {
     isInventoryOpen = true;
+    renderHotbarUI();
     document.getElementById('inventoryModal').style.display = 'flex';
     if (document.exitPointerLock) document.exitPointerLock();
   }
