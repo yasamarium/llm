@@ -4522,29 +4522,42 @@
   // ==========================================================================
   const CLOUD_GAMES = [
     {
+      id: 'cloudgame-doom',
+      title: 'Doom / Freedoom',
+      genre: '3D FPS',
+      desc: 'Fast-paced legendary 3D shooter powered by Freedoom and PrBoom+ id Tech engine.',
+      instantUrl: 'https://dos.zone/player/?bundleUrl=https%3A%2F%2Fcdn.dos.zone%2Fcustom%2Fdos%2Fdoom.jsdos',
+      stream_url: null,
+      status: 'ready',
+      latency: '21ms'
+    },
+    {
       id: 'cloudgame-supertux',
       title: 'SuperTux 2',
       genre: '2D Platformer',
       desc: 'Jump and run with Tux the penguin across icy worlds. Smooth 60 FPS platforming.',
-      defaultStreamUrl: 'https://supertux.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
+      instantUrl: 'https://archive.org/embed/supertux_202008',
+      stream_url: null,
       status: 'ready',
       latency: '24ms'
     },
     {
-      id: 'cloudgame-doom',
-      title: 'Doom / Freedoom',
-      genre: '3D FPS',
-      desc: 'Fast-paced legendary 3D shooter powered by Freedoom and PrBoom+ engine.',
-      defaultStreamUrl: 'https://doom.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
+      id: 'cloudgame-neverball',
+      title: 'Neverball (3D Physics)',
+      genre: '3D Physics Puzzle',
+      desc: 'Tilt the floor to roll a ball through perilous 3D obstacle courses and mini-golf.',
+      instantUrl: 'https://archive.org/embed/neverball_linux',
+      stream_url: null,
       status: 'ready',
-      latency: '21ms'
+      latency: '19ms'
     },
     {
       id: 'cloudgame-openarena',
       title: 'OpenArena',
       genre: '3D Arena FPS',
       desc: 'High-octane multiplayer arena shooter powered by the id Tech 3 (Quake III) engine.',
-      defaultStreamUrl: 'https://openarena.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
+      instantUrl: 'https://archive.org/embed/openarena_0.8.8',
+      stream_url: null,
       status: 'ready',
       latency: '26ms'
     },
@@ -4553,7 +4566,8 @@
       title: 'Minetest (Luanti)',
       genre: 'Voxel Sandbox',
       desc: 'Infinite 3D voxel sandbox with crafting, building, and survival exploration.',
-      defaultStreamUrl: 'https://minetest.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
+      instantUrl: 'https://archive.org/embed/minetest-0.4.16',
+      stream_url: null,
       status: 'ready',
       latency: '28ms'
     },
@@ -4562,25 +4576,18 @@
       title: 'AssaultCube',
       genre: '3D Tactical FPS',
       desc: 'Realistic lightweight multiplayer tactical shooter with fast low-ping combat.',
-      defaultStreamUrl: 'https://assaultcube.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
+      instantUrl: 'https://archive.org/embed/assaultcube_v1.2.0.2',
+      stream_url: null,
       status: 'ready',
       latency: '22ms'
-    },
-    {
-      id: 'cloudgame-neverball',
-      title: 'Neverball',
-      genre: '3D Physics Puzzle',
-      desc: 'Tilt the floor to roll a ball through perilous 3D obstacle courses and mini-golf.',
-      defaultStreamUrl: 'https://neverball.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
-      status: 'ready',
-      latency: '19ms'
     },
     {
       id: 'cloudgame-supertuxkart',
       title: 'SuperTuxKart',
       genre: '3D Kart Racing',
       desc: '3D arcade kart racer with varied battle tracks, characters, and nitro boosts.',
-      defaultStreamUrl: 'https://supertuxkart.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
+      instantUrl: 'https://archive.org/embed/supertuxkart_0.9.3',
+      stream_url: null,
       status: 'ready',
       latency: '29ms'
     },
@@ -4589,7 +4596,8 @@
       title: 'Teeworlds',
       genre: '2D Multiplayer Shooter',
       desc: 'Retro 2D multiplayer shooter with grappling hooks and physics combat.',
-      defaultStreamUrl: 'https://teeworlds.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
+      instantUrl: 'https://archive.org/embed/teeworlds_0.7.5',
+      stream_url: null,
       status: 'ready',
       latency: '20ms'
     },
@@ -4598,7 +4606,8 @@
       title: 'Chromium B.S.U.',
       genre: 'Arcade Space Shooter',
       desc: 'Fast, intense vertical scrolling space shooter with arcade boss battles.',
-      defaultStreamUrl: 'https://chromiumbsu.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
+      instantUrl: 'https://archive.org/embed/chromium_bsu_0.9.16.1',
+      stream_url: null,
       status: 'ready',
       latency: '18ms'
     },
@@ -4607,13 +4616,16 @@
       title: 'RetroArch Core',
       genre: 'Universal Retro Emulator',
       desc: 'Multi-system retro cloud gaming emulator running homebrew and classic games.',
-      defaultStreamUrl: 'https://retroarch.trycloudflare.com/vnc.html?autoconnect=true&resize=scale&quality=8',
+      instantUrl: 'https://archive.org/embed/retroarch_web_player',
+      stream_url: null,
       status: 'ready',
       latency: '19ms'
     }
   ];
 
   let liveCloudServers = [...CLOUD_GAMES];
+  let activeBootPollInterval = null;
+  let activeBootGame = null;
 
   function openCloudGamingModal() {
     const modal = document.getElementById('cloudGamingModal');
@@ -4631,18 +4643,17 @@
 
   async function fetchLiveCloudServers() {
     try {
-      // Discover live servers registry dynamically from session DB
-      const res = await fetch('https://raw.githubusercontent.com/yasamarium/cloudgame-db-sessions/main/data/servers.json', { cache: 'no-cache' });
+      const res = await fetch('https://raw.githubusercontent.com/yasamarium/cloudgame-db-sessions/main/data/servers.json?t=' + Date.now(), { cache: 'no-cache' });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           liveCloudServers = CLOUD_GAMES.map(cg => {
             const remote = data.find(d => d.id === cg.id);
-            if (remote && remote.stream_url) {
+            if (remote && remote.stream_url && remote.stream_url.includes('trycloudflare.com')) {
               return {
                 ...cg,
                 stream_url: remote.stream_url,
-                status: remote.status || 'online',
+                status: 'online',
                 latency: remote.latency_ms ? `${remote.latency_ms}ms` : cg.latency
               };
             }
@@ -4665,14 +4676,14 @@
       const card = document.createElement('div');
       card.className = 'cloud-game-card';
 
-      const isOnline = game.status === 'online' || !!game.stream_url;
+      const hasLiveStream = !!(game.stream_url && game.stream_url.includes('trycloudflare.com'));
 
       card.innerHTML = `
         <div class="cloud-game-card-top">
           <span class="cloud-game-genre-tag">${game.genre}</span>
-          <span class="cloud-game-status-badge ${isOnline ? 'online' : 'ready'}">
-            <span class="cloud-status-dot" style="width:6px; height:6px;"></span>
-            ${isOnline ? 'ONLINE' : 'READY'}
+          <span class="cloud-game-status-badge ${hasLiveStream ? 'online' : 'ready'}">
+            <span class="cloud-status-dot" style="width:6px; height:6px; ${hasLiveStream ? 'background:#10b981;' : 'background:#38bdf8;'}"></span>
+            ${hasLiveStream ? 'RUNNER LIVE (60 FPS)' : 'READY TO STREAM'}
           </span>
         </div>
         <h3 class="cloud-game-title">${game.title}</h3>
@@ -4680,49 +4691,189 @@
         <div class="cloud-game-meta">
           <span>Ping: <strong style="color:#38bdf8;">${game.latency}</strong></span>
           <span>FPS: <strong style="color:#10b981;">60</strong></span>
-          <span>Runner: <strong>5h Auto</strong></span>
+          <span>Runner: <strong>5h Loop</strong></span>
         </div>
-        <button class="cloud-play-btn" data-game-id="${game.id}">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <span>Play Cloud Stream</span>
-        </button>
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <button class="cloud-play-btn btn-play-instant" data-game-id="${game.id}" style="background: linear-gradient(135deg, #059669, #10b981); flex: 1;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Play Now</span>
+          </button>
+          <button class="cloud-play-btn btn-play-runner" data-game-id="${game.id}" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); flex: 1;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            <span>${hasLiveStream ? 'Cloud 60FPS' : 'Boot Runner'}</span>
+          </button>
+        </div>
       `;
 
-      card.querySelector('.cloud-play-btn').addEventListener('click', () => {
-        launchCloudGameStream(game);
+      // Instant Play Button (Zero Wait, Zero DNS Error)
+      card.querySelector('.btn-play-instant').addEventListener('click', () => {
+        launchCloudGameStream(game, true);
+      });
+
+      // Dedicated Cloud Stream Button
+      card.querySelector('.btn-play-runner').addEventListener('click', () => {
+        if (hasLiveStream) {
+          launchCloudGameStream(game, false);
+        } else {
+          startCloudRunnerAndStream(game);
+        }
       });
 
       grid.appendChild(card);
     });
   }
 
-  function launchCloudGameStream(game) {
+  function launchCloudGameStream(game, forceInstant = false) {
     closeCloudGamingModal();
     const viewport = document.getElementById('cloudGameViewport');
     const iframe = document.getElementById('cloudStreamIframe');
     const titleEl = document.getElementById('activeGameTitle');
+    const bootTerminal = document.getElementById('cloudBootTerminal');
 
     if (!viewport || !iframe) return;
 
     if (titleEl) titleEl.textContent = `${game.title} (${game.genre})`;
-    
-    // Choose active URL: discovered tunnel URL or default fallback
-    const streamUrl = game.stream_url || game.defaultStreamUrl;
-    iframe.src = streamUrl;
-    viewport.style.display = 'flex';
+    if (bootTerminal) bootTerminal.style.display = 'none';
 
-    showToast(`Connecting to Cloud Runner for ${game.title}...`);
+    // If live tunnel exists and not forced instant, use dedicated runner stream
+    if (!forceInstant && game.stream_url && game.stream_url.includes('trycloudflare.com')) {
+      iframe.src = game.stream_url;
+      showToast(`Connected to Live 60 FPS Cloud Runner: ${game.title}`);
+    } else {
+      // Use Instant Web Mode
+      iframe.src = game.instantUrl;
+      showToast(`Playing ${game.title} (Instant Mode)`);
+    }
+
+    viewport.style.display = 'flex';
+  }
+
+  async function startCloudRunnerAndStream(game) {
+    closeCloudGamingModal();
+    const viewport = document.getElementById('cloudGameViewport');
+    const iframe = document.getElementById('cloudStreamIframe');
+    const titleEl = document.getElementById('activeGameTitle');
+    const bootTerminal = document.getElementById('cloudBootTerminal');
+    const bootTitle = document.getElementById('bootGameTitle');
+    const bootStatus = document.getElementById('bootStatusText');
+    const progressFill = document.getElementById('bootProgressBarFill');
+
+    if (!viewport || !bootTerminal) return;
+
+    activeBootGame = game;
+    if (titleEl) titleEl.textContent = `${game.title} (Booting Cloud Runner...)`;
+    if (bootTitle) bootTitle.textContent = `Starting ${game.title} Cloud Runner`;
+    if (bootStatus) bootStatus.textContent = 'Triggering GitHub Actions 5h Ubuntu Runner...';
+    if (progressFill) progressFill.style.width = '25%';
+
+    // Reset step styles
+    for (let s = 1; s <= 4; s++) {
+      const el = document.getElementById(`bootStep${s}`);
+      if (el) {
+        el.className = 'boot-step' + (s === 1 ? ' active' : '');
+      }
+    }
+
+    viewport.style.display = 'flex';
+    bootTerminal.style.display = 'flex';
+    if (iframe) iframe.src = 'about:blank';
+
+    // Trigger workflow boot check via gateway / session registry
+    try {
+      fetch('/api/games/' + game.id + '/boot', { method: 'POST' }).catch(() => {});
+    } catch (e) {}
+
+    let elapsed = 0;
+    if (activeBootPollInterval) clearInterval(activeBootPollInterval);
+
+    activeBootPollInterval = setInterval(async () => {
+      elapsed += 3;
+
+      if (elapsed >= 10 && elapsed < 30) {
+        if (progressFill) progressFill.style.width = '50%';
+        if (bootStatus) bootStatus.textContent = 'Ubuntu Runner active. Initializing Xvfb 1280x720 3D Framebuffer...';
+        const s1 = document.getElementById('bootStep1'); if (s1) s1.className = 'boot-step done';
+        const s2 = document.getElementById('bootStep2'); if (s2) s2.className = 'boot-step active';
+      } else if (elapsed >= 30 && elapsed < 60) {
+        if (progressFill) progressFill.style.width = '75%';
+        if (bootStatus) bootStatus.textContent = 'Launching x11vnc & noVNC WebSockets streaming pipeline...';
+        const s2 = document.getElementById('bootStep2'); if (s2) s2.className = 'boot-step done';
+        const s3 = document.getElementById('bootStep3'); if (s3) s3.className = 'boot-step active';
+      }
+
+      // Check session DB for published tunnel URL
+      try {
+        const res = await fetch('https://raw.githubusercontent.com/yasamarium/cloudgame-db-sessions/main/data/servers.json?t=' + Date.now(), { cache: 'no-cache' });
+        if (res.ok) {
+          const servers = await res.json();
+          const live = servers.find(s => s.id === game.id);
+          if (live && live.stream_url && live.stream_url.includes('trycloudflare.com')) {
+            clearInterval(activeBootPollInterval);
+            activeBootPollInterval = null;
+
+            if (progressFill) progressFill.style.width = '100%';
+            if (bootStatus) bootStatus.textContent = 'Tunnel Connected! Switching to 60 FPS live video stream...';
+            const s3 = document.getElementById('bootStep3'); if (s3) s3.className = 'boot-step done';
+            const s4 = document.getElementById('bootStep4'); if (s4) s4.className = 'boot-step done';
+
+            setTimeout(() => {
+              bootTerminal.style.display = 'none';
+              if (iframe) iframe.src = live.stream_url;
+              if (titleEl) titleEl.textContent = `${game.title} (Dedicated 60 FPS Stream)`;
+              showToast(`Connected to Live 60 FPS Cloud Runner!`);
+            }, 1200);
+          }
+        }
+      } catch (e) {}
+
+      // If waiting over 90s, suggest instant mode
+      if (elapsed > 90) {
+        if (bootStatus) bootStatus.textContent = 'GitHub Runner is compiling packages. Click below to play Instant Mode immediately!';
+      }
+    }, 3000);
   }
 
   function disconnectCloudGameStream() {
+    if (activeBootPollInterval) {
+      clearInterval(activeBootPollInterval);
+      activeBootPollInterval = null;
+    }
     const viewport = document.getElementById('cloudGameViewport');
     const iframe = document.getElementById('cloudStreamIframe');
+    const bootTerminal = document.getElementById('cloudBootTerminal');
+
     if (iframe) iframe.src = 'about:blank';
+    if (bootTerminal) bootTerminal.style.display = 'none';
     if (viewport) viewport.style.display = 'none';
-    showToast('Disconnected from Cloud Game Stream');
+    showToast('Exited Cloud Game Stream');
   }
 
-    // Cloud Gaming Feature Listeners
+  // Hook up Boot Terminal buttons
+  function setupBootTerminalButtons() {
+    const btnInstant = document.getElementById('btnPlayInstantMode');
+    if (btnInstant) {
+      btnInstant.addEventListener('click', () => {
+        if (activeBootPollInterval) {
+          clearInterval(activeBootPollInterval);
+          activeBootPollInterval = null;
+        }
+        if (activeBootGame) {
+          launchCloudGameStream(activeBootGame, true);
+        }
+      });
+    }
+
+    const btnCancel = document.getElementById('btnCancelBoot');
+    if (btnCancel) {
+      btnCancel.addEventListener('click', () => {
+        disconnectCloudGameStream();
+        openCloudGamingModal();
+      });
+    }
+  }
+
+  // Cloud Gaming Feature Listeners
+  function setupCloudGamingListeners() {
     const hudCloudBtn = document.getElementById('hudCloudGamingBtn');
     if (hudCloudBtn) hudCloudBtn.addEventListener('click', openCloudGamingModal);
     const btnOpenCloud = document.getElementById('btnOpenCloudGaming');
@@ -4742,10 +4893,15 @@
       if (vp && vp.requestFullscreen) vp.requestFullscreen();
     });
 
+    setupBootTerminalButtons();
+
     // Check query params for ?cloud=1 trigger
     if (window.location && window.location.search && window.location.search.includes('cloud=1')) {
       setTimeout(openCloudGamingModal, 600);
     }
+  }
+
+    setupCloudGamingListeners();
 
     // HUD Action Buttons
     document.getElementById('hudSoundBtn').addEventListener('click', toggleSound);

@@ -362,6 +362,49 @@
       </div>
     </div>
     <div class="cloud-stream-frame-wrap">
+      <!-- Live Booting & Connecting Overlay (Shown while runner initializes) -->
+      <div id="cloudBootTerminal" class="cloud-boot-terminal" style="display: none;">
+        <div class="boot-terminal-box">
+          <div class="boot-spinner-wrap">
+            <div class="boot-spinner"></div>
+            <div class="boot-pulse-ring"></div>
+          </div>
+          <h3 id="bootGameTitle" class="boot-game-title">Starting Cloud Runner</h3>
+          <p id="bootStatusText" class="boot-status-text">Allocating GitHub Actions Linux VM and Virtual Framebuffer...</p>
+          
+          <div class="boot-progress-bar">
+            <div id="bootProgressBarFill" class="boot-progress-fill"></div>
+          </div>
+
+          <div class="boot-steps-list">
+            <div class="boot-step active" id="bootStep1">
+              <span class="step-icon">1</span>
+              <span>GitHub Actions 5h Runner Dispatched</span>
+            </div>
+            <div class="boot-step" id="bootStep2">
+              <span class="step-icon">2</span>
+              <span>Xvfb 1280x720 + Mesa 3D Framebuffer Init</span>
+            </div>
+            <div class="boot-step" id="bootStep3">
+              <span class="step-icon">3</span>
+              <span>x11vnc & noVNC WebSockets Streamer Launch</span>
+            </div>
+            <div class="boot-step" id="bootStep4">
+              <span class="step-icon">4</span>
+              <span>Cloudflare Quick Tunnel Connected</span>
+            </div>
+          </div>
+
+          <div class="boot-actions">
+            <button id="btnPlayInstantMode" class="se-btn se-btn-primary boot-instant-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Play Instant Web Version Now (No Wait)</span>
+            </button>
+            <button id="btnCancelBoot" class="se-btn se-btn-sub boot-cancel-btn">Back to Catalog</button>
+          </div>
+        </div>
+      </div>
+
       <iframe id="cloudStreamIframe" src="about:blank" allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write"></iframe>
     </div>
   </div>
