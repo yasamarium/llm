@@ -14,12 +14,32 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Handle Link Creation POST
+  // Handle Creation POST (Link or Paste)
   if (req.method === "POST") {
     try {
       const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
-      const { url, slug, title } = body;
 
+      // If paste creation
+      if (req.query.type === "paste" || body.type === "paste" || (body.content && !body.url)) {
+        const { title, slug, lang, content } = body;
+        if (!content || typeof content !== "string") {
+          return res.status(400).json({ error: "Content is required for paste." });
+        }
+        const cleanSlug = (slug && typeof slug === "string")
+          ? slug.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "")
+          : "paste-" + Math.random().toString(36).substring(2, 8);
+        return res.status(200).json({
+          success: true,
+          slug: cleanSlug,
+          title: (title && typeof title === "string") ? title.trim() : "Untitled Snippet",
+          lang: lang || "plaintext",
+          content: content,
+          created_at: new Date().toISOString(),
+          shareUrl: `/game?p=${cleanSlug}`
+        });
+      }
+
+      const { url, slug, title } = body;
       if (!url || typeof url !== "string") {
         return res.status(400).json({ error: "Destination URL is required." });
       }
@@ -33,7 +53,7 @@ export default async function handler(req, res) {
         shortUrl: `/s/${result.slug}`
       });
     } catch (err) {
-      return res.status(500).json({ error: err.message || "Failed to create short link." });
+      return res.status(500).json({ error: err.message || "Failed to process request." });
     }
   }
 

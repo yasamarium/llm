@@ -7590,9 +7590,9 @@
           localStorage.setItem('as_cloud_pastes', JSON.stringify(localPastes));
         } catch (e) {}
 
-        // Serverless POST to /api/paste
+        // Serverless POST to /api/s?type=paste
         try {
-          fetch('/api/paste', {
+          fetch('/api/s?type=paste', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(pasteRecord)
