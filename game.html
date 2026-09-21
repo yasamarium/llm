@@ -17,11 +17,11 @@
       document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
     }
   </script>
-  <!-- Pure JS QR Code Engine (Local-first with CDN fallback) -->
-  <script src="/qrcode.min.js"></script>
+  <!-- Pure JS QR Code Engine (CDN with local fallback) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script>
     if (typeof qrcode === 'undefined') {
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"><\/script>');
+      document.write('<script src="/qrcode.min.js"><\/script>');
     }
   </script>
 </head>
