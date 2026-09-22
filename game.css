@@ -1706,6 +1706,27 @@ html, body {
   margin-bottom: 20px;
 }
 
+.rooms-input-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rooms-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rooms-name-error {
+  color: #f87171;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding-left: 2px;
+  animation: seFadeInScale 0.2s ease;
+}
+
 .rooms-label {
   font-size: 13px;
   font-weight: 600;
@@ -1723,13 +1744,25 @@ html, body {
   padding: 6px 12px;
   border-radius: 8px;
   outline: none;
-  min-width: 180px;
+  min-width: 220px;
   transition: all 0.2s ease;
 }
 
 .rooms-name-input:focus {
   border-color: #60a5fa;
   box-shadow: 0 0 12px rgba(96, 165, 250, 0.4);
+}
+
+.rooms-name-input.input-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important;
+  animation: seShake 0.3s ease;
+}
+
+@keyframes seShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 .rooms-status-tag {

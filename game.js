@@ -6375,10 +6375,10 @@
       this.roomId = 1;
       this.roomName = 'Sanctuary Hub';
       this.roomMode = 'creative';
-      this.playerName = localStorage.getItem('square_era_player_name') || ('Player_' + Math.floor(Math.random() * 899 + 100));
+      this.playerName = localStorage.getItem('square_era_player_name') || '';
       this.localPlayerId = 'p_' + Math.random().toString(36).slice(2, 10);
 
-      // Remote peers: Map<peerId, { id, name, mesh, targetPos, targetYaw, targetPitch, lastSeen, isFlying, isSprinting, heldSlot, animTime, isMoving }>
+      // Remote peers: Map<peerId, { id, name, mesh, targetPos, targetYaw, targetPitch, lastSeen, isFlying, isSprinting, heldSlot, animTime, isMoving, vx, vy, vz, lastPacketTime }>
       this.remotePlayers = new Map();
       this.broadcastChannel = null;
       this.mqttClient = null;
@@ -6408,6 +6408,28 @@
     }
 
     joinRoom(roomId) {
+      // Validate Player Name
+      const nameInput = document.getElementById('multiplayerNameInput');
+      const errorEl = document.getElementById('roomsNameError');
+      const enteredName = (nameInput ? nameInput.value.trim() : (this.playerName || '')).slice(0, 16);
+
+      if (!enteredName || enteredName.length < 2) {
+        if (errorEl) {
+          errorEl.style.display = 'block';
+          errorEl.textContent = 'Name is required to join an online room! Please enter a player name.';
+        }
+        if (nameInput) {
+          nameInput.classList.add('input-error');
+          nameInput.focus();
+        }
+        showToast('Player Name is required to join!');
+        return;
+      }
+
+      if (errorEl) errorEl.style.display = 'none';
+      if (nameInput) nameInput.classList.remove('input-error');
+      this.setPlayerName(enteredName);
+
       const room = this.roomRepositories[roomId];
       if (!room) return;
 
@@ -6419,7 +6441,7 @@
       this.roomMode = room.mode;
       this.isOnline = true;
 
-      // 2. Set fixed shared spawn coordinates so both players spawn right next to each other
+      // 2. Set fixed shared spawn coordinates so all players spawn at the exact same location
       player.x = 8.5;
       player.z = 8.5;
       player.yaw = 0;
@@ -6466,7 +6488,7 @@
 
       // 11. Welcome message in chat
       this.addChatMessage('System', `Connected to Room ${roomId}: ${this.roomName} (${this.roomMode.toUpperCase()}). Global live sync active!`, 'system');
-      showToast(`Joined Room ${roomId}: ${this.roomName}`);
+      showToast(`Welcome ${this.playerName}! Joined Room ${roomId}`);
 
       // 12. Start game
       initAudio();
@@ -6768,6 +6790,7 @@
       const id = packet.id || packet.senderId;
       if (!id) return;
 
+      const now = performance.now();
       let peer = this.remotePlayers.get(id);
       if (!peer) {
         // Create 3D character avatar
@@ -6783,18 +6806,29 @@
           lastSeen: Date.now(),
           heldSlot: packet.slot || 0,
           animTime: 0,
-          isMoving: false
+          isMoving: false,
+          vx: 0,
+          vy: 0,
+          vz: 0,
+          lastPacketTime: now
         };
         this.remotePlayers.set(id, peer);
         this.updatePlayerCountBadge();
         this.addChatMessage('System', `${peer.name} joined Room ${this.roomId}!`, 'system');
         showToast(`${peer.name} entered the room!`);
+      } else {
+        // Calculate velocity based on change in target position
+        if (typeof packet.x === 'number' && typeof packet.y === 'number' && typeof packet.z === 'number') {
+          const dtPacket = Math.max(0.01, Math.min(0.25, (now - peer.lastPacketTime) / 1000));
+          peer.vx = (packet.x - peer.targetPos.x) / dtPacket;
+          peer.vy = (packet.y - peer.targetPos.y) / dtPacket;
+          peer.vz = (packet.z - peer.targetPos.z) / dtPacket;
+          peer.targetPos.set(packet.x, packet.y, packet.z);
+        }
+        peer.lastPacketTime = now;
       }
 
       peer.name = packet.name || peer.name;
-      if (typeof packet.x === 'number' && typeof packet.y === 'number' && typeof packet.z === 'number') {
-        peer.targetPos.set(packet.x, packet.y, packet.z);
-      }
       peer.targetYaw = packet.yaw || 0;
       peer.targetPitch = packet.pitch || 0;
       peer.heldSlot = packet.slot !== undefined ? packet.slot : peer.heldSlot;
@@ -6806,7 +6840,7 @@
     createPlayerAvatarMesh(name, id) {
       const group = new THREE.Group();
 
-      // Pick distinct shirt color per peer based on id hash
+      // Pick distinct colorful shirt based on id hash
       const shirtColors = [0x2563eb, 0x059669, 0xd97706, 0xdc2626, 0x7c3aed, 0x0891b2, 0xdb2777];
       let hash = 0;
       for (let i = 0; i < (id || name).length; i++) hash += (id || name).charCodeAt(i);
@@ -6817,7 +6851,7 @@
       const pantsMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
       const hairMat = new THREE.MeshLambertMaterial({ color: 0x451a03 });
 
-      // Head Group
+      // Head Group (Rotates with Yaw and Pitch)
       const headGroup = new THREE.Group();
       headGroup.position.set(0, 1.45, 0);
 
@@ -6830,16 +6864,16 @@
       hairMesh.position.set(0, 0.16, 0);
       headGroup.add(hairMesh);
 
-      // Glowing Eyes
+      // Glowing Eyes placed on FRONT face (-Z direction to match camera look vector)
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
       const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
-      leftEye.position.set(-0.12, 0.02, 0.25);
+      leftEye.position.set(-0.12, 0.02, -0.25);
       const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
-      rightEye.position.set(0.12, 0.02, 0.25);
+      rightEye.position.set(0.12, 0.02, -0.25);
       headGroup.add(leftEye);
       headGroup.add(rightEye);
 
-      // Floating Nameplate Canvas Sprite - Visible from any distance and through blocks!
+      // Floating Nameplate Canvas Sprite - Visible through blocks & from any distance
       const canvas = document.createElement('canvas');
       canvas.width = 256;
       canvas.height = 64;
@@ -6892,15 +6926,15 @@
       group.add(leftArm);
       group.leftArm = leftArm;
 
-      // Right Arm (Holds Item)
+      // Right Arm (Holds Item on front -Z face)
       const rightArm = new THREE.Mesh(armGeom.clone(), skinMat);
       rightArm.position.set(0.36, 1.15, 0);
 
-      // Held Item Voxel
+      // Held Item Voxel placed towards front (-Z)
       const heldGeom = new THREE.BoxGeometry(0.2, 0.2, 0.2);
       const heldMat = new THREE.MeshLambertMaterial({ color: 0x4caf50 });
       const heldMesh = new THREE.Mesh(heldGeom, heldMat);
-      heldMesh.position.set(0, -0.5, 0.15);
+      heldMesh.position.set(0, -0.5, -0.15);
       rightArm.add(heldMesh);
       group.add(rightArm);
       group.rightArm = rightArm;
@@ -6939,8 +6973,8 @@
     update(dt, now) {
       if (!this.isOnline) return;
 
-      // 1. Broadcast local player transform at ~28 Hz (every 35ms)
-      if (now - this.lastBroadcastTime > 35) {
+      // 1. Broadcast local player transform every 45ms (~22 Hz for optimal network pacing)
+      if (now - this.lastBroadcastTime > 45) {
         this.lastBroadcastTime = now;
         this.broadcast({
           type: 'player_state',
@@ -6973,8 +7007,10 @@
         });
       }
 
-      // 3. Interpolate remote player avatars smoothly (60 FPS exponential lerp)
-      const lerpSpeed = Math.min(1.0, dt * 25.0);
+      // 3. Butter-Smooth 60 FPS Continuous Exponential Interpolation with Velocity Dead Reckoning
+      const alphaPos = 1.0 - Math.exp(-22.0 * dt);
+      const alphaRot = 1.0 - Math.exp(-20.0 * dt);
+
       for (const [id, peer] of this.remotePlayers.entries()) {
         if (now - peer.lastSeen > 20000) {
           this.removeRemotePlayer(id);
@@ -6984,39 +7020,49 @@
         const mesh = peer.mesh;
         if (!mesh) continue;
 
-        // Position Lerp
+        // Forward extrapolation during inter-packet gaps (eliminates micro-stutters)
+        const timeSincePacket = Math.min(0.10, (now - peer.lastPacketTime) / 1000);
+        const targetX = peer.targetPos.x + (peer.vx || 0) * timeSincePacket * 0.75;
+        const targetY = peer.targetPos.y + (peer.isFlying ? (peer.vy || 0) * timeSincePacket * 0.75 : 0);
+        const targetZ = peer.targetPos.z + (peer.vz || 0) * timeSincePacket * 0.75;
+
         const dist = mesh.position.distanceTo(peer.targetPos);
-        if (dist > 30.0) {
-          mesh.position.copy(peer.targetPos);
+        if (dist > 25.0) {
+          mesh.position.set(targetX, targetY, targetZ);
         } else {
-          mesh.position.lerp(peer.targetPos, lerpSpeed);
+          mesh.position.x += (targetX - mesh.position.x) * alphaPos;
+          mesh.position.y += (targetY - mesh.position.y) * alphaPos;
+          mesh.position.z += (targetZ - mesh.position.z) * alphaPos;
         }
 
-        // Rotation Lerp (Yaw)
+        // Smooth Angular Yaw Interpolation
         let diffYaw = peer.targetYaw - mesh.rotation.y;
         while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
         while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
-        mesh.rotation.y += diffYaw * lerpSpeed;
+        mesh.rotation.y += diffYaw * alphaRot;
 
-        // Head Pitch Lerp
+        // Smooth Head Pitch Interpolation (Face on -Z nods correctly down/up)
         if (mesh.head) {
-          mesh.head.rotation.x += (peer.targetPitch - mesh.head.rotation.x) * lerpSpeed;
+          mesh.head.rotation.x += (peer.targetPitch - mesh.head.rotation.x) * alphaRot;
         }
 
-        // Walking Animation
-        peer.isMoving = dist > 0.04;
+        // Animated Limbs proportional to actual movement
+        const horizSpeed = Math.hypot(peer.vx || 0, peer.vz || 0);
+        peer.isMoving = (horizSpeed > 0.15) || (dist > 0.05);
+
         if (peer.isMoving) {
-          peer.animTime += dt * (peer.isSprinting ? 14.0 : 8.0);
+          peer.animTime += dt * (peer.isSprinting ? 15.0 : 9.0);
           const swing = Math.sin(peer.animTime) * 0.65;
           if (mesh.leftArm) mesh.leftArm.rotation.x = swing;
           if (mesh.rightArm) mesh.rightArm.rotation.x = -swing;
           if (mesh.leftLeg) mesh.leftLeg.rotation.x = -swing;
           if (mesh.rightLeg) mesh.rightLeg.rotation.x = swing;
         } else {
-          if (mesh.leftArm) mesh.leftArm.rotation.x *= 0.8;
-          if (mesh.rightArm) mesh.rightArm.rotation.x *= 0.8;
-          if (mesh.leftLeg) mesh.leftLeg.rotation.x *= 0.8;
-          if (mesh.rightLeg) mesh.rightLeg.rotation.x *= 0.8;
+          const limbDecay = 1.0 - Math.exp(-12.0 * dt);
+          if (mesh.leftArm) mesh.leftArm.rotation.x -= mesh.leftArm.rotation.x * limbDecay;
+          if (mesh.rightArm) mesh.rightArm.rotation.x -= mesh.rightArm.rotation.x * limbDecay;
+          if (mesh.leftLeg) mesh.leftLeg.rotation.x -= mesh.leftLeg.rotation.x * limbDecay;
+          if (mesh.rightLeg) mesh.rightLeg.rotation.x -= mesh.rightLeg.rotation.x * limbDecay;
         }
       }
     }
@@ -7093,25 +7139,39 @@
     }
 
     initUI() {
+      const nameInput = document.getElementById('multiplayerNameInput');
+      const errorEl = document.getElementById('roomsNameError');
+
+      // Pre-fill stored name if available
+      if (nameInput && this.playerName) {
+        nameInput.value = this.playerName;
+      }
+
+      // Clear error as user types
+      if (nameInput) {
+        nameInput.addEventListener('input', () => {
+          if (nameInput.value.trim().length >= 2) {
+            if (errorEl) errorEl.style.display = 'none';
+            nameInput.classList.remove('input-error');
+          }
+        });
+        nameInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.joinRoom(1); // Default to Room 1 on Enter
+          }
+        });
+      }
+
+      // Join Room Button Handlers
       document.querySelectorAll('.btn-join-room').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const roomId = parseInt(e.currentTarget.getAttribute('data-room-id'));
-          const nameInput = document.getElementById('multiplayerNameInput');
-          if (nameInput && nameInput.value.trim()) {
-            this.setPlayerName(nameInput.value.trim());
-          }
           this.joinRoom(roomId);
         });
       });
 
-      const nameInput = document.getElementById('multiplayerNameInput');
-      if (nameInput) {
-        nameInput.value = this.playerName;
-        nameInput.addEventListener('change', (e) => {
-          this.setPlayerName(e.target.value);
-        });
-      }
-
+      // Close Rooms Modal
       const btnCloseRooms = document.getElementById('btnCloseRoomsModal');
       if (btnCloseRooms) {
         btnCloseRooms.addEventListener('click', () => {
@@ -7119,6 +7179,7 @@
         });
       }
 
+      // Play Offline button in rooms modal
       const btnOffline = document.getElementById('btnOfflineBack');
       if (btnOffline) {
         btnOffline.addEventListener('click', () => {
@@ -7129,6 +7190,7 @@
         });
       }
 
+      // Chat input send button
       const btnSend = document.getElementById('btnMpSendChat');
       if (btnSend) {
         btnSend.addEventListener('click', () => this.sendChat());

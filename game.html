@@ -318,8 +318,13 @@
 
       <!-- Player Profile Strip -->
       <div class="rooms-player-strip">
-        <label for="multiplayerNameInput" class="rooms-label">Your Player Name:</label>
-        <input type="text" id="multiplayerNameInput" class="rooms-name-input" maxlength="16" placeholder="Enter username..." value="Player">
+        <div class="rooms-input-col">
+          <div class="rooms-input-wrap">
+            <label for="multiplayerNameInput" class="rooms-label">Your Player Name:</label>
+            <input type="text" id="multiplayerNameInput" class="rooms-name-input" maxlength="16" placeholder="Enter your name (Required)..." autocomplete="off">
+          </div>
+          <div id="roomsNameError" class="rooms-name-error" style="display: none;">Name is required to join an online room!</div>
+        </div>
         <div class="rooms-status-tag">
           <span class="rooms-ping-dot"></span>
           <span>Zero Latency Sync Ready</span>
