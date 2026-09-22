@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AS Services">
+  <meta name="theme-color" content="#030712">
+  <title>AS Cloud Services &amp; Developer Tools Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/services.css">
+  <!-- Client-Side QR Engine -->
+  <script src="/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="services-app">
+    <!-- Top Navigation Bar -->
+    <header class="services-navbar">
+      <div class="services-nav-left">
+        <a href="/" class="services-brand" title="AS Cloud Home">
+          <div class="brand-cube-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+              <polyline points="2 17 12 22 22 17"/>
+              <polyline points="2 12 12 17 22 12"/>
+            </svg>
+          </div>
+          <div>
+            <div class="brand-name">AS CLOUD</div>
+            <div class="brand-sub">General Web Services &amp; Tools</div>
+          </div>
+        </a>
+        <div class="nav-status-pill">
+          <span class="status-pulse-dot"></span>
+          <span class="status-text">15 Repositories &bull; Git DB Online</span>
+        </div>
+      </div>
+
+      <nav class="services-nav-right">
+        <a href="/" class="nav-link-btn" title="AI Intelligence Chat">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>AI Chat</span>
+        </a>
+        <a href="/game" class="nav-link-btn highlight" title="Square Era 3D Voxel Sandbox">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <span>Square Era 3D</span>
+        </a>
+        <a href="/webeditor" class="nav-link-btn" title="Web Editor">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          <span>Web Editor</span>
+        </a>
+        <a href="/home" class="nav-link-btn" title="Live Messaging">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>Messaging</span>
+        </a>
+      </nav>
+    </header>
+
+    <!-- Main Container Viewport -->
+    <main class="services-container">
+      <!-- Hub Header Title & Intro -->
+      <section class="services-hero">
+        <div class="hero-badge">ENTERPRISE CLOUD UTILITIES</div>
+        <h1 class="hero-title">General Web Services &amp; Developer Tools</h1>
+        <p class="hero-desc">High-utility client-side web tools, URL shortener with custom slugs, QR Code Studio, cloud pastebin, and developer utilities powered by 15 GitHub repositories.</p>
+      </section>
+
+      <!-- Primary Service Category Tabs -->
+      <nav class="services-tab-bar" aria-label="Web Service Categories">
+        <button class="service-tab-btn active" data-tab="shortener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>Link Shortener</span>
+          <span class="tab-badge">Custom Slugs</span>
+        </button>
+        <button class="service-tab-btn" data-tab="qrstudio">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>QR Code Studio</span>
+        </button>
+        <button class="service-tab-btn" data-tab="pastebin">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+          <span>Cloud Pastebin</span>
+        </button>
+        <button class="service-tab-btn" data-tab="devsuite">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>Developer Utilities</span>
+        </button>
+        <button class="service-tab-btn" data-tab="cloudhub">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          <span>Cloud Repos Hub</span>
+          <span class="tab-badge info">15 Repos</span>
+        </button>
+      </nav>
+
+      <!-- Panel 1: URL Shortener & Custom Slugs -->
+      <section id="panelShortener" class="service-panel active">
+        <div class="panel-grid-2">
+          <!-- Shortener Form Card -->
+          <div class="service-card">
+            <div class="card-header">
+              <h2 class="card-title">Generate Custom Short Link</h2>
+              <p class="card-subtitle">Create memorable custom links with instantaneous QR code synthesis and dual cloud persistence.</p>
+            </div>
+
+            <form id="shortenerForm" class="card-form" onsubmit="return false;">
+              <div class="form-group">
+                <label for="shortenerLongUrl" class="form-label">Destination URL</label>
+                <div class="input-wrap">
+                  <input type="url" id="shortenerLongUrl" class="form-input" placeholder="https://example.com/long/deep/url/path..." required autocomplete="off">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="shortenerCustomSlug" class="form-label">Custom Slug (Alias)</label>
+                  <button type="button" id="btnGenRandomSlug" class="btn-text-action">Random Slug</button>
+                </div>
+                <div class="slug-input-wrap">
+                  <span class="slug-prefix" id="slugPrefixDomain">/s/</span>
+                  <input type="text" id="shortenerCustomSlug" class="form-input slug-input" placeholder="my-custom-slug" autocomplete="off">
+                </div>
+                <span class="input-hint">Alphanumeric characters and hyphens only (e.g. project-x, demo2026, mylink).</span>
+              </div>
+
+              <div class="form-group">
+                <label for="shortenerTitle" class="form-label">Title / Note (Optional)</label>
+                <input type="text" id="shortenerTitle" class="form-input" placeholder="Marketing Campaign, Portfolio, Docs..." autocomplete="off">
+              </div>
+
+              <button type="submit" id="btnCreateShortLink" class="btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span>Generate Short Link</span>
+              </button>
+            </form>
+
+            <!-- Result Box -->
+            <div id="shortenerResultCard" class="result-box" style="display: none;">
+              <div class="result-header">
+                <span class="result-badge">Link Created Successfully</span>
+                <span id="shortenerResultSlug" class="result-slug-tag"></span>
+              </div>
+              <div class="result-url-row">
+                <div id="shortenerResultUrl" class="result-url-text"></div>
+                <button id="btnCopyShortUrl" class="btn-secondary btn-sm" title="Copy to Clipboard">Copy</button>
+                <a id="btnVisitShortUrl" href="#" target="_blank" class="btn-secondary btn-sm" title="Visit Destination">Open</a>
+              </div>
+              <div class="result-qr-row">
+                <canvas id="shortenerResultQR" class="qr-canvas-sm"></canvas>
+                <div class="qr-info">
+                  <div class="qr-info-title">Scan QR Code</div>
+                  <div class="qr-info-sub">Camera scanning redirects straight to destination.</div>
+                  <button id="btnDownloadShortQR" class="btn-text-action">Download PNG</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Links Registry Table -->
+          <div class="service-card">
+            <div class="card-header flex-between">
+              <div>
+                <h2 class="card-title">Active Links Registry</h2>
+                <p class="card-subtitle">Synchronized across local cache and GitHub sessions database.</p>
+              </div>
+              <span id="activeLinksCountBadge" class="count-pill">0 Links</span>
+            </div>
+
+            <div class="links-table-wrap">
+              <table class="services-table" id="linksTable">
+                <thead>
+                  <tr>
+                    <th>Slug &amp; Short URL</th>
+                    <th>Destination</th>
+                    <th>Clicks</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="linksTableBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card-footer-actions">
+              <button id="btnRefreshLinks" class="btn-secondary btn-sm">Refresh List</button>
+              <button id="btnClearLocalLinks" class="btn-danger btn-sm">Clear Local Cache</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: QR Code Studio -->
+      <section id="panelQRStudio" class="service-panel">
+        <div class="panel-grid-2">
+          <!-- QR Configuration Card -->
+          <div class="service-card">
+            <div class="card-header">
+              <h2 class="card-title">QR Code Customizer</h2>
+              <p class="card-subtitle">Generate high-density, customizable vector QR codes locally without external API dependencies.</p>
+            </div>
+
+            <div class="card-form">
+              <div class="form-group">
+                <label for="qrTextInput" class="form-label">Text, URL, or Payload</label>
+                <textarea id="qrTextInput" class="form-textarea" rows="3" placeholder="Enter URL, text, contact information, or Wi-Fi credentials..."></textarea>
+              </div>
+
+              <!-- Quick Presets -->
+              <div class="form-group">
+                <label class="form-label">Quick Preset Templates</label>
+                <div class="chips-row">
+                  <button type="button" class="preset-chip" data-qr="https://asllm.vercel.app">Current Page</button>
+                  <button type="button" class="preset-chip" data-qr="https://asllm.vercel.app/game">Square Era 3D</button>
+                  <button type="button" class="preset-chip" data-qr="WIFI:S:MyNetwork;T:WPA;P:SecretPassword;;">Wi-Fi Config</button>
+                  <button type="button" class="preset-chip" data-qr="BEGIN:VCARD&#10;VERSION:3.0&#10;FN:AS Intelligence&#10;ORG:AS Cloud&#10;URL:https://asllm.vercel.app&#10;END:VCARD">vCard Contact</button>
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="qrFgColor" class="form-label">Foreground Color</label>
+                  <div class="color-picker-wrap">
+                    <input type="color" id="qrFgColor" class="color-picker" value="#000000">
+                    <span id="qrFgColorHex" class="color-hex-label">#000000</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="qrBgColor" class="form-label">Background Color</label>
+                  <div class="color-picker-wrap">
+                    <input type="color" id="qrBgColor" class="color-picker" value="#ffffff">
+                    <span id="qrBgColorHex" class="color-hex-label">#ffffff</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="qrResolution" class="form-label">Resolution Output</label>
+                  <select id="qrResolution" class="form-select">
+                    <option value="160">Compact (160x160 px)</option>
+                    <option value="256" selected>Standard (256x256 px)</option>
+                    <option value="384">High-Res (384x384 px)</option>
+                    <option value="512">Ultra-HD (512x512 px)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="qrEccLevel" class="form-label">Error Correction</label>
+                  <select id="qrEccLevel" class="form-select">
+                    <option value="L">Level L (7% Recovery)</option>
+                    <option value="M" selected>Level M (15% Recovery)</option>
+                    <option value="Q">Level Q (25% Recovery)</option>
+                    <option value="H">Level H (30% Recovery)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- QR Live Preview & Export -->
+          <div class="service-card flex-col-center">
+            <div class="card-header text-center">
+              <h2 class="card-title">Live Dynamic Preview</h2>
+              <p class="card-subtitle">Rendered client-side on HTML5 Canvas</p>
+            </div>
+
+            <div class="qr-preview-container">
+              <div id="qrCanvasWrapper" class="qr-canvas-frame">
+                <!-- QR Canvas mounted here -->
+              </div>
+            </div>
+
+            <div class="preview-actions-row">
+              <button id="btnDownloadQR" class="btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Download PNG</span>
+              </button>
+              <button id="btnCopyQRImage" class="btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Copy Image</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 3: Cloud Pastebin & Code Sharer -->
+      <section id="panelPastebin" class="service-panel">
+        <div class="panel-grid-2">
+          <!-- Paste Editor Card -->
+          <div class="service-card">
+            <div class="card-header">
+              <h2 class="card-title">New Cloud Snippet</h2>
+              <p class="card-subtitle">Store and share code snippets, JSON payloads, and markdown notes backed by GitHub git databases.</p>
+            </div>
+
+            <form id="pasteForm" class="card-form" onsubmit="return false;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="pasteTitle" class="form-label">Snippet Title</label>
+                  <input type="text" id="pasteTitle" class="form-input" placeholder="E.g. API Client, Three.js Shader..." autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label for="pasteLang" class="form-label">Syntax Language</label>
+                  <select id="pasteLang" class="form-select">
+                    <option value="javascript">JavaScript (Node / Web)</option>
+                    <option value="python">Python</option>
+                    <option value="html">HTML / CSS</option>
+                    <option value="json">JSON</option>
+                    <option value="markdown">Markdown</option>
+                    <option value="bash">Bash / Shell</option>
+                    <option value="plaintext" selected>Plain Text</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="pasteCustomSlug" class="form-label">Custom Slug (Optional)</label>
+                <div class="slug-input-wrap">
+                  <span class="slug-prefix">/services?p=</span>
+                  <input type="text" id="pasteCustomSlug" class="form-input slug-input" placeholder="my-snippet" autocomplete="off">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="pasteContent" class="form-label">Content / Source Code</label>
+                  <button type="button" id="btnFormatPaste" class="btn-text-action">Format Code</button>
+                </div>
+                <textarea id="pasteContent" class="form-textarea code-textarea" rows="12" placeholder="// Paste source code, configuration files, or logs here..." required></textarea>
+              </div>
+
+              <div class="form-actions-row">
+                <button type="submit" id="btnPublishPaste" class="btn-primary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>Publish Paste</span>
+                </button>
+                <button type="button" id="btnClearPaste" class="btn-secondary">Clear</button>
+              </div>
+            </form>
+
+            <div id="pasteResultCard" class="result-box" style="display: none;">
+              <div class="result-header">
+                <span class="result-badge">Snippet Published</span>
+              </div>
+              <div class="result-url-row">
+                <div id="pasteResultUrl" class="result-url-text"></div>
+                <button id="btnCopyPasteResult" class="btn-secondary btn-sm">Copy Link</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pastes Explorer Grid -->
+          <div class="service-card">
+            <div class="card-header flex-between">
+              <div>
+                <h2 class="card-title">Pastes Explorer</h2>
+                <p class="card-subtitle">Local storage and GitHub cloudgame-db-users registry.</p>
+              </div>
+              <span id="pastesCountBadge" class="count-pill">0 Pastes</span>
+            </div>
+
+            <div class="pastes-search-bar">
+              <input type="text" id="pasteSearchInput" class="form-input" placeholder="Search snippet titles or languages...">
+            </div>
+
+            <div id="pastesList" class="pastes-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 4: Developer Utilities Suite -->
+      <section id="panelDevSuite" class="service-panel">
+        <!-- Subtab Navigation for Utilities -->
+        <nav class="dev-subnav-bar">
+          <button class="dev-subtab-btn active" data-subtab="uuid">UUID &amp; Key Generator</button>
+          <button class="dev-subtab-btn" data-subtab="crypto">Cryptographic Hashes</button>
+          <button class="dev-subtab-btn" data-subtab="jwt">Base64 &amp; JWT Inspector</button>
+          <button class="dev-subtab-btn" data-subtab="http">API &amp; Webhook Tester</button>
+          <button class="dev-subtab-btn" data-subtab="json">JSON Formatter</button>
+        </nav>
+
+        <!-- Subpanel 1: UUID & Key Gen -->
+        <div id="devSubUuid" class="dev-subpanel active">
+          <div class="service-card">
+            <h3 class="card-title">RFC 4122 v4 UUID Generator</h3>
+            <p class="card-subtitle">Generate cryptographically secure version-4 random UUIDs.</p>
+
+            <div class="chips-row">
+              <button id="btnGenUUID1" class="btn-secondary btn-sm">Generate 1 UUID</button>
+              <button id="btnGenUUID5" class="btn-secondary btn-sm">Generate 5 UUIDs</button>
+              <button id="btnGenUUID10" class="btn-secondary btn-sm">Generate 10 UUIDs</button>
+            </div>
+
+            <textarea id="uuidResult" class="form-textarea code-textarea" rows="4" readonly></textarea>
+            <button id="btnCopyUUID" class="btn-secondary btn-sm">Copy UUIDs</button>
+          </div>
+
+          <div class="service-card" style="margin-top: 16px;">
+            <h3 class="card-title">High-Entropy Password &amp; Secret Key Generator</h3>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="pwdLength" class="form-label">Password Length: <span id="pwdLengthVal">24</span> chars</label>
+                <input type="range" id="pwdLength" min="8" max="64" value="24" class="form-range">
+              </div>
+              <div class="form-group checkbox-grid">
+                <label class="checkbox-label"><input type="checkbox" id="pwdUpper" checked> Uppercase (A-Z)</label>
+                <label class="checkbox-label"><input type="checkbox" id="pwdLower" checked> Lowercase (a-z)</label>
+                <label class="checkbox-label"><input type="checkbox" id="pwdDigits" checked> Digits (0-9)</label>
+                <label class="checkbox-label"><input type="checkbox" id="pwdSymbols" checked> Symbols (!@#$%^&amp;*)</label>
+              </div>
+            </div>
+
+            <div class="result-url-row" style="margin-top: 12px;">
+              <input type="text" id="pwdResult" class="form-input code-font" readonly>
+              <button id="btnGenPwd" class="btn-primary btn-sm">Generate</button>
+              <button id="btnCopyPwd" class="btn-secondary btn-sm">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subpanel 2: Cryptographic Hashes -->
+        <div id="devSubCrypto" class="dev-subpanel">
+          <div class="service-card">
+            <h3 class="card-title">Real-Time Cryptographic Hash Calculator</h3>
+            <p class="card-subtitle">Compute standard hashes instantly via Web Crypto API and pure JavaScript.</p>
+
+            <div class="form-group">
+              <label for="hashInput" class="form-label">Plain Text / Data Input</label>
+              <textarea id="hashInput" class="form-textarea" rows="3" placeholder="Type or paste text to compute hashes in real-time..."></textarea>
+            </div>
+
+            <div class="hash-rows-grid">
+              <div class="hash-row">
+                <div class="hash-label">MD5 (128-bit)</div>
+                <input type="text" id="hashMD5" class="form-input hash-input" readonly placeholder="Waiting for input...">
+                <button class="btn-secondary btn-sm btn-copy-hash" data-target="hashMD5">Copy</button>
+              </div>
+              <div class="hash-row">
+                <div class="hash-label">SHA-1 (160-bit)</div>
+                <input type="text" id="hashSHA1" class="form-input hash-input" readonly placeholder="Waiting for input...">
+                <button class="btn-secondary btn-sm btn-copy-hash" data-target="hashSHA1">Copy</button>
+              </div>
+              <div class="hash-row">
+                <div class="hash-label">SHA-256 (256-bit)</div>
+                <input type="text" id="hashSHA256" class="form-input hash-input" readonly placeholder="Waiting for input...">
+                <button class="btn-secondary btn-sm btn-copy-hash" data-target="hashSHA256">Copy</button>
+              </div>
+              <div class="hash-row">
+                <div class="hash-label">SHA-512 (512-bit)</div>
+                <input type="text" id="hashSHA512" class="form-input hash-input" readonly placeholder="Waiting for input...">
+                <button class="btn-secondary btn-sm btn-copy-hash" data-target="hashSHA512">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subpanel 3: Base64 & JWT -->
+        <div id="devSubJwt" class="dev-subpanel">
+          <div class="service-card">
+            <h3 class="card-title">UTF-8 Safe Base64 Encoder &amp; Decoder</h3>
+            <div class="panel-grid-2" style="margin-top: 12px;">
+              <div class="form-group">
+                <label for="b64Raw" class="form-label">Plain Text</label>
+                <textarea id="b64Raw" class="form-textarea" rows="4" placeholder="Hello World..."></textarea>
+                <div class="chips-row" style="margin-top: 8px;">
+                  <button id="btnEncodeB64" class="btn-primary btn-sm">Encode to Base64</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="b64Encoded" class="form-label">Base64 String</label>
+                <textarea id="b64Encoded" class="form-textarea code-font" rows="4" placeholder="SGVsbG8gV29ybGQ="></textarea>
+                <div class="chips-row" style="margin-top: 8px;">
+                  <button id="btnDecodeB64" class="btn-secondary btn-sm">Decode to Plain Text</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="service-card" style="margin-top: 16px;">
+            <h3 class="card-title">JSON Web Token (JWT) Inspector</h3>
+            <p class="card-subtitle">Decode headers and payload claims with real-time expiration validation.</p>
+            <div class="form-group">
+              <label for="jwtInput" class="form-label">Raw JWT Token</label>
+              <textarea id="jwtInput" class="form-textarea code-font" rows="3" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+            </div>
+            <div class="panel-grid-2">
+              <div>
+                <span class="sub-label">Header Claims</span>
+                <pre id="jwtHeaderOutput" class="code-pre">Waiting for JWT token...</pre>
+              </div>
+              <div>
+                <span class="sub-label">Payload Claims</span>
+                <pre id="jwtPayloadOutput" class="code-pre">Waiting for JWT token...</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subpanel 4: HTTP API Tester -->
+        <div id="devSubHttp" class="dev-subpanel">
+          <div class="service-card">
+            <h3 class="card-title">In-Browser HTTP API &amp; Webhook Client</h3>
+            <p class="card-subtitle">Test REST endpoints, webhooks, and JSON payloads directly from your browser.</p>
+
+            <div class="http-request-bar">
+              <select id="httpMethod" class="form-select method-select">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="PATCH">PATCH</option>
+              </select>
+              <input type="url" id="httpUrl" class="form-input http-url-input" placeholder="https://api.example.com/data" value="/api/health">
+              <button id="btnSendHttp" class="btn-primary">Send Request</button>
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+              <label for="httpHeaders" class="form-label">Custom Headers (JSON)</label>
+              <textarea id="httpHeaders" class="form-textarea code-font" rows="2" placeholder='{"Content-Type": "application/json"}'></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="httpBody" class="form-label">Request Body (for POST, PUT, PATCH)</label>
+              <textarea id="httpBody" class="form-textarea code-font" rows="4" placeholder='{"key": "value"}'></textarea>
+            </div>
+
+            <div class="http-response-box">
+              <div class="http-status-header">
+                <div class="flex-align-center">
+                  <span class="sub-label">Response Body</span>
+                  <span id="httpStatusBadge" class="http-status-pill">HTTP Status: ---</span>
+                </div>
+                <span id="httpLatencyBadge" class="latency-text">0 ms</span>
+              </div>
+              <pre id="httpResponseBody" class="code-pre">Response will appear here after sending request...</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subpanel 5: JSON Formatter -->
+        <div id="devSubJson" class="dev-subpanel">
+          <div class="service-card">
+            <h3 class="card-title">JSON Formatter, Validator &amp; Minifier</h3>
+            <div class="chips-row">
+              <button id="btnFormatJson2" class="btn-secondary btn-sm">Beautify (2 Spaces)</button>
+              <button id="btnFormatJson4" class="btn-secondary btn-sm">Beautify (4 Spaces)</button>
+              <button id="btnMinifyJson" class="btn-secondary btn-sm">Minify (Compact)</button>
+              <button id="btnClearJson" class="btn-danger btn-sm">Clear</button>
+            </div>
+
+            <textarea id="jsonInputArea" class="form-textarea code-textarea" rows="12" placeholder='Paste unformatted or raw JSON here...'></textarea>
+            <div id="jsonStatusMsg" class="json-status-msg">JSON syntax valid.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 5: Cloud Infrastructure Hub -->
+      <section id="panelCloudHub" class="service-panel">
+        <div class="service-card">
+          <div class="card-header">
+            <h2 class="card-title">AS Cloud Architecture &bull; 15 Repositories Overview</h2>
+            <p class="card-subtitle">Automated workflows running continuous 5-hour auto-restart loops, Git-backed databases, and releases under @yasamarium.</p>
+          </div>
+
+          <!-- Section 1: 10 Compute Workflow Runners -->
+          <div class="infra-section">
+            <h3 class="infra-title">10 Compute Workflow Runners (5h Auto-Restart Loops)</h3>
+            <div class="infra-grid">
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-doom</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-doom/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-supertux</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-supertux/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-neverball</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-neverball/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-openarena</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-openarena/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-minetest</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-minetest/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-assaultcube</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-assaultcube/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-supertuxkart</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-supertuxkart/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-teeworlds</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-teeworlds/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-chromium-bsu</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-chromium-bsu/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-retroarch</div>
+                <div class="infra-card-desc">Continuous runner &bull; Auto-restart loop</div>
+                <a href="https://github.com/yasamarium/cloudgame-retroarch/actions" target="_blank" class="infra-link">View Actions</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: 2 Git-Backed Databases -->
+          <div class="infra-section">
+            <h3 class="infra-title">2 Git-Backed Databases (Sessions &amp; Users)</h3>
+            <div class="infra-grid-2">
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-db-sessions</div>
+                <div class="infra-card-desc">Holds links.json, servers.json, active telemetry sessions.</div>
+                <div class="chips-row" style="margin-top: 8px;">
+                  <a href="https://raw.githubusercontent.com/yasamarium/cloudgame-db-sessions/main/data/links.json" target="_blank" class="infra-link">links.json</a>
+                  <a href="https://raw.githubusercontent.com/yasamarium/cloudgame-db-sessions/main/data/servers.json" target="_blank" class="infra-link">servers.json</a>
+                </div>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-db-users</div>
+                <div class="infra-card-desc">Holds pastes.json, users.json, user accounts &amp; profiles.</div>
+                <div class="chips-row" style="margin-top: 8px;">
+                  <a href="https://raw.githubusercontent.com/yasamarium/cloudgame-db-users/main/data/pastes.json" target="_blank" class="infra-link">pastes.json</a>
+                  <a href="https://raw.githubusercontent.com/yasamarium/cloudgame-db-users/main/data/users.json" target="_blank" class="infra-link">users.json</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: 3 Service Managers -->
+          <div class="infra-section">
+            <h3 class="infra-title">3 Service Managers (Orchestration, Auth, Gateway)</h3>
+            <div class="infra-grid-3">
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-manager-orchestrator</div>
+                <div class="infra-card-desc">Load balancer &amp; task allocator.</div>
+                <a href="https://github.com/yasamarium/cloudgame-manager-orchestrator" target="_blank" class="infra-link">Repository</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-manager-auth</div>
+                <div class="infra-card-desc">Token security &amp; JWT keys.</div>
+                <a href="https://github.com/yasamarium/cloudgame-manager-auth" target="_blank" class="infra-link">Repository</a>
+              </div>
+              <div class="infra-card">
+                <div class="infra-card-title">cloudgame-manager-gateway</div>
+                <div class="infra-card-desc">Proxy gateway &amp; routing table.</div>
+                <a href="https://github.com/yasamarium/cloudgame-manager-gateway" target="_blank" class="infra-link">Repository</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Global Toast Notification -->
+    <div id="servicesToast" class="services-toast"></div>
+
+    <!-- Footer -->
+    <footer class="services-footer">
+      <div>AS Cloud &bull; Independent Decentralized General Web Services Hub &bull; Zero Emojis</div>
+      <div class="footer-links">
+        <a href="/">AI Chat</a>
+        <a href="/game">Square Era 3D</a>
+        <a href="/webeditor">Web Editor</a>
+        <a href="https://github.com/yasamarium" target="_blank">GitHub @yasamarium</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Services Application Script -->
+  <script src="/services.js"></script>
+</body>
+</html>

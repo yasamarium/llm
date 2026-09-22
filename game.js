@@ -635,6 +635,8 @@
     vz: 0,
     pitch: 0,
     yaw: 0,
+    targetPitch: 0,
+    targetYaw: 0,
     width: 0.6,
     height: 1.8,
     eyeHeight: 1.62,
@@ -660,6 +662,9 @@
 
   // Saved world modifications: Map<"x,y,z", blockId>
   const worldModifications = new Map();
+
+  // Chunk Meshing Queue for butter-smooth staggered frame pacing
+  const chunkMeshQueue = [];
 
   // Three.js Core Globals
   let scene, camera, renderer;
@@ -3493,11 +3498,12 @@
       targetVz = (moveZ / inputLen) * moveSpeed;
     }
 
-    // High-responsiveness acceleration and snappy braking
+    // High-responsiveness acceleration and snappy braking with frame-rate-independent exponential damping
     const hasInput = (forward !== 0 || right !== 0);
     const accel = player.onGround ? (hasInput ? 28.0 : 20.0) : 7.0;
-    player.vx += (targetVx - player.vx) * Math.min(dt * accel, 1.0);
-    player.vz += (targetVz - player.vz) * Math.min(dt * accel, 1.0);
+    const blend = 1.0 - Math.exp(-accel * dt);
+    player.vx += (targetVx - player.vx) * blend;
+    player.vz += (targetVz - player.vz) * blend;
 
     // Zero out tiny residual velocities to prevent micro-drifting
     if (!hasInput && Math.hypot(player.vx, player.vz) < 0.05) {
@@ -5878,8 +5884,31 @@
   }
 
   // =========================================================================
-  // Chunk Management (Dynamic Streaming Around Player)
+  // Chunk Management (Dynamic Streaming Around Player with Staggered Meshing)
   // =========================================================================
+  function processChunkMeshQueue() {
+    if (chunkMeshQueue.length === 0) return;
+
+    // Prioritize chunks closest to player
+    const playerChunkX = Math.floor(player.x / CHUNK_SIZE);
+    const playerChunkZ = Math.floor(player.z / CHUNK_SIZE);
+    chunkMeshQueue.sort((a, b) => {
+      const distA = (a.cx - playerChunkX) ** 2 + (a.cz - playerChunkZ) ** 2;
+      const distB = (b.cx - playerChunkX) ** 2 + (b.cz - playerChunkZ) ** 2;
+      return distA - distB;
+    });
+
+    // Mesh at most 1 chunk per frame to guarantee consistent 60+ FPS
+    while (chunkMeshQueue.length > 0) {
+      const nextChunk = chunkMeshQueue.shift();
+      const key = `${nextChunk.cx},${nextChunk.cz}`;
+      if (chunks.has(key) && !nextChunk.mesh) {
+        meshChunk(nextChunk);
+        break;
+      }
+    }
+  }
+
   function updateLoadedChunks() {
     const playerChunkX = Math.floor(player.x / CHUNK_SIZE);
     const playerChunkZ = Math.floor(player.z / CHUNK_SIZE);
@@ -5897,7 +5926,7 @@
         if (!chunks.has(key)) {
           const chunk = new Chunk(cx, cz);
           chunks.set(key, chunk);
-          meshChunk(chunk);
+          chunkMeshQueue.push(chunk);
         }
       }
     }
@@ -5910,6 +5939,14 @@
           chunk.mesh = null;
         }
         chunks.delete(key);
+      }
+    }
+
+    // Also remove any unloaded chunks from the mesh queue
+    for (let i = chunkMeshQueue.length - 1; i >= 0; i--) {
+      const c = chunkMeshQueue[i];
+      if (!neededKeys.has(`${c.cx},${c.cz}`)) {
+        chunkMeshQueue.splice(i, 1);
       }
     }
 
@@ -6344,8 +6381,18 @@
     // 6. Setup First-Person Viewmodel (Hand holding block)
     setupFirstPersonViewmodel();
 
-    // 7. Initial Chunk Generation around Spawn
+    // 7. Initial Chunk Generation around Spawn (Immediately mesh spawn area)
     updateLoadedChunks();
+    const spawnChunkX = Math.floor(player.x / CHUNK_SIZE);
+    const spawnChunkZ = Math.floor(player.z / CHUNK_SIZE);
+    for (let i = chunkMeshQueue.length - 1; i >= 0; i--) {
+      const chunk = chunkMeshQueue[i];
+      const dist = Math.max(Math.abs(chunk.cx - spawnChunkX), Math.abs(chunk.cz - spawnChunkZ));
+      if (dist <= 1) {
+        chunkMeshQueue.splice(i, 1);
+        meshChunk(chunk);
+      }
+    }
 
     // 8. UI Bindings
     renderHotbarUI();
@@ -6390,7 +6437,10 @@
       cameraStepOffset *= Math.pow(0.0001, dt);
       if (Math.abs(cameraStepOffset) < 0.002) cameraStepOffset = 0;
 
-      // 2. Direct Responsive Camera Positioning (Zero latency, silky-smooth first-person feel)
+      // 2. Ultra-Smooth First-Person Camera Positioning (Sub-pixel lerping to eliminate mouse jitter)
+      const aimSmoothing = Math.min(1.0, dt * 40.0);
+      player.yaw += (player.targetYaw - player.yaw) * aimSmoothing;
+      player.pitch += (player.targetPitch - player.pitch) * aimSmoothing;
       camera.position.set(player.x, player.y + player.eyeHeight + cameraStepOffset, player.z);
       camera.rotation.y = player.yaw;
       camera.rotation.x = player.pitch;
@@ -6458,6 +6508,9 @@
         lastPlayerChunkZ = currentChunkZ;
         updateLoadedChunks();
       }
+
+      // 8. Staggered Chunk Meshing (Guarantees silky 60+ FPS without boundary hiccups)
+      processChunkMeshQueue();
 
       // 8. Update Debug Info
       updateDebugOverlay();
@@ -6621,10 +6674,10 @@
       // Clamp extreme mouse movement spikes for ultra-smooth aiming
       const dx = Math.max(-100, Math.min(100, e.movementX));
       const dy = Math.max(-100, Math.min(100, e.movementY));
-      player.yaw -= dx * settings.mouseSensitivity;
-      player.pitch -= dy * settings.mouseSensitivity;
+      player.targetYaw -= dx * settings.mouseSensitivity;
+      player.targetPitch -= dy * settings.mouseSensitivity;
       // Clamp pitch (-89 to +89 degrees)
-      player.pitch = Math.max(-Math.PI / 2 + 0.02, Math.min(Math.PI / 2 - 0.02, player.pitch));
+      player.targetPitch = Math.max(-Math.PI / 2 + 0.02, Math.min(Math.PI / 2 - 0.02, player.targetPitch));
     });
 
     // Mouse Clicks for Mining & Placing
@@ -6829,1449 +6882,11 @@
       btnRespawn.addEventListener('click', respawnPlayer);
     }
 
-  // ==========================================================================
-  // AS Web Services & Tools Hub Engine
-  // Strictly Zero Unicode Emojis
-  // ==========================================================================
-
-  function getLocationHref() {
-    try {
-      if (typeof window !== 'undefined' && window.location && window.location.href) {
-        return window.location.href;
-      }
-    } catch (e) {}
-    return 'https://asllm.vercel.app/game';
-  }
-
-  function getLocationOrigin() {
-    try {
-      if (typeof window !== 'undefined' && window.location && window.location.origin) {
-        return window.location.origin;
-      }
-    } catch (e) {}
-    return 'https://asllm.vercel.app';
-  }
-
-
-  // --- MD5 Hash Algorithm (Pure JavaScript) ---
-  function computeMD5(string) {
-    function md5cycle(x, k) {
-      var a = x[0], b = x[1], c = x[2], d = x[3];
-      a = ff(a, b, c, d, k[0], 7, -680876936);
-      d = ff(d, a, b, c, k[1], 12, -389564586);
-      c = ff(c, d, a, b, k[2], 17, 606105819);
-      b = ff(b, c, d, a, k[3], 22, -1044525330);
-      a = ff(a, b, c, d, k[4], 7, -176418897);
-      d = ff(d, a, b, c, k[5], 12, 1200080426);
-      c = ff(c, d, a, b, k[6], 17, -1473231341);
-      b = ff(b, c, d, a, k[7], 22, -45705983);
-      a = ff(a, b, c, d, k[8], 7, 1770035416);
-      d = ff(d, a, b, c, k[9], 12, -1958414417);
-      c = ff(c, d, a, b, k[10], 17, -42063);
-      b = ff(b, c, d, a, k[11], 22, -1990404162);
-      a = ff(a, b, c, d, k[12], 7, 1804603682);
-      d = ff(d, a, b, c, k[13], 12, -40341101);
-      c = ff(c, d, a, b, k[14], 17, -1502002290);
-      b = ff(b, c, d, a, k[15], 22, 1236535329);
-      a = gg(a, b, c, d, k[1], 5, -165796510);
-      d = gg(d, a, b, c, k[6], 9, -1069501632);
-      c = gg(c, d, a, b, k[11], 14, 643717713);
-      b = gg(b, c, d, a, k[0], 20, -373897302);
-      a = gg(a, b, c, d, k[5], 5, -701558691);
-      d = gg(d, a, b, c, k[10], 9, 38016083);
-      c = gg(c, d, a, b, k[15], 14, -660478335);
-      b = gg(b, c, d, a, k[4], 20, -405537848);
-      a = gg(a, b, c, d, k[9], 5, 568446438);
-      d = gg(d, a, b, c, k[14], 9, -1019803690);
-      c = gg(c, d, a, b, k[3], 14, -187363961);
-      b = gg(b, c, d, a, k[8], 20, 1163531501);
-      a = gg(a, b, c, d, k[13], 5, -1444681467);
-      d = gg(d, a, b, c, k[2], 9, -51403784);
-      c = gg(c, d, a, b, k[7], 14, 1735328473);
-      b = gg(b, c, d, a, k[12], 20, -1926607734);
-      a = hh(a, b, c, d, k[5], 4, -378558);
-      d = hh(d, a, b, c, k[8], 11, -2022574463);
-      c = hh(c, d, a, b, k[11], 16, 1839030562);
-      b = hh(b, c, d, a, k[14], 23, -35309556);
-      a = hh(a, b, c, d, k[1], 4, -1530992060);
-      d = hh(d, a, b, c, k[4], 11, 1272893353);
-      c = hh(c, d, a, b, k[7], 16, -155497632);
-      b = hh(b, c, d, a, k[10], 23, -1094730640);
-      a = hh(a, b, c, d, k[13], 4, 681279174);
-      d = hh(d, a, b, c, k[0], 11, -358537222);
-      c = hh(c, d, a, b, k[3], 16, -722521979);
-      b = hh(b, c, d, a, k[6], 23, 76029189);
-      a = hh(a, b, c, d, k[9], 4, -640364487);
-      d = hh(d, a, b, c, k[12], 11, -421815835);
-      c = hh(c, d, a, b, k[15], 16, 530742520);
-      b = hh(b, c, d, a, k[2], 23, -995338651);
-      a = ii(a, b, c, d, k[0], 6, -198630844);
-      d = ii(d, a, b, c, k[7], 10, 1126891415);
-      c = ii(c, d, a, b, k[14], 15, -1416354905);
-      b = ii(b, c, d, a, k[5], 21, -57434055);
-      a = ii(a, b, c, d, k[12], 6, 1700485571);
-      d = ii(d, a, b, c, k[3], 10, -1894986606);
-      c = ii(c, d, a, b, k[10], 15, -1051523);
-      b = ii(b, c, d, a, k[1], 21, -2054922799);
-      a = ii(a, b, c, d, k[8], 6, 1873313359);
-      d = ii(d, a, b, c, k[15], 10, -30611744);
-      c = ii(c, d, a, b, k[6], 15, -1560198380);
-      b = ii(b, c, d, a, k[13], 21, 1309151649);
-      a = ii(a, b, c, d, k[4], 6, -145523070);
-      d = ii(d, a, b, c, k[11], 10, -1120210379);
-      c = ii(c, d, a, b, k[2], 15, 718787259);
-      b = ii(b, c, d, a, k[9], 21, -343485551);
-      x[0] = add32(a, x[0]);
-      x[1] = add32(b, x[1]);
-      x[2] = add32(c, x[2]);
-      x[3] = add32(d, x[3]);
-    }
-    function cmn(q, a, b, x, s, t) {
-      a = add32(add32(a, q), add32(x, t));
-      return add32((a << s) | (a >>> (32 - s)), b);
-    }
-    function ff(a, b, c, d, x, s, t) { return cmn((b & c) | ((~b) & d), a, b, x, s, t); }
-    function gg(a, b, c, d, x, s, t) { return cmn((b & d) | (c & (~d)), a, b, x, s, t); }
-    function hh(a, b, c, d, x, s, t) { return cmn(b ^ c ^ d, a, b, x, s, t); }
-    function ii(a, b, c, d, x, s, t) { return cmn(c ^ (b | (~d)), a, b, x, s, t); }
-    function md51(s) {
-      var n = s.length, state = [1732584193, -271733879, -1732584194, 271733878], i;
-      for (i = 64; i <= s.length; i += 64) {
-        md5cycle(state, md5blk(s.substring(i - 64, i)));
-      }
-      s = s.substring(i - 64);
-      var tail = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-      for (i = 0; i < s.length; i++) tail[i >> 2] |= s.charCodeAt(i) << ((i % 4) << 3);
-      tail[i >> 2] |= 0x80 << ((i % 4) << 3);
-      if (i > 55) {
-        md5cycle(state, tail);
-        for (i = 0; i < 16; i++) tail[i] = 0;
-      }
-      tail[14] = n * 8;
-      md5cycle(state, tail);
-      return state;
-    }
-    function md5blk(s) {
-      var md5blks = [], i;
-      for (i = 0; i < 64; i += 4) {
-        md5blks[i >> 2] = s.charCodeAt(i) + (s.charCodeAt(i + 1) << 8) + (s.charCodeAt(i + 2) << 16) + (s.charCodeAt(i + 3) << 24);
-      }
-      return md5blks;
-    }
-    var hex_chr = '0123456789abcdef'.split('');
-    function rhex(n) {
-      var s = '', j = 0;
-      for (; j < 4; j++) s += hex_chr[(n >> (j * 8 + 4)) & 0x0F] + hex_chr[(n >> (j * 8)) & 0x0F];
-      return s;
-    }
-    function hex(x) {
-      for (var i = 0; i < x.length; i++) x[i] = rhex(x[i]);
-      return x.join('');
-    }
-    function add32(a, b) { return (a + b) & 0xFFFFFFFF; }
-    return hex(md51(string));
-  }
-
-  // --- Draw QR Code directly to HTML5 Canvas ---
-  function drawQRCodeToCanvas(canvas, text, options = {}) {
-    if (!canvas || !text) return false;
-    const fg = options.fgColor || '#0f172a';
-    const bg = options.bgColor || '#ffffff';
-    const ecc = options.ecc || 'M';
-    const targetSize = options.size || 256;
-
-    try {
-      if (typeof qrcode !== 'undefined') {
-        const qr = qrcode(0, ecc);
-        qr.addData(text);
-        qr.make();
-        const count = qr.getModuleCount();
-        const margin = 4;
-        const totalModules = count + margin * 2;
-        const cellSize = Math.max(2, Math.floor(targetSize / totalModules));
-        const finalDim = totalModules * cellSize;
-
-        canvas.width = finalDim;
-        canvas.height = finalDim;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, finalDim, finalDim);
-
-        ctx.fillStyle = fg;
-        for (let r = 0; r < count; r++) {
-          for (let c = 0; c < count; c++) {
-            if (qr.isDark(r, c)) {
-              ctx.fillRect((c + margin) * cellSize, (r + margin) * cellSize, cellSize, cellSize);
-            }
-          }
-        }
-        return true;
-      }
-    } catch (e) {
-      console.warn('QR Code generation error:', e);
-    }
-
-    // Fallback: draw clean matrix pattern
-    try {
-      canvas.width = targetSize;
-      canvas.height = targetSize;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, targetSize, targetSize);
-      ctx.fillStyle = fg;
-      ctx.font = '12px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('QR Engine Ready', targetSize / 2, targetSize / 2);
-    } catch (e) {}
-    return false;
-  }
-
-  // --- UUID v4 Generator ---
-  function generateUUIDv4() {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
-
-  // --- Random Slug Generator ---
-  function generateRandomSlug(len = 6) {
-    const chars = '23456789abcdefghjkmnpqrstuvwxyz';
-    let res = '';
-    for (let i = 0; i < len; i++) {
-      res += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return res;
-  }
-
-  // --- 15 Repositories Catalog Definition ---
-  const CLOUD_INFRA_REPOSITORIES = [
-    // 10 Compute Workflow Runners (5h Auto-Restart)
-    { id: 'cloudgame-doom', name: 'cloudgame-doom', title: 'Doom / Freedoom', category: '3D FPS Engine', desc: 'PrBoom+ id Tech engine with Xvfb 3D framebuffer streaming.', type: 'runner' },
-    { id: 'cloudgame-supertux', name: 'cloudgame-supertux', title: 'SuperTux 2', category: '2D Platformer', desc: 'Smooth 60 FPS icy platformer on Ubuntu cloud runner.', type: 'runner' },
-    { id: 'cloudgame-neverball', name: 'cloudgame-neverball', title: 'Neverball', category: '3D Physics', desc: 'Perilous 3D obstacle courses and tilt physics.', type: 'runner' },
-    { id: 'cloudgame-openarena', name: 'cloudgame-openarena', title: 'OpenArena', category: '3D Arena FPS', desc: 'Quake III Arena id Tech 3 multiplayer combat runner.', type: 'runner' },
-    { id: 'cloudgame-minetest', name: 'cloudgame-minetest', title: 'Minetest (Luanti)', category: 'Voxel Sandbox', desc: 'Infinite procedural voxel world simulation.', type: 'runner' },
-    { id: 'cloudgame-assaultcube', name: 'cloudgame-assaultcube', title: 'AssaultCube', category: 'Tactical 3D FPS', desc: 'Low-ping tactical team combat server & streamer.', type: 'runner' },
-    { id: 'cloudgame-supertuxkart', name: 'cloudgame-supertuxkart', title: 'SuperTuxKart', category: '3D Kart Racing', desc: '3D arcade racing with battle tracks and nitro.', type: 'runner' },
-    { id: 'cloudgame-teeworlds', name: 'cloudgame-teeworlds', title: 'Teeworlds', category: '2D Multiplayer', desc: 'Physics combat with grappling hooks and shotguns.', type: 'runner' },
-    { id: 'cloudgame-chromium-bsu', name: 'cloudgame-chromium-bsu', title: 'Chromium B.S.U.', category: 'Arcade Space', desc: 'Fast vertical-scrolling arcade space battles.', type: 'runner' },
-    { id: 'cloudgame-retroarch', name: 'cloudgame-retroarch', title: 'RetroArch Core', category: 'Universal Emulator', desc: 'Multi-system retro emulation cloud runner.', type: 'runner' },
-
-    // 2 Git-Backed Databases
-    { id: 'cloudgame-db-sessions', name: 'cloudgame-db-sessions', title: 'Links & Sessions DB', category: 'Git Database', desc: 'Stores data/links.json and active server sessions.', type: 'db', rawUrl: 'https://raw.githubusercontent.com/yasamarium/cloudgame-db-sessions/main/data/links.json' },
-    { id: 'cloudgame-db-users', name: 'cloudgame-db-users', title: 'Pastes & Users DB', category: 'Git Database', desc: 'Stores data/pastes.json and user profile credentials.', type: 'db', rawUrl: 'https://raw.githubusercontent.com/yasamarium/cloudgame-db-users/main/data/pastes.json' },
-
-    // 3 Service Managers
-    { id: 'cloudgame-manager-orchestrator', name: 'cloudgame-manager-orchestrator', title: 'Workflow Orchestrator', category: 'Service Manager', desc: 'Runner auto-restart scheduler and VM allocation manager.', type: 'mgr' },
-    { id: 'cloudgame-manager-auth', name: 'cloudgame-manager-auth', title: 'Authentication Service', category: 'Service Manager', desc: 'Session tokens, permissions, and security coordinator.', type: 'mgr' },
-    { id: 'cloudgame-manager-gateway', name: 'cloudgame-manager-gateway', title: 'Gateway & Reverse Proxy', category: 'Service Manager', desc: 'Routing controller and client handshake manager.', type: 'mgr' }
-  ];
-
-  // Default initial links fallback
-  const DEFAULT_SERVICES_LINKS = [
-    { slug: 'game', url: 'https://asllm.vercel.app/game', title: 'Square Era 3D Voxel Sandbox', clicks: 142, created_at: '2026-09-21T10:00:00Z' },
-    { slug: 'portal', url: 'https://asllm.vercel.app/', title: 'AS Cloud Intelligence Portal', clicks: 98, created_at: '2026-09-21T10:00:00Z' },
-    { slug: 'editor', url: 'https://asllm.vercel.app/webeditor', title: 'Web Editor Website Builder', clicks: 45, created_at: '2026-09-21T10:00:00Z' },
-    { slug: 'messaging', url: 'https://asllm.vercel.app/home', title: 'Live Messaging Platform', clicks: 36, created_at: '2026-09-21T10:00:00Z' }
-  ];
-
-  // Default initial pastes fallback
-  const DEFAULT_SERVICES_PASTES = [
-    { slug: 'welcome-paste', title: 'Welcome to AS Cloud Pastebin', lang: 'javascript', content: '// AS Cloud Web Services Pastebin\nconsole.log("Welcome to AS Cloud Developer Services!");\n// Features: Link Shortener, QR Studio, Pastebin & Cloud Infra', created_at: '2026-09-21T10:00:00Z' }
-  ];
-
-  let cachedActiveLinks = [];
-  let cachedActivePastes = [];
-
-  // --- Open Web Services Modal ---
-  function openWebServicesModal(targetTab = 'links') {
-    const modal = document.getElementById('webServicesModal');
-    if (!modal) return;
-    modal.style.display = 'flex';
-    if (document.exitPointerLock) document.exitPointerLock();
-
-    switchServicesTab(targetTab);
-    loadAndRenderLinks();
-    loadAndRenderPastes();
-    renderCloudInfrastructureHub();
-
-    // If QR tab opened, render preview
-    if (targetTab === 'qr') {
-      setTimeout(updateQRStudioPreview, 50);
-    }
-  }
-
-  // --- Close Web Services Modal ---
-  function closeWebServicesModal() {
-    const modal = document.getElementById('webServicesModal');
-    if (modal) modal.style.display = 'none';
-  }
-
-  // --- Switch Tabs ---
-  function switchServicesTab(tabName) {
-    const tabBtns = document.querySelectorAll('.services-tab-btn');
-    const panels = document.querySelectorAll('.services-panel');
-
-    tabBtns.forEach(btn => {
-      const tab = btn.getAttribute('data-tab') || (btn.dataset && btn.dataset.tab);
-      if (tab === tabName) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-
-    panels.forEach(p => {
-      p.classList.remove('active');
-    });
-
-    const targetPanelId = 'panel' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
-    const targetPanel = document.getElementById(targetPanelId);
-    if (targetPanel) {
-      targetPanel.classList.add('active');
-    }
-
-    if (tabName === 'qr') {
-      setTimeout(updateQRStudioPreview, 50);
-    }
-  }
-
-  // --- Load and Render Links ---
-  async function loadAndRenderLinks() {
-    let localLinks = [];
-    try {
-      const stored = localStorage.getItem('as_cloud_links');
-      if (stored) localLinks = JSON.parse(stored);
-    } catch (e) {}
-
-    let remoteLinks = [];
-    try {
-      const res = await fetch('https://raw.githubusercontent.com/yasamarium/cloudgame-db-sessions/main/data/links.json?t=' + Date.now(), { cache: 'no-cache' });
-      if (res.ok) {
-        remoteLinks = await res.json();
-      }
-    } catch (e) {}
-
-    // Merge remote and local (local takes precedence for click counts or edits)
-    const map = new Map();
-    DEFAULT_SERVICES_LINKS.forEach(l => map.set(l.slug, l));
-    if (Array.isArray(remoteLinks)) remoteLinks.forEach(l => map.set(l.slug, l));
-    if (Array.isArray(localLinks)) localLinks.forEach(l => map.set(l.slug, { ...map.get(l.slug), ...l }));
-
-    cachedActiveLinks = Array.from(map.values());
-    renderLinksTable(cachedActiveLinks);
-  }
-
-  function renderLinksTable(links) {
-    const tbody = document.getElementById('linksTableBody');
-    const countBadge = document.getElementById('linksCountBadge');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-    if (countBadge) countBadge.textContent = `${links.length} Links`;
-
-    if (links.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">No short links generated yet. Create your first short link above!</td></tr>';
-      return;
-    }
-
-    links.forEach(item => {
-      const tr = document.createElement('tr');
-      const origin = getLocationOrigin();
-      const shortUrl = `${origin}/s/${item.slug}`;
-
-      tr.innerHTML = `
-        <td><span class="table-slug">/s/${item.slug}</span></td>
-        <td><div class="table-dest" title="${item.url}">${item.url}</div></td>
-        <td>${item.title || item.slug}</td>
-        <td><span class="result-badge" style="background: rgba(56,189,248,0.15); color: #38bdf8;">${item.clicks || 0} clicks</span></td>
-        <td>
-          <div class="table-actions">
-            <button class="btn-table-action btn-copy-link" data-url="${shortUrl}" title="Copy Link">Copy</button>
-            <button class="btn-table-action btn-qr-link" data-url="${shortUrl}" data-slug="${item.slug}" title="View QR">QR</button>
-            <a href="${shortUrl}" target="_blank" class="btn-table-action" style="text-decoration:none;" title="Visit Link">Visit</a>
-          </div>
-        </td>
-      `;
-
-      tr.querySelector('.btn-copy-link').addEventListener('click', () => {
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(shortUrl);
-          showToast(`Copied short link: ${shortUrl}`);
-        }
-      });
-
-      tr.querySelector('.btn-qr-link').addEventListener('click', () => {
-        switchServicesTab('qr');
-        const qrInput = document.getElementById('qrStudioText');
-        if (qrInput) {
-          qrInput.value = shortUrl;
-          updateQRStudioPreview();
-        }
-        showToast(`Loaded QR Code for /s/${item.slug}`);
-      });
-
-      tbody.appendChild(tr);
-    });
-  }
-
-  // --- Create Short Link Action ---
-  async function handleCreateShortLink() {
-    const destInput = document.getElementById('linkDestUrl');
-    const slugInput = document.getElementById('linkCustomSlug');
-    const titleInput = document.getElementById('linkTitle');
-
-    if (!destInput) return;
-    let url = destInput.value.trim();
-    if (!url) {
-      showToast('Please enter a destination URL');
-      destInput.focus();
-      return;
-    }
-
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url;
-      destInput.value = url;
-    }
-
-    let slug = slugInput ? slugInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') : '';
-    if (!slug) {
-      slug = generateRandomSlug(6);
-      if (slugInput) slugInput.value = slug;
-    }
-
-    const title = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : slug;
-
-    const newLink = {
-      slug: slug,
-      url: url,
-      title: title,
-      clicks: 0,
-      created_at: new Date().toISOString()
-    };
-
-    // Save locally
-    let localLinks = [];
-    try {
-      const stored = localStorage.getItem('as_cloud_links');
-      if (stored) localLinks = JSON.parse(stored);
-    } catch (e) {}
-
-    // Check if slug exists in local list, update or append
-    const idx = localLinks.findIndex(l => l.slug === slug);
-    if (idx >= 0) {
-      localLinks[idx] = newLink;
-    } else {
-      localLinks.unshift(newLink);
-    }
-    try {
-      localStorage.setItem('as_cloud_links', JSON.stringify(localLinks));
-    } catch (e) {}
-
-    // Also attempt serverless POST to /api/s
-    try {
-      fetch('/api/s', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, slug, title })
-      }).catch(() => {});
-    } catch (e) {}
-
-    // Display result card
-    const resultCard = document.getElementById('linkResultCard');
-    const fullUrlEl = document.getElementById('linkResultFull');
-    const testBtn = document.getElementById('btnTestResultLink');
-    const qrCanvas = document.getElementById('linkResultQRCanvas');
-
-    const origin = getLocationOrigin();
-    const fullShortUrl = `${origin}/s/${slug}`;
-
-    if (fullUrlEl) fullUrlEl.textContent = fullShortUrl;
-    if (testBtn) testBtn.href = fullShortUrl;
-
-    if (qrCanvas) {
-      drawQRCodeToCanvas(qrCanvas, fullShortUrl, { size: 120, fgColor: '#0f172a', bgColor: '#ffffff' });
-    }
-
-    if (resultCard) resultCard.style.display = 'block';
-
-    // Hook up result copy button
-    const btnCopyResult = document.getElementById('btnCopyResultLink');
-    if (btnCopyResult) {
-      btnCopyResult.onclick = () => {
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(fullShortUrl);
-          showToast(`Copied short link: ${fullShortUrl}`);
-        }
-      };
-    }
-
-    // Hook up download QR button
-    const btnDownloadResultQR = document.getElementById('btnDownloadResultQR');
-    if (btnDownloadResultQR && qrCanvas) {
-      btnDownloadResultQR.onclick = () => {
-        const link = document.createElement('a');
-        link.download = `as-qr-${slug}.png`;
-        link.href = qrCanvas.toDataURL('image/png');
-        link.click();
-        showToast('QR Code image downloaded');
-      };
-    }
-
-    // Refresh table
-    loadAndRenderLinks();
-    showToast(`Short link created: /s/${slug}`);
-  }
-
-  // --- QR Code Studio Logic ---
-  function updateQRStudioPreview() {
-    const textInput = document.getElementById('qrStudioText');
-    const canvas = document.getElementById('qrStudioCanvas');
-    const fgInput = document.getElementById('qrStudioFgColor');
-    const bgInput = document.getElementById('qrStudioBgColor');
-    const sizeSelect = document.getElementById('qrStudioSize');
-    const eccSelect = document.getElementById('qrStudioECC');
-    const dimBadge = document.getElementById('qrStudioDimBadge');
-
-    if (!canvas) return;
-
-    const text = (textInput && textInput.value.trim()) ? textInput.value.trim() : getLocationHref();
-    const fg = fgInput ? fgInput.value : '#0f172a';
-    const bg = bgInput ? bgInput.value : '#ffffff';
-    const size = sizeSelect ? parseInt(sizeSelect.value) : 256;
-    const ecc = eccSelect ? eccSelect.value : 'M';
-
-    drawQRCodeToCanvas(canvas, text, { size, fgColor: fg, bgColor: bg, ecc });
-
-    if (dimBadge) {
-      dimBadge.textContent = `${size} x ${size} px`;
-    }
-  }
-
-  function setupQRStudioEvents() {
-    const textInput = document.getElementById('qrStudioText');
-    const fgInput = document.getElementById('qrStudioFgColor');
-    const bgInput = document.getElementById('qrStudioBgColor');
-    const fgHex = document.getElementById('qrFgHexLabel');
-    const bgHex = document.getElementById('qrBgHexLabel');
-    const sizeSelect = document.getElementById('qrStudioSize');
-    const eccSelect = document.getElementById('qrStudioECC');
-
-    if (textInput) {
-      if (!textInput.value) textInput.value = getLocationHref();
-      textInput.addEventListener('input', updateQRStudioPreview);
-    }
-
-    if (fgInput) {
-      fgInput.addEventListener('input', () => {
-        if (fgHex) fgHex.textContent = fgInput.value;
-        updateQRStudioPreview();
-      });
-    }
-
-    if (bgInput) {
-      bgInput.addEventListener('input', () => {
-        if (bgHex) bgHex.textContent = bgInput.value;
-        updateQRStudioPreview();
-      });
-    }
-
-    if (sizeSelect) sizeSelect.addEventListener('change', updateQRStudioPreview);
-    if (eccSelect) eccSelect.addEventListener('change', updateQRStudioPreview);
-
-    // Presets
-    const pCurrent = document.getElementById('btnPresetCurrentUrl');
-    if (pCurrent) pCurrent.addEventListener('click', () => {
-      if (textInput) { textInput.value = getLocationHref(); updateQRStudioPreview(); }
-    });
-
-    const pPortal = document.getElementById('btnPresetPortal');
-    if (pPortal) pPortal.addEventListener('click', () => {
-      if (textInput) { textInput.value = getLocationOrigin() + '/'; updateQRStudioPreview(); }
-    });
-
-    const pWifi = document.getElementById('btnPresetWifi');
-    if (pWifi) pWifi.addEventListener('click', () => {
-      if (textInput) { textInput.value = 'WIFI:S:MyFastNetwork;T:WPA;P:SuperSecretPass;;'; updateQRStudioPreview(); }
-    });
-
-    const pVcard = document.getElementById('btnPresetVcard');
-    if (pVcard) pVcard.addEventListener('click', () => {
-      if (textInput) {
-        textInput.value = 'BEGIN:VCARD\nVERSION:3.0\nFN:AS Cloud Intelligence\nURL:https://asllm.vercel.app\nEND:VCARD';
-        updateQRStudioPreview();
-      }
-    });
-
-    // Download PNG
-    const btnDownload = document.getElementById('btnDownloadQRStudio');
-    if (btnDownload) {
-      btnDownload.addEventListener('click', () => {
-        const canvas = document.getElementById('qrStudioCanvas');
-        if (!canvas) return;
-        const link = document.createElement('a');
-        link.download = 'as-cloud-qrcode.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        showToast('QR Code image downloaded successfully');
-      });
-    }
-
-    // Copy Image to Clipboard
-    const btnCopyImg = document.getElementById('btnCopyQRStudio');
-    if (btnCopyImg) {
-      btnCopyImg.addEventListener('click', async () => {
-        const canvas = document.getElementById('qrStudioCanvas');
-        if (!canvas) return;
-        try {
-          canvas.toBlob(blob => {
-            if (blob && navigator.clipboard && navigator.clipboard.write) {
-              navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-              showToast('QR Code image copied to clipboard');
-            } else {
-              showToast('Clipboard image write not supported in this browser');
-            }
-          });
-        } catch (e) {
-          showToast('Could not copy image to clipboard');
-        }
-      });
-    }
-
-    // Clear
-    const btnClear = document.getElementById('btnClearQRStudio');
-    if (btnClear && textInput) {
-      btnClear.addEventListener('click', () => {
-        textInput.value = '';
-        updateQRStudioPreview();
-      });
-    }
-  }
-
-  // --- Cloud Pastebin Logic ---
-  async function loadAndRenderPastes() {
-    let localPastes = [];
-    try {
-      const stored = localStorage.getItem('as_cloud_pastes');
-      if (stored) localPastes = JSON.parse(stored);
-    } catch (e) {}
-
-    let remotePastes = [];
-    try {
-      const res = await fetch('https://raw.githubusercontent.com/yasamarium/cloudgame-db-users/main/data/pastes.json?t=' + Date.now(), { cache: 'no-cache' });
-      if (res.ok) {
-        remotePastes = await res.json();
-      }
-    } catch (e) {}
-
-    const map = new Map();
-    DEFAULT_SERVICES_PASTES.forEach(p => map.set(p.slug, p));
-    if (Array.isArray(remotePastes)) remotePastes.forEach(p => map.set(p.slug, p));
-    if (Array.isArray(localPastes)) localPastes.forEach(p => map.set(p.slug, { ...map.get(p.slug), ...p }));
-
-    cachedActivePastes = Array.from(map.values());
-    renderPastesGrid(cachedActivePastes);
-  }
-
-  function renderPastesGrid(pastes) {
-    const listEl = document.getElementById('pastesList');
-    const badge = document.getElementById('pastesCountBadge');
-    if (!listEl) return;
-
-    listEl.innerHTML = '';
-    if (badge) badge.textContent = `${pastes.length} Pastes`;
-
-    if (pastes.length === 0) {
-      listEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #64748b; padding: 20px;">No pastes published yet. Create one above!</div>';
-      return;
-    }
-
-    pastes.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'paste-item-card';
-
-      const origin = getLocationOrigin();
-      const shareUrl = `${origin}/game?p=${p.slug}`;
-
-      card.innerHTML = `
-        <div class="paste-card-header">
-          <h4 class="paste-card-title">${p.title || p.slug}</h4>
-          <span class="paste-lang-badge">${p.lang || 'text'}</span>
-        </div>
-        <div class="paste-card-snippet">${escapeHtml((p.content || '').substring(0, 140))}</div>
-        <div class="paste-card-footer">
-          <span>/${p.slug}</span>
-          <div style="display: flex; gap: 6px;">
-            <button class="btn-table-action btn-load-paste" title="Load into Editor">Load</button>
-            <button class="btn-table-action btn-copy-paste-link" data-url="${shareUrl}" title="Copy Link">Link</button>
-          </div>
-        </div>
-      `;
-
-      card.querySelector('.btn-load-paste').addEventListener('click', () => {
-        const titleEl = document.getElementById('pasteTitle');
-        const slugEl = document.getElementById('pasteCustomSlug');
-        const langEl = document.getElementById('pasteLang');
-        const contentEl = document.getElementById('pasteContent');
-
-        if (titleEl) titleEl.value = p.title || '';
-        if (slugEl) slugEl.value = p.slug || '';
-        if (langEl) langEl.value = p.lang || 'javascript';
-        if (contentEl) contentEl.value = p.content || '';
-        showToast(`Loaded snippet: ${p.title || p.slug}`);
-      });
-
-      card.querySelector('.btn-copy-paste-link').addEventListener('click', () => {
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(shareUrl);
-          showToast(`Copied paste link: ${shareUrl}`);
-        }
-      });
-
-      listEl.appendChild(card);
-    });
-  }
-
-  function escapeHtml(str) {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  function setupPastebinEvents() {
-    const btnPublish = document.getElementById('btnPublishPaste');
-    if (btnPublish) {
-      btnPublish.addEventListener('click', async () => {
-        const titleEl = document.getElementById('pasteTitle');
-        const slugEl = document.getElementById('pasteCustomSlug');
-        const langEl = document.getElementById('pasteLang');
-        const contentEl = document.getElementById('pasteContent');
-
-        if (!contentEl) return;
-        const content = contentEl.value.trim();
-        if (!content) {
-          showToast('Paste content cannot be empty');
-          contentEl.focus();
-          return;
-        }
-
-        let slug = slugEl ? slugEl.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') : '';
-        if (!slug) {
-          slug = 'snippet-' + generateRandomSlug(6);
-          if (slugEl) slugEl.value = slug;
-        }
-
-        const title = (titleEl && titleEl.value.trim()) ? titleEl.value.trim() : `Snippet (${slug})`;
-        const lang = langEl ? langEl.value : 'plaintext';
-
-        const pasteRecord = {
-          slug,
-          title,
-          lang,
-          content,
-          created_at: new Date().toISOString()
-        };
-
-        // Save locally
-        let localPastes = [];
-        try {
-          const stored = localStorage.getItem('as_cloud_pastes');
-          if (stored) localPastes = JSON.parse(stored);
-        } catch (e) {}
-
-        const idx = localPastes.findIndex(p => p.slug === slug);
-        if (idx >= 0) localPastes[idx] = pasteRecord;
-        else localPastes.unshift(pasteRecord);
-
-        try {
-          localStorage.setItem('as_cloud_pastes', JSON.stringify(localPastes));
-        } catch (e) {}
-
-        // Serverless POST to /api/s?type=paste
-        try {
-          fetch('/api/s?type=paste', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(pasteRecord)
-          }).catch(() => {});
-        } catch (e) {}
-
-        // Show published result
-        const resultCard = document.getElementById('pasteResultCard');
-        const urlDisplay = document.getElementById('pasteResultUrl');
-        const origin = getLocationOrigin();
-        const shareUrl = `${origin}/game?p=${slug}`;
-
-        if (urlDisplay) urlDisplay.textContent = shareUrl;
-        if (resultCard) resultCard.style.display = 'block';
-
-        const btnCopy = document.getElementById('btnCopyPasteResult');
-        if (btnCopy) {
-          btnCopy.onclick = () => {
-            if (navigator.clipboard) {
-              navigator.clipboard.writeText(shareUrl);
-              showToast(`Copied paste share link: ${shareUrl}`);
-            }
-          };
-        }
-
-        loadAndRenderPastes();
-        showToast(`Paste published: /game?p=${slug}`);
-      });
-    }
-
-    const btnFormat = document.getElementById('btnFormatPaste');
-    if (btnFormat) {
-      btnFormat.addEventListener('click', () => {
-        const contentEl = document.getElementById('pasteContent');
-        const langEl = document.getElementById('pasteLang');
-        if (!contentEl) return;
-        const val = contentEl.value.trim();
-        if (!val) return;
-
-        if (langEl && langEl.value === 'json') {
-          try {
-            contentEl.value = JSON.stringify(JSON.parse(val), null, 2);
-            showToast('JSON beautified successfully');
-          } catch (e) {
-            showToast('Invalid JSON syntax');
-          }
-        } else {
-          // Normalize line breaks
-          contentEl.value = val.replace(/\r\n/g, '\n');
-          showToast('Code formatting normalized');
-        }
-      });
-    }
-
-    const btnClear = document.getElementById('btnClearPaste');
-    if (btnClear) {
-      btnClear.addEventListener('click', () => {
-        const contentEl = document.getElementById('pasteContent');
-        const titleEl = document.getElementById('pasteTitle');
-        const slugEl = document.getElementById('pasteCustomSlug');
-        if (contentEl) contentEl.value = '';
-        if (titleEl) titleEl.value = '';
-        if (slugEl) slugEl.value = '';
-        const resultCard = document.getElementById('pasteResultCard');
-        if (resultCard) resultCard.style.display = 'none';
-      });
-    }
-  }
-
-  // --- Developer Utilities Suite Logic ---
-  function setupDevUtilitiesEvents() {
-    // Subtab switching
-    const subtabs = document.querySelectorAll('.dev-subtab-btn');
-    subtabs.forEach(btn => {
-      btn.addEventListener('click', () => {
-        subtabs.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const target = btn.getAttribute('data-subtab') || (btn.dataset && btn.dataset.subtab);
-        if (!target) return;
-        const subpanels = document.querySelectorAll('.dev-subpanel');
-        subpanels.forEach(p => p.classList.remove('active'));
-
-        const panel = document.getElementById('devSub' + target.charAt(0).toUpperCase() + target.slice(1));
-        if (panel) panel.classList.add('active');
-      });
-    });
-
-    // 1. UUID Generator
-    function handleGenUUID(count = 1) {
-      const resultEl = document.getElementById('uuidResult');
-      if (!resultEl) return;
-      const list = [];
-      for (let i = 0; i < count; i++) {
-        list.push(generateUUIDv4());
-      }
-      resultEl.value = list.join('\n');
-    }
-
-    const b1 = document.getElementById('btnGenUUID1'); if (b1) b1.addEventListener('click', () => handleGenUUID(1));
-    const b5 = document.getElementById('btnGenUUID5'); if (b5) b5.addEventListener('click', () => handleGenUUID(5));
-    const b10 = document.getElementById('btnGenUUID10'); if (b10) b10.addEventListener('click', () => handleGenUUID(10));
-
-    const btnCopyUUID = document.getElementById('btnCopyUUID');
-    if (btnCopyUUID) {
-      btnCopyUUID.addEventListener('click', () => {
-        const resultEl = document.getElementById('uuidResult');
-        if (resultEl && resultEl.value) {
-          if (navigator.clipboard) {
-            navigator.clipboard.writeText(resultEl.value);
-            showToast('UUIDs copied to clipboard');
-          }
-        }
-      });
-    }
-
-    // Password Generator
-    const passLenSlider = document.getElementById('passLength');
-    const valPassLen = document.getElementById('valPassLength');
-    if (passLenSlider && valPassLen) {
-      passLenSlider.addEventListener('input', e => {
-        valPassLen.textContent = `${e.target.value} characters`;
-      });
-    }
-
-    const btnGenPass = document.getElementById('btnGenPass');
-    if (btnGenPass) {
-      btnGenPass.addEventListener('click', () => {
-        const len = passLenSlider ? parseInt(passLenSlider.value) : 20;
-        const chkU = document.getElementById('chkPassUpper');
-        const chkL = document.getElementById('chkPassLower');
-        const chkD = document.getElementById('chkPassDigits');
-        const chkS = document.getElementById('chkPassSymbols');
-
-        let pool = '';
-        if (chkU && chkU.checked) pool += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        if (chkL && chkL.checked) pool += 'abcdefghijklmnopqrstuvwxyz';
-        if (chkD && chkD.checked) pool += '0123456789';
-        if (chkS && chkS.checked) pool += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-
-        if (!pool) pool = 'abcdefghijklmnopqrstuvwxyz0123456789';
-
-        let pass = '';
-        for (let i = 0; i < len; i++) {
-          pass += pool.charAt(Math.floor(Math.random() * pool.length));
-        }
-
-        const passEl = document.getElementById('passResult');
-        if (passEl) passEl.value = pass;
-      });
-    }
-
-    const btnCopyPass = document.getElementById('btnCopyPass');
-    if (btnCopyPass) {
-      btnCopyPass.addEventListener('click', () => {
-        const passEl = document.getElementById('passResult');
-        if (passEl && passEl.value) {
-          if (navigator.clipboard) {
-            navigator.clipboard.writeText(passEl.value);
-            showToast('Password copied to clipboard');
-          }
-        }
-      });
-    }
-
-    // 2. Cryptographic Hashes
-    const hashInput = document.getElementById('hashInput');
-    async function updateHashes() {
-      if (!hashInput) return;
-      const text = hashInput.value;
-
-      // MD5
-      const md5El = document.getElementById('hashMD5');
-      if (md5El) md5El.value = computeMD5(text);
-
-      // Web Crypto API for SHA-1, SHA-256, SHA-512
-      if (typeof crypto !== 'undefined' && crypto.subtle && crypto.subtle.digest) {
-        const enc = new TextEncoder();
-        const data = enc.encode(text);
-
-        try {
-          const sha1Buf = await crypto.subtle.digest('SHA-1', data);
-          const sha1El = document.getElementById('hashSHA1');
-          if (sha1El) sha1El.value = Array.from(new Uint8Array(sha1Buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-        } catch (e) {}
-
-        try {
-          const sha256Buf = await crypto.subtle.digest('SHA-256', data);
-          const sha256El = document.getElementById('hashSHA256');
-          if (sha256El) sha256El.value = Array.from(new Uint8Array(sha256Buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-        } catch (e) {}
-
-        try {
-          const sha512Buf = await crypto.subtle.digest('SHA-512', data);
-          const sha512El = document.getElementById('hashSHA512');
-          if (sha512El) sha512El.value = Array.from(new Uint8Array(sha512Buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-        } catch (e) {}
-      }
-    }
-
-    if (hashInput) {
-      hashInput.addEventListener('input', updateHashes);
-    }
-
-    document.querySelectorAll('.btn-copy-hash').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetId = btn.getAttribute('data-target') || (btn.dataset && btn.dataset.target);
-        if (!targetId) return;
-        const targetInput = document.getElementById(targetId);
-        if (targetInput && targetInput.value) {
-          if (navigator.clipboard) {
-            navigator.clipboard.writeText(targetInput.value);
-            showToast('Hash copied to clipboard');
-          }
-        }
-      });
-    });
-
-    // 3. Base64 & JWT
-    const b64In = document.getElementById('b64Input');
-    const b64Res = document.getElementById('b64Result');
-    const btnEnc = document.getElementById('btnB64Encode');
-    const btnDec = document.getElementById('btnB64Decode');
-    const btnCopyB64 = document.getElementById('btnCopyB64');
-
-    if (btnEnc && b64In && b64Res) {
-      btnEnc.addEventListener('click', () => {
-        try {
-          b64Res.value = btoa(unescape(encodeURIComponent(b64In.value)));
-          showToast('Base64 encoded');
-        } catch (e) {
-          showToast('Encoding error');
-        }
-      });
-    }
-
-    if (btnDec && b64In && b64Res) {
-      btnDec.addEventListener('click', () => {
-        try {
-          b64Res.value = decodeURIComponent(escape(atob(b64In.value.trim())));
-          showToast('Base64 decoded');
-        } catch (e) {
-          showToast('Invalid Base64 string');
-        }
-      });
-    }
-
-    if (btnCopyB64 && b64Res) {
-      btnCopyB64.addEventListener('click', () => {
-        if (b64Res.value && navigator.clipboard) {
-          navigator.clipboard.writeText(b64Res.value);
-          showToast('Result copied');
-        }
-      });
-    }
-
-    // JWT Inspector
-    const jwtIn = document.getElementById('jwtInput');
-    const btnJwt = document.getElementById('btnDecodeJWT');
-    const jwtHdr = document.getElementById('jwtHeaderResult');
-    const jwtPay = document.getElementById('jwtPayloadResult');
-    const jwtBadge = document.getElementById('jwtStatusBadge');
-
-    if (btnJwt && jwtIn) {
-      btnJwt.addEventListener('click', () => {
-        const token = jwtIn.value.trim();
-        if (!token) {
-          showToast('Please paste a JWT token');
-          return;
-        }
-
-        const parts = token.split('.');
-        if (parts.length < 2) {
-          if (jwtBadge) { jwtBadge.textContent = 'Invalid JWT format'; jwtBadge.className = 'jwt-status-badge expired'; }
-          showToast('Invalid JWT: Requires at least header and payload');
-          return;
-        }
-
-        try {
-          const headerJson = JSON.parse(decodeURIComponent(escape(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')))));
-          const payloadJson = JSON.parse(decodeURIComponent(escape(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))));
-
-          if (jwtHdr) jwtHdr.value = JSON.stringify(headerJson, null, 2);
-          if (jwtPay) jwtPay.value = JSON.stringify(payloadJson, null, 2);
-
-          if (payloadJson.exp) {
-            const expDate = new Date(payloadJson.exp * 1000);
-            const isExpired = expDate.getTime() < Date.now();
-            if (jwtBadge) {
-              jwtBadge.textContent = isExpired ? `Expired (${expDate.toLocaleDateString()})` : `Valid (Expires ${expDate.toLocaleDateString()})`;
-              jwtBadge.className = 'jwt-status-badge ' + (isExpired ? 'expired' : 'valid');
-            }
-          } else {
-            if (jwtBadge) { jwtBadge.textContent = 'Decoded (No exp claim)'; jwtBadge.className = 'jwt-status-badge valid'; }
-          }
-          showToast('JWT decoded successfully');
-        } catch (e) {
-          if (jwtBadge) { jwtBadge.textContent = 'Decode Error'; jwtBadge.className = 'jwt-status-badge expired'; }
-          showToast('Failed to decode JWT base64 payload');
-        }
-      });
-    }
-
-    // 4. API / Webhook Tester
-    const btnSendApi = document.getElementById('btnSendApiRequest');
-    if (btnSendApi) {
-      btnSendApi.addEventListener('click', async () => {
-        const method = document.getElementById('apiMethod') ? document.getElementById('apiMethod').value : 'GET';
-        const urlEl = document.getElementById('apiUrl');
-        const url = urlEl ? urlEl.value.trim() : '';
-
-        if (!url) {
-          showToast('Please enter an API URL');
-          return;
-        }
-
-        const headersInput = document.getElementById('apiHeaders') ? document.getElementById('apiHeaders').value.trim() : '';
-        const bodyInput = document.getElementById('apiBody') ? document.getElementById('apiBody').value.trim() : '';
-        const statusBadge = document.getElementById('apiStatusBadge');
-        const timeBadge = document.getElementById('apiTimeBadge');
-        const resBodyEl = document.getElementById('apiResponseBody');
-
-        if (statusBadge) { statusBadge.textContent = 'Sending...'; statusBadge.className = 'api-status-badge'; }
-        if (timeBadge) timeBadge.textContent = 'Timing...';
-
-        let parsedHeaders = {};
-        if (headersInput) {
-          try {
-            parsedHeaders = JSON.parse(headersInput);
-          } catch (e) {
-            headersInput.split('\n').forEach(line => {
-              const colon = line.indexOf(':');
-              if (colon > 0) {
-                const k = line.substring(0, colon).trim();
-                const v = line.substring(colon + 1).trim();
-                if (k && v) parsedHeaders[k] = v;
-              }
-            });
-          }
-        }
-
-        const fetchOpts = { method, headers: parsedHeaders };
-        if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && bodyInput) {
-          fetchOpts.body = bodyInput;
-        }
-
-        const t0 = performance.now();
-        try {
-          const res = await fetch(url, fetchOpts);
-          const t1 = performance.now();
-          const latency = Math.round(t1 - t0);
-
-          if (timeBadge) timeBadge.textContent = `${latency}ms`;
-          if (statusBadge) {
-            statusBadge.textContent = `HTTP ${res.status} ${res.statusText || 'OK'}`;
-            statusBadge.className = 'api-status-badge ' + (res.ok ? 'ok' : 'error');
-          }
-
-          const text = await res.text();
-          let formattedText = text;
-          try {
-            formattedText = JSON.stringify(JSON.parse(text), null, 2);
-          } catch (e) {}
-
-          if (resBodyEl) resBodyEl.value = formattedText;
-          showToast(`API Response received (HTTP ${res.status})`);
-        } catch (err) {
-          const t1 = performance.now();
-          if (timeBadge) timeBadge.textContent = `${Math.round(t1 - t0)}ms`;
-          if (statusBadge) {
-            statusBadge.textContent = 'Network / CORS Error';
-            statusBadge.className = 'api-status-badge error';
-          }
-          if (resBodyEl) resBodyEl.value = `Request Error: ${err.message}\n\nNote: If requesting external URLs, ensure the endpoint supports CORS (Cross-Origin Resource Sharing).`;
-        }
-      });
-    }
-
-    const btnCopyApi = document.getElementById('btnCopyApiResponse');
-    if (btnCopyApi) {
-      btnCopyApi.addEventListener('click', () => {
-        const el = document.getElementById('apiResponseBody');
-        if (el && el.value && navigator.clipboard) {
-          navigator.clipboard.writeText(el.value);
-          showToast('API response body copied');
-        }
-      });
-    }
-
-    // 5. JSON Formatter
-    const jsonIn = document.getElementById('jsonInput');
-    const jsonBadge = document.getElementById('jsonStatusBadge');
-
-    function formatJSONWithIndent(indent) {
-      if (!jsonIn) return;
-      try {
-        const parsed = JSON.parse(jsonIn.value.trim());
-        jsonIn.value = JSON.stringify(parsed, null, indent);
-        if (jsonBadge) { jsonBadge.textContent = 'Valid JSON'; jsonBadge.className = 'json-status-badge valid'; }
-        showToast('JSON formatted successfully');
-      } catch (e) {
-        if (jsonBadge) { jsonBadge.textContent = 'Invalid Syntax: ' + e.message; jsonBadge.className = 'json-status-badge invalid'; }
-        showToast('JSON Syntax Error');
-      }
-    }
-
-    const bJ2 = document.getElementById('btnJsonBeautify2'); if (bJ2) bJ2.addEventListener('click', () => formatJSONWithIndent(2));
-    const bJ4 = document.getElementById('btnJsonBeautify4'); if (bJ4) bJ4.addEventListener('click', () => formatJSONWithIndent(4));
-    const bJMin = document.getElementById('btnJsonMinify'); if (bJMin) bJMin.addEventListener('click', () => formatJSONWithIndent(0));
-
-    const bJVal = document.getElementById('btnJsonValidate');
-    if (bJVal && jsonIn) {
-      bJVal.addEventListener('click', () => {
-        try {
-          JSON.parse(jsonIn.value.trim());
-          if (jsonBadge) { jsonBadge.textContent = 'Valid JSON Syntax'; jsonBadge.className = 'json-status-badge valid'; }
-          showToast('Valid JSON');
-        } catch (e) {
-          if (jsonBadge) { jsonBadge.textContent = 'Syntax Error: ' + e.message; jsonBadge.className = 'json-status-badge invalid'; }
-          showToast('JSON Syntax Error');
-        }
-      });
-    }
-  }
-
-  // --- Cloud Infrastructure Hub Render ---
-  function renderCloudInfrastructureHub() {
-    const runnersGrid = document.getElementById('cloudRunnersGrid');
-    const databasesGrid = document.getElementById('cloudDatabasesGrid');
-    const managersGrid = document.getElementById('cloudManagersGrid');
-    const releasesGrid = document.getElementById('cloudReleasesGrid');
-
-    if (runnersGrid && runnersGrid.children.length === 0) {
-      const runners = CLOUD_INFRA_REPOSITORIES.filter(r => r.type === 'runner');
-      runners.forEach(repo => {
-        const card = document.createElement('div');
-        card.className = 'repo-card';
-        card.innerHTML = `
-          <div class="repo-card-top">
-            <h4 class="repo-name">${repo.title}</h4>
-            <span class="repo-badge runner">5h Loop Active</span>
-          </div>
-          <p class="repo-desc">${repo.desc}</p>
-          <div class="repo-actions">
-            <a href="https://github.com/yasamarium/${repo.name}" target="_blank" class="repo-link-btn">GitHub Repo</a>
-            <a href="https://github.com/yasamarium/${repo.name}/actions" target="_blank" class="repo-link-btn" style="background: rgba(16,185,129,0.15); color: #34d399;">Workflow Runs</a>
-          </div>
-        `;
-        runnersGrid.appendChild(card);
-      });
-    }
-
-    if (databasesGrid && databasesGrid.children.length === 0) {
-      const dbs = CLOUD_INFRA_REPOSITORIES.filter(r => r.type === 'db');
-      dbs.forEach(repo => {
-        const card = document.createElement('div');
-        card.className = 'repo-card';
-        card.innerHTML = `
-          <div class="repo-card-top">
-            <h4 class="repo-name">${repo.title}</h4>
-            <span class="repo-badge db">Git Database</span>
-          </div>
-          <p class="repo-desc">${repo.desc}</p>
-          <div class="repo-actions">
-            <a href="https://github.com/yasamarium/${repo.name}" target="_blank" class="repo-link-btn">GitHub Repo</a>
-            <a href="${repo.rawUrl}" target="_blank" class="repo-link-btn" style="background: rgba(56,189,248,0.15); color: #38bdf8;">View Live JSON</a>
-          </div>
-        `;
-        databasesGrid.appendChild(card);
-      });
-    }
-
-    if (managersGrid && managersGrid.children.length === 0) {
-      const mgrs = CLOUD_INFRA_REPOSITORIES.filter(r => r.type === 'mgr');
-      mgrs.forEach(repo => {
-        const card = document.createElement('div');
-        card.className = 'repo-card';
-        card.innerHTML = `
-          <div class="repo-card-top">
-            <h4 class="repo-name">${repo.title}</h4>
-            <span class="repo-badge mgr">Service Mgr</span>
-          </div>
-          <p class="repo-desc">${repo.desc}</p>
-          <div class="repo-actions">
-            <a href="https://github.com/yasamarium/${repo.name}" target="_blank" class="repo-link-btn">GitHub Repo</a>
-            <a href="https://github.com/yasamarium/${repo.name}/actions" target="_blank" class="repo-link-btn">Workflows</a>
-          </div>
-        `;
-        managersGrid.appendChild(card);
-      });
-    }
-
-    if (releasesGrid && releasesGrid.children.length === 0) {
-      const releaseCard = document.createElement('div');
-      releaseCard.className = 'repo-card';
-      releaseCard.style.gridColumn = '1 / -1';
-      releaseCard.innerHTML = `
-        <div class="repo-card-top">
-          <h4 class="repo-name">Doom / Freedoom Release Asset</h4>
-          <span class="repo-badge runner">v1.0.0 Verified</span>
-        </div>
-        <p class="repo-desc">Pre-compiled standalone release binaries published on GitHub Releases API with automated workflow packaging.</p>
-        <div class="repo-actions">
-          <a href="https://github.com/yasamarium/cloudgame-doom/releases/tag/v1.0.0" target="_blank" class="repo-link-btn" style="background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,182,212,0.2)); color: #34d399;">View v1.0.0 Release</a>
-          <a href="https://github.com/yasamarium/cloudgame-doom/releases" target="_blank" class="repo-link-btn">All Releases</a>
-        </div>
-      `;
-      releasesGrid.appendChild(releaseCard);
-    }
-  }
-
-  // --- Main Setup for Web Services Hub ---
-  function setupWebServicesSystem() {
-    // HUD button & Menu button
-    const hudBtn = document.getElementById('hudWebServicesBtn');
-    if (hudBtn) hudBtn.addEventListener('click', () => openWebServicesModal('links'));
-
-    const menuBtn = document.getElementById('btnOpenWebServices');
-    if (menuBtn) menuBtn.addEventListener('click', () => openWebServicesModal('links'));
-
-    const closeBtn = document.getElementById('btnCloseWebServices');
-    if (closeBtn) closeBtn.addEventListener('click', closeWebServicesModal);
-
-    const doneBtn = document.getElementById('btnDoneWebServices');
-    if (doneBtn) doneBtn.addEventListener('click', closeWebServicesModal);
-
-    // Tab buttons
-    document.querySelectorAll('.services-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tab = btn.getAttribute('data-tab') || (btn.dataset && btn.dataset.tab);
-        if (tab) switchServicesTab(tab);
-      });
-    });
-
-    // Link Shortener events
-    const btnGenLink = document.getElementById('btnGenerateLink');
-    if (btnGenLink) btnGenLink.addEventListener('click', handleCreateShortLink);
-
-    const btnRandomSlug = document.getElementById('btnRandomSlug');
-    if (btnRandomSlug) {
-      btnRandomSlug.addEventListener('click', () => {
-        const slugIn = document.getElementById('linkCustomSlug');
-        if (slugIn) slugIn.value = generateRandomSlug(6);
-      });
-    }
-
-    const btnRefreshLinks = document.getElementById('btnRefreshLinks');
-    if (btnRefreshLinks) {
-      btnRefreshLinks.addEventListener('click', async () => {
-        await loadAndRenderLinks();
-        showToast('Short links refreshed from database');
-      });
-    }
-
-    // QR Studio events
-    setupQRStudioEvents();
-
-    // Pastebin events
-    setupPastebinEvents();
-    const btnRefreshPastes = document.getElementById('btnRefreshPastes');
-    if (btnRefreshPastes) {
-      btnRefreshPastes.addEventListener('click', async () => {
-        await loadAndRenderPastes();
-        showToast('Pastes refreshed from database');
-      });
-    }
-
-    // Dev Utilities events
-    setupDevUtilitiesEvents();
-
-    // Query parameters handling at startup
-    if (typeof window !== 'undefined' && window.location && window.location.search) {
-      const search = window.location.search;
-
-      // 1. ?services=1 or ?tools=1
-      if (search.includes('services=1') || search.includes('tools=1') || search.includes('cloud=1')) {
-        setTimeout(() => openWebServicesModal('links'), 500);
-      }
-
-      // 2. ?s=slug (Redirect visitor)
-      const sMatch = search.match(/[?&]s=([a-zA-Z0-9_-]+)/);
-      if (sMatch && sMatch[1]) {
-        const requestedSlug = sMatch[1].toLowerCase();
-        handleSlugRedirection(requestedSlug);
-      }
-
-      // 3. ?p=slug (Load Paste)
-      const pMatch = search.match(/[?&]p=([a-zA-Z0-9_-]+)/);
-      if (pMatch && pMatch[1]) {
-        const pasteSlug = pMatch[1].toLowerCase();
-        setTimeout(() => {
-          openWebServicesModal('paste');
-          loadPasteBySlug(pasteSlug);
-        }, 600);
-      }
-    }
-  }
-
-  // Handle custom slug redirection
-  async function handleSlugRedirection(slug) {
-    // Check local storage first
-    let targetUrl = null;
-    try {
-      const stored = localStorage.getItem('as_cloud_links');
-      if (stored) {
-        const links = JSON.parse(stored);
-        const match = links.find(l => l.slug && l.slug.toLowerCase() === slug);
-        if (match && match.url) targetUrl = match.url;
-      }
-    } catch (e) {}
-
-    // Check remote DB
-    if (!targetUrl) {
-      try {
-        const res = await fetch('https://raw.githubusercontent.com/yasamarium/cloudgame-db-sessions/main/data/links.json?t=' + Date.now());
-        if (res.ok) {
-          const links = await res.json();
-          const match = links.find(l => l.slug && l.slug.toLowerCase() === slug);
-          if (match && match.url) targetUrl = match.url;
-        }
-      } catch (e) {}
-    }
-
-    // Check defaults
-    if (!targetUrl) {
-      const dMatch = DEFAULT_SERVICES_LINKS.find(l => l.slug === slug);
-      if (dMatch) targetUrl = dMatch.url;
-    }
-
-    if (targetUrl) {
-      showToast(`Redirecting to: ${targetUrl}...`);
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.location) window.location.href = targetUrl;
-      }, 700);
-    } else {
-      showToast(`Short link /s/${slug} not found`);
-    }
-  }
-
-  // Load paste by slug
-  async function loadPasteBySlug(slug) {
-    let match = null;
-    try {
-      const stored = localStorage.getItem('as_cloud_pastes');
-      if (stored) {
-        const pastes = JSON.parse(stored);
-        match = pastes.find(p => p.slug === slug);
-      }
-    } catch (e) {}
-
-    if (!match) {
-      try {
-        const res = await fetch('https://raw.githubusercontent.com/yasamarium/cloudgame-db-users/main/data/pastes.json?t=' + Date.now());
-        if (res.ok) {
-          const pastes = await res.json();
-          match = pastes.find(p => p.slug === slug);
-        }
-      } catch (e) {}
-    }
-
-    if (match) {
-      const titleEl = document.getElementById('pasteTitle');
-      const slugEl = document.getElementById('pasteCustomSlug');
-      const langEl = document.getElementById('pasteLang');
-      const contentEl = document.getElementById('pasteContent');
-
-      if (titleEl) titleEl.value = match.title || '';
-      if (slugEl) slugEl.value = match.slug || '';
-      if (langEl) langEl.value = match.lang || 'javascript';
-      if (contentEl) contentEl.value = match.content || '';
-      showToast(`Opened paste: ${match.title || match.slug}`);
-    }
-  }
-
-    setupWebServicesSystem();
-
     // HUD Action Buttons
-    document.getElementById('hudSoundBtn').addEventListener('click', toggleSound);
-    document.getElementById('hudFullscreenBtn').addEventListener('click', toggleFullscreen);
+    const hudSound = document.getElementById('hudSoundBtn');
+    if (hudSound) hudSound.addEventListener('click', toggleSound);
+    const hudFullscreen = document.getElementById('hudFullscreenBtn');
+    if (hudFullscreen) hudFullscreen.addEventListener('click', toggleFullscreen);
 
     // Settings Sliders Listeners
     setupSettingsSliders();
@@ -8488,8 +7103,14 @@
         player.x = data.player.x;
         player.y = data.player.y;
         player.z = data.player.z;
-        if (Number.isFinite(data.player.yaw)) player.yaw = data.player.yaw;
-        if (Number.isFinite(data.player.pitch)) player.pitch = data.player.pitch;
+        if (Number.isFinite(data.player.yaw)) {
+          player.yaw = data.player.yaw;
+          player.targetYaw = data.player.yaw;
+        }
+        if (Number.isFinite(data.player.pitch)) {
+          player.pitch = data.player.pitch;
+          player.targetPitch = data.player.pitch;
+        }
         if (Array.isArray(data.player.hotbar) && data.player.hotbar.length === 9) {
           player.hotbar = data.player.hotbar;
         }
