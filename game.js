@@ -644,7 +644,7 @@
       if (settings.mobilePreset === 'sharp') return Math.min(dpr, 1.25);
       return Math.min(dpr, 1.0);
     }
-    return Math.min(dpr, 1.5);
+    return Math.min(dpr, 1.25);
   }
 
   // Mobile Touch Input State
@@ -737,6 +737,9 @@
   let lastFrameTime = performance.now();
   let lastSpacePressTime = 0;
   let dayTime = 0.25; // 0: dawn, 0.25: noon, 0.5: sunset, 0.75: midnight
+  let lastSkyUpdateDayTime = -1;
+  const _rayOrigin = new THREE.Vector3();
+  const _rayDir = new THREE.Vector3();
   let isPaused = true;
   let isInventoryOpen = false;
   let isDead = false;
@@ -3322,8 +3325,7 @@
                 normals: [],
                 uvs: [],
                 colors: [],
-                indices: [],
-                groups: [],
+                indicesByMat: [[], [], [], [], [], []],
                 vertCount: 0
               };
             }
@@ -3411,47 +3413,81 @@
             // Shading colors
             batch.colors.push(ao0, ao0, ao0, ao1, ao1, ao1, ao2, ao2, ao2, ao3, ao3, ao3);
 
-            // Record multi-material group for this face
-            const indexStart = batch.indices.length;
-            batch.indices.push(vBase, vBase + 1, vBase + 2, vBase, vBase + 2, vBase + 3);
-            batch.groups.push({ start: indexStart, count: 6, matIdx: face.matIdx });
+            // Bucket indices directly by material index to eliminate thousands of draw calls
+            batch.indicesByMat[face.matIdx].push(vBase, vBase + 1, vBase + 2, vBase, vBase + 2, vBase + 3);
             batch.vertCount += 4;
           }
         }
       }
     }
 
-    // Assemble chunk mesh group
+    // Assemble chunk mesh group with optimal 1-to-3 draw call batching
     const chunkGroup = new THREE.Group();
 
     for (const blockIdStr in blockBatches) {
       const bId = parseInt(blockIdStr);
       const batch = blockBatches[bId];
-      if (batch.indices.length === 0) continue;
+      if (batch.vertCount === 0) continue;
 
       const geom = new THREE.BufferGeometry();
       geom.setAttribute('position', new THREE.Float32BufferAttribute(batch.positions, 3));
       geom.setAttribute('normal', new THREE.Float32BufferAttribute(batch.normals, 3));
       geom.setAttribute('uv', new THREE.Float32BufferAttribute(batch.uvs, 2));
       geom.setAttribute('color', new THREE.Float32BufferAttribute(batch.colors, 3));
-      geom.setIndex(batch.indices);
-
-      // Assign face material groups (allows top, side, and bottom textures to render correctly)
-      for (let i = 0; i < batch.groups.length; i++) {
-        const g = batch.groups[i];
-        geom.addGroup(g.start, g.count, g.matIdx);
-      }
 
       const mats = blockMaterials[bId] || [new THREE.MeshLambertMaterial({ color: 0x888888 })];
-      const mesh = new THREE.Mesh(geom, mats);
+      const isMultiMat = Array.isArray(mats) && mats.length > 1;
+      const isActuallySingle = !isMultiMat || mats.every(m => m === mats[0]);
 
-      if (bId === BLOCKS.WATER) {
-        mesh.renderOrder = 2; // Water rendered cleanly above solids
+      if (isActuallySingle) {
+        // Flat index buffer with 0 groups -> exactly 1 draw call!
+        const allIndices = [];
+        for (let m = 0; m < 6; m++) {
+          const list = batch.indicesByMat[m];
+          if (list && list.length > 0) {
+            for (let j = 0; j < list.length; j++) allIndices.push(list[j]);
+          }
+        }
+        geom.setIndex(allIndices);
+        const singleMat = isMultiMat ? mats[0] : mats;
+        const mesh = new THREE.Mesh(geom, singleMat);
+        mesh.frustumCulled = true;
+        if (bId === BLOCKS.WATER) mesh.renderOrder = 2;
+        geom.computeBoundingSphere();
+        chunkGroup.add(mesh);
+      } else {
+        // Multi-material (Grass, Logs, Bookshelf, TNT, Snow)
+        // Group all faces sharing the same material instance into ONE single draw call!
+        const allIndices = [];
+        const matToIndices = new Map();
+        for (let m = 0; m < mats.length; m++) {
+          const targetMat = mats[m];
+          if (!matToIndices.has(targetMat)) {
+            matToIndices.set(targetMat, { matIdx: m, indices: [] });
+          }
+          const list = batch.indicesByMat[m];
+          if (list && list.length > 0) {
+            const entry = matToIndices.get(targetMat);
+            for (let j = 0; j < list.length; j++) entry.indices.push(list[j]);
+          }
+        }
+
+        for (const entry of matToIndices.values()) {
+          if (entry.indices.length > 0) {
+            const start = allIndices.length;
+            const count = entry.indices.length;
+            geom.addGroup(start, count, entry.matIdx);
+            for (let j = 0; j < entry.indices.length; j++) allIndices.push(entry.indices[j]);
+          }
+        }
+
+        geom.setIndex(allIndices);
+        const mesh = new THREE.Mesh(geom, mats);
+        mesh.frustumCulled = true;
+        if (bId === BLOCKS.WATER) mesh.renderOrder = 2;
+        geom.computeBoundingSphere();
+        chunkGroup.add(mesh);
       }
-
-      geom.computeBoundingSphere();
-      geom.computeBoundingBox();
-      chunkGroup.add(mesh);
     }
 
     chunk.mesh = chunkGroup;
@@ -3788,9 +3824,10 @@
   // Robust DDA Voxel Raycaster (Guaranteed Finite & Zero-Division Proof)
   // =========================================================================
   function raycastBlock(maxDist = 6.0) {
-    const origin = new THREE.Vector3(player.x, player.y + player.eyeHeight, player.z);
-    const dir = new THREE.Vector3();
-    camera.getWorldDirection(dir);
+    _rayOrigin.set(player.x, player.y + player.eyeHeight, player.z);
+    camera.getWorldDirection(_rayDir);
+    const origin = _rayOrigin;
+    const dir = _rayDir;
 
     // Prevent division by zero
     const dx = Math.abs(dir.x) < 1e-6 ? (dir.x >= 0 ? 1e-6 : -1e-6) : dir.x;
@@ -4416,15 +4453,8 @@
   function updateAmbientDust(dt) {
     if (!ambientDust) return;
     ambientDust.position.set(player.x, player.y, player.z);
-    const posAttr = ambientDust.geometry.attributes.position;
-    for (let i = 0; i < posAttr.count; i++) {
-      let py = posAttr.getY(i);
-      py += dt * (0.15 + Math.sin(i * 0.7) * 0.1);
-      if (py > 30) py -= 25;
-      posAttr.setY(i, py);
-      posAttr.setX(i, posAttr.getX(i) + Math.sin(performance.now() * 0.0003 + i) * dt * 0.3);
-    }
-    posAttr.needsUpdate = true;
+    ambientDust.rotation.y += dt * 0.025;
+    ambientDust.rotation.x += dt * 0.012;
     const isDay = (dayTime > 0.10 && dayTime < 0.45);
     ambientDust.material.opacity = isDay ? 0.12 : 0.03;
   }
@@ -5916,8 +5946,9 @@
       scene.fog.color = fogColor;
     }
 
-    // Update sky dome vertex colors (smooth zenith to horizon gradient)
-    if (skyDome) {
+    // Update sky dome vertex colors (smooth zenith to horizon gradient, throttled for 60 FPS)
+    if (skyDome && Math.abs(dayTime - lastSkyUpdateDayTime) > 0.005) {
+      lastSkyUpdateDayTime = dayTime;
       const posAttr = skyDome.geometry.attributes.position;
       const colAttr = skyDome.geometry.attributes.color;
       for (let i = 0; i < posAttr.count; i++) {
@@ -5930,6 +5961,10 @@
       }
       colAttr.needsUpdate = true;
     }
+
+    // Toggle inactive directional light to save fragment shader ALU
+    sunLight.visible = (sunLight.intensity > 0.03);
+    moonLight.visible = (moonLight.intensity > 0.03);
 
     // HUD time label
     const hudTime = document.getElementById('hudTimeBadge');
@@ -5988,6 +6023,15 @@
           chunkMeshQueue.push(chunk);
         }
       }
+    }
+
+    // Sort mesh queue once when loaded chunks are updated
+    if (chunkMeshQueue.length > 1) {
+      chunkMeshQueue.sort((a, b) => {
+        const distA = (a.cx - playerChunkX) ** 2 + (a.cz - playerChunkZ) ** 2;
+        const distB = (b.cx - playerChunkX) ** 2 + (b.cz - playerChunkZ) ** 2;
+        return distA - distB;
+      });
     }
 
     // Safely unload distant chunks
@@ -7496,12 +7540,8 @@
       if (target) {
         wireframeTargetBox.visible = true;
         wireframeTargetBox.position.set(target.x + 0.5, target.y + 0.5, target.z + 0.5);
-        const dbgTarget = document.getElementById('debugTarget');
-        if (dbgTarget) dbgTarget.textContent = `${BLOCK_NAMES[target.block]} at (${target.x}, ${target.y}, ${target.z})`;
       } else {
         wireframeTargetBox.visible = false;
-        const dbgTarget = document.getElementById('debugTarget');
-        if (dbgTarget) dbgTarget.textContent = 'Air';
       }
 
       // 7. Dynamic Chunk Streaming (Only recalculates when entering a new chunk)
@@ -7537,6 +7577,12 @@
     document.getElementById('debugChunk').textContent = `${cx}, ${cz}`;
     document.getElementById('debugBiome').textContent = getBiome(Math.floor(player.x), Math.floor(player.z));
     document.getElementById('debugFlight').textContent = player.isFlying ? 'Active' : 'Off';
+
+    const dbgTarget = document.getElementById('debugTarget');
+    if (dbgTarget) {
+      const target = raycastBlock();
+      dbgTarget.textContent = target ? `${BLOCK_NAMES[target.block]} at (${target.x}, ${target.y}, ${target.z})` : 'Air';
+    }
   }
 
   // =========================================================================
