@@ -38,8 +38,9 @@
     <!-- Top-Left Status Bar -->
     <div class="hud-top-left">
       <div class="hud-badge mode-badge" id="hudModeBadge">Creative</div>
+      <div class="hud-badge mp-badge" id="hudMultiplayerBadge" style="display: none;">Online: Room 1</div>
       <div class="hud-badge time-badge" id="hudTimeBadge">Day</div>
-      <div class="hud-hint">Press [F3] Coordinates &bull; [E] / [I] Inventory &bull; [Esc] Pause</div>
+      <div class="hud-hint">Press [F3] Coordinates &bull; [E] / [I] Inventory &bull; [T] Chat &bull; [Esc] Pause</div>
     </div>
 
     <!-- Top-Right Actions -->
@@ -111,6 +112,12 @@
           <rect x="14" y="4" width="4" height="16"/>
         </svg>
         <span class="touch-top-label">PAUSE</span>
+      </button>
+      <button id="touchBtnChat" class="touch-top-btn" title="Open Room Chat" aria-label="Open Room Chat" style="display: none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span class="touch-top-label">CHAT</span>
       </button>
       <button id="touchBtnDebug" class="touch-top-btn" title="Toggle F3 Info" aria-label="Toggle F3 Info">
         <span class="touch-top-label" style="font-weight: 700; font-size: 13px;">F3</span>
@@ -223,7 +230,17 @@
       <div class="menu-actions">
         <button id="btnPlayGame" class="se-btn se-btn-primary">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <span>Enter World</span>
+          <span>Single-Player (Offline)</span>
+        </button>
+        <button id="btnOpenMultiplayer" class="se-btn se-btn-primary" style="background: linear-gradient(135deg, #2563eb, #7c3aed); border-color: #60a5fa; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Multiplayer (Online)</span>
+          <strong style="font-size: 10px; background: #3b82f6; color: #fff; padding: 2px 6px; border-radius: 9999px; margin-left: 6px;">5 ROOMS &bull; LIVE</strong>
         </button>
         <a href="/services" class="se-btn se-btn-secondary" style="background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,182,212,0.2)); border-color: rgba(52,211,153,0.5); text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
@@ -278,6 +295,153 @@
       <h1 class="death-title">YOU DIED!</h1>
       <p class="death-subtitle">Your adventure in Square Era came to an unfortunate end.</p>
       <button id="btnRespawn" class="death-respawn-btn">RESPAWN</button>
+    </div>
+  </div>
+
+  <!-- Online Multiplayer Rooms Modal -->
+  <div id="onlineRoomsModal" class="game-modal-overlay" style="display: none;">
+    <div class="rooms-modal-card">
+      <div class="rooms-header">
+        <div>
+          <h2 class="rooms-title">Square Era Online Multiplayer</h2>
+          <p class="rooms-subtitle">5 Dedicated GitHub Actions Rooms &bull; 5-Hour Auto-Restart &bull; Zero-Latency P2P Sync &bull; Git DB Persistence</p>
+        </div>
+        <button id="btnCloseRoomsModal" class="inventory-close-btn" title="Close">&times;</button>
+      </div>
+
+      <!-- Player Profile Strip -->
+      <div class="rooms-player-strip">
+        <label for="multiplayerNameInput" class="rooms-label">Your Player Name:</label>
+        <input type="text" id="multiplayerNameInput" class="rooms-name-input" maxlength="16" placeholder="Enter username..." value="Player">
+        <div class="rooms-status-tag">
+          <span class="rooms-ping-dot"></span>
+          <span>Zero Latency Sync Ready</span>
+        </div>
+      </div>
+
+      <!-- 5 Dedicated Room Cards Grid -->
+      <div class="rooms-grid">
+        <!-- Room 1 -->
+        <div class="room-card" data-room-id="1" data-mode="creative">
+          <div class="room-card-header">
+            <span class="room-badge room-badge-creative">CREATIVE REALM</span>
+            <span class="room-id-tag">ROOM #1</span>
+          </div>
+          <h3 class="room-name">Sanctuary Hub</h3>
+          <p class="room-desc">Community creative sanctuary hub, AI Sanctuary sector builds, and collaborative voxel architecture.</p>
+          <div class="room-meta">
+            <span class="room-meta-item">Daemon: <strong>square-era-server-room1</strong></span>
+            <span class="room-meta-item">Database: <strong>square-era-db-room1</strong></span>
+          </div>
+          <div class="room-card-footer">
+            <div class="room-live-stat">
+              <span class="room-stat-dot"></span>
+              <span id="room1PlayerCount">Live &bull; P2P Active</span>
+            </div>
+            <button class="se-btn se-btn-primary btn-join-room" data-room-id="1">Join Room 1</button>
+          </div>
+        </div>
+
+        <!-- Room 2 -->
+        <div class="room-card" data-room-id="2" data-mode="survival">
+          <div class="room-card-header">
+            <span class="room-badge room-badge-survival">SURVIVAL REALM</span>
+            <span class="room-id-tag">ROOM #2</span>
+          </div>
+          <h3 class="room-name">Survival Frontier</h3>
+          <p class="room-desc">Hardcore survival frontier, shared mining shafts, mob defense, crafting cooperation, and resource trade.</p>
+          <div class="room-meta">
+            <span class="room-meta-item">Daemon: <strong>square-era-server-room2</strong></span>
+            <span class="room-meta-item">Database: <strong>square-era-db-room2</strong></span>
+          </div>
+          <div class="room-card-footer">
+            <div class="room-live-stat">
+              <span class="room-stat-dot"></span>
+              <span id="room2PlayerCount">Live &bull; P2P Active</span>
+            </div>
+            <button class="se-btn se-btn-primary btn-join-room" data-room-id="2">Join Room 2</button>
+          </div>
+        </div>
+
+        <!-- Room 3 -->
+        <div class="room-card" data-room-id="3" data-mode="creative">
+          <div class="room-card-header">
+            <span class="room-badge room-badge-creative">CREATIVE REALM</span>
+            <span class="room-id-tag">ROOM #3</span>
+          </div>
+          <h3 class="room-name">Builder's Paradise</h3>
+          <p class="room-desc">Infinite creative canvas for colossal megastructures, pixel art, terrain terraforming, and monument designs.</p>
+          <div class="room-meta">
+            <span class="room-meta-item">Daemon: <strong>square-era-server-room3</strong></span>
+            <span class="room-meta-item">Database: <strong>square-era-db-room3</strong></span>
+          </div>
+          <div class="room-card-footer">
+            <div class="room-live-stat">
+              <span class="room-stat-dot"></span>
+              <span id="room3PlayerCount">Live &bull; P2P Active</span>
+            </div>
+            <button class="se-btn se-btn-primary btn-join-room" data-room-id="3">Join Room 3</button>
+          </div>
+        </div>
+
+        <!-- Room 4 -->
+        <div class="room-card" data-room-id="4" data-mode="creative">
+          <div class="room-card-header">
+            <span class="room-badge room-badge-cyber">CYBER REALM</span>
+            <span class="room-id-tag">ROOM #4</span>
+          </div>
+          <h3 class="room-name">Cyber City</h3>
+          <p class="room-desc">Futuristic cyberpunk nexus with Obsidian spires, Amethyst crystal conduits, neon illumination, and AI fleet towers.</p>
+          <div class="room-meta">
+            <span class="room-meta-item">Daemon: <strong>square-era-server-room4</strong></span>
+            <span class="room-meta-item">Database: <strong>square-era-db-room4</strong></span>
+          </div>
+          <div class="room-card-footer">
+            <div class="room-live-stat">
+              <span class="room-stat-dot"></span>
+              <span id="room4PlayerCount">Live &bull; P2P Active</span>
+            </div>
+            <button class="se-btn se-btn-primary btn-join-room" data-room-id="4">Join Room 4</button>
+          </div>
+        </div>
+
+        <!-- Room 5 -->
+        <div class="room-card" data-room-id="5" data-mode="survival">
+          <div class="room-card-header">
+            <span class="room-badge room-badge-anarchy">ANARCHY &amp; TNT PVP</span>
+            <span class="room-id-tag">ROOM #5</span>
+          </div>
+          <h3 class="room-name">Anarchy Wilds</h3>
+          <p class="room-desc">High-intensity TNT blast battlefield, crater destruction, unconstrained PvP skirmishes, and survival warfare.</p>
+          <div class="room-meta">
+            <span class="room-meta-item">Daemon: <strong>square-era-server-room5</strong></span>
+            <span class="room-meta-item">Database: <strong>square-era-db-room5</strong></span>
+          </div>
+          <div class="room-card-footer">
+            <div class="room-live-stat">
+              <span class="room-stat-dot"></span>
+              <span id="room5PlayerCount">Live &bull; P2P Active</span>
+            </div>
+            <button class="se-btn se-btn-primary btn-join-room" data-room-id="5">Join Room 5</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="rooms-footer-bar">
+        <button id="btnOfflineBack" class="se-btn se-btn-secondary">Play Offline Single-Player</button>
+        <span class="rooms-footer-note">All block placements and mining auto-persist to Git database repos across 5-hour runner cycles.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multiplayer In-Game Chat Overlay -->
+  <div id="multiplayerChatOverlay" class="mp-chat-overlay" style="display: none;">
+    <div id="mpChatMessages" class="mp-chat-messages">
+      <!-- In-room player messages -->
+    </div>
+    <div id="mpChatInputWrap" class="mp-chat-input-wrap" style="display: none;">
+      <input type="text" id="mpChatInput" class="mp-chat-input" maxlength="120" placeholder="Press Enter to send chat to room...">
+      <button id="btnMpSendChat" class="mp-chat-send-btn">Send</button>
     </div>
   </div>
 

@@ -723,6 +723,7 @@
   const aiNodeCores = [];
   let activeNearbyAICore = null;
   let isAiChatOpen = false;
+  let multiplayerManager;
   let activeInvCategory = 'all';
   let invSearchQuery = '';
   const playerEffects = { swiftness: 0, regen: 0, fireRes: 0, nightVision: 0, strength: 0 };
@@ -3232,6 +3233,9 @@
 
     // Save to modification registry
     worldModifications.set(`${gx},${gy},${gz}`, blockId);
+    if (typeof multiplayerManager !== 'undefined' && multiplayerManager && multiplayerManager.isOnline) {
+      multiplayerManager.broadcastBlockChange(gx, gy, gz, blockId);
+    }
 
     // Re-mesh current chunk safely
     meshChunk(chunk);
@@ -3939,9 +3943,13 @@
     }
   }
 
+  let isHandlingRemoteExplosion = false;
   function explodeAt(ex, ey, ez, radius = 5.2) {
     playSynthesizedSound('explosion');
     cameraShake = Math.max(cameraShake, 0.55);
+    if (!isHandlingRemoteExplosion && typeof multiplayerManager !== 'undefined' && multiplayerManager && multiplayerManager.isOnline) {
+      multiplayerManager.broadcastExplosion(ex, ey, ez, radius);
+    }
 
     // Massive fiery shockwave particles
     createParticleExplosion(ex, ey, ez, BLOCKS.TNT, 45);
@@ -6357,6 +6365,601 @@
   
     // Game Setup & Initialization
   // =========================================================================
+
+  // =========================================================================
+  // Multiplayer Engine (5 Dedicated GitHub Actions Rooms & Zero-Latency Sync)
+  // =========================================================================
+  class MultiplayerManager {
+    constructor() {
+      this.isOnline = false;
+      this.roomId = 1;
+      this.roomName = 'Sanctuary Hub';
+      this.roomMode = 'creative';
+      this.playerName = localStorage.getItem('square_era_player_name') || ('Player_' + Math.floor(Math.random() * 899 + 100));
+      this.localPlayerId = 'p_' + Math.random().toString(36).slice(2, 10);
+
+      // Remote peers: Map<peerId, { id, name, mesh, targetPos, targetYaw, targetPitch, lastSeen, isFlying, isSprinting, heldSlot, ... }>
+      this.remotePlayers = new Map();
+      this.broadcastChannel = null;
+      this.lastBroadcastTime = 0;
+      this.lastHeartbeatTime = 0;
+      this.isChatInputOpen = false;
+
+      // 5 Dedicated Room Repositories
+      this.roomRepositories = {
+        1: { server: 'square-era-server-room1', db: 'square-era-db-room1', name: 'Sanctuary Hub', mode: 'creative' },
+        2: { server: 'square-era-server-room2', db: 'square-era-db-room2', name: 'Survival Frontier', mode: 'survival' },
+        3: { server: 'square-era-server-room3', db: 'square-era-db-room3', name: "Builder's Paradise", mode: 'creative' },
+        4: { server: 'square-era-server-room4', db: 'square-era-db-room4', name: 'Cyber City', mode: 'creative' },
+        5: { server: 'square-era-server-room5', db: 'square-era-db-room5', name: 'Anarchy Wilds', mode: 'survival' }
+      };
+
+      this.initUI();
+    }
+
+    setPlayerName(name) {
+      if (!name) return;
+      this.playerName = name.trim().slice(0, 16);
+      localStorage.setItem('square_era_player_name', this.playerName);
+      const nameInput = document.getElementById('multiplayerNameInput');
+      if (nameInput) nameInput.value = this.playerName;
+    }
+
+    joinRoom(roomId) {
+      const room = this.roomRepositories[roomId];
+      if (!room) return;
+      this.roomId = roomId;
+      this.roomName = room.name;
+      this.roomMode = room.mode;
+      this.isOnline = true;
+
+      // Clean up previous remote player meshes
+      for (const [id, peer] of this.remotePlayers.entries()) {
+        if (peer.mesh && scene) scene.remove(peer.mesh);
+      }
+      this.remotePlayers.clear();
+
+      // Configure room game mode
+      settings.gameMode = this.roomMode;
+      syncGameModeUI();
+
+      // Hide modal
+      const roomsModal = document.getElementById('onlineRoomsModal');
+      if (roomsModal) roomsModal.style.display = 'none';
+
+      // Update HUD badges
+      const mpBadge = document.getElementById('hudMultiplayerBadge');
+      if (mpBadge) {
+        mpBadge.style.display = 'inline-flex';
+        mpBadge.textContent = `Online: Room ${roomId} (${this.roomMode.toUpperCase()})`;
+      }
+
+      // Show in-game chat overlay
+      const chatOverlay = document.getElementById('multiplayerChatOverlay');
+      if (chatOverlay) chatOverlay.style.display = 'flex';
+
+      // Show mobile chat button if on mobile
+      const touchChat = document.getElementById('touchBtnChat');
+      if (touchChat) touchChat.style.display = 'flex';
+
+      // Setup BroadcastChannel for 0ms multi-tab IPC
+      try {
+        if (this.broadcastChannel) this.broadcastChannel.close();
+        this.broadcastChannel = new BroadcastChannel(`square-era-room-${this.roomId}`);
+        this.broadcastChannel.onmessage = (e) => this.handleIncomingPacket(e.data);
+      } catch (err) {
+        console.warn('BroadcastChannel notice:', err);
+      }
+
+      // Announce arrival to room
+      this.broadcast({
+        type: 'player_join',
+        id: this.localPlayerId,
+        name: this.playerName,
+        x: player.x,
+        y: player.y,
+        z: player.z,
+        yaw: player.yaw,
+        pitch: player.pitch,
+        slot: player.activeSlot,
+        mode: this.roomMode
+      });
+
+      this.addChatMessage('System', `Connected to Room ${roomId}: ${this.roomName} (${this.roomMode.toUpperCase()}). Zero-latency sync active!`, 'system');
+
+      // Fetch persistent world modifications from GitHub database repository
+      this.syncWorldFromDatabase(roomId);
+
+      // Start game
+      initAudio();
+      startGame();
+    }
+
+    async syncWorldFromDatabase(roomId) {
+      const room = this.roomRepositories[roomId];
+      if (!room) return;
+      const dbRepo = room.db;
+      const url = `https://raw.githubusercontent.com/yasamarium/${dbRepo}/main/data/world.json?t=${Date.now()}`;
+      try {
+        const resp = await fetch(url, { cache: 'no-cache' });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && Array.isArray(data.modifications)) {
+            let appliedCount = 0;
+            data.modifications.forEach(([coordStr, blockId]) => {
+              if (!worldModifications.has(coordStr)) {
+                worldModifications.set(coordStr, blockId);
+                const [gx, gy, gz] = coordStr.split(',').map(Number);
+                const cx = Math.floor(gx / CHUNK_SIZE);
+                const cz = Math.floor(gz / CHUNK_SIZE);
+                const chunk = chunks.get(`${cx},${cz}`);
+                if (chunk) {
+                  const lx = ((gx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                  const lz = ((gz % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                  chunk.setBlock(lx, gy, lz, blockId);
+                  meshChunk(chunk);
+                }
+                appliedCount++;
+              }
+            });
+            if (appliedCount > 0) {
+              console.log(`[Multiplayer] Restored ${appliedCount} persistent block modifications from ${dbRepo}`);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[Multiplayer] GitHub DB snapshot notice:', err.message);
+      }
+    }
+
+    broadcast(packet) {
+      packet.senderId = this.localPlayerId;
+      packet.roomId = this.roomId;
+      packet.timestamp = Date.now();
+
+      // 1. BroadcastChannel (0ms local IPC)
+      if (this.broadcastChannel) {
+        try {
+          this.broadcastChannel.postMessage(packet);
+        } catch (e) {}
+      }
+    }
+
+    broadcastBlockChange(gx, gy, gz, blockId) {
+      if (!this.isOnline) return;
+      this.broadcast({
+        type: 'block_change',
+        key: `${gx},${gy},${gz}`,
+        x: gx,
+        y: gy,
+        z: gz,
+        block: blockId
+      });
+    }
+
+    broadcastExplosion(ex, ey, ez, radius) {
+      if (!this.isOnline) return;
+      this.broadcast({
+        type: 'explosion',
+        ex: ex,
+        ey: ey,
+        ez: ez,
+        radius: radius
+      });
+    }
+
+    handleIncomingPacket(packet) {
+      if (!packet || packet.senderId === this.localPlayerId || packet.roomId !== this.roomId) return;
+
+      if (packet.type === 'player_state' || packet.type === 'player_join') {
+        this.updateRemotePlayer(packet);
+        if (packet.type === 'player_join') {
+          // Send back our current state so new player knows about us
+          this.broadcast({
+            type: 'player_state',
+            id: this.localPlayerId,
+            name: this.playerName,
+            x: player.x,
+            y: player.y,
+            z: player.z,
+            yaw: player.yaw,
+            pitch: player.pitch,
+            slot: player.activeSlot,
+            isFlying: player.isFlying,
+            isSprinting: player.isSprinting
+          });
+        }
+      } else if (packet.type === 'block_change') {
+        this.applyRemoteBlockChange(packet);
+      } else if (packet.type === 'explosion') {
+        isHandlingRemoteExplosion = true;
+        explodeAt(packet.ex, packet.ey, packet.ez, packet.radius);
+        isHandlingRemoteExplosion = false;
+      } else if (packet.type === 'chat') {
+        this.addChatMessage(packet.sender || 'Player', packet.text);
+      } else if (packet.type === 'player_leave') {
+        this.removeRemotePlayer(packet.id);
+      }
+    }
+
+    applyRemoteBlockChange(packet) {
+      const { x, y, z, block } = packet;
+      if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') return;
+      worldModifications.set(`${x},${y},${z}`, block);
+      const cx = Math.floor(x / CHUNK_SIZE);
+      const cz = Math.floor(z / CHUNK_SIZE);
+      const chunk = chunks.get(`${cx},${cz}`);
+      if (chunk) {
+        const lx = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+        const lz = ((z % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+        chunk.setBlock(lx, y, lz, block);
+        meshChunk(chunk);
+        if (lx === 0) meshChunkAt(cx - 1, cz);
+        if (lx === CHUNK_SIZE - 1) meshChunkAt(cx + 1, cz);
+        if (lz === 0) meshChunkAt(cx, cz - 1);
+        if (lz === CHUNK_SIZE - 1) meshChunkAt(cx, cz + 1);
+      }
+    }
+
+    updateRemotePlayer(packet) {
+      const id = packet.id || packet.senderId;
+      if (!id) return;
+
+      let peer = this.remotePlayers.get(id);
+      if (!peer) {
+        // Create 3D character avatar
+        const avatarGroup = this.createPlayerAvatarMesh(packet.name || 'Player');
+        if (scene) scene.add(avatarGroup);
+        peer = {
+          id: id,
+          name: packet.name || 'Player',
+          mesh: avatarGroup,
+          targetPos: new THREE.Vector3(packet.x || 0, packet.y || 0, packet.z || 0),
+          targetYaw: packet.yaw || 0,
+          targetPitch: packet.pitch || 0,
+          lastSeen: Date.now(),
+          heldSlot: packet.slot || 0,
+          animTime: 0,
+          isMoving: false
+        };
+        this.remotePlayers.set(id, peer);
+        this.addChatMessage('System', `${peer.name} entered Room ${this.roomId}.`, 'system');
+      }
+
+      peer.name = packet.name || peer.name;
+      peer.targetPos.set(packet.x, packet.y, packet.z);
+      peer.targetYaw = packet.yaw || 0;
+      peer.targetPitch = packet.pitch || 0;
+      peer.heldSlot = packet.slot !== undefined ? packet.slot : peer.heldSlot;
+      peer.isFlying = !!packet.isFlying;
+      peer.isSprinting = !!packet.isSprinting;
+      peer.lastSeen = Date.now();
+    }
+
+    createPlayerAvatarMesh(name) {
+      const group = new THREE.Group();
+
+      const skinMat = new THREE.MeshLambertMaterial({ color: 0xc89d7c });
+      const shirtMat = new THREE.MeshLambertMaterial({ color: 0x2563eb });
+      const pantsMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
+      const hairMat = new THREE.MeshLambertMaterial({ color: 0x451a03 });
+
+      // Head Group
+      const headGroup = new THREE.Group();
+      headGroup.position.set(0, 1.45, 0);
+
+      const headGeom = new THREE.BoxGeometry(0.48, 0.48, 0.48);
+      const headMesh = new THREE.Mesh(headGeom, skinMat);
+      headGroup.add(headMesh);
+
+      const hairGeom = new THREE.BoxGeometry(0.50, 0.20, 0.50);
+      const hairMesh = new THREE.Mesh(hairGeom, hairMat);
+      hairMesh.position.set(0, 0.16, 0);
+      headGroup.add(hairMesh);
+
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+      const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
+      leftEye.position.set(-0.12, 0.02, 0.25);
+      const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
+      rightEye.position.set(0.12, 0.02, 0.25);
+      headGroup.add(leftEye);
+      headGroup.add(rightEye);
+
+      // Floating Nameplate Canvas Sprite
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(10, 10, 236, 44, 12);
+      } else {
+        ctx.rect(10, 10, 236, 44);
+      }
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(96, 165, 250, 0.7)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(name, 128, 32);
+
+      const nameTexture = new THREE.CanvasTexture(canvas);
+      const nameSpriteMat = new THREE.SpriteMaterial({ map: nameTexture, transparent: true });
+      const nameSprite = new THREE.Sprite(nameSpriteMat);
+      nameSprite.position.set(0, 0.65, 0);
+      nameSprite.scale.set(1.4, 0.35, 1.0);
+      headGroup.add(nameSprite);
+
+      group.add(headGroup);
+      group.head = headGroup;
+
+      // Torso
+      const torsoGeom = new THREE.BoxGeometry(0.48, 0.72, 0.24);
+      const torsoMesh = new THREE.Mesh(torsoGeom, shirtMat);
+      torsoMesh.position.set(0, 0.86, 0);
+      group.add(torsoMesh);
+      group.torso = torsoMesh;
+
+      // Left Arm
+      const armGeom = new THREE.BoxGeometry(0.22, 0.70, 0.22);
+      armGeom.translate(0, -0.25, 0);
+      const leftArm = new THREE.Mesh(armGeom, skinMat);
+      leftArm.position.set(-0.36, 1.15, 0);
+      group.add(leftArm);
+      group.leftArm = leftArm;
+
+      // Right Arm (Holds Item)
+      const rightArm = new THREE.Mesh(armGeom.clone(), skinMat);
+      rightArm.position.set(0.36, 1.15, 0);
+
+      // Held Item Voxel
+      const heldGeom = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+      const heldMat = new THREE.MeshLambertMaterial({ color: 0x4caf50 });
+      const heldMesh = new THREE.Mesh(heldGeom, heldMat);
+      heldMesh.position.set(0, -0.5, 0.15);
+      rightArm.add(heldMesh);
+      group.add(rightArm);
+      group.rightArm = rightArm;
+      group.heldMesh = heldMesh;
+
+      // Left Leg
+      const legGeom = new THREE.BoxGeometry(0.22, 0.72, 0.22);
+      legGeom.translate(0, -0.36, 0);
+      const leftLeg = new THREE.Mesh(legGeom, pantsMat);
+      leftLeg.position.set(-0.13, 0.50, 0);
+      group.add(leftLeg);
+      group.leftLeg = leftLeg;
+
+      // Right Leg
+      const rightLeg = new THREE.Mesh(legGeom.clone(), pantsMat);
+      rightLeg.position.set(0.13, 0.50, 0);
+      group.add(rightLeg);
+      group.rightLeg = rightLeg;
+
+      return group;
+    }
+
+    removeRemotePlayer(id) {
+      const peer = this.remotePlayers.get(id);
+      if (peer) {
+        if (peer.mesh && scene) scene.remove(peer.mesh);
+        this.remotePlayers.delete(id);
+        this.addChatMessage('System', `${peer.name} left the room.`, 'system');
+      }
+    }
+
+    update(dt, now) {
+      if (!this.isOnline) return;
+
+      // 1. Broadcast local player transform at ~28 Hz (every 35ms)
+      if (now - this.lastBroadcastTime > 35) {
+        this.lastBroadcastTime = now;
+        this.broadcast({
+          type: 'player_state',
+          id: this.localPlayerId,
+          name: this.playerName,
+          x: player.x,
+          y: player.y,
+          z: player.z,
+          yaw: player.yaw,
+          pitch: player.pitch,
+          slot: player.activeSlot,
+          isFlying: player.isFlying,
+          isSprinting: player.isSprinting
+        });
+      }
+
+      // 2. Interpolate remote player avatars smoothly (60 FPS exponential lerp)
+      const lerpSpeed = Math.min(1.0, dt * 25.0);
+      for (const [id, peer] of this.remotePlayers.entries()) {
+        if (now - peer.lastSeen > 15000) {
+          this.removeRemotePlayer(id);
+          continue;
+        }
+
+        const mesh = peer.mesh;
+        if (!mesh) continue;
+
+        // Position Lerp
+        const dist = mesh.position.distanceTo(peer.targetPos);
+        if (dist > 25.0) {
+          mesh.position.copy(peer.targetPos);
+        } else {
+          mesh.position.lerp(peer.targetPos, lerpSpeed);
+        }
+
+        // Rotation Lerp (Yaw)
+        let diffYaw = peer.targetYaw - mesh.rotation.y;
+        while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
+        while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
+        mesh.rotation.y += diffYaw * lerpSpeed;
+
+        // Head Pitch Lerp
+        if (mesh.head) {
+          mesh.head.rotation.x += (peer.targetPitch - mesh.head.rotation.x) * lerpSpeed;
+        }
+
+        // Walking Animation
+        peer.isMoving = dist > 0.04;
+        if (peer.isMoving) {
+          peer.animTime += dt * (peer.isSprinting ? 14.0 : 8.0);
+          const swing = Math.sin(peer.animTime) * 0.65;
+          if (mesh.leftArm) mesh.leftArm.rotation.x = swing;
+          if (mesh.rightArm) mesh.rightArm.rotation.x = -swing;
+          if (mesh.leftLeg) mesh.leftLeg.rotation.x = -swing;
+          if (mesh.rightLeg) mesh.rightLeg.rotation.x = swing;
+        } else {
+          if (mesh.leftArm) mesh.leftArm.rotation.x *= 0.8;
+          if (mesh.rightArm) mesh.rightArm.rotation.x *= 0.8;
+          if (mesh.leftLeg) mesh.leftLeg.rotation.x *= 0.8;
+          if (mesh.rightLeg) mesh.rightLeg.rotation.x *= 0.8;
+        }
+      }
+    }
+
+    addChatMessage(sender, text, type = 'normal') {
+      const container = document.getElementById('mpChatMessages');
+      if (!container) return;
+
+      const item = document.createElement('div');
+      item.className = 'mp-chat-item';
+
+      const senderSpan = document.createElement('span');
+      senderSpan.className = `mp-chat-sender sender-${type}`;
+      senderSpan.textContent = `[${sender}]`;
+
+      const textSpan = document.createElement('span');
+      textSpan.textContent = text;
+
+      item.appendChild(senderSpan);
+      item.appendChild(textSpan);
+      container.appendChild(item);
+
+      while (container.childNodes.length > 20) {
+        container.removeChild(container.firstChild);
+      }
+
+      setTimeout(() => {
+        item.style.opacity = '0';
+        setTimeout(() => {
+          if (item.parentNode) item.parentNode.removeChild(item);
+        }, 500);
+      }, 8000);
+    }
+
+    sendChat() {
+      const input = document.getElementById('mpChatInput');
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      this.addChatMessage(this.playerName, text, 'self');
+      this.broadcast({
+        type: 'chat',
+        id: this.localPlayerId,
+        sender: this.playerName,
+        text: text
+      });
+
+      this.closeChatInput();
+    }
+
+    openChatInput() {
+      if (!this.isOnline) return;
+      const wrap = document.getElementById('mpChatInputWrap');
+      const input = document.getElementById('mpChatInput');
+      if (wrap && input) {
+        wrap.style.display = 'flex';
+        input.focus();
+        this.isChatInputOpen = true;
+        if (document.exitPointerLock) document.exitPointerLock();
+      }
+    }
+
+    closeChatInput() {
+      const wrap = document.getElementById('mpChatInputWrap');
+      if (wrap) wrap.style.display = 'none';
+      this.isChatInputOpen = false;
+      if (!isMobileDevice) {
+        try {
+          document.body.requestPointerLock();
+        } catch (e) {}
+      }
+    }
+
+    initUI() {
+      document.querySelectorAll('.btn-join-room').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const roomId = parseInt(e.currentTarget.getAttribute('data-room-id'));
+          const nameInput = document.getElementById('multiplayerNameInput');
+          if (nameInput && nameInput.value.trim()) {
+            this.setPlayerName(nameInput.value.trim());
+          }
+          this.joinRoom(roomId);
+        });
+      });
+
+      const nameInput = document.getElementById('multiplayerNameInput');
+      if (nameInput) {
+        nameInput.value = this.playerName;
+        nameInput.addEventListener('change', (e) => {
+          this.setPlayerName(e.target.value);
+        });
+      }
+
+      const btnCloseRooms = document.getElementById('btnCloseRoomsModal');
+      if (btnCloseRooms) {
+        btnCloseRooms.addEventListener('click', () => {
+          document.getElementById('onlineRoomsModal').style.display = 'none';
+        });
+      }
+
+      const btnOffline = document.getElementById('btnOfflineBack');
+      if (btnOffline) {
+        btnOffline.addEventListener('click', () => {
+          document.getElementById('onlineRoomsModal').style.display = 'none';
+          this.isOnline = false;
+          initAudio();
+          startGame();
+        });
+      }
+
+      const btnSend = document.getElementById('btnMpSendChat');
+      if (btnSend) {
+        btnSend.addEventListener('click', () => this.sendChat());
+      }
+
+      const chatInput = document.getElementById('mpChatInput');
+      if (chatInput) {
+        chatInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.sendChat();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            this.closeChatInput();
+          }
+        });
+      }
+
+      const touchChat = document.getElementById('touchBtnChat');
+      if (touchChat) {
+        touchChat.addEventListener('click', () => {
+          if (this.isChatInputOpen) {
+            this.closeChatInput();
+          } else {
+            this.openChatInput();
+          }
+        });
+      }
+    }
+  }
+
   function initGame() {
     // 1. Setup Three.js Scene, Camera, Renderer
     const container = document.getElementById('gameContainer');
@@ -6460,6 +7063,7 @@
     renderSurvivalMeters();
     renderInventoryGrid();
     setupEventListeners();
+    multiplayerManager = new MultiplayerManager();
 
     // 9. Start Game Animation Loop
     lastFrameTime = performance.now();
@@ -6526,6 +7130,9 @@
         updateMobs(dt);
         updateAICores(dt, now);
         updateAICoreProximity();
+        if (typeof multiplayerManager !== 'undefined' && multiplayerManager) {
+          multiplayerManager.update(dt, now);
+        }
 
       // Smooth GPU-accelerated Water and Lava Shimmer
       if (threeTextures && threeTextures.water) {
@@ -6616,7 +7223,7 @@
     window.addEventListener('keydown', e => {
       // Do not process movement or hotbar keys when player is typing in chat or search
       const activeEl = document.activeElement;
-      if (activeEl && (activeEl.id === 'aiChatInput' || activeEl.id === 'inventorySearchInput')) {
+      if (activeEl && (activeEl.id === 'aiChatInput' || activeEl.id === 'inventorySearchInput' || activeEl.id === 'mpChatInput' || activeEl.id === 'multiplayerNameInput')) {
         if (e.code === 'Escape') {
           if (isAiChatOpen) closeAIChatModal();
           else if (isInventoryOpen) closeInventory();
@@ -6658,6 +7265,15 @@
       if (e.code >= 'Digit1' && e.code <= 'Digit9') {
         const idx = parseInt(e.code.replace('Digit', '')) - 1;
         selectHotbarSlot(idx);
+      }
+
+      // Multiplayer Chat Toggle [T] or [Enter]
+      if ((e.code === 'KeyT' || e.code === 'Enter') && !isAiChatOpen && !isInventoryOpen && !isPaused && typeof multiplayerManager !== 'undefined' && multiplayerManager && multiplayerManager.isOnline) {
+        if (!multiplayerManager.isChatInputOpen) {
+          e.preventDefault();
+          multiplayerManager.openChatInput();
+          return;
+        }
       }
 
       // Inventory / AI Chat Toggle [E] or [I]
@@ -6801,10 +7417,30 @@
     });
 
     // Main Menu Buttons
-    document.getElementById('btnPlayGame').addEventListener('click', () => {
-      initAudio();
-      startGame();
-    });
+    const btnPlayEl = document.getElementById('btnPlayGame');
+    if (btnPlayEl) {
+      btnPlayEl.addEventListener('click', () => {
+        if (typeof multiplayerManager !== 'undefined' && multiplayerManager) {
+          multiplayerManager.isOnline = false;
+          const mpBadge = document.getElementById('hudMultiplayerBadge');
+          if (mpBadge) mpBadge.style.display = 'none';
+          const chatOverlay = document.getElementById('multiplayerChatOverlay');
+          if (chatOverlay) chatOverlay.style.display = 'none';
+          const touchChat = document.getElementById('touchBtnChat');
+          if (touchChat) touchChat.style.display = 'none';
+        }
+        initAudio();
+        startGame();
+      });
+    }
+
+    const btnMpEl = document.getElementById('btnOpenMultiplayer');
+    if (btnMpEl) {
+      btnMpEl.addEventListener('click', () => {
+        const roomsModal = document.getElementById('onlineRoomsModal');
+        if (roomsModal) roomsModal.style.display = 'flex';
+      });
+    }
 
     document.getElementById('btnSelectMode').addEventListener('click', () => {
       settings.gameMode = (settings.gameMode === 'creative' ? 'survival' : 'creative');

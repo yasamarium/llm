@@ -1638,5 +1638,372 @@ html, body {
   }
 }
 
+/* ==========================================================================
+   Square Era Online Multiplayer (5 Rooms, Zero-Latency Sync & HUD)
+   ========================================================================== */
 
+.hud-badge.mp-badge {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(124, 58, 237, 0.35));
+  border-color: rgba(96, 165, 250, 0.6);
+  color: #93c5fd;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
 
+/* Online Rooms Modal Card */
+.rooms-modal-card {
+  background: rgba(11, 17, 32, 0.96);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(37, 99, 235, 0.2);
+  width: 92vw;
+  max-width: 1040px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 28px;
+  color: #f1f5f9;
+  backdrop-filter: blur(20px);
+  overflow-y: auto;
+  animation: seFadeInScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rooms-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 14px;
+}
+
+.rooms-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.rooms-subtitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Player Name Row */
+.rooms-player-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.rooms-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+
+.rooms-name-input {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  outline: none;
+  min-width: 180px;
+  transition: all 0.2s ease;
+}
+
+.rooms-name-input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.4);
+}
+
+.rooms-status-tag {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
+
+.rooms-ping-dot,
+.room-stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: sePulse 2s infinite;
+}
+
+/* 5 Rooms Grid */
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.room-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.room-card:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(96, 165, 250, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+.room-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.room-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.room-badge-creative {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: #34d399;
+}
+
+.room-badge-survival {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+}
+
+.room-badge-cyber {
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  color: #c084fc;
+}
+
+.room-badge-anarchy {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: #f87171;
+}
+
+.room-id-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.room-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+}
+
+.room-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0 0 12px 0;
+  flex-grow: 1;
+}
+
+.room-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  color: #64748b;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.room-meta-item strong {
+  color: #94a3b8;
+}
+
+.room-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.room-live-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.btn-join-room {
+  padding: 8px 16px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  min-width: 105px;
+}
+
+/* Footer Bar */
+.rooms-footer-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 14px;
+}
+
+.rooms-footer-note {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* In-Room Multiplayer Chat Overlay */
+.mp-chat-overlay {
+  position: fixed;
+  bottom: 80px;
+  left: 18px;
+  width: 380px;
+  max-width: calc(100vw - 36px);
+  z-index: 80;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mp-chat-messages {
+  max-height: 200px;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mp-chat-item {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #e2e8f0;
+  line-height: 1.4;
+  word-break: break-word;
+  animation: seFadeInScale 0.2s ease;
+  transition: opacity 0.5s ease;
+}
+
+.mp-chat-sender {
+  font-weight: 700;
+  color: #60a5fa;
+  margin-right: 6px;
+}
+
+.mp-chat-sender.sender-system {
+  color: #fbbf24;
+}
+
+.mp-chat-sender.sender-self {
+  color: #34d399;
+}
+
+.mp-chat-input-wrap {
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(96, 165, 250, 0.5);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.mp-chat-input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 4px 8px;
+}
+
+.mp-chat-send-btn {
+  background: #2563eb;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mp-chat-send-btn:hover {
+  background: #1d4ed8;
+}
+
+@media (max-width: 600px) {
+  .rooms-grid {
+    grid-template-columns: 1fr;
+  }
+  .rooms-player-strip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rooms-status-tag {
+    margin-left: 0;
+    justify-content: center;
+  }
+  .rooms-footer-bar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .mp-chat-overlay {
+    bottom: 160px;
+    left: 10px;
+    width: 320px;
+  }
+}
