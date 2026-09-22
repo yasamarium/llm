@@ -6378,9 +6378,11 @@
       this.playerName = localStorage.getItem('square_era_player_name') || ('Player_' + Math.floor(Math.random() * 899 + 100));
       this.localPlayerId = 'p_' + Math.random().toString(36).slice(2, 10);
 
-      // Remote peers: Map<peerId, { id, name, mesh, targetPos, targetYaw, targetPitch, lastSeen, isFlying, isSprinting, heldSlot, ... }>
+      // Remote peers: Map<peerId, { id, name, mesh, targetPos, targetYaw, targetPitch, lastSeen, isFlying, isSprinting, heldSlot, animTime, isMoving }>
       this.remotePlayers = new Map();
       this.broadcastChannel = null;
+      this.mqttClient = null;
+      this.roomTopic = '';
       this.lastBroadcastTime = 0;
       this.lastHeartbeatTime = 0;
       this.isChatInputOpen = false;
@@ -6408,50 +6410,180 @@
     joinRoom(roomId) {
       const room = this.roomRepositories[roomId];
       if (!room) return;
+
+      // 1. Clean up previous connections and remote player avatars
+      this.disconnect();
+
       this.roomId = roomId;
       this.roomName = room.name;
       this.roomMode = room.mode;
       this.isOnline = true;
 
-      // Clean up previous remote player meshes
-      for (const [id, peer] of this.remotePlayers.entries()) {
-        if (peer.mesh && scene) scene.remove(peer.mesh);
-      }
-      this.remotePlayers.clear();
+      // 2. Set fixed shared spawn coordinates so both players spawn right next to each other
+      player.x = 8.5;
+      player.z = 8.5;
+      player.yaw = 0;
+      player.pitch = 0;
+      player.targetYaw = 0;
+      player.targetPitch = 0;
+      player.vx = 0;
+      player.vy = 0;
+      player.vz = 0;
 
-      // Configure room game mode
+      // 3. Configure room game mode
       settings.gameMode = this.roomMode;
       syncGameModeUI();
 
-      // Hide modal
+      // 4. Hide room selection modal
       const roomsModal = document.getElementById('onlineRoomsModal');
       if (roomsModal) roomsModal.style.display = 'none';
 
-      // Update HUD badges
-      const mpBadge = document.getElementById('hudMultiplayerBadge');
-      if (mpBadge) {
-        mpBadge.style.display = 'inline-flex';
-        mpBadge.textContent = `Online: Room ${roomId} (${this.roomMode.toUpperCase()})`;
-      }
+      // 5. Update HUD badges
+      this.updatePlayerCountBadge();
 
-      // Show in-game chat overlay
+      // 6. Show in-game chat overlay
       const chatOverlay = document.getElementById('multiplayerChatOverlay');
       if (chatOverlay) chatOverlay.style.display = 'flex';
 
-      // Show mobile chat button if on mobile
+      // 7. Show mobile chat button if on mobile
       const touchChat = document.getElementById('touchBtnChat');
       if (touchChat) touchChat.style.display = 'flex';
 
-      // Setup BroadcastChannel for 0ms multi-tab IPC
+      // 8. Setup local BroadcastChannel (for 0ms IPC between tabs on same machine)
       try {
         if (this.broadcastChannel) this.broadcastChannel.close();
         this.broadcastChannel = new BroadcastChannel(`square-era-room-${this.roomId}`);
         this.broadcastChannel.onmessage = (e) => this.handleIncomingPacket(e.data);
       } catch (err) {
-        console.warn('BroadcastChannel notice:', err);
+        console.warn('[Multiplayer] BroadcastChannel notice:', err);
       }
 
-      // Announce arrival to room
+      // 9. Connect to high-speed real-time internet MQTT WebSocket broker
+      this.connectNetwork();
+
+      // 10. Pull persistent world modifications from GitHub DB repository
+      this.syncWorldFromDatabase(roomId);
+
+      // 11. Welcome message in chat
+      this.addChatMessage('System', `Connected to Room ${roomId}: ${this.roomName} (${this.roomMode.toUpperCase()}). Global live sync active!`, 'system');
+      showToast(`Joined Room ${roomId}: ${this.roomName}`);
+
+      // 12. Start game
+      initAudio();
+      startGame();
+    }
+
+    updatePlayerCountBadge() {
+      const mpBadge = document.getElementById('hudMultiplayerBadge');
+      if (mpBadge && this.isOnline) {
+        mpBadge.style.display = 'inline-flex';
+        const total = this.remotePlayers.size + 1;
+        mpBadge.textContent = `Online: Room ${this.roomId} (${this.roomMode.toUpperCase()}) - ${total} Player${total > 1 ? 's' : ''}`;
+      }
+    }
+
+    connectNetwork() {
+      if (typeof Paho === 'undefined' || !Paho.MQTT) {
+        console.warn('[Multiplayer] Paho MQTT not available, relying on local BroadcastChannel.');
+        return;
+      }
+
+      const brokerHost = 'broker.emqx.io';
+      const brokerPort = 8084;
+      const brokerPath = '/mqtt';
+      const topic = `square-era-v2/room-${this.roomId}`;
+      this.roomTopic = topic;
+
+      const clientId = 'sq_' + this.localPlayerId + '_' + Math.floor(Math.random() * 10000);
+      try {
+        const client = new Paho.MQTT.Client(brokerHost, brokerPort, brokerPath, clientId);
+        this.mqttClient = client;
+
+        client.onConnectionLost = (responseObject) => {
+          if (responseObject.errorCode !== 0 && this.isOnline) {
+            console.warn('[Multiplayer] EMQX connection lost, switching to HiveMQ fallback in 2s...');
+            setTimeout(() => this.connectFallbackNetwork(), 2000);
+          }
+        };
+
+        client.onMessageArrived = (message) => {
+          try {
+            const packet = JSON.parse(message.payloadString);
+            this.handleIncomingPacket(packet);
+          } catch (err) {}
+        };
+
+        client.connect({
+          useSSL: true,
+          timeout: 4,
+          keepAliveInterval: 30,
+          cleanSession: true,
+          onSuccess: () => {
+            console.log(`[Multiplayer] Connected to EMQX MQTT Broker! Subscribing to ${topic}...`);
+            client.subscribe(topic, {
+              onSuccess: () => {
+                console.log(`[Multiplayer] Subscribed to room topic ${topic}!`);
+                this.announceJoin();
+              }
+            });
+          },
+          onFailure: (err) => {
+            console.warn('[Multiplayer] EMQX connect failed, trying HiveMQ fallback...', err);
+            this.connectFallbackNetwork();
+          }
+        });
+      } catch (err) {
+        console.warn('[Multiplayer] MQTT init notice:', err);
+      }
+    }
+
+    connectFallbackNetwork() {
+      if (typeof Paho === 'undefined' || !Paho.MQTT || !this.isOnline) return;
+      const brokerHost = 'broker.hivemq.com';
+      const brokerPort = 8884;
+      const brokerPath = '/mqtt';
+      const topic = `square-era-v2/room-${this.roomId}`;
+      this.roomTopic = topic;
+
+      const clientId = 'sq_' + this.localPlayerId + '_' + Math.floor(Math.random() * 10000);
+      try {
+        const client = new Paho.MQTT.Client(brokerHost, brokerPort, brokerPath, clientId);
+        this.mqttClient = client;
+
+        client.onConnectionLost = (responseObject) => {
+          if (responseObject.errorCode !== 0 && this.isOnline) {
+            setTimeout(() => this.connectNetwork(), 4000);
+          }
+        };
+
+        client.onMessageArrived = (message) => {
+          try {
+            const packet = JSON.parse(message.payloadString);
+            this.handleIncomingPacket(packet);
+          } catch (err) {}
+        };
+
+        client.connect({
+          useSSL: true,
+          timeout: 5,
+          keepAliveInterval: 30,
+          cleanSession: true,
+          onSuccess: () => {
+            console.log(`[Multiplayer] Connected to HiveMQ fallback broker! Subscribing to ${topic}...`);
+            client.subscribe(topic, {
+              onSuccess: () => {
+                this.announceJoin();
+              }
+            });
+          },
+          onFailure: (err) => {
+            console.warn('[Multiplayer] HiveMQ fallback failed:', err);
+          }
+        });
+      } catch (e) {}
+    }
+
+    announceJoin() {
       this.broadcast({
         type: 'player_join',
         id: this.localPlayerId,
@@ -6464,15 +6596,34 @@
         slot: player.activeSlot,
         mode: this.roomMode
       });
+    }
 
-      this.addChatMessage('System', `Connected to Room ${roomId}: ${this.roomName} (${this.roomMode.toUpperCase()}). Zero-latency sync active!`, 'system');
-
-      // Fetch persistent world modifications from GitHub database repository
-      this.syncWorldFromDatabase(roomId);
-
-      // Start game
-      initAudio();
-      startGame();
+    disconnect() {
+      if (this.isOnline) {
+        this.broadcast({
+          type: 'player_leave',
+          id: this.localPlayerId
+        });
+      }
+      this.isOnline = false;
+      if (this.mqttClient) {
+        try { this.mqttClient.disconnect(); } catch (e) {}
+        this.mqttClient = null;
+      }
+      if (this.broadcastChannel) {
+        try { this.broadcastChannel.close(); } catch (e) {}
+        this.broadcastChannel = null;
+      }
+      for (const [id, peer] of this.remotePlayers.entries()) {
+        if (peer.mesh && scene) scene.remove(peer.mesh);
+      }
+      this.remotePlayers.clear();
+      const mpBadge = document.getElementById('hudMultiplayerBadge');
+      if (mpBadge) mpBadge.style.display = 'none';
+      const chatOverlay = document.getElementById('multiplayerChatOverlay');
+      if (chatOverlay) chatOverlay.style.display = 'none';
+      const touchChat = document.getElementById('touchBtnChat');
+      if (touchChat) touchChat.style.display = 'none';
     }
 
     async syncWorldFromDatabase(roomId) {
@@ -6523,6 +6674,16 @@
           this.broadcastChannel.postMessage(packet);
         } catch (e) {}
       }
+
+      // 2. Internet MQTT WebSocket Broadcast (Across all devices worldwide)
+      if (this.mqttClient && this.mqttClient.isConnected && this.mqttClient.isConnected()) {
+        try {
+          const msg = new Paho.MQTT.Message(JSON.stringify(packet));
+          msg.destinationName = this.roomTopic || `square-era-v2/room-${this.roomId}`;
+          msg.qos = 0;
+          this.mqttClient.send(msg);
+        } catch (e) {}
+      }
     }
 
     broadcastBlockChange(gx, gy, gz, blockId) {
@@ -6551,10 +6712,12 @@
     handleIncomingPacket(packet) {
       if (!packet || packet.senderId === this.localPlayerId || packet.roomId !== this.roomId) return;
 
-      if (packet.type === 'player_state' || packet.type === 'player_join') {
+      if (packet.type === 'player_state' || packet.type === 'player_join' || packet.type === 'player_heartbeat') {
+        const isNew = !this.remotePlayers.has(packet.id || packet.senderId);
         this.updateRemotePlayer(packet);
-        if (packet.type === 'player_join') {
-          // Send back our current state so new player knows about us
+
+        if (packet.type === 'player_join' || isNew) {
+          // Immediately respond with our own state so new player sees us without waiting
           this.broadcast({
             type: 'player_state',
             id: this.localPlayerId,
@@ -6608,13 +6771,13 @@
       let peer = this.remotePlayers.get(id);
       if (!peer) {
         // Create 3D character avatar
-        const avatarGroup = this.createPlayerAvatarMesh(packet.name || 'Player');
+        const avatarGroup = this.createPlayerAvatarMesh(packet.name || 'Player', id);
         if (scene) scene.add(avatarGroup);
         peer = {
           id: id,
           name: packet.name || 'Player',
           mesh: avatarGroup,
-          targetPos: new THREE.Vector3(packet.x || 0, packet.y || 0, packet.z || 0),
+          targetPos: new THREE.Vector3(packet.x || 8.5, packet.y || 28.0, packet.z || 8.5),
           targetYaw: packet.yaw || 0,
           targetPitch: packet.pitch || 0,
           lastSeen: Date.now(),
@@ -6623,11 +6786,15 @@
           isMoving: false
         };
         this.remotePlayers.set(id, peer);
-        this.addChatMessage('System', `${peer.name} entered Room ${this.roomId}.`, 'system');
+        this.updatePlayerCountBadge();
+        this.addChatMessage('System', `${peer.name} joined Room ${this.roomId}!`, 'system');
+        showToast(`${peer.name} entered the room!`);
       }
 
       peer.name = packet.name || peer.name;
-      peer.targetPos.set(packet.x, packet.y, packet.z);
+      if (typeof packet.x === 'number' && typeof packet.y === 'number' && typeof packet.z === 'number') {
+        peer.targetPos.set(packet.x, packet.y, packet.z);
+      }
       peer.targetYaw = packet.yaw || 0;
       peer.targetPitch = packet.pitch || 0;
       peer.heldSlot = packet.slot !== undefined ? packet.slot : peer.heldSlot;
@@ -6636,12 +6803,18 @@
       peer.lastSeen = Date.now();
     }
 
-    createPlayerAvatarMesh(name) {
+    createPlayerAvatarMesh(name, id) {
       const group = new THREE.Group();
 
+      // Pick distinct shirt color per peer based on id hash
+      const shirtColors = [0x2563eb, 0x059669, 0xd97706, 0xdc2626, 0x7c3aed, 0x0891b2, 0xdb2777];
+      let hash = 0;
+      for (let i = 0; i < (id || name).length; i++) hash += (id || name).charCodeAt(i);
+      const chosenShirtColor = shirtColors[Math.abs(hash) % shirtColors.length];
+
       const skinMat = new THREE.MeshLambertMaterial({ color: 0xc89d7c });
-      const shirtMat = new THREE.MeshLambertMaterial({ color: 0x2563eb });
-      const pantsMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
+      const shirtMat = new THREE.MeshLambertMaterial({ color: chosenShirtColor });
+      const pantsMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
       const hairMat = new THREE.MeshLambertMaterial({ color: 0x451a03 });
 
       // Head Group
@@ -6652,12 +6825,13 @@
       const headMesh = new THREE.Mesh(headGeom, skinMat);
       headGroup.add(headMesh);
 
-      const hairGeom = new THREE.BoxGeometry(0.50, 0.20, 0.50);
+      const hairGeom = new THREE.BoxGeometry(0.50, 0.18, 0.50);
       const hairMesh = new THREE.Mesh(hairGeom, hairMat);
       hairMesh.position.set(0, 0.16, 0);
       headGroup.add(hairMesh);
 
-      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+      // Glowing Eyes
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
       const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
       leftEye.position.set(-0.12, 0.02, 0.25);
       const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
@@ -6665,33 +6839,39 @@
       headGroup.add(leftEye);
       headGroup.add(rightEye);
 
-      // Floating Nameplate Canvas Sprite
+      // Floating Nameplate Canvas Sprite - Visible from any distance and through blocks!
       const canvas = document.createElement('canvas');
       canvas.width = 256;
       canvas.height = 64;
       const ctx = canvas.getContext('2d');
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
       ctx.beginPath();
       if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(10, 10, 236, 44, 12);
+        ctx.roundRect(8, 8, 240, 48, 12);
       } else {
-        ctx.rect(10, 10, 236, 44);
+        ctx.rect(8, 8, 240, 48);
       }
       ctx.fill();
-      ctx.strokeStyle = 'rgba(96, 165, 250, 0.7)';
+      ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 3;
       ctx.stroke();
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px sans-serif';
+      ctx.font = 'bold 22px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(name, 128, 32);
 
       const nameTexture = new THREE.CanvasTexture(canvas);
-      const nameSpriteMat = new THREE.SpriteMaterial({ map: nameTexture, transparent: true });
+      const nameSpriteMat = new THREE.SpriteMaterial({
+        map: nameTexture,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false
+      });
       const nameSprite = new THREE.Sprite(nameSpriteMat);
-      nameSprite.position.set(0, 0.65, 0);
-      nameSprite.scale.set(1.4, 0.35, 1.0);
+      nameSprite.renderOrder = 9999;
+      nameSprite.position.set(0, 0.75, 0);
+      nameSprite.scale.set(1.6, 0.4, 1.0);
       headGroup.add(nameSprite);
 
       group.add(headGroup);
@@ -6740,6 +6920,9 @@
       group.add(rightLeg);
       group.rightLeg = rightLeg;
 
+      // Place mesh initially at spawn
+      group.position.set(8.5, 28.0, 8.5);
+
       return group;
     }
 
@@ -6748,6 +6931,7 @@
       if (peer) {
         if (peer.mesh && scene) scene.remove(peer.mesh);
         this.remotePlayers.delete(id);
+        this.updatePlayerCountBadge();
         this.addChatMessage('System', `${peer.name} left the room.`, 'system');
       }
     }
@@ -6773,10 +6957,26 @@
         });
       }
 
-      // 2. Interpolate remote player avatars smoothly (60 FPS exponential lerp)
+      // 2. Periodic presence heartbeat every 8 seconds
+      if (now - this.lastHeartbeatTime > 8000) {
+        this.lastHeartbeatTime = now;
+        this.broadcast({
+          type: 'player_heartbeat',
+          id: this.localPlayerId,
+          name: this.playerName,
+          x: player.x,
+          y: player.y,
+          z: player.z,
+          yaw: player.yaw,
+          pitch: player.pitch,
+          slot: player.activeSlot
+        });
+      }
+
+      // 3. Interpolate remote player avatars smoothly (60 FPS exponential lerp)
       const lerpSpeed = Math.min(1.0, dt * 25.0);
       for (const [id, peer] of this.remotePlayers.entries()) {
-        if (now - peer.lastSeen > 15000) {
+        if (now - peer.lastSeen > 20000) {
           this.removeRemotePlayer(id);
           continue;
         }
@@ -6786,7 +6986,7 @@
 
         // Position Lerp
         const dist = mesh.position.distanceTo(peer.targetPos);
-        if (dist > 25.0) {
+        if (dist > 30.0) {
           mesh.position.copy(peer.targetPos);
         } else {
           mesh.position.lerp(peer.targetPos, lerpSpeed);
@@ -6923,7 +7123,7 @@
       if (btnOffline) {
         btnOffline.addEventListener('click', () => {
           document.getElementById('onlineRoomsModal').style.display = 'none';
-          this.isOnline = false;
+          this.disconnect();
           initAudio();
           startGame();
         });
