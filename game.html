@@ -94,6 +94,105 @@
     </div>
   </div>
 
+  <!-- Mobile Touch Controls Overlay -->
+  <div id="mobileControlsOverlay" class="mobile-controls-overlay" style="display: none;">
+    <!-- Top Mobile Quick Action Bar -->
+    <div class="mobile-top-bar">
+      <button id="touchBtnInventory" class="touch-top-btn" title="Open Inventory" aria-label="Open Inventory">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+        </svg>
+        <span class="touch-top-label">INV</span>
+      </button>
+      <button id="touchBtnPause" class="touch-top-btn" title="Pause Game" aria-label="Pause Game">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="4" width="4" height="16"/>
+          <rect x="14" y="4" width="4" height="16"/>
+        </svg>
+        <span class="touch-top-label">PAUSE</span>
+      </button>
+      <button id="touchBtnDebug" class="touch-top-btn" title="Toggle F3 Info" aria-label="Toggle F3 Info">
+        <span class="touch-top-label" style="font-weight: 700; font-size: 13px;">F3</span>
+      </button>
+    </div>
+
+    <!-- Bottom Left Cluster: Virtual D-Pad -->
+    <div class="mobile-dpad-cluster" id="mobileDpadCluster">
+      <button id="touchBtnForward" class="touch-dpad-btn touch-dpad-up" aria-label="Move Forward">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="18 15 12 9 6 15"/>
+        </svg>
+      </button>
+      <button id="touchBtnLeft" class="touch-dpad-btn touch-dpad-left" aria-label="Strafe Left">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <button id="touchBtnSneak" class="touch-dpad-btn touch-dpad-center" aria-label="Sneak or Sprint">
+        <div class="touch-dpad-center-dot"></div>
+      </button>
+      <button id="touchBtnRight" class="touch-dpad-btn touch-dpad-right" aria-label="Strafe Right">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+      <button id="touchBtnBackward" class="touch-dpad-btn touch-dpad-down" aria-label="Move Backward">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom Right Cluster: Action Buttons -->
+    <div class="mobile-actions-cluster" id="mobileActionsCluster">
+      <!-- Creative Mode Flight Buttons (Shown when flying) -->
+      <div id="mobileFlightControls" class="mobile-flight-controls" style="display: none;">
+        <button id="touchBtnFlyUp" class="touch-action-btn touch-fly-btn" aria-label="Fly Up">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"/>
+            <polyline points="18 9 12 3 6 9"/>
+          </svg>
+          <span class="touch-btn-sub">UP</span>
+        </button>
+        <button id="touchBtnFlyDown" class="touch-action-btn touch-fly-btn" aria-label="Fly Down">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+            <polyline points="6 15 12 21 18 15"/>
+          </svg>
+          <span class="touch-btn-sub">DOWN</span>
+        </button>
+      </div>
+
+      <!-- Action: Break / Mine Block -->
+      <button id="touchBtnBreak" class="touch-action-btn touch-break-btn" aria-label="Mine or Break Block">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"/>
+          <path d="M15 13 9 7l4-4 6 6-4 4Z"/>
+        </svg>
+        <span class="touch-btn-sub">MINE</span>
+      </button>
+
+      <!-- Action: Place Block / Use Item / Eat -->
+      <button id="touchBtnPlace" class="touch-action-btn touch-place-btn" aria-label="Place Block or Use Item">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+          <polyline points="2 17 12 22 22 17"/>
+          <polyline points="2 12 12 17 22 12"/>
+        </svg>
+        <span class="touch-btn-sub">PLACE</span>
+      </button>
+
+      <!-- Action: Jump & Flight Toggle -->
+      <button id="touchBtnJump" class="touch-action-btn touch-jump-btn" aria-label="Jump">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="18 15 12 9 6 15"/>
+        </svg>
+        <span class="touch-btn-sub">JUMP</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Debug Overlay (F3) -->
   <div id="debugOverlay" class="debug-overlay" style="display: none;">
     <div class="debug-title">Square Era v1.0 • Debug Info</div>
@@ -297,6 +396,38 @@
             <span>Ambient Occlusion Simulation</span>
           </label>
         </div>
+
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-name">Touch Controls</span>
+            <span class="setting-val" id="valTouchControls">Auto</span>
+          </div>
+          <div class="setting-btn-group" id="groupTouchControls">
+            <button type="button" class="se-btn se-btn-sm se-btn-sub active" data-touch="auto">Auto</button>
+            <button type="button" class="se-btn se-btn-sm se-btn-sub" data-touch="on">Always On</button>
+            <button type="button" class="se-btn se-btn-sm se-btn-sub" data-touch="off">Off</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-name">Mobile 60 FPS Preset</span>
+            <span class="setting-val" id="valMobilePreset">Balanced (1.0x)</span>
+          </div>
+          <div class="setting-btn-group" id="groupMobilePreset">
+            <button type="button" class="se-btn se-btn-sm se-btn-sub" data-preset="performance">Performance (0.85x)</button>
+            <button type="button" class="se-btn se-btn-sm se-btn-sub active" data-preset="balanced">Balanced (1.0x)</button>
+            <button type="button" class="se-btn se-btn-sm se-btn-sub" data-preset="sharp">Sharp (1.25x)</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-name">Touch Aim Sensitivity</span>
+            <span class="setting-val" id="valTouchSensitivity">Normal (0.0035)</span>
+          </div>
+          <input type="range" id="sliderTouchSensitivity" min="15" max="75" value="35" class="se-slider">
+        </div>
       </div>
 
       <div class="settings-footer">
@@ -314,6 +445,7 @@
       </div>
       
       <div class="controls-grid">
+        <div class="controls-section-header" style="grid-column: 1 / -1; font-weight: 700; color: #60a5fa; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 4px;">PC Keyboard &amp; Mouse</div>
         <div class="control-item"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Walk / Move</span></div>
         <div class="control-item"><kbd>Mouse</kbd><span>Look around / Aim</span></div>
         <div class="control-item"><kbd>Left Click</kbd><span>Break / Mine voxel</span></div>
@@ -324,8 +456,16 @@
         <div class="control-item"><kbd>Scroll Wheel</kbd><span>Cycle Hotbar Slots</span></div>
         <div class="control-item"><kbd>E / I</kbd><span>Open Block Inventory</span></div>
         <div class="control-item"><kbd>F</kbd><span>Toggle Flight (Creative)</span></div>
-        <div class="control-item"><kbd>F3</kbd><span>Toggle Debug & Coords</span></div>
+        <div class="control-item"><kbd>F3</kbd><span>Toggle Debug &amp; Coords</span></div>
         <div class="control-item"><kbd>Esc</kbd><span>Pause / Unlock Cursor</span></div>
+
+        <div class="controls-section-header" style="grid-column: 1 / -1; font-weight: 700; color: #34d399; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-top: 10px; margin-bottom: 4px;">Mobile Touchscreen Controls</div>
+        <div class="control-item"><kbd>Left D-Pad</kbd><span>Walk, Backpedal &amp; Strafe</span></div>
+        <div class="control-item"><kbd>Drag Screen</kbd><span>Touch &amp; drag anywhere to rotate camera</span></div>
+        <div class="control-item"><kbd>JUMP Button</kbd><span>Jump &bull; Double-tap to toggle flight</span></div>
+        <div class="control-item"><kbd>MINE Button</kbd><span>Hold or tap to break targeted block</span></div>
+        <div class="control-item"><kbd>PLACE Button</kbd><span>Place block, eat food, drink potion</span></div>
+        <div class="control-item"><kbd>INV Button</kbd><span>Open full 212-item inventory catalog</span></div>
       </div>
 
       <div class="settings-footer">

@@ -612,10 +612,21 @@
     [BLOCKS.IGNITER]: true
   };
 
+  // Detect mobile touchscreen devices
+  const isMobileDevice = (typeof window !== 'undefined') && (
+    ('ontouchstart' in window) ||
+    (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
+    (typeof window.innerWidth === 'number' && window.innerWidth <= 820) ||
+    (typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || ''))
+  );
+
   // User Settings State
   const settings = {
-    renderDistance: 4,
+    renderDistance: isMobileDevice ? 3 : 4,
     mouseSensitivity: 0.0025,
+    touchSensitivity: 0.0035,
+    touchControls: 'auto', // 'auto', 'on', 'off'
+    mobilePreset: 'balanced', // 'performance' (0.85x), 'balanced' (1.0x), 'sharp' (1.25x)
     fov: 75,
     soundVolume: 0.7,
     soundMuted: false,
@@ -624,6 +635,41 @@
     smoothLighting: true,
     gameMode: 'creative' // 'creative' or 'survival'
   };
+
+  function getTargetPixelRatio() {
+    if (typeof window === 'undefined') return 1.0;
+    const dpr = window.devicePixelRatio || 1.0;
+    if (isMobileDevice) {
+      if (settings.mobilePreset === 'performance') return Math.min(dpr, 0.85);
+      if (settings.mobilePreset === 'sharp') return Math.min(dpr, 1.25);
+      return Math.min(dpr, 1.0);
+    }
+    return Math.min(dpr, 1.5);
+  }
+
+  // Mobile Touch Input State
+  const touchMoveState = {
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+    sprinting: false
+  };
+
+  const touchActionState = {
+    jump: false,
+    flyUp: false,
+    flyDown: false
+  };
+
+  let activeLookTouchId = null;
+  let lastLookTouchX = 0;
+  let lastLookTouchY = 0;
+  let lookTouchStartTime = 0;
+  let lookTouchStartX = 0;
+  let lookTouchStartY = 0;
+  let activeBreakInterval = null;
+  let lastJumpTapTime = 0;
 
   // Player State (Spawn on open village cobblestone street)
   const player = {
@@ -3442,15 +3488,15 @@
     player.inWater = (currentBlock === BLOCKS.WATER);
     player.inLava = (currentBlock === BLOCKS.LAVA);
 
-    // 2. Movement Inputs (Support both WASD and Arrow Keys)
+    // 2. Movement Inputs (Support both WASD, Arrow Keys, and Mobile Touch D-Pad)
     let forward = 0;
     let right = 0;
-    if (keys['KeyW'] || keys['ArrowUp']) forward += 1;
-    if (keys['KeyS'] || keys['ArrowDown']) forward -= 1;
-    if (keys['KeyA'] || keys['ArrowLeft']) right -= 1;
-    if (keys['KeyD'] || keys['ArrowRight']) right += 1;
+    if (keys['KeyW'] || keys['ArrowUp'] || touchMoveState.forward) forward += 1;
+    if (keys['KeyS'] || keys['ArrowDown'] || touchMoveState.backward) forward -= 1;
+    if (keys['KeyA'] || keys['ArrowLeft'] || touchMoveState.left) right -= 1;
+    if (keys['KeyD'] || keys['ArrowRight'] || touchMoveState.right) right += 1;
 
-    player.isSprinting = !player.isFlying && (!!keys['ShiftLeft'] || !!keys['ShiftRight'] || !!keys['ControlLeft'] || !!keys['ControlRight']);
+    player.isSprinting = !player.isFlying && (!!keys['ShiftLeft'] || !!keys['ShiftRight'] || !!keys['ControlLeft'] || !!keys['ControlRight'] || touchMoveState.sprinting);
 
     let moveSpeed = 4.6;
     if (playerEffects.swiftness > 0) {
@@ -3515,9 +3561,9 @@
     if (player.isFlying) {
       player.vy = 0;
       const flyVerticalSpeed = 7.8;
-      // Space moves up, Shift or KeyC moves down
-      if (keys['Space']) player.vy = flyVerticalSpeed;
-      if (keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyC']) player.vy = -flyVerticalSpeed;
+      // Space moves up, Shift or KeyC moves down, touch fly buttons support
+      if (keys['Space'] || touchActionState.jump || touchActionState.flyUp) player.vy = flyVerticalSpeed;
+      if (keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyC'] || touchActionState.flyDown) player.vy = -flyVerticalSpeed;
       const newY = player.y + player.vy * dt;
       if (!checkPlayerCollision(player.x, newY, player.z)) {
         player.y = newY;
@@ -3538,7 +3584,7 @@
       const isLava = player.inLava;
       player.vy -= (isLava ? 10.0 : 7.0) * dt;
       player.vy *= Math.pow(isLava ? 0.2 : 0.5, dt * 5.0);
-      if (keys['Space']) player.vy = (isLava ? 2.4 : 3.2);
+      if (keys['Space'] || touchActionState.jump) player.vy = (isLava ? 2.4 : 3.2);
       if (keys['ShiftLeft'] || keys['KeyC']) player.vy = (isLava ? -2.0 : -3.2);
       const newY = player.y + player.vy * dt;
       if (!checkPlayerCollision(player.x, newY, player.z)) {
@@ -3561,8 +3607,8 @@
       player.vy -= 28.0 * dt;
       player.vy = Math.max(player.vy, -38.0); // Terminal fall velocity
 
-      // Jump
-      if (keys['Space'] && player.onGround) {
+      // Jump (Keyboard Space or Touch Jump Button)
+      if ((keys['Space'] || touchActionState.jump) && player.onGround) {
         player.vy = 8.8; // Crisp, responsive jump
         player.onGround = false;
         playSynthesizedSound('jump');
@@ -4338,7 +4384,7 @@
   // Atmospheric Ambient Dust Motes (Subtle, warm, non-whitish)
   let ambientDust = null;
   function setupAmbientDust() {
-    const dustCount = 120;
+    const dustCount = isMobileDevice ? 50 : 120;
     const dustGeom = new THREE.BufferGeometry();
     const dustPos = new Float32Array(dustCount * 3);
     for (let i = 0; i < dustCount; i++) {
@@ -5520,8 +5566,13 @@
   }
 
   function updateMobs(dt) {
+    const maxDistSq = isMobileDevice ? (36 * 36) : (54 * 54);
     for (let i = 0; i < mobs.length; i++) {
-      mobs[i].update(dt);
+      const mob = mobs[i];
+      const distSq = (mob.x - player.x) ** 2 + (mob.z - player.z) ** 2;
+      if (distSq < maxDistSq) {
+        mob.update(dt);
+      }
     }
   }
 
@@ -5985,6 +6036,10 @@
       slot.addEventListener('click', () => {
         selectHotbarSlot(i);
       });
+      slot.addEventListener('touchstart', e => {
+        e.stopPropagation();
+        selectHotbarSlot(i);
+      }, { passive: true });
 
       // Drag and drop target support
       slot.addEventListener('dragover', e => {
@@ -6335,10 +6390,16 @@
     camera = new THREE.PerspectiveCamera(settings.fov, window.innerWidth / window.innerHeight, 0.1, 500);
     camera.rotation.order = 'YXZ';
 
-    // Standard linear pipeline for rich, vibrant voxel colors without washed-out bleaching
-    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    // High-performance WebGL pipeline (antialias disabled on mobile for 35% fillrate boost to hit solid 60 FPS)
+    renderer = new THREE.WebGLRenderer({
+      antialias: !isMobileDevice,
+      powerPreference: 'high-performance',
+      precision: isMobileDevice ? 'mediump' : 'highp',
+      stencil: false,
+      depth: true
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(getTargetPixelRatio());
     renderer.toneMapping = THREE.NoToneMapping;
     renderer.shadowMap.enabled = false;
     container.appendChild(renderer.domElement);
@@ -6539,11 +6600,16 @@
   // Input Handling & Event Listeners
   // =========================================================================
   function setupEventListeners() {
-    // Window Resize
+    // Window Resize & Orientation Change
     window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      if (camera) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+      }
+      if (renderer) {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(getTargetPixelRatio());
+      }
     });
 
     // Keyboard Input
@@ -6654,10 +6720,10 @@
       console.warn('Pointer lock request was declined or unavailable.');
     });
 
-    // Clicking game canvas requests pointer lock if unlocked
+    // Clicking game canvas requests pointer lock if on desktop (avoid defer warnings on mobile)
     if (renderer && renderer.domElement) {
       renderer.domElement.addEventListener('click', () => {
-        if (!isPaused && !isInventoryOpen && !isDead && !isPointerLocked) {
+        if (!isMobileDevice && !isPaused && !isInventoryOpen && !isDead && !isPointerLocked) {
           try { document.body.requestPointerLock(); } catch(e) {}
         }
       });
@@ -6890,6 +6956,9 @@
 
     // Settings Sliders Listeners
     setupSettingsSliders();
+
+    // Setup Mobile Touchscreen Controls Engine
+    setupMobileTouchControls();
   }
 
   function setupSettingsSliders() {
@@ -6967,12 +7036,399 @@
         chunks.forEach(chunk => meshChunk(chunk));
       });
     }
+
+    // Touch controls mode buttons
+    const touchGroup = document.getElementById('groupTouchControls');
+    if (touchGroup) {
+      touchGroup.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          touchGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          settings.touchControls = btn.dataset.touch;
+          const valEl = document.getElementById('valTouchControls');
+          if (valEl) valEl.textContent = btn.textContent;
+          updateTouchOverlayVisibility();
+        });
+      });
+    }
+
+    // Mobile Graphics preset buttons (Performance / Balanced / Sharp)
+    const presetGroup = document.getElementById('groupMobilePreset');
+    if (presetGroup) {
+      presetGroup.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          presetGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          settings.mobilePreset = btn.dataset.preset;
+          const valEl = document.getElementById('valMobilePreset');
+          if (valEl) valEl.textContent = btn.textContent;
+          if (renderer) {
+            renderer.setPixelRatio(getTargetPixelRatio());
+            renderer.setSize(window.innerWidth, window.innerHeight);
+          }
+        });
+      });
+    }
+
+    // Touch sensitivity slider
+    const sTouchSens = document.getElementById('sliderTouchSensitivity');
+    if (sTouchSens) {
+      sTouchSens.addEventListener('input', e => {
+        const val = parseInt(e.target.value);
+        settings.touchSensitivity = val * 0.0001;
+        const valEl = document.getElementById('valTouchSensitivity');
+        if (valEl) valEl.textContent = `Speed (${settings.touchSensitivity.toFixed(4)})`;
+      });
+    }
   }
 
   // =========================================================================
-  // Game State Controllers
+  // Game State Controllers & Mobile Touch Controls Engine
   // =========================================================================
   let hasGameStarted = false;
+
+  function updateTouchOverlayVisibility() {
+    const overlay = document.getElementById('mobileControlsOverlay');
+    if (!overlay) return;
+    const shouldShow = (!isPaused && !isInventoryOpen && !isDead && hasGameStarted) && (
+      settings.touchControls === 'on' ||
+      (settings.touchControls === 'auto' && isMobileDevice)
+    );
+    overlay.style.display = shouldShow ? 'block' : 'none';
+  }
+
+  function syncFlightControlsUI() {
+    const flightControls = document.getElementById('mobileFlightControls');
+    if (flightControls) {
+      flightControls.style.display = (settings.gameMode === 'creative' && player.isFlying) ? 'flex' : 'none';
+    }
+  }
+
+  function setupMobileTouchControls() {
+    const overlay = document.getElementById('mobileControlsOverlay');
+    if (!overlay) return;
+
+    // 1. Top Quick Action Buttons
+    const btnTouchInv = document.getElementById('touchBtnInventory');
+    if (btnTouchInv) {
+      btnTouchInv.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleInventory();
+      });
+    }
+
+    const btnTouchPause = document.getElementById('touchBtnPause');
+    if (btnTouchPause) {
+      btnTouchPause.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        pauseGame();
+      });
+    }
+
+    const btnTouchDebug = document.getElementById('touchBtnDebug');
+    if (btnTouchDebug) {
+      btnTouchDebug.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const dbg = document.getElementById('debugOverlay');
+        if (dbg) {
+          dbg.style.display = (dbg.style.display === 'none' ? 'block' : 'none');
+        }
+      });
+    }
+
+    // 2. D-Pad Cluster (Multi-Touch Sliding Support)
+    const dpadCluster = document.getElementById('mobileDpadCluster');
+    const dpadButtons = {
+      up: document.getElementById('touchBtnForward'),
+      down: document.getElementById('touchBtnBackward'),
+      left: document.getElementById('touchBtnLeft'),
+      right: document.getElementById('touchBtnRight'),
+      center: document.getElementById('touchBtnSneak')
+    };
+
+    let activeDpadTouchId = null;
+
+    function updateDpadFromTouch(touch) {
+      if (!dpadCluster) return;
+      const rect = dpadCluster.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dx = touch.clientX - centerX;
+      const dy = touch.clientY - centerY;
+      const dist = Math.hypot(dx, dy);
+
+      const deadzone = 14;
+      if (dist < deadzone) {
+        touchMoveState.forward = false;
+        touchMoveState.backward = false;
+        touchMoveState.left = false;
+        touchMoveState.right = false;
+        return;
+      }
+
+      const angle = Math.atan2(dy, dx);
+      const octant = Math.PI / 8;
+
+      touchMoveState.right = (angle >= -3 * octant && angle <= 3 * octant);
+      touchMoveState.left = (angle >= 5 * octant || angle <= -5 * octant);
+      touchMoveState.forward = (angle >= -7 * octant && angle <= -octant);
+      touchMoveState.backward = (angle >= octant && angle <= 7 * octant);
+
+      if (dpadButtons.up) dpadButtons.up.classList.toggle('active', touchMoveState.forward);
+      if (dpadButtons.down) dpadButtons.down.classList.toggle('active', touchMoveState.backward);
+      if (dpadButtons.left) dpadButtons.left.classList.toggle('active', touchMoveState.left);
+      if (dpadButtons.right) dpadButtons.right.classList.toggle('active', touchMoveState.right);
+    }
+
+    function resetDpad() {
+      activeDpadTouchId = null;
+      touchMoveState.forward = false;
+      touchMoveState.backward = false;
+      touchMoveState.left = false;
+      touchMoveState.right = false;
+      for (const k in dpadButtons) {
+        if (dpadButtons[k] && k !== 'center') dpadButtons[k].classList.remove('active');
+      }
+    }
+
+    if (dpadCluster) {
+      dpadCluster.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        initAudio();
+        const touch = e.changedTouches[0];
+        activeDpadTouchId = touch.identifier;
+        updateDpadFromTouch(touch);
+      }, { passive: false });
+
+      dpadCluster.addEventListener('touchmove', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const touch = e.changedTouches[i];
+          if (touch.identifier === activeDpadTouchId) {
+            updateDpadFromTouch(touch);
+            break;
+          }
+        }
+      }, { passive: false });
+
+      const onDpadEnd = e => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === activeDpadTouchId) {
+            resetDpad();
+            break;
+          }
+        }
+      };
+      dpadCluster.addEventListener('touchend', onDpadEnd);
+      dpadCluster.addEventListener('touchcancel', onDpadEnd);
+    }
+
+    // Center sneak / sprint toggle
+    if (dpadButtons.center) {
+      dpadButtons.center.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        touchMoveState.sprinting = !touchMoveState.sprinting;
+        dpadButtons.center.classList.toggle('active', touchMoveState.sprinting);
+        showToast(touchMoveState.sprinting ? 'Sprint enabled' : 'Normal walk');
+      }, { passive: false });
+    }
+
+    // 3. Action Buttons
+    const btnJump = document.getElementById('touchBtnJump');
+    if (btnJump) {
+      btnJump.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        initAudio();
+        touchActionState.jump = true;
+        btnJump.classList.add('active');
+
+        // Double-tap jump detection to toggle flight in creative mode
+        const now = performance.now();
+        if (now - lastJumpTapTime < 340 && settings.gameMode === 'creative') {
+          player.isFlying = !player.isFlying;
+          syncGameModeUI();
+          showToast(player.isFlying ? 'Creative flight enabled' : 'Flight disabled');
+        }
+        lastJumpTapTime = now;
+      }, { passive: false });
+
+      const onJumpEnd = () => {
+        touchActionState.jump = false;
+        btnJump.classList.remove('active');
+      };
+      btnJump.addEventListener('touchend', onJumpEnd);
+      btnJump.addEventListener('touchcancel', onJumpEnd);
+    }
+
+    // Mine / Break button
+    const btnBreak = document.getElementById('touchBtnBreak');
+    if (btnBreak) {
+      btnBreak.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        initAudio();
+        btnBreak.classList.add('active');
+        breakTargetedBlock();
+
+        if (activeBreakInterval) clearInterval(activeBreakInterval);
+        activeBreakInterval = setInterval(() => {
+          if (!isPaused && !isInventoryOpen && !isDead) {
+            breakTargetedBlock();
+          }
+        }, 220);
+      }, { passive: false });
+
+      const onBreakEnd = () => {
+        btnBreak.classList.remove('active');
+        if (activeBreakInterval) {
+          clearInterval(activeBreakInterval);
+          activeBreakInterval = null;
+        }
+      };
+      btnBreak.addEventListener('touchend', onBreakEnd);
+      btnBreak.addEventListener('touchcancel', onBreakEnd);
+    }
+
+    // Place / Use button
+    const btnPlace = document.getElementById('touchBtnPlace');
+    if (btnPlace) {
+      btnPlace.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        initAudio();
+        btnPlace.classList.add('active');
+        placeSelectedBlock();
+      }, { passive: false });
+
+      const onPlaceEnd = () => btnPlace.classList.remove('active');
+      btnPlace.addEventListener('touchend', onPlaceEnd);
+      btnPlace.addEventListener('touchcancel', onPlaceEnd);
+    }
+
+    // Creative Flight buttons
+    const btnFlyUp = document.getElementById('touchBtnFlyUp');
+    if (btnFlyUp) {
+      btnFlyUp.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        touchActionState.flyUp = true;
+        btnFlyUp.classList.add('active');
+      }, { passive: false });
+      const onFlyUpEnd = () => { touchActionState.flyUp = false; btnFlyUp.classList.remove('active'); };
+      btnFlyUp.addEventListener('touchend', onFlyUpEnd);
+      btnFlyUp.addEventListener('touchcancel', onFlyUpEnd);
+    }
+
+    const btnFlyDown = document.getElementById('touchBtnFlyDown');
+    if (btnFlyDown) {
+      btnFlyDown.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        touchActionState.flyDown = true;
+        btnFlyDown.classList.add('active');
+      }, { passive: false });
+      const onFlyDownEnd = () => { touchActionState.flyDown = false; btnFlyDown.classList.remove('active'); };
+      btnFlyDown.addEventListener('touchend', onFlyDownEnd);
+      btnFlyDown.addEventListener('touchcancel', onFlyDownEnd);
+    }
+
+    // 4. Full-Screen Multi-Touch Camera Look
+    // Any touch outside control buttons smoothly rotates the camera!
+    window.addEventListener('touchstart', e => {
+      if (!hasGameStarted || isPaused || isInventoryOpen || isDead) return;
+
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const target = touch.target;
+
+        if (target && target.closest && (
+          target.closest('#mobileDpadCluster') ||
+          target.closest('#mobileActionsCluster') ||
+          target.closest('.mobile-top-bar') ||
+          target.closest('.hotbar-slot') ||
+          target.closest('.hud-top-right') ||
+          target.closest('.game-modal-overlay') ||
+          target.closest('.ai-interact-prompt')
+        )) {
+          continue;
+        }
+
+        if (activeLookTouchId === null) {
+          activeLookTouchId = touch.identifier;
+          lastLookTouchX = touch.clientX;
+          lastLookTouchY = touch.clientY;
+          lookTouchStartX = touch.clientX;
+          lookTouchStartY = touch.clientY;
+          lookTouchStartTime = performance.now();
+          break;
+        }
+      }
+    }, { passive: false });
+
+    window.addEventListener('touchmove', e => {
+      if (activeLookTouchId === null) return;
+
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (touch.identifier === activeLookTouchId) {
+          const deltaX = touch.clientX - lastLookTouchX;
+          const deltaY = touch.clientY - lastLookTouchY;
+          lastLookTouchX = touch.clientX;
+          lastLookTouchY = touch.clientY;
+
+          const sens = settings.touchSensitivity || 0.0035;
+          player.targetYaw -= deltaX * sens;
+          player.targetPitch -= deltaY * sens;
+          player.targetPitch = Math.max(-Math.PI / 2 + 0.02, Math.min(Math.PI / 2 - 0.02, player.targetPitch));
+          break;
+        }
+      }
+    }, { passive: false });
+
+    const onLookTouchEnd = e => {
+      if (activeLookTouchId === null) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (touch.identifier === activeLookTouchId) {
+          const duration = performance.now() - lookTouchStartTime;
+          const distMoved = Math.hypot(touch.clientX - lookTouchStartX, touch.clientY - lookTouchStartY);
+          if (duration < 220 && distMoved < 12) {
+            let interacted = false;
+            for (let j = 0; j < npcs.length; j++) {
+              const npc = npcs[j];
+              if (Math.hypot(player.x - npc.x, player.z - npc.z) < 3.8) {
+                npc.interact();
+                interacted = true;
+                break;
+              }
+            }
+            if (!interacted && typeof mobs !== 'undefined') {
+              for (let j = 0; j < mobs.length; j++) {
+                const mob = mobs[j];
+                if (Math.hypot(player.x - mob.x, player.z - mob.z) < 3.8) {
+                  mob.interact();
+                  interacted = true;
+                  break;
+                }
+              }
+            }
+          }
+          activeLookTouchId = null;
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('touchend', onLookTouchEnd);
+    window.addEventListener('touchcancel', onLookTouchEnd);
+  }
 
   function startGame() {
     document.getElementById('mainMenu').style.display = 'none';
@@ -6997,22 +7453,29 @@
     player.vz = 0;
 
     syncGameModeUI();
-    try {
-      document.body.requestPointerLock();
-    } catch (e) {
-      console.warn('Pointer lock request was deferred:', e);
+    updateTouchOverlayVisibility();
+    if (!isMobileDevice) {
+      try {
+        document.body.requestPointerLock();
+      } catch (e) {
+        console.warn('Pointer lock request was deferred:', e);
+      }
     }
   }
 
   function pauseGame() {
     isPaused = true;
     document.getElementById('pauseMenu').style.display = 'flex';
+    updateTouchOverlayVisibility();
   }
 
   function resumeGame() {
     document.getElementById('pauseMenu').style.display = 'none';
     isPaused = false;
-    document.body.requestPointerLock();
+    updateTouchOverlayVisibility();
+    if (!isMobileDevice) {
+      document.body.requestPointerLock();
+    }
   }
 
   function toggleInventory() {
@@ -7027,13 +7490,15 @@
     isInventoryOpen = true;
     renderHotbarUI();
     document.getElementById('inventoryModal').style.display = 'flex';
+    updateTouchOverlayVisibility();
     if (document.exitPointerLock) document.exitPointerLock();
   }
 
   function closeInventory() {
     isInventoryOpen = false;
     document.getElementById('inventoryModal').style.display = 'none';
-    if (!isPaused) {
+    updateTouchOverlayVisibility();
+    if (!isPaused && !isMobileDevice) {
       document.body.requestPointerLock();
     }
   }
@@ -7053,6 +7518,7 @@
       if (pauseNextText) pauseNextText.textContent = 'Creative';
       player.isFlying = false;
     }
+    syncFlightControlsUI();
   }
 
   function toggleSound() {

@@ -1294,4 +1294,349 @@ html, body {
   filter: brightness(1.15);
 }
 
+/* =========================================================================
+   Mobile Touch Controls & Responsive Styles
+   Strictly Zero Unicode Emojis
+   ========================================================================= */
+
+/* Prevent default touch behaviors on canvas */
+#gameContainer,
+.mobile-controls-overlay {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile Controls Overlay */
+.mobile-controls-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* Top Mobile Quick Bar */
+.mobile-top-bar {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  z-index: 25;
+}
+
+.touch-top-btn {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 9999px;
+  padding: 6px 14px;
+  color: #f1f5f9;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: all 0.12s ease;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.touch-top-btn:active,
+.touch-top-btn.active {
+  background: rgba(56, 189, 248, 0.4);
+  border-color: #38bdf8;
+  transform: scale(0.94);
+  color: #fff;
+}
+
+.touch-top-label {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Virtual D-Pad Cluster (Bottom Left) */
+.mobile-dpad-cluster {
+  position: absolute;
+  left: calc(16px + env(safe-area-inset-left, 0px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  width: 154px;
+  height: 154px;
+  pointer-events: auto;
+  z-index: 25;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.touch-dpad-btn {
+  background: rgba(15, 23, 42, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: all 0.08s ease;
+}
+
+.touch-dpad-up {
+  grid-column: 2;
+  grid-row: 1;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+}
+
+.touch-dpad-left {
+  grid-column: 1;
+  grid-row: 2;
+  border-top-left-radius: 18px;
+  border-bottom-left-radius: 18px;
+}
+
+.touch-dpad-center {
+  grid-column: 2;
+  grid-row: 2;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.7);
+}
+
+.touch-dpad-center-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.touch-dpad-right {
+  grid-column: 3;
+  grid-row: 2;
+  border-top-right-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+
+.touch-dpad-down {
+  grid-column: 2;
+  grid-row: 3;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+
+.touch-dpad-btn:active,
+.touch-dpad-btn.active {
+  background: rgba(56, 189, 248, 0.45) !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  transform: scale(0.92);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+}
+
+/* Mobile Actions Cluster (Bottom Right) */
+.mobile-actions-cluster {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  pointer-events: auto;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.mobile-flight-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.touch-action-btn {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition: all 0.08s ease;
+  font-family: inherit;
+}
+
+.touch-btn-sub {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.touch-jump-btn {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(6, 182, 212, 0.35));
+  border-color: rgba(52, 211, 153, 0.45);
+}
+
+.touch-break-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(245, 158, 11, 0.3));
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.touch-place-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+.touch-fly-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(168, 85, 247, 0.3);
+  border-color: rgba(192, 132, 252, 0.4);
+}
+
+.touch-action-btn:active,
+.touch-action-btn.active {
+  transform: scale(0.9);
+  filter: brightness(1.3);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.7);
+}
+
+/* Settings button groups */
+.setting-btn-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.setting-btn-group .se-btn {
+  flex: 1;
+  min-width: 80px;
+  text-align: center;
+  justify-content: center;
+}
+
+.setting-btn-group .se-btn.active {
+  background: rgba(56, 189, 248, 0.25) !important;
+  border-color: #38bdf8 !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+/* Responsive Styles for Mobile & Tablets */
+@media (max-width: 900px), (max-height: 560px) {
+  .game-hud {
+    padding: 10px 12px;
+  }
+
+  .hud-top-left .hud-hint {
+    display: none;
+  }
+
+  .hud-badge {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  .hotbar-slot {
+    width: 38px;
+    height: 38px;
+  }
+
+  .hotbar-slot-num {
+    font-size: 8px;
+  }
+
+  .hud-bottom-center {
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .hotbar-label {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  /* Modals on small screens */
+  .inventory-card,
+  .settings-card,
+  .controls-card,
+  .main-menu-card,
+  .pause-menu-card,
+  .ai-chat-card {
+    max-height: 94vh;
+    padding: 16px;
+    width: 95vw;
+    max-width: 600px;
+    overflow-y: auto;
+  }
+
+  .inventory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    max-height: 40vh;
+  }
+
+  .controls-grid {
+    grid-template-columns: 1fr;
+    max-height: 48vh;
+    overflow-y: auto;
+  }
+
+  .modal-hotbar .hotbar-slot {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 500px) {
+  .mobile-dpad-cluster {
+    width: 136px;
+    height: 136px;
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .touch-jump-btn {
+    width: 60px;
+    height: 60px;
+  }
+
+  .touch-break-btn,
+  .touch-place-btn {
+    width: 50px;
+    height: 50px;
+  }
+
+  .hotbar-slot {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+
 
