@@ -4687,29 +4687,45 @@
   }
 
   // =========================================================================
-  // Dynamic Voxel Clouds System (Altitude Y=46.5, Wind Drift & Day Tinting)
+  // Natural Procedural Voxel Clouds System (Expansive Skies, Open Blue Patches & Wind Drift)
   // =========================================================================
   function setupCloudLayer() {
-    // 64x64 Procedural Pixel Cloud Canvas with Puffy Voxel Patches
+    // 128x128 Procedural Pixel Cloud Canvas with Natural Open-Sky Gaps
     const cloudCanvas = document.createElement('canvas');
-    cloudCanvas.width = 64;
-    cloudCanvas.height = 64;
+    cloudCanvas.width = 128;
+    cloudCanvas.height = 128;
     const cctx = cloudCanvas.getContext('2d');
-    cctx.clearRect(0, 0, 64, 64);
+    cctx.clearRect(0, 0, 128, 128);
 
-    // Generate chunky pixel clouds
-    for (let x = 0; x < 64; x += 2) {
-      for (let y = 0; y < 64; y += 2) {
-        const n1 = Math.sin(x * 0.15) * Math.cos(y * 0.15);
-        const n2 = Math.sin(x * 0.35 + 1.2) * Math.cos(y * 0.35 + 0.8) * 0.5;
-        const val = n1 + n2;
-        if (val > 0.18) {
-          cctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
+    // Generate seamless multi-octave harmonic noise with ~70% clear open sky
+    const W = 128, H = 128;
+    for (let x = 0; x < W; x += 2) {
+      for (let y = 0; y < H; y += 2) {
+        const fx = (x / W) * Math.PI * 2;
+        const fy = (y / H) * Math.PI * 2;
+        // Macro noise mask creates large expanses of clear open sky
+        const macro = Math.sin(fx + 0.5) * Math.cos(fy + 0.8) * 0.7 +
+                      Math.sin(fx * 2 - 1.1) * Math.sin(fy * 2 + 0.4) * 0.3;
+        if (macro < 0.05) continue; // Clear open sky patch
+
+        // Fluffy cumulus cloud shaping harmonics
+        const shape = Math.sin(fx * 3 + 1.7) * Math.cos(fy * 3 + 2.1) * 0.4 +
+                      Math.cos(fx * 5 - 0.9) * Math.sin(fy * 5 + 1.3) * 0.25 +
+                      Math.sin(fx * 8 + 0.3) * Math.cos(fy * 8 - 0.7) * 0.15;
+        const D = macro * 0.6 + shape * 0.4;
+
+        if (D > 0.40) {
+          // Dense cloud core
+          cctx.fillStyle = 'rgba(255, 255, 255, 0.98)';
           cctx.fillRect(x, y, 2, 2);
-          if (val > 0.42) {
-            cctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
-            cctx.fillRect(x, y, 1, 1);
-          }
+        } else if (D > 0.24) {
+          // Mid cloud body
+          cctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+          cctx.fillRect(x, y, 2, 2);
+        } else if (D > 0.14) {
+          // Soft fluffy cloud rim
+          cctx.fillStyle = 'rgba(255, 255, 255, 0.68)';
+          cctx.fillRect(x, y, 2, 2);
         }
       }
     }
@@ -4719,10 +4735,10 @@
     cloudTex.minFilter = THREE.NearestFilter;
     cloudTex.wrapS = THREE.RepeatWrapping;
     cloudTex.wrapT = THREE.RepeatWrapping;
-    cloudTex.repeat.set(16, 16);
+    cloudTex.repeat.set(4, 4);
 
-    // Massive 1600x1600 high altitude cloud layer
-    const cloudGeom = new THREE.PlaneGeometry(1600, 1600);
+    // Massive 3200x3200 high altitude cloud layer covering up to 24-chunk horizons
+    const cloudGeom = new THREE.PlaneGeometry(3200, 3200);
     const cloudMat = new THREE.MeshBasicMaterial({
       map: cloudTex,
       transparent: true,
@@ -4734,7 +4750,7 @@
 
     cloudMesh = new THREE.Mesh(cloudGeom, cloudMat);
     cloudMesh.rotation.x = Math.PI / 2; // Flat horizontal plane
-    cloudMesh.position.set(player.x, 115.0, player.z); // High in the stratosphere above mountains
+    cloudMesh.position.set(player.x, 125.0, player.z); // High in the stratosphere above mountains
     cloudMesh.renderOrder = -400;
     scene.add(cloudMesh);
   }
@@ -4745,33 +4761,67 @@
   function updateClouds(dt) {
     if (!cloudMesh || !cloudTex) return;
 
-    // Continuous natural wind drift (100% independent of player movement)
-    cloudWindX += dt * 0.0025;
-    cloudWindZ += dt * 0.0010;
+    // Gentle natural wind drift across the sky
+    cloudWindX += dt * 0.0006;
+    cloudWindZ += dt * 0.0002;
     cloudTex.offset.x = cloudWindX;
     cloudTex.offset.y = cloudWindZ;
 
-    // Discretely snap the mesh position to 100-block intervals around the player
-    // Because the texture repeats every 100 blocks, snapping by 100 blocks is 100% seamless and imperceptible.
-    // While moving within any 100-block zone, the mesh is COMPLETELY STATIONARY in world space!
-    const step = 100.0;
+    // Discretely snap the mesh position to 800-block intervals (equal to repeat interval)
+    // Seamless and completely invisible to the player
+    const step = 800.0;
     cloudMesh.position.x = Math.floor(player.x / step) * step;
-    cloudMesh.position.y = 125.0; // High in the sky far above mountains
+    cloudMesh.position.y = 125.0;
     cloudMesh.position.z = Math.floor(player.z / step) * step;
 
-    // Dynamic Day/Night cloud color tinting
-    const isDay = (dayTime >= 0.12 && dayTime <= 0.45);
-    const isDawnDusk = ((dayTime >= 0.00 && dayTime < 0.12) || (dayTime > 0.45 && dayTime <= 0.58));
-    if (isDay) {
-      cloudMesh.material.color.setRGB(1.0, 1.0, 1.0);
-      cloudMesh.material.opacity = 0.82;
-    } else if (isDawnDusk) {
-      cloudMesh.material.color.setRGB(1.0, 0.75, 0.58); // Sunset peach/gold
-      cloudMesh.material.opacity = 0.86;
+    // Continuous smooth Day / Sunset / Night cloud tinting
+    let cR = 0.98, cG = 0.98, cB = 1.0, cAlpha = 0.82;
+    if (dayTime < 0.12) {
+      // Dawn transition (0.00 to 0.12): amber gold to daytime white
+      const ct = dayTime / 0.12;
+      const st = ct * ct * (3 - 2 * ct);
+      cR = 0.98 * (1 - st) + 0.98 * st;
+      cG = 0.72 * (1 - st) + 0.98 * st;
+      cB = 0.54 * (1 - st) + 1.0 * st;
+      cAlpha = 0.88 * (1 - st) + 0.82 * st;
+    } else if (dayTime < 0.42) {
+      // Day (0.12 to 0.42): bright fluffy cloud white
+      cR = 0.98; cG = 0.98; cB = 1.0; cAlpha = 0.82;
+    } else if (dayTime < 0.54) {
+      // Sunset (0.42 to 0.54): daylight to warm vibrant sunset peach / gold
+      const ct = (dayTime - 0.42) / 0.12;
+      const st = ct * ct * (3 - 2 * ct);
+      cR = 0.98 * (1 - st) + 1.0 * st;
+      cG = 0.98 * (1 - st) + 0.70 * st;
+      cB = 1.0 * (1 - st) + 0.48 * st;
+      cAlpha = 0.82 * (1 - st) + 0.88 * st;
+    } else if (dayTime < 0.65) {
+      // Dusk (0.54 to 0.65): sunset peach to twilight rose / dusty purple
+      const ct = (dayTime - 0.54) / 0.11;
+      const st = ct * ct * (3 - 2 * ct);
+      cR = 1.0 * (1 - st) + 0.45 * st;
+      cG = 0.70 * (1 - st) + 0.32 * st;
+      cB = 0.48 * (1 - st) + 0.46 * st;
+      cAlpha = 0.88 * (1 - st) + 0.65 * st;
+    } else if (dayTime < 0.88) {
+      // Night (0.65 to 0.88): dusk rose to moonlit indigo
+      const ct = (dayTime - 0.65) / 0.23;
+      const st = ct * ct * (3 - 2 * ct);
+      cR = 0.45 * (1 - st) + 0.15 * st;
+      cG = 0.32 * (1 - st) + 0.18 * st;
+      cB = 0.46 * (1 - st) + 0.30 * st;
+      cAlpha = 0.65 * (1 - st) + 0.48 * st;
     } else {
-      cloudMesh.material.color.setRGB(0.18, 0.22, 0.35); // Moonlit indigo
-      cloudMesh.material.opacity = 0.52;
+      // Late night to Dawn (0.88 to 1.00): moonlit indigo to warm dawn amber
+      const ct = (dayTime - 0.88) / 0.12;
+      const st = ct * ct * (3 - 2 * ct);
+      cR = 0.15 * (1 - st) + 0.98 * st;
+      cG = 0.18 * (1 - st) + 0.72 * st;
+      cB = 0.30 * (1 - st) + 0.54 * st;
+      cAlpha = 0.48 * (1 - st) + 0.88 * st;
     }
+    cloudMesh.material.color.setRGB(cR, cG, cB);
+    cloudMesh.material.opacity = cAlpha;
   }
 
   // =========================================================================
@@ -5881,12 +5931,15 @@
 
   function updateDayNightCycle(dt) {
     if (settings.dayCycleSpeed > 0) {
-      const cycleDuration = 240 / settings.dayCycleSpeed;
+      // Speeds: 1: Normal (12 min / 720s), 2: Cinematic (20 min / 1200s), 3: Fast (4 min / 240s)
+      let cycleDuration = 720;
+      if (settings.dayCycleSpeed === 2) cycleDuration = 1200;
+      else if (settings.dayCycleSpeed === 3) cycleDuration = 240;
       dayTime = (dayTime + (dt / cycleDuration)) % 1.0;
     }
 
     const sunAngle = dayTime * Math.PI * 2 - Math.PI / 2;
-    const orbitDist = 140;
+    const orbitDist = 260;
     const celestialX = Math.cos(sunAngle) * orbitDist;
     const celestialY = Math.sin(sunAngle) * orbitDist;
     const celestialZ = 30;
@@ -5926,7 +5979,8 @@
       }
     }
     const range = hi[0] - lo[0];
-    const t = range > 0 ? (dayTime - lo[0]) / range : 0;
+    const rawT = range > 0 ? (dayTime - lo[0]) / range : 0;
+    const t = rawT * rawT * (3 - 2 * rawT); // Smoothstep easing for gradual, natural transitions
 
     const skyR = lo[1] + (hi[1] - lo[1]) * t;
     const skyG = lo[2] + (hi[2] - lo[2]) * t;
@@ -5946,20 +6000,25 @@
       scene.fog.color = fogColor;
     }
 
-    // Update sky dome vertex colors (smooth zenith to horizon gradient, throttled for 60 FPS)
-    if (skyDome && Math.abs(dayTime - lastSkyUpdateDayTime) > 0.005) {
-      lastSkyUpdateDayTime = dayTime;
-      const posAttr = skyDome.geometry.attributes.position;
-      const colAttr = skyDome.geometry.attributes.color;
-      for (let i = 0; i < posAttr.count; i++) {
-        const ny = posAttr.getY(i) / 400;
-        const nt = Math.max(0, Math.min(1, ny));
-        const zR = skyR * (0.65 + nt * 0.35);
-        const zG = skyG * (0.65 + nt * 0.35);
-        const zB = skyB * (0.75 + nt * 0.25);
-        colAttr.setXYZ(i, zR, zG, zB);
+    // Continuous smooth Sky Dome tinting & throttled vertex gradient
+    if (skyDome) {
+      skyDome.material.color.setRGB(skyR, skyG, skyB);
+      if (Math.abs(dayTime - lastSkyUpdateDayTime) > 0.005) {
+        lastSkyUpdateDayTime = dayTime;
+        const posAttr = skyDome.geometry.attributes.position;
+        const colAttr = skyDome.geometry.attributes.color;
+        if (posAttr && colAttr) {
+          for (let i = 0; i < posAttr.count; i++) {
+            const ny = posAttr.getY(i) / 800;
+            const nt = Math.max(0, Math.min(1, ny));
+            const zR = skyR * (0.65 + nt * 0.35);
+            const zG = skyG * (0.65 + nt * 0.35);
+            const zB = skyB * (0.75 + nt * 0.25);
+            colAttr.setXYZ(i, zR, zG, zB);
+          }
+          colAttr.needsUpdate = true;
+        }
       }
-      colAttr.needsUpdate = true;
     }
 
     // Toggle inactive directional light to save fragment shader ALU
@@ -5980,25 +6039,34 @@
   // =========================================================================
   // Chunk Management (Dynamic Streaming Around Player with Staggered Meshing)
   // =========================================================================
+  let lastMeshSortChunkX = null;
+  let lastMeshSortChunkZ = null;
+
   function processChunkMeshQueue() {
     if (chunkMeshQueue.length === 0) return;
 
-    // Prioritize chunks closest to player
+    // Prioritize chunks closest to player - only re-sort on chunk boundary change or when queue freshly populated
     const playerChunkX = Math.floor(player.x / CHUNK_SIZE);
     const playerChunkZ = Math.floor(player.z / CHUNK_SIZE);
-    chunkMeshQueue.sort((a, b) => {
-      const distA = (a.cx - playerChunkX) ** 2 + (a.cz - playerChunkZ) ** 2;
-      const distB = (b.cx - playerChunkX) ** 2 + (b.cz - playerChunkZ) ** 2;
-      return distA - distB;
-    });
+    if (lastMeshSortChunkX !== playerChunkX || lastMeshSortChunkZ !== playerChunkZ) {
+      lastMeshSortChunkX = playerChunkX;
+      lastMeshSortChunkZ = playerChunkZ;
+      chunkMeshQueue.sort((a, b) => {
+        const distA = (a.cx - playerChunkX) ** 2 + (a.cz - playerChunkZ) ** 2;
+        const distB = (b.cx - playerChunkX) ** 2 + (b.cz - playerChunkZ) ** 2;
+        return distA - distB;
+      });
+    }
 
-    // Mesh at most 1 chunk per frame to guarantee consistent 60+ FPS
-    while (chunkMeshQueue.length > 0) {
+    // Mesh 1 chunk per frame (or 2 if queue is large) to guarantee consistent 60+ FPS
+    const maxMeshPerFrame = chunkMeshQueue.length > 24 ? 2 : 1;
+    let meshedCount = 0;
+    while (chunkMeshQueue.length > 0 && meshedCount < maxMeshPerFrame) {
       const nextChunk = chunkMeshQueue.shift();
       const key = `${nextChunk.cx},${nextChunk.cz}`;
       if (chunks.has(key) && !nextChunk.mesh) {
         meshChunk(nextChunk);
-        break;
+        meshedCount++;
       }
     }
   }
@@ -7345,13 +7413,13 @@
     const container = document.getElementById('gameContainer');
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x5a92ee);
-    // Premium Sky Gradient Dome (fog: false ensures sky is always vivid)
-    const skyGeom = new THREE.SphereGeometry(400, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    // Premium Sky Gradient Dome (fog: false ensures sky is always vivid, 800 radius supports 24 chunks)
+    const skyGeom = new THREE.SphereGeometry(800, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
     const skyColors = [];
     const skyPosAttr = skyGeom.attributes.position;
     for (let i = 0; i < skyPosAttr.count; i++) {
       const y = skyPosAttr.getY(i);
-      const t = Math.max(0, Math.min(1, y / 400));
+      const t = Math.max(0, Math.min(1, y / 800));
       const r = 0.42 * (1 - t) + 0.15 * t;
       const g = 0.64 * (1 - t) + 0.35 * t;
       const b = 0.96 * (1 - t) + 0.90 * t;
@@ -7359,7 +7427,7 @@
     }
     skyGeom.setAttribute('color', new THREE.Float32BufferAttribute(skyColors, 3));
     const skyMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, depthWrite: false, fog: false });
-    const skyDome = new THREE.Mesh(skyGeom, skyMat);
+    skyDome = new THREE.Mesh(skyGeom, skyMat); // Assigns global skyDome (no const shadowing)
     skyDome.renderOrder = -999;
     scene.add(skyDome);
 
@@ -7370,7 +7438,8 @@
       scene.fog = new THREE.Fog(0x6ca0f5, fogNear, fogFar);
     }
 
-    camera = new THREE.PerspectiveCamera(settings.fov, window.innerWidth / window.innerHeight, 0.1, 500);
+    // Camera far plane at 1000 to fully support up to 24-chunk render distance
+    camera = new THREE.PerspectiveCamera(settings.fov, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.rotation.order = 'YXZ';
 
     // High-performance WebGL pipeline (antialias disabled on mobile for 35% fillrate boost to hit solid 60 FPS)
@@ -8002,6 +8071,10 @@
       sRender.addEventListener('input', e => {
         settings.renderDistance = parseInt(e.target.value);
         document.getElementById('valRenderDistance').textContent = `${settings.renderDistance} Chunks`;
+        if (camera) {
+          camera.far = Math.max(800, (settings.renderDistance + 4) * CHUNK_SIZE * 1.5);
+          camera.updateProjectionMatrix();
+        }
         if (scene && scene.fog) {
           scene.fog.near = Math.max(16, settings.renderDistance * CHUNK_SIZE * 0.65);
           scene.fog.far = settings.renderDistance * CHUNK_SIZE;
@@ -8040,8 +8113,8 @@
     if (sDay) {
       sDay.addEventListener('input', e => {
         settings.dayCycleSpeed = parseInt(e.target.value);
-        const labels = ['Paused', 'Normal (4 min)', 'Fast (2 min)', 'Ultra (1 min)'];
-        document.getElementById('valDayCycle').textContent = labels[settings.dayCycleSpeed];
+        const labels = ['Paused', 'Normal (12 min)', 'Cinematic (20 min)', 'Fast (4 min)'];
+        document.getElementById('valDayCycle').textContent = labels[settings.dayCycleSpeed] || 'Normal (12 min)';
       });
     }
 
