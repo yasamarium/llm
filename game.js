@@ -6535,11 +6535,24 @@
           } catch (err) {}
         };
 
+        const willPayload = JSON.stringify({
+          type: 'player_leave',
+          id: this.localPlayerId,
+          senderId: this.localPlayerId,
+          roomId: this.roomId,
+          name: this.playerName
+        });
+        const willMsg = new Paho.MQTT.Message(willPayload);
+        willMsg.destinationName = topic;
+        willMsg.qos = 0;
+        willMsg.retained = false;
+
         client.connect({
           useSSL: true,
           timeout: 4,
           keepAliveInterval: 30,
           cleanSession: true,
+          willMessage: willMsg,
           onSuccess: () => {
             console.log(`[Multiplayer] Connected to EMQX MQTT Broker! Subscribing to ${topic}...`);
             client.subscribe(topic, {
@@ -6585,11 +6598,24 @@
           } catch (err) {}
         };
 
+        const willPayload = JSON.stringify({
+          type: 'player_leave',
+          id: this.localPlayerId,
+          senderId: this.localPlayerId,
+          roomId: this.roomId,
+          name: this.playerName
+        });
+        const willMsg = new Paho.MQTT.Message(willPayload);
+        willMsg.destinationName = topic;
+        willMsg.qos = 0;
+        willMsg.retained = false;
+
         client.connect({
           useSSL: true,
           timeout: 5,
           keepAliveInterval: 30,
           cleanSession: true,
+          willMessage: willMsg,
           onSuccess: () => {
             console.log(`[Multiplayer] Connected to HiveMQ fallback broker! Subscribing to ${topic}...`);
             client.subscribe(topic, {
@@ -6624,20 +6650,36 @@
       if (this.isOnline) {
         this.broadcast({
           type: 'player_leave',
-          id: this.localPlayerId
+          id: this.localPlayerId,
+          senderId: this.localPlayerId,
+          roomId: this.roomId,
+          name: this.playerName
         });
       }
       this.isOnline = false;
-      if (this.mqttClient) {
-        try { this.mqttClient.disconnect(); } catch (e) {}
-        this.mqttClient = null;
+      const clientToClose = this.mqttClient;
+      this.mqttClient = null;
+      if (clientToClose) {
+        setTimeout(() => {
+          try { clientToClose.disconnect(); } catch (e) {}
+        }, 150);
       }
       if (this.broadcastChannel) {
         try { this.broadcastChannel.close(); } catch (e) {}
         this.broadcastChannel = null;
       }
       for (const [id, peer] of this.remotePlayers.entries()) {
-        if (peer.mesh && scene) scene.remove(peer.mesh);
+        if (peer.mesh) {
+          peer.mesh.visible = false;
+          if (scene) scene.remove(peer.mesh);
+          peer.mesh.traverse(child => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+              else child.material.dispose();
+            }
+          });
+        }
       }
       this.remotePlayers.clear();
       const mpBadge = document.getElementById('hudMultiplayerBadge');
@@ -6763,7 +6805,8 @@
       } else if (packet.type === 'chat') {
         this.addChatMessage(packet.sender || 'Player', packet.text);
       } else if (packet.type === 'player_leave') {
-        this.removeRemotePlayer(packet.id);
+        const leaveId = packet.id || packet.senderId;
+        this.removeRemotePlayer(leaveId, packet.name);
       }
     }
 
@@ -6960,14 +7003,41 @@
       return group;
     }
 
-    removeRemotePlayer(id) {
-      const peer = this.remotePlayers.get(id);
+    removeRemotePlayer(id, fallbackName) {
+      let peer = this.remotePlayers.get(id);
+      if (!peer && fallbackName) {
+        for (const [pId, p] of this.remotePlayers.entries()) {
+          if (p.name === fallbackName) {
+            peer = p;
+            id = pId;
+            break;
+          }
+        }
+      }
+
+      if (!peer && !fallbackName) return;
+
+      const playerName = (peer && peer.name) || fallbackName || 'Player';
+
       if (peer) {
-        if (peer.mesh && scene) scene.remove(peer.mesh);
+        if (peer.mesh) {
+          peer.mesh.visible = false;
+          if (scene) scene.remove(peer.mesh);
+          peer.mesh.traverse(child => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+              else child.material.dispose();
+            }
+          });
+        }
         this.remotePlayers.delete(id);
         this.updatePlayerCountBadge();
-        this.addChatMessage('System', `${peer.name} left the room.`, 'system');
       }
+
+      // System announcement in chat & on-screen alert banner
+      this.addChatMessage('System', `${playerName} has left the room.`, 'system');
+      showToast(`${playerName} has left the room.`);
     }
 
     update(dt, now) {
@@ -7079,7 +7149,11 @@
       senderSpan.textContent = `[${sender}]`;
 
       const textSpan = document.createElement('span');
-      textSpan.textContent = text;
+      textSpan.textContent = (type === 'system' ? ' ' : ': ') + text;
+      if (type === 'system') {
+        textSpan.style.color = '#fef08a';
+        textSpan.style.fontWeight = '600';
+      }
 
       item.appendChild(senderSpan);
       item.appendChild(textSpan);
@@ -7613,6 +7687,19 @@
       player.vz = 0;
     });
 
+    // Clean disconnect on page unload or navigation
+    window.addEventListener('beforeunload', () => {
+      if (typeof multiplayerManager !== 'undefined' && multiplayerManager && multiplayerManager.isOnline) {
+        multiplayerManager.disconnect();
+      }
+    });
+
+    window.addEventListener('pagehide', () => {
+      if (typeof multiplayerManager !== 'undefined' && multiplayerManager && multiplayerManager.isOnline) {
+        multiplayerManager.disconnect();
+      }
+    });
+
     window.addEventListener('mousemove', e => {
       if (!isPointerLocked) return;
       // Clamp extreme mouse movement spikes for ultra-smooth aiming
@@ -7682,14 +7769,8 @@
     const btnPlayEl = document.getElementById('btnPlayGame');
     if (btnPlayEl) {
       btnPlayEl.addEventListener('click', () => {
-        if (typeof multiplayerManager !== 'undefined' && multiplayerManager) {
-          multiplayerManager.isOnline = false;
-          const mpBadge = document.getElementById('hudMultiplayerBadge');
-          if (mpBadge) mpBadge.style.display = 'none';
-          const chatOverlay = document.getElementById('multiplayerChatOverlay');
-          if (chatOverlay) chatOverlay.style.display = 'none';
-          const touchChat = document.getElementById('touchBtnChat');
-          if (touchChat) touchChat.style.display = 'none';
+        if (typeof multiplayerManager !== 'undefined' && multiplayerManager && multiplayerManager.isOnline) {
+          multiplayerManager.disconnect();
         }
         initAudio();
         startGame();
@@ -7761,6 +7842,9 @@
       document.getElementById('gameHUD').style.display = 'none';
       isPaused = true;
       if (document.exitPointerLock) document.exitPointerLock();
+      if (typeof multiplayerManager !== 'undefined' && multiplayerManager && multiplayerManager.isOnline) {
+        multiplayerManager.disconnect();
+      }
     });
 
     // Inventory Modal Buttons & Tabs
