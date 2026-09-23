@@ -8282,11 +8282,12 @@
   function updateTouchOverlayVisibility() {
     const overlay = document.getElementById('mobileControlsOverlay');
     if (!overlay) return;
-    const shouldShow = (!isPaused && !isInventoryOpen && !isDead && hasGameStarted) && (
+    const shouldShow = (!isPaused && !isInventoryOpen && !isDead && hasGameStarted && !isPortraitBlocked) && (
       settings.touchControls === 'on' ||
       (settings.touchControls === 'auto' && isMobileDevice)
     );
     overlay.style.display = shouldShow ? 'block' : 'none';
+    overlay.style.visibility = shouldShow ? 'visible' : 'hidden';
   }
 
   function syncFlightControlsUI() {
@@ -8315,22 +8316,18 @@
     if (isTouchMobile && isPortrait) {
       isPortraitBlocked = true;
       blocker.style.display = 'flex';
-      const mobileOverlay = document.getElementById('mobileControlsOverlay');
-      if (mobileOverlay) mobileOverlay.style.visibility = 'hidden';
       const crosshair = document.getElementById('hudCrosshair');
       if (crosshair) crosshair.style.display = 'none';
+      updateTouchOverlayVisibility();
     } else {
       const wasBlocked = isPortraitBlocked;
       isPortraitBlocked = false;
       blocker.style.display = 'none';
-      const mobileOverlay = document.getElementById('mobileControlsOverlay');
-      if (mobileOverlay && typeof gameState !== 'undefined' && gameState === 'playing' && isMobileDevice) {
-        mobileOverlay.style.visibility = 'visible';
-      }
       const crosshair = document.getElementById('hudCrosshair');
-      if (crosshair && typeof gameState !== 'undefined' && gameState === 'playing') {
+      if (crosshair && hasGameStarted && !isPaused) {
         crosshair.style.display = 'block';
       }
+      updateTouchOverlayVisibility();
 
       if (wasBlocked && renderer && camera) {
         camera.aspect = window.innerWidth / window.innerHeight;

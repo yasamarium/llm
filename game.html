@@ -52,14 +52,6 @@
 
     <!-- Top-Right Actions -->
     <div class="hud-top-right">
-      <a href="/services" id="hudWebServicesBtn" class="hud-icon-btn hud-services-btn" title="AS Web Services & Tools Hub" aria-label="AS Web Services & Tools Hub">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-          <polyline points="2 17 12 22 22 17"/>
-          <polyline points="2 12 12 17 22 12"/>
-        </svg>
-        <span class="hud-services-badge">SERVICES</span>
-      </a>
       <button id="hudSoundBtn" class="hud-icon-btn" title="Toggle Sound (M)" aria-label="Toggle Sound">
         <svg id="soundIconOn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
@@ -178,24 +170,25 @@
         </button>
       </div>
 
-      <!-- Action: Break / Mine Block -->
-      <button id="touchBtnBreak" class="touch-action-btn touch-break-btn" aria-label="Mine or Break Block">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"/>
-          <path d="M15 13 9 7l4-4 6 6-4 4Z"/>
-        </svg>
-        <span class="touch-btn-sub">MINE</span>
-      </button>
+      <!-- Action Row: Mine & Place -->
+      <div class="mobile-actions-row">
+        <button id="touchBtnBreak" class="touch-action-btn touch-break-btn" aria-label="Mine or Break Block">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"/>
+            <path d="M15 13 9 7l4-4 6 6-4 4Z"/>
+          </svg>
+          <span class="touch-btn-sub">MINE</span>
+        </button>
 
-      <!-- Action: Place Block / Use Item / Eat -->
-      <button id="touchBtnPlace" class="touch-action-btn touch-place-btn" aria-label="Place Block or Use Item">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-          <polyline points="2 17 12 22 22 17"/>
-          <polyline points="2 12 12 17 22 12"/>
-        </svg>
-        <span class="touch-btn-sub">PLACE</span>
-      </button>
+        <button id="touchBtnPlace" class="touch-action-btn touch-place-btn" aria-label="Place Block or Use Item">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+            <polyline points="2 17 12 22 22 17"/>
+            <polyline points="2 12 12 17 22 12"/>
+          </svg>
+          <span class="touch-btn-sub">PLACE</span>
+        </button>
+      </div>
 
       <!-- Action: Jump & Flight Toggle -->
       <button id="touchBtnJump" class="touch-action-btn touch-jump-btn" aria-label="Jump">
