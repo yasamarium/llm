@@ -6404,6 +6404,15 @@
     return bubble;
   }
 
+  function stripUnicodeEmojis(str) {
+    if (!str) return '';
+    return str
+      .replace(/\p{Extended_Pictographic}/gu, '')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\uFE0E\uFE0F]/gu, '')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+  }
+
   async function sendAiChatMessage() {
     const input = document.getElementById('aiChatInput');
     if (!input) return;
@@ -6419,42 +6428,30 @@
     const thinkingBubble = appendChatMessage('assistant', 'Maiko AI Core is computing neural response...');
 
     try {
-      const coreInfo = activeNearbyAICore ? activeNearbyAICore.name : 'Sector Core';
-      const promptPayload = {
-        model: 'maiko-yen',
-        messages: [
-          {
-            role: 'system',
-            content: `You are Maiko AI Core, the sentient quantum artificial intelligence node of Square Era voxel universe. The player is currently interacting with you at ${coreInfo} (Player coords: X: ${Math.floor(player.x)}, Y: ${Math.floor(player.y)}, Z: ${Math.floor(player.z)}). Square Era is an advanced 3D voxel sandbox featuring 100+ Minecraft Java Edition items, building blocks, TNT explosives with true voxel collision and craters, and high-tech AI sanctuaries. Respond in a concise, knowledgeable, friendly, and cyberpunk-styled tone. Strictly ZERO unicode emojis.`
-          },
-          ...aiChatHistory.slice(-8)
-        ]
-      };
-
       let answerText = null;
 
-      // Try local /api/chat proxy first
+      // 1. Primary: Direct query to MAIKO Public Chatbot API
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 7500);
-        const res = await fetch('/api/chat', {
+        const timeoutId = setTimeout(() => controller.abort(), 9000);
+        const res = await fetch('https://maikoyen.lovable.app/api/public/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(promptPayload),
+          body: JSON.stringify({ message: text }),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.choices && data.choices[0] && data.choices[0].message) {
-            answerText = data.choices[0].message.content;
-          } else if (data && data.response) {
-            answerText = data.response;
+          if (data && data.reply) {
+            answerText = stripUnicodeEmojis(data.reply);
           }
         }
-      } catch (err) {}
+      } catch (apiErr) {
+        // Fallback gracefully on network error or timeout
+      }
 
-      // Fallback: Smart local knowledge generator if offline or cluster booting
+      // 2. Secondary fallback: Smart local domain knowledge generator
       if (!answerText) {
         answerText = generateLocalAiKnowledge(text);
       }
