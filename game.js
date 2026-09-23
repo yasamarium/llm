@@ -249,7 +249,8 @@
     SPAWN_WOLF: 209,
     SPAWN_SLIME: 210,
     SPAWN_BLAZE: 211,
-    SPAWN_WARDEN: 212
+    SPAWN_WARDEN: 212,
+    SPAWN_AS_CAT: 213
   };
 
   const BLOCK_NAMES = {
@@ -485,7 +486,8 @@
     [BLOCKS.SPAWN_WOLF]: 'Wolf Spawn Egg',
     [BLOCKS.SPAWN_SLIME]: 'Slime Spawn Egg',
     [BLOCKS.SPAWN_BLAZE]: 'Blaze Spawn Egg',
-    [BLOCKS.SPAWN_WARDEN]: 'Warden Spawn Egg'
+    [BLOCKS.SPAWN_WARDEN]: 'Warden Spawn Egg',
+    [BLOCKS.SPAWN_AS_CAT]: 'Egg (as cat)'
   };
 
 
@@ -575,7 +577,8 @@
     [BLOCKS.SPAWN_SPIDER]: 'eggs', [BLOCKS.SPAWN_ENDERMAN]: 'eggs', [BLOCKS.SPAWN_PIG]: 'eggs',
     [BLOCKS.SPAWN_COW]: 'eggs', [BLOCKS.SPAWN_SHEEP]: 'eggs', [BLOCKS.SPAWN_CHICKEN]: 'eggs',
     [BLOCKS.SPAWN_VILLAGER]: 'eggs', [BLOCKS.SPAWN_GOLEM]: 'eggs', [BLOCKS.SPAWN_WOLF]: 'eggs',
-    [BLOCKS.SPAWN_SLIME]: 'eggs', [BLOCKS.SPAWN_BLAZE]: 'eggs', [BLOCKS.SPAWN_WARDEN]: 'eggs'
+    [BLOCKS.SPAWN_SLIME]: 'eggs', [BLOCKS.SPAWN_BLAZE]: 'eggs', [BLOCKS.SPAWN_WARDEN]: 'eggs',
+    [BLOCKS.SPAWN_AS_CAT]: 'eggs'
   };
 
   const BLOCK_TRANSPARENT = {
@@ -2171,6 +2174,7 @@
     texCanvases.spawn_slime = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#4ade80', '#15803d'); });
     texCanvases.spawn_blaze = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#f59e0b', '#dc2626'); });
     texCanvases.spawn_warden = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#0f172a', '#06b6d4'); });
+    texCanvases.spawn_as_cat = createPixelCanvas(ctx => { drawSpawnEgg(ctx, '#0f172a', '#10b981'); });
 
     function makeMat(texture, isTransp = false, opacity = 1.0, isWater = false) {
       return new THREE.MeshLambertMaterial({
@@ -2320,7 +2324,7 @@
       [BLOCKS.SPAWN_CHICKEN, 'spawn_chicken'], [BLOCKS.SPAWN_VILLAGER, 'spawn_villager'],
       [BLOCKS.SPAWN_GOLEM, 'spawn_golem'], [BLOCKS.SPAWN_WOLF, 'spawn_wolf'],
       [BLOCKS.SPAWN_SLIME, 'spawn_slime'], [BLOCKS.SPAWN_BLAZE, 'spawn_blaze'],
-      [BLOCKS.SPAWN_WARDEN, 'spawn_warden']
+      [BLOCKS.SPAWN_WARDEN, 'spawn_warden'], [BLOCKS.SPAWN_AS_CAT, 'spawn_as_cat']
     ];
 
     autoBlockMappings.forEach(([id, texKey, isTransp]) => {
@@ -3498,21 +3502,28 @@
   // Player Controls & Physics Engine
   // =========================================================================
   function isBlockSolid(b) {
-    return b !== BLOCKS.AIR && b !== BLOCKS.WATER && b !== BLOCKS.LAVA && b !== BLOCKS.ROSE && b !== BLOCKS.IGNITER;
+    if (!b || b === BLOCKS.AIR) return false;
+    if (b === BLOCKS.WATER || b === BLOCKS.LAVA) return false;
+    if (b === BLOCKS.ROSE || b === BLOCKS.IGNITER || b === BLOCKS.POPPY || b === BLOCKS.DANDELION ||
+        b === BLOCKS.TULIP || b === BLOCKS.BLUE_ORCHID || b === BLOCKS.SUNFLOWER || b === BLOCKS.WITHER_ROSE ||
+        b === BLOCKS.REDSTONE_DUST || b === BLOCKS.REDSTONE_TORCH || b === BLOCKS.RAIL || b === BLOCKS.POWERED_RAIL ||
+        b === BLOCKS.SUGAR_CANE || b === BLOCKS.VINES || b === BLOCKS.SWEET_BERRIES || b === BLOCKS.CANDLE) {
+      return false;
+    }
+    return true;
   }
 
-  function checkPlayerCollision(px, py, pz) {
-    const hw = 0.28; // Slightly narrower than block so player moves freely through 1-block corridors
-    const minX = Math.floor(px - hw + 0.001);
-    const maxX = Math.floor(px + hw - 0.001);
-    const minY = Math.floor(py + 0.001);
-    const maxY = Math.floor(py + player.height - 0.001);
-    const minZ = Math.floor(pz - hw + 0.001);
-    const maxZ = Math.floor(pz + hw - 0.001);
+  function checkAABBCollision(minX, minY, minZ, maxX, maxY, maxZ) {
+    const x0 = Math.floor(minX + 0.001);
+    const x1 = Math.floor(maxX - 0.001);
+    const y0 = Math.floor(minY + 0.001);
+    const y1 = Math.floor(maxY - 0.001);
+    const z0 = Math.floor(minZ + 0.001);
+    const z1 = Math.floor(maxZ - 0.001);
 
-    for (let x = minX; x <= maxX; x++) {
-      for (let y = minY; y <= maxY; y++) {
-        for (let z = minZ; z <= maxZ; z++) {
+    for (let x = x0; x <= x1; x++) {
+      for (let y = y0; y <= y1; y++) {
+        for (let z = z0; z <= z1; z++) {
           if (isBlockSolid(getGlobalBlock(x, y, z))) {
             return true;
           }
@@ -3520,6 +3531,15 @@
       }
     }
     return false;
+  }
+
+  function checkPlayerCollision(px, py, pz) {
+    const hw = 0.28; // Slightly narrower than block so player moves freely through 1-block corridors
+    return checkAABBCollision(px - hw, py, pz - hw, px + hw, py + player.height, pz + hw);
+  }
+
+  function checkEntityCollision(x, y, z, hw = 0.28, height = 0.8) {
+    return checkAABBCollision(x - hw, y, z - hw, x + hw, y + height, z + hw);
   }
 
   function updatePhysics(dt) {
@@ -3604,35 +3624,12 @@
       // Space moves up, Shift or KeyC moves down, touch fly buttons support
       if (keys['Space'] || touchActionState.jump || touchActionState.flyUp) player.vy = flyVerticalSpeed;
       if (keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyC'] || touchActionState.flyDown) player.vy = -flyVerticalSpeed;
-      const newY = player.y + player.vy * dt;
-      if (!checkPlayerCollision(player.x, newY, player.z)) {
-        player.y = newY;
-        player.onGround = false;
-      } else {
-        if (player.vy < 0) {
-          player.y = Math.ceil(newY);
-          let flySafety = 0;
-          while (checkPlayerCollision(player.x, player.y, player.z) && player.y < CHUNK_HEIGHT && flySafety < 80) {
-            player.y += 0.05;
-            flySafety++;
-          }
-          player.onGround = true;
-        }
-        player.vy = 0;
-      }
     } else if (player.inWater || player.inLava) {
       const isLava = player.inLava;
       player.vy -= (isLava ? 10.0 : 7.0) * dt;
       player.vy *= Math.pow(isLava ? 0.2 : 0.5, dt * 5.0);
       if (keys['Space'] || touchActionState.jump) player.vy = (isLava ? 2.4 : 3.2);
       if (keys['ShiftLeft'] || keys['KeyC']) player.vy = (isLava ? -2.0 : -3.2);
-      const newY = player.y + player.vy * dt;
-      if (!checkPlayerCollision(player.x, newY, player.z)) {
-        player.y = newY;
-      } else {
-        player.vy = 0;
-      }
-      player.onGround = false;
 
       // Lava burn damage in survival mode
       if (isLava && settings.gameMode === 'survival') {
@@ -3649,23 +3646,33 @@
 
       // Jump (Keyboard Space or Touch Jump Button)
       if ((keys['Space'] || touchActionState.jump) && player.onGround) {
-        player.vy = 8.8; // Crisp, responsive jump
+        player.vy = 8.8; // Responsive jump
         player.onGround = false;
         playSynthesizedSound('jump');
       }
+    }
 
-      // Vertical movement & collision
-      const newY = player.y + player.vy * dt;
+    // 4. Axis-Separated Swept Sub-Stepping (Guarantees zero tunneling through walls or floor sinking)
+    const horizDist = Math.hypot(player.vx * dt, player.vz * dt);
+    const vertDist = Math.abs(player.vy * dt);
+    const totalDist = Math.max(horizDist, vertDist);
+    const subSteps = Math.min(4, Math.max(1, Math.ceil(totalDist / 0.32)));
+    const sdt = dt / subSteps;
+    const hw = 0.28;
+
+    for (let step = 0; step < subSteps; step++) {
+      // Step A: Vertical (Y) Collision & Snapping
+      const newY = player.y + player.vy * sdt;
       if (!checkPlayerCollision(player.x, newY, player.z)) {
         player.y = newY;
         player.onGround = false;
       } else {
         if (player.vy < 0) {
-          // Clean landing: snap to top of the block
-          player.y = Math.ceil(newY);
+          // Clean landing: snap flush to top of the solid block below
+          player.y = Math.floor(player.y);
           let landSafety = 0;
-          while (checkPlayerCollision(player.x, player.y, player.z) && player.y < CHUNK_HEIGHT && landSafety < 80) {
-            player.y += 0.05;
+          while (checkPlayerCollision(player.x, player.y, player.z) && player.y < CHUNK_HEIGHT && landSafety < 60) {
+            player.y += 0.02;
             landSafety++;
           }
           player.onGround = true;
@@ -3673,82 +3680,83 @@
             damagePlayer(Math.floor((-player.vy - 16.0) / 2.5));
           }
         } else if (player.vy > 0) {
-          // Ceiling collision
-          player.y = Math.floor(newY + player.height) - player.height - 0.001;
+          // Ceiling collision: snap flush below ceiling block
+          player.y = Math.floor(newY + player.height) - player.height - 0.002;
         }
         player.vy = 0;
       }
-    }
 
-    // 4. Smooth Horizontal Movement & Intelligent 1-Block Auto Step-Up
-    const stepHeight = 1.05; // Can smoothly step over 1-block terrain elevation
-    const dx = player.vx * dt;
-    const dz = player.vz * dt;
-
-    if (Math.abs(dx) > 1e-5 || Math.abs(dz) > 1e-5) {
-      // Try direct diagonal movement
-      if (!checkPlayerCollision(player.x + dx, player.y, player.z + dz)) {
-        player.x += dx;
-        player.z += dz;
-      } else {
-        // Try stepping up if on ground
-        let stepped = false;
-        if (player.onGround) {
-          for (let sh = 0.25; sh <= stepHeight; sh += 0.25) {
-            if (!checkPlayerCollision(player.x, player.y + sh, player.z) &&
-                !checkPlayerCollision(player.x + dx, player.y + sh, player.z + dz)) {
-              player.x += dx;
-              player.z += dz;
-              player.y += sh;
-              cameraStepOffset -= sh;
-              stepped = true;
-              break;
+      // Step B: Horizontal (X) Collision with Auto Step-Up & Flush Snapping
+      const dx = player.vx * sdt;
+      if (Math.abs(dx) > 1e-5) {
+        if (!checkPlayerCollision(player.x + dx, player.y, player.z)) {
+          player.x += dx;
+        } else {
+          // Try stepping up 1 block if on ground and headroom is completely clear
+          let steppedX = false;
+          if (player.onGround) {
+            for (let sh = 0.25; sh <= 1.05; sh += 0.25) {
+              if (!checkPlayerCollision(player.x, player.y + sh, player.z) &&
+                  !checkPlayerCollision(player.x + dx, player.y + sh, player.z)) {
+                player.x += dx;
+                player.y += sh;
+                cameraStepOffset -= sh;
+                steppedX = true;
+                break;
+              }
             }
+          }
+          if (!steppedX) {
+            // Flush clamp against the block face so player never penetrates or slides through walls
+            if (dx > 0) {
+              player.x = Math.floor(player.x + dx + hw) - hw - 0.002;
+            } else {
+              player.x = Math.floor(player.x + dx - hw) + 1.0 + hw + 0.002;
+            }
+            player.vx = 0;
           }
         }
+      }
 
-        if (!stepped) {
-          // Slide along X axis
-          if (!checkPlayerCollision(player.x + dx, player.y, player.z)) {
-            player.x += dx;
-          } else {
-            // Try step up on X
-            let steppedX = false;
-            if (player.onGround) {
-              for (let sh = 0.25; sh <= stepHeight; sh += 0.25) {
-                if (!checkPlayerCollision(player.x, player.y + sh, player.z) &&
-                    !checkPlayerCollision(player.x + dx, player.y + sh, player.z)) {
-                  player.x += dx;
-                  player.y += sh;
-                  cameraStepOffset -= sh;
-                  steppedX = true;
-                  break;
-                }
+      // Step C: Horizontal (Z) Collision with Auto Step-Up & Flush Snapping
+      const dz = player.vz * sdt;
+      if (Math.abs(dz) > 1e-5) {
+        if (!checkPlayerCollision(player.x, player.y, player.z + dz)) {
+          player.z += dz;
+        } else {
+          // Try stepping up 1 block if on ground and headroom is completely clear
+          let steppedZ = false;
+          if (player.onGround) {
+            for (let sh = 0.25; sh <= 1.05; sh += 0.25) {
+              if (!checkPlayerCollision(player.x, player.y + sh, player.z) &&
+                  !checkPlayerCollision(player.x, player.y + sh, player.z + dz)) {
+                player.z += dz;
+                player.y += sh;
+                cameraStepOffset -= sh;
+                steppedZ = true;
+                break;
               }
             }
-            if (!steppedX) player.vx = 0;
           }
-
-          // Slide along Z axis
-          if (!checkPlayerCollision(player.x, player.y, player.z + dz)) {
-            player.z += dz;
-          } else {
-            // Try step up on Z
-            let steppedZ = false;
-            if (player.onGround) {
-              for (let sh = 0.25; sh <= stepHeight; sh += 0.25) {
-                if (!checkPlayerCollision(player.x, player.y + sh, player.z) &&
-                    !checkPlayerCollision(player.x, player.y + sh, player.z + dz)) {
-                  player.z += dz;
-                  player.y += sh;
-                  cameraStepOffset -= sh;
-                  steppedZ = true;
-                  break;
-                }
-              }
+          if (!steppedZ) {
+            // Flush clamp against the block face so player never penetrates or slides through walls
+            if (dz > 0) {
+              player.z = Math.floor(player.z + dz + hw) - hw - 0.002;
+            } else {
+              player.z = Math.floor(player.z + dz - hw) + 1.0 + hw + 0.002;
             }
-            if (!steppedZ) player.vz = 0;
+            player.vz = 0;
           }
+        }
+      }
+    }
+
+    // Step D: Anti-Stuck Depenetration Safeguard
+    if (checkPlayerCollision(player.x, player.y, player.z)) {
+      for (let py = 0.05; py <= 1.2; py += 0.05) {
+        if (!checkPlayerCollision(player.x, player.y + py, player.z)) {
+          player.y += py;
+          break;
         }
       }
     }
@@ -4244,7 +4252,8 @@
       [BLOCKS.SPAWN_WOLF]: 'wolf',
       [BLOCKS.SPAWN_SLIME]: 'slime',
       [BLOCKS.SPAWN_BLAZE]: 'blaze',
-      [BLOCKS.SPAWN_WARDEN]: 'warden'
+      [BLOCKS.SPAWN_WARDEN]: 'warden',
+      [BLOCKS.SPAWN_AS_CAT]: 'as_cat'
     };
 
     if (spawnEggMobMap[selectedBlock]) {
@@ -4259,7 +4268,8 @@
       mobs.push(newMob);
       playSynthesizedSound('place');
       createParticleExplosion(sx, sy + 0.5, sz, BLOCKS.GLOWSTONE, 14);
-      showToast(`Spawned ${BLOCK_NAMES[selectedBlock].replace(' Spawn Egg', '')}!`);
+      const spawnTitle = (mobType === 'as_cat') ? 'AS Cat' : BLOCK_NAMES[selectedBlock].replace(' Spawn Egg', '');
+      showToast(`Spawned ${spawnTitle}!`);
       return;
     }
 
@@ -4638,6 +4648,19 @@
         gain.connect(master);
         osc.start(now);
         osc.stop(now + 0.18);
+      } else if (type === 'mob_cat') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(560, now);
+        osc.frequency.exponentialRampToValueAtTime(860, now + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.35);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now);
+        osc.stop(now + 0.35);
       } else if (type === 'ignite') {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -4839,7 +4862,7 @@
   }
 
   // =========================================================================
-  // Cute Animated NPCs System (Mostly Female with Chibi Voxel Rigs & Wandering AI)
+  // Animated Chibi NPCs System (Mostly Female with Stylized Voxel Rigs & Wandering AI)
   // =========================================================================
   const NPC_PRESETS = [
     {
@@ -4955,19 +4978,19 @@
       this.group = new THREE.Group();
       this.group.position.set(this.x, this.y, this.z);
 
-      // Cute Chibi Proportions: Head (0.44), Torso (0.45), Arms, Legs
+      // Chibi Proportions: Head (0.44), Torso (0.45), Arms, Legs
       // 1. Head Group
       this.headGroup = new THREE.Group();
       this.headGroup.position.set(0, 1.25, 0);
 
-      // Cute Anime Face Texture (32x32 with big sparkly eyes & rosy cheeks)
+      // Anime Face Texture (32x32 with big sparkly eyes & rosy cheeks)
       const faceCanvas = document.createElement('canvas');
       faceCanvas.width = 32;
       faceCanvas.height = 32;
       const fctx = faceCanvas.getContext('2d');
       fctx.fillStyle = '#ffedd5'; // Skin tone
       fctx.fillRect(0, 0, 32, 32);
-      // Sparkly cute eyes
+      // Sparkly expressive eyes
       fctx.fillStyle = this.preset.eyeColor;
       fctx.fillRect(6, 12, 6, 8);
       fctx.fillRect(20, 12, 6, 8);
@@ -4979,7 +5002,7 @@
       fctx.fillStyle = '#fb7185';
       fctx.fillRect(5, 21, 5, 2);
       fctx.fillRect(22, 21, 5, 2);
-      // Cute smile
+      // Playful smile
       fctx.fillStyle = '#e11d48';
       fctx.fillRect(14, 23, 4, 1);
 
@@ -4994,7 +5017,7 @@
       const headMesh = new THREE.Mesh(headGeom, headMats);
       this.headGroup.add(headMesh);
 
-      // Cute Hairstyle Mesh
+      // Hairstyle Mesh
       const hairMat = new THREE.MeshLambertMaterial({ color: this.preset.hairColor });
       const hairTopGeom = new THREE.BoxGeometry(0.48, 0.22, 0.48);
       const hairTopMesh = new THREE.Mesh(hairTopGeom, hairMat);
@@ -5011,7 +5034,7 @@
       rightStrand.position.set(0.25, -0.08, -0.05);
       this.headGroup.add(rightStrand);
 
-      // Cute Hair Ribbon
+      // Hair Ribbon
       const ribbonMat = new THREE.MeshLambertMaterial({ color: this.preset.ribbonColor });
       const ribbonGeom = new THREE.BoxGeometry(0.18, 0.08, 0.08);
       const ribbonMesh = new THREE.Mesh(ribbonGeom, ribbonMat);
@@ -5020,7 +5043,7 @@
 
       this.group.add(this.headGroup);
 
-      // 2. Torso with Cute Dress
+      // 2. Torso with Stylized Dress
       const dressMat = new THREE.MeshLambertMaterial({ color: this.preset.dressColor });
       const torsoGeom = new THREE.BoxGeometry(0.40, 0.50, 0.24);
       this.torsoMesh = new THREE.Mesh(torsoGeom, dressMat);
@@ -5101,7 +5124,7 @@
       if (distToPlayer < 4.0) {
         const targetYaw = Math.atan2(dx, dz);
         this.yaw += (targetYaw - this.yaw) * Math.min(dt * 6.0, 1.0);
-        this.headGroup.rotation.y = Math.sin(performance.now() * 0.002) * 0.15; // Gentle cute head tilt
+        this.headGroup.rotation.y = Math.sin(performance.now() * 0.002) * 0.15; // Gentle expressive head tilt
         this.isWalking = false;
       } else {
         this.headGroup.rotation.y = 0;
@@ -5128,24 +5151,63 @@
           if (tdist > 0.4) {
             this.yaw = Math.atan2(tdx, tdz);
             const step = this.moveSpeed * dt;
-            this.x += (tdx / tdist) * step;
-            this.z += (tdz / tdist) * step;
+            const mdx = (tdx / tdist) * step;
+            const mdz = (tdz / tdist) * step;
+
+            // X movement with 1-block auto step-up
+            if (!checkEntityCollision(this.x + mdx, this.y, this.z, 0.28, 1.35)) {
+              this.x += mdx;
+            } else if (this.onGround && !checkEntityCollision(this.x + mdx, this.y + 1.05, this.z, 0.28, 1.35) && !checkEntityCollision(this.x, this.y + 1.05, this.z, 0.28, 1.35)) {
+              this.x += mdx;
+              this.y += 1.0;
+            } else {
+              this.targetX = this.x - mdx * 2.5;
+            }
+
+            // Z movement with 1-block auto step-up
+            if (!checkEntityCollision(this.x, this.y, this.z + mdz, 0.28, 1.35)) {
+              this.z += mdz;
+            } else if (this.onGround && !checkEntityCollision(this.x, this.y + 1.05, this.z + mdz, 0.28, 1.35) && !checkEntityCollision(this.x, this.y + 1.05, this.z, 0.28, 1.35)) {
+              this.z += mdz;
+              this.y += 1.0;
+            } else {
+              this.targetZ = this.z - mdz * 2.5;
+            }
           } else {
             this.isWalking = false;
           }
         }
       }
 
-      // 2. Terrain ground height tracking (Cached per block for silky 60fps)
-      const bx = Math.floor(this.x);
-      const bz = Math.floor(this.z);
-      if (this.lastBx !== bx || this.lastBz !== bz) {
-        this.lastBx = bx;
-        this.lastBz = bz;
-        this.cachedGroundH = getTerrainHeight(bx, bz);
+      // 2. Vertical Gravity and Solid Ground Physics
+      this.vy = (this.vy || 0) - 24.0 * dt;
+      this.vy = Math.max(-20.0, this.vy);
+      const nextY = this.y + this.vy * dt;
+      if (!checkEntityCollision(this.x, nextY, this.z, 0.28, 1.35)) {
+        this.y = nextY;
+        this.onGround = false;
+      } else {
+        if (this.vy < 0) {
+          this.y = Math.floor(nextY + 0.05);
+          let safety = 0;
+          while (checkEntityCollision(this.x, this.y, this.z, 0.28, 1.35) && safety < 50) {
+            this.y += 0.02;
+            safety++;
+          }
+          this.onGround = true;
+        }
+        this.vy = 0;
       }
-      const targetY = (this.cachedGroundH || 25) + 1.0;
-      this.y += (targetY - this.y) * Math.min(dt * 10.0, 1.0);
+
+      // Anti-stuck safeguard
+      if (checkEntityCollision(this.x, this.y, this.z, 0.28, 1.35)) {
+        for (let py = 0.1; py <= 2.0; py += 0.1) {
+          if (!checkEntityCollision(this.x, this.y + py, this.z, 0.28, 1.35)) {
+            this.y += py;
+            break;
+          }
+        }
+      }
 
       // 3. Apply Group Position & Rotation
       this.group.position.set(this.x, this.y, this.z);
@@ -5180,7 +5242,7 @@
 
   function spawnInitialNPCs() {
     npcs = [];
-    // Place cute NPCs into their themed sectors in the Grand City
+    // Place NPCs into their themed sectors in the Grand City
     npcs.push(new NPC(NPC_PRESETS[0], 11.5, 3.5));  // Sakura (Florist at Plaza Rose Garden)
     npcs.push(new NPC(NPC_PRESETS[1], 4.5, 18.5));  // Aoi (Architect at Skyscraper Plaza)
     npcs.push(new NPC(NPC_PRESETS[2], 22.5, 5.5));  // Lily (Baker at Market District)
@@ -5201,7 +5263,7 @@
   // =========================================================================
   class Mob {
     constructor(type, x, z) {
-      this.type = type; // 'sheep', 'cow', 'pig'
+      this.type = type; // 'sheep', 'cow', 'pig', 'as_cat', etc.
       this.x = x;
       this.z = z;
       this.y = Math.max(20, getTerrainHeight(Math.floor(x), Math.floor(z)) + 0.4);
@@ -5211,9 +5273,16 @@
       this.walkTimer = Math.random() * 10;
       this.idleTimer = 1.0 + Math.random() * 3.0;
       this.isWalking = false;
-      this.moveSpeed = (type === 'pig') ? 1.7 : 1.25;
+      this.isSitting = false;
+      this.moveSpeed = (type === 'pig') ? 1.7 : ((type === 'as_cat') ? 3.2 : 1.25);
+      this.vy = 0;
+      this.onGround = false;
       this.legs = [];
       this.head = null;
+      this.body = null;
+      this.tail = null;
+      this.tailSeg2 = null;
+      this.nametag = null;
       this.createModel();
     }
 
@@ -5305,7 +5374,7 @@
           return leg;
         });
       } else if (this.type === 'pig') {
-        // Pig: Cute pink body, snout, floppy ears, stubby legs
+        // Pig: Pink body, snout, floppy ears, stubby legs
         const pigMat = new THREE.MeshLambertMaterial({ color: 0xf472b6 });
         const darkPigMat = new THREE.MeshLambertMaterial({ color: 0xdb2777 });
 
@@ -5555,60 +5624,286 @@
         const legR = new THREE.Mesh(legGeom, sculkMat); legR.position.set(0.3, 0.45, 0);
         this.legs = [legL, legR];
         this.group.add(legL, legR);
+      } else if (this.type === 'as_cat') {
+        // AS Black Cat: Sleek obsidian black coat, pointed ears with rose inner lining, glowing emerald eyes, 4 slender legs, animated tail, and AS nametag
+        const catMat = new THREE.MeshLambertMaterial({ color: 0x0f172a }); // Obsidian black fur
+        const earInnerMat = new THREE.MeshLambertMaterial({ color: 0x9d174d }); // Velvety rose inner ear
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x10b981 }); // Glowing emerald eyes
+        const pupilMat = new THREE.MeshBasicMaterial({ color: 0x022c22 });
+        const noseMat = new THREE.MeshLambertMaterial({ color: 0x475569 });
+
+        // 1. Torso Body
+        const bodyGeom = new THREE.BoxGeometry(0.34, 0.30, 0.68);
+        this.body = new THREE.Mesh(bodyGeom, catMat);
+        this.body.position.set(0, 0.38, 0);
+        this.group.add(this.body);
+
+        // 2. Feline Head
+        this.head = new THREE.Group();
+        this.head.position.set(0, 0.54, 0.40);
+        const headGeom = new THREE.BoxGeometry(0.32, 0.28, 0.30);
+        const headMesh = new THREE.Mesh(headGeom, catMat);
+        this.head.add(headMesh);
+
+        // Pointed Ears
+        const earGeom = new THREE.BoxGeometry(0.08, 0.12, 0.08);
+        const earL = new THREE.Mesh(earGeom, catMat); earL.position.set(-0.11, 0.18, 0.04); earL.rotation.z = 0.15;
+        const earInnerL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.02), earInnerMat); earInnerL.position.set(0, -0.01, 0.04); earL.add(earInnerL);
+        const earR = new THREE.Mesh(earGeom, catMat); earR.position.set(0.11, 0.18, 0.04); earR.rotation.z = -0.15;
+        const earInnerR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.02), earInnerMat); earInnerR.position.set(0, -0.01, 0.04); earR.add(earInnerR);
+        this.head.add(earL, earR);
+
+        // Emerald Eyes
+        const eyeGeom = new THREE.BoxGeometry(0.065, 0.065, 0.02);
+        const eyeLMesh = new THREE.Mesh(eyeGeom, eyeMat); eyeLMesh.position.set(-0.08, 0.04, 0.155);
+        const pupilL = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.05, 0.01), pupilMat); pupilL.position.set(0, 0, 0.01); eyeLMesh.add(pupilL);
+        const eyeRMesh = new THREE.Mesh(eyeGeom, eyeMat); eyeRMesh.position.set(0.08, 0.04, 0.155);
+        const pupilR = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.05, 0.01), pupilMat); pupilR.position.set(0, 0, 0.01); eyeRMesh.add(pupilR);
+        this.head.add(eyeLMesh, eyeRMesh);
+
+        // Nose
+        const noseMesh = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.035, 0.03), noseMat);
+        noseMesh.position.set(0, -0.04, 0.16);
+        this.head.add(noseMesh);
+
+        this.group.add(this.head);
+
+        // 3. Four Slender Legs
+        const legGeom = new THREE.BoxGeometry(0.09, 0.30, 0.09);
+        const legOffsets = [[-0.11, 0.15, 0.22], [0.11, 0.15, 0.22], [-0.11, 0.15, -0.22], [0.11, 0.15, -0.22]];
+        this.legs = legOffsets.map(([lx, ly, lz]) => {
+          const l = new THREE.Mesh(legGeom, catMat);
+          l.position.set(lx, ly, lz);
+          this.group.add(l);
+          return l;
+        });
+
+        // 4. Articulated Curved Tail (2 interconnected segments)
+        this.tail = new THREE.Group();
+        this.tail.position.set(0, 0.44, -0.34);
+        const seg1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.06), catMat);
+        seg1.position.set(0, 0.08, -0.04);
+        seg1.rotation.x = -0.35;
+        this.tail.add(seg1);
+        this.tailSeg2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.16, 0.05), catMat);
+        this.tailSeg2.position.set(0, 0.14, -0.06);
+        this.tailSeg2.rotation.x = 0.55;
+        seg1.add(this.tailSeg2);
+        this.group.add(this.tail);
+
+        // 5. Floating "AS" Nametag
+        const tagCanvas = document.createElement('canvas');
+        tagCanvas.width = 128;
+        tagCanvas.height = 48;
+        const tctx = tagCanvas.getContext('2d');
+        tctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        tctx.beginPath();
+        tctx.roundRect(14, 6, 100, 36, 10);
+        tctx.fill();
+        tctx.lineWidth = 2;
+        tctx.strokeStyle = '#38bdf8';
+        tctx.stroke();
+        tctx.fillStyle = '#f8fafc';
+        tctx.font = 'bold 24px monospace';
+        tctx.textAlign = 'center';
+        tctx.textBaseline = 'middle';
+        tctx.fillText('AS', 64, 24);
+
+        const tagTex = new THREE.CanvasTexture(tagCanvas);
+        tagTex.magFilter = THREE.NearestFilter;
+        tagTex.minFilter = THREE.NearestFilter;
+        const tagMat = new THREE.SpriteMaterial({ map: tagTex, transparent: true });
+        this.nametag = new THREE.Sprite(tagMat);
+        this.nametag.scale.set(0.85, 0.32, 1.0);
+        this.nametag.position.set(0, 0.82, 0.2);
+        this.group.add(this.nametag);
       }
 
       scene.add(this.group);
     }
 
     update(dt) {
-      this.idleTimer -= dt;
-      if (this.idleTimer <= 0) {
-        if (this.isWalking) {
+      const isCat = (this.type === 'as_cat');
+      const hw = isCat ? 0.22 : ((this.type === 'cow' || this.type === 'golem') ? 0.38 : 0.28);
+      const height = isCat ? 0.55 : ((this.type === 'chicken') ? 0.45 : ((this.type === 'cow' || this.type === 'villager' || this.type === 'golem') ? 1.4 : 0.85));
+
+      // AI Decision Logic
+      if (isCat) {
+        const distToPlayer = Math.hypot(player.x - this.x, player.z - this.z);
+        if (distToPlayer < 2.3) {
+          // Sitting posture near player
+          this.isSitting = true;
           this.isWalking = false;
-          this.idleTimer = 2.0 + Math.random() * 4.0;
+          // Look up at player
+          const pYaw = Math.atan2(player.x - this.x, player.z - this.z);
+          let dyaw = pYaw - this.yaw;
+          while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+          while (dyaw > Math.PI) dyaw -= Math.PI * 2;
+          this.yaw += dyaw * Math.min(dt * 6.0, 1.0);
+          if (this.head) {
+            this.head.rotation.x = -0.26; // tilted looking upward
+            this.head.rotation.y = Math.max(-0.5, Math.min(0.5, dyaw));
+          }
+          if (this.body) {
+            this.body.position.y = 0.28;
+            this.body.rotation.x = -0.18;
+          }
+          if (this.legs && this.legs.length === 4) {
+            this.legs[0].rotation.x = 0.12;
+            this.legs[1].rotation.x = 0.12;
+            this.legs[2].rotation.x = -Math.PI / 3;
+            this.legs[3].rotation.x = -Math.PI / 3;
+          }
+          if (this.tail) {
+            this.tail.rotation.z = 0.32 + Math.sin(performance.now() * 0.003) * 0.12;
+            this.tail.rotation.y = 0.35;
+          }
         } else {
-          const angle = Math.random() * Math.PI * 2;
-          const dist = 3.0 + Math.random() * 6.0;
-          this.targetX = this.x + Math.cos(angle) * dist;
-          this.targetZ = this.z + Math.sin(angle) * dist;
-          this.isWalking = true;
-          this.idleTimer = 3.5 + Math.random() * 3.0;
+          // Standing & following player if within range
+          this.isSitting = false;
+          if (this.body) {
+            this.body.position.y = 0.38;
+            this.body.rotation.x = 0;
+          }
+          if (distToPlayer <= 16.0) {
+            this.targetX = player.x;
+            this.targetZ = player.z;
+            this.isWalking = true;
+            this.moveSpeed = 3.2;
+          } else {
+            // Wandering
+            this.idleTimer -= dt;
+            if (this.idleTimer <= 0) {
+              if (this.isWalking) {
+                this.isWalking = false;
+                this.idleTimer = 2.0 + Math.random() * 3.0;
+              } else {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 3.0 + Math.random() * 5.0;
+                this.targetX = this.x + Math.cos(angle) * dist;
+                this.targetZ = this.z + Math.sin(angle) * dist;
+                this.isWalking = true;
+                this.idleTimer = 3.0 + Math.random() * 3.0;
+              }
+            }
+          }
+        }
+      } else {
+        // Standard mob wandering
+        this.idleTimer -= dt;
+        if (this.idleTimer <= 0) {
+          if (this.isWalking) {
+            this.isWalking = false;
+            this.idleTimer = 2.0 + Math.random() * 4.0;
+          } else {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 3.0 + Math.random() * 6.0;
+            this.targetX = this.x + Math.cos(angle) * dist;
+            this.targetZ = this.z + Math.sin(angle) * dist;
+            this.isWalking = true;
+            this.idleTimer = 3.5 + Math.random() * 3.0;
+          }
         }
       }
 
-      if (this.isWalking) {
+      // Vertical Gravity & Solid Voxel Block Contact
+      this.vy = (this.vy || 0) - 24.0 * dt;
+      this.vy = Math.max(-20.0, this.vy);
+
+      // Water buoyancy
+      const inWater = (getGlobalBlock(Math.floor(this.x), Math.floor(this.y + 0.15), Math.floor(this.z)) === BLOCKS.WATER);
+      if (inWater) {
+        this.vy = 2.0;
+      }
+
+      const nextY = this.y + this.vy * dt;
+      if (!checkEntityCollision(this.x, nextY, this.z, hw, height)) {
+        this.y = nextY;
+        this.onGround = false;
+      } else {
+        if (this.vy < 0) {
+          this.y = Math.floor(nextY + 0.05);
+          let safety = 0;
+          while (checkEntityCollision(this.x, this.y, this.z, hw, height) && safety < 50) {
+            this.y += 0.02;
+            safety++;
+          }
+          this.onGround = true;
+        }
+        this.vy = 0;
+      }
+
+      // Anti-stuck depenetration
+      if (checkEntityCollision(this.x, this.y, this.z, hw, height)) {
+        for (let py = 0.1; py <= 2.0; py += 0.1) {
+          if (!checkEntityCollision(this.x, this.y + py, this.z, hw, height)) {
+            this.y += py;
+            break;
+          }
+        }
+      }
+
+      // Horizontal Movement with Solid Block Collision & 1-Block Auto Step-Up
+      if (this.isWalking && !this.isSitting) {
         const tdx = this.targetX - this.x;
         const tdz = this.targetZ - this.z;
         const tdist = Math.hypot(tdx, tdz);
-        if (tdist > 0.3) {
+        if (tdist > 0.4) {
           const targetYaw = Math.atan2(tdx, tdz);
           let dyaw = targetYaw - this.yaw;
           while (dyaw < -Math.PI) dyaw += Math.PI * 2;
           while (dyaw > Math.PI) dyaw -= Math.PI * 2;
-          this.yaw += dyaw * Math.min(dt * 5.0, 1.0);
+          this.yaw += dyaw * Math.min(dt * 7.0, 1.0);
 
           const step = Math.min(this.moveSpeed * dt, tdist);
-          this.x += (tdx / tdist) * step;
-          this.z += (tdz / tdist) * step;
+          const mdx = (tdx / tdist) * step;
+          const mdz = (tdz / tdist) * step;
 
-          // 4-legged alternating walk cycle
-          this.walkTimer += dt * 7.5;
-          const legSwing = Math.sin(this.walkTimer) * 0.45;
-          if (this.legs.length === 4) {
+          // X axis
+          if (!checkEntityCollision(this.x + mdx, this.y, this.z, hw, height)) {
+            this.x += mdx;
+          } else if (this.onGround && !checkEntityCollision(this.x + mdx, this.y + 1.05, this.z, hw, height) && !checkEntityCollision(this.x, this.y + 1.05, this.z, hw, height)) {
+            this.x += mdx;
+            this.y += 1.0;
+          } else {
+            this.targetX = this.x - mdx * 2.5;
+          }
+
+          // Z axis
+          if (!checkEntityCollision(this.x, this.y, this.z + mdz, hw, height)) {
+            this.z += mdz;
+          } else if (this.onGround && !checkEntityCollision(this.x, this.y + 1.05, this.z + mdz, hw, height) && !checkEntityCollision(this.x, this.y + 1.05, this.z, hw, height)) {
+            this.z += mdz;
+            this.y += 1.0;
+          } else {
+            this.targetZ = this.z - mdz * 2.5;
+          }
+
+          // Walk limb animation
+          this.walkTimer += dt * (isCat ? 10.0 : 7.5);
+          const legSwing = Math.sin(this.walkTimer) * (isCat ? 0.55 : 0.45);
+          if (this.legs && this.legs.length === 4) {
             this.legs[0].rotation.x = legSwing;
             this.legs[1].rotation.x = -legSwing;
             this.legs[2].rotation.x = -legSwing;
             this.legs[3].rotation.x = legSwing;
           }
-          if (this.head) this.head.rotation.x = Math.sin(this.walkTimer * 2) * 0.08;
+          if (this.head && !isCat) {
+            this.head.rotation.x = Math.sin(this.walkTimer * 2) * 0.08;
+          }
+          if (this.tail) {
+            this.tail.rotation.z = Math.sin(this.walkTimer * 1.5) * 0.28;
+            if (this.tailSeg2) this.tailSeg2.rotation.z = Math.sin(this.walkTimer * 1.5 + 0.6) * 0.35;
+          }
         } else {
           this.isWalking = false;
         }
       } else {
-        if (this.legs.length === 4) {
+        // Idle limb relaxation
+        if (this.legs && this.legs.length === 4 && !this.isSitting) {
           this.legs.forEach(l => l.rotation.x *= 0.85);
         }
-        if (this.head) {
+        if (this.head && !isCat) {
           const pDist = Math.hypot(player.x - this.x, player.z - this.z);
           if (pDist < 4.5) {
             const pYaw = Math.atan2(player.x - this.x, player.z - this.z);
@@ -5624,14 +5919,22 @@
         }
       }
 
-      const targetY = Math.max(WATER_LEVEL + 0.1, getTerrainHeight(Math.floor(this.x), Math.floor(this.z)));
-      this.y += (targetY - this.y) * Math.min(dt * 8.0, 1.0);
-
       this.group.position.set(this.x, this.y, this.z);
       this.group.rotation.y = this.yaw;
+
+      // Keep nametag facing camera
+      if (this.nametag && camera) {
+        this.nametag.quaternion.copy(camera.quaternion);
+      }
     }
 
     interact() {
+      if (this.type === 'as_cat') {
+        showToast('AS the Cat: Purr~ Meow!');
+        playSynthesizedSound('mob_cat');
+        createParticleExplosion(this.x, this.y + 0.6, this.z, BLOCKS.AMETHYST, 8);
+        return;
+      }
       if (this.type === 'sheep') {
         showToast('Fluffy Sheep: Baaa! <3');
         playSynthesizedSound('mob_sheep');
@@ -5648,6 +5951,9 @@
 
   function spawnInitialMobs() {
     mobs = [];
+    // Spawn AS Black Cat Companion near Spawn Sanctuary
+    mobs.push(new Mob('as_cat', 25, 25));
+
     // Spawn Sheep in Western Meadows
     mobs.push(new Mob('sheep', -24, 8));
     mobs.push(new Mob('sheep', -28, 14));
