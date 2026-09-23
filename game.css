@@ -2040,3 +2040,124 @@ html, body {
     width: 320px;
   }
 }
+
+/* Mobile Touch & Layout Optimizations */
+#gameContainer,
+#gameCanvas,
+#mobileControlsOverlay,
+.mobile-dpad-cluster,
+.mobile-action-cluster,
+.touch-dpad-btn,
+.touch-action-btn,
+.touch-top-btn {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#mobileControlsOverlay {
+  contain: layout size;
+  will-change: transform;
+}
+
+/* Mobile Portrait Blocker Overlay */
+.portrait-blocker-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.portrait-blocker-card {
+  background: rgba(30, 41, 59, 0.75);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 32px 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(59, 130, 246, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.portrait-phone-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portrait-phone-svg {
+  width: 48px;
+  height: 48px;
+  animation: phoneRotateAnim 2.2s infinite ease-in-out;
+}
+
+@keyframes phoneRotateAnim {
+  0%, 20% {
+    transform: rotate(0deg);
+  }
+  50%, 80% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.portrait-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #f8fafc;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.portrait-subtitle {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.portrait-actions {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.portrait-actions .se-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+}
+
+.portrait-tip {
+  font-size: 11px;
+  color: #64748b;
+  font-style: italic;
+}
+

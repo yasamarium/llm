@@ -704,6 +704,34 @@
     </div>
   </div>
 
+  <!-- Mobile Portrait Orientation Blocker & Landscape Mode Switcher -->
+  <div id="portraitBlockerOverlay" class="portrait-blocker-overlay" style="display: none;">
+    <div class="portrait-blocker-card">
+      <div class="portrait-phone-icon-wrap">
+        <svg class="portrait-phone-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="18" y="8" width="28" height="48" rx="5" stroke="#3b82f6" stroke-width="2.5" fill="rgba(15, 23, 42, 0.8)"/>
+          <line x1="28" y1="13" x2="36" y2="13" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="32" cy="50" r="2" fill="#3b82f6"/>
+          <path d="M48 24C52 28 54 34 52 40C50 46 44 51 38 52" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 3"/>
+          <polygon points="50,20 48,27 43,23" fill="#60a5fa"/>
+        </svg>
+      </div>
+      <h2 class="portrait-title">ROTATE TO LANDSCAPE</h2>
+      <p class="portrait-subtitle">Square Era is crafted for widescreen landscape gameplay. Please rotate your device to play.</p>
+      <div class="portrait-actions">
+        <button id="btnPlayInLandscape" class="se-btn se-btn-primary se-btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          Play in Landscape
+        </button>
+      </div>
+      <div class="portrait-tip">Tip: Ensure Auto-Rotate is enabled in your phone quick settings.</div>
+    </div>
+  </div>
+
   <!-- Game Logic Script -->
   <script src="/game.js"></script>
 </body>

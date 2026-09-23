@@ -4345,34 +4345,48 @@
   }
 
   // =========================================================================
-  // Particle Explosion Effects
+  // High-Performance Zero-Allocation Particle Explosion Effects
   // =========================================================================
-  function spawnBreakParticles(bx, by, bz, blockId) {
-    const count = 18;
-    const geom = new THREE.BoxGeometry(0.12, 0.12, 0.12);
-    const color = getBlockColor(blockId);
-    const mat = new THREE.MeshBasicMaterial({ color });
+  const particleBoxGeom = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+  const particleMaterialCache = new Map();
 
-    for (let i = 0; i < count; i++) {
-      const mesh = new THREE.Mesh(geom, mat);
+  function getParticleMaterial(color) {
+    if (!particleMaterialCache.has(color)) {
+      particleMaterialCache.set(color, new THREE.MeshBasicMaterial({ color }));
+    }
+    return particleMaterialCache.get(color);
+  }
+
+  function createParticleExplosion(x, y, z, blockId, count = 10) {
+    // Dynamically scale particle count on mobile to preserve 60 FPS
+    const finalCount = isMobileDevice ? Math.min(8, Math.ceil(count * 0.4)) : count;
+    const color = getBlockColor(blockId);
+    const mat = getParticleMaterial(color);
+
+    for (let i = 0; i < finalCount; i++) {
+      const mesh = new THREE.Mesh(particleBoxGeom, mat);
       mesh.position.set(
-        bx + 0.5 + (Math.random() - 0.5) * 0.7,
-        by + 0.5 + (Math.random() - 0.5) * 0.7,
-        bz + 0.5 + (Math.random() - 0.5) * 0.7
+        x + (Math.random() - 0.5) * 0.6,
+        y + (Math.random() - 0.5) * 0.6,
+        z + (Math.random() - 0.5) * 0.6
       );
       scene.add(mesh);
 
       particles.push({
         mesh,
         vel: new THREE.Vector3(
-          (Math.random() - 0.5) * 4.0,
-          Math.random() * 3.5 + 1.0,
-          (Math.random() - 0.5) * 4.0
+          (Math.random() - 0.5) * 4.2,
+          Math.random() * 3.2 + 1.2,
+          (Math.random() - 0.5) * 4.2
         ),
-        life: 0.6 + Math.random() * 0.4,
-        maxLife: 1.0
+        life: 0.5 + Math.random() * 0.4,
+        maxLife: 0.9
       });
     }
+  }
+
+  function spawnBreakParticles(bx, by, bz, blockId) {
+    createParticleExplosion(bx + 0.5, by + 0.5, bz + 0.5, blockId, isMobileDevice ? 8 : 16);
   }
 
   function getBlockColor(b) {
@@ -6592,10 +6606,13 @@
         console.warn('[Multiplayer] BroadcastChannel notice:', err);
       }
 
-      // 9. Connect to high-speed real-time internet MQTT WebSocket broker
+      // 9. Load local persistent room modifications from storage
+      this.loadLocalRoomModifications(roomId);
+
+      // 10. Connect to high-speed real-time internet MQTT WebSocket broker
       this.connectNetwork();
 
-      // 10. Pull persistent world modifications from GitHub DB repository
+      // 11. Pull persistent world modifications from GitHub DB repository
       this.syncWorldFromDatabase(roomId);
 
       // 11. Welcome message in chat
@@ -6756,6 +6773,39 @@
         slot: player.activeSlot,
         mode: this.roomMode
       });
+
+      // Request live room modifications sync from server daemon
+      this.broadcast({
+        type: 'request_room_sync',
+        id: this.localPlayerId,
+        senderId: this.localPlayerId,
+        roomId: this.roomId
+      });
+    }
+
+    saveRoomModificationsToStorage() {
+      if (!this.isOnline || !this.roomId) return;
+      try {
+        const entries = Array.from(worldModifications.entries());
+        localStorage.setItem(`square_era_room_${this.roomId}_mods`, JSON.stringify(entries));
+      } catch (e) {}
+    }
+
+    loadLocalRoomModifications(roomId) {
+      try {
+        const raw = localStorage.getItem(`square_era_room_${roomId}_mods`);
+        if (raw) {
+          const entries = JSON.parse(raw);
+          if (Array.isArray(entries)) {
+            let loaded = 0;
+            entries.forEach(([coordStr, blockId]) => {
+              worldModifications.set(coordStr, blockId);
+              loaded++;
+            });
+            console.log(`[Multiplayer] Restored ${loaded} modifications from local room ${roomId} storage.`);
+          }
+        }
+      } catch (e) {}
     }
 
     disconnect() {
@@ -6872,6 +6922,7 @@
         z: gz,
         block: blockId
       });
+      this.saveRoomModificationsToStorage();
     }
 
     broadcastExplosion(ex, ey, ez, radius) {
@@ -6910,6 +6961,29 @@
         }
       } else if (packet.type === 'block_change') {
         this.applyRemoteBlockChange(packet);
+        this.saveRoomModificationsToStorage();
+      } else if (packet.type === 'room_sync_response' && Array.isArray(packet.modifications)) {
+        let applied = 0;
+        packet.modifications.forEach(([coordStr, blockId]) => {
+          if (!worldModifications.has(coordStr) || worldModifications.get(coordStr) !== blockId) {
+            worldModifications.set(coordStr, blockId);
+            const [gx, gy, gz] = coordStr.split(',').map(Number);
+            const cx = Math.floor(gx / CHUNK_SIZE);
+            const cz = Math.floor(gz / CHUNK_SIZE);
+            const chunk = chunks.get(`${cx},${cz}`);
+            if (chunk) {
+              const lx = ((gx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+              const lz = ((gz % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+              chunk.setBlock(lx, gy, lz, blockId);
+              meshChunk(chunk);
+            }
+            applied++;
+          }
+        });
+        if (applied > 0) {
+          this.saveRoomModificationsToStorage();
+          console.log(`[Multiplayer] Applied ${applied} live room sync modifications from server daemon.`);
+        }
       } else if (packet.type === 'explosion') {
         isHandlingRemoteExplosion = true;
         explodeAt(packet.ex, packet.ey, packet.ez, packet.radius);
@@ -7514,6 +7588,20 @@
     setupEventListeners();
     multiplayerManager = new MultiplayerManager();
 
+    // Orientation event listeners
+    window.addEventListener('resize', checkDeviceOrientation);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkDeviceOrientation, 150);
+    });
+    if (typeof screen !== 'undefined' && screen.orientation) {
+      screen.orientation.addEventListener('change', checkDeviceOrientation);
+    }
+    const btnPlayInLandscape = document.getElementById('btnPlayInLandscape');
+    if (btnPlayInLandscape) {
+      btnPlayInLandscape.addEventListener('click', requestLandscapeMode);
+    }
+    checkDeviceOrientation();
+
     // 9. Start Game Animation Loop
     lastFrameTime = performance.now();
     requestAnimationFrame(gameLoop);
@@ -7527,6 +7615,9 @@
 
   function gameLoop(currentTime) {
     requestAnimationFrame(gameLoop);
+
+    // Save mobile battery and GPU ALU when in portrait mode
+    if (isPortraitBlocked) return;
 
     try {
       const now = (typeof currentTime === 'number' && Number.isFinite(currentTime)) ? currentTime : performance.now();
@@ -8205,6 +8296,78 @@
     }
   }
 
+  // =========================================================================
+  // Mobile Orientation Blocker & Fullscreen Landscape Controller
+  // =========================================================================
+  let isPortraitBlocked = false;
+
+  function checkDeviceOrientation() {
+    const blocker = document.getElementById('portraitBlockerOverlay');
+    if (!blocker) return;
+
+    // Detect if device is a mobile / touch device in portrait mode
+    const isTouchMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+                          (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+                          ('ontouchstart' in window && window.innerWidth <= 1024);
+
+    const isPortrait = window.innerHeight > window.innerWidth;
+
+    if (isTouchMobile && isPortrait) {
+      isPortraitBlocked = true;
+      blocker.style.display = 'flex';
+      const mobileOverlay = document.getElementById('mobileControlsOverlay');
+      if (mobileOverlay) mobileOverlay.style.visibility = 'hidden';
+      const crosshair = document.getElementById('hudCrosshair');
+      if (crosshair) crosshair.style.display = 'none';
+    } else {
+      const wasBlocked = isPortraitBlocked;
+      isPortraitBlocked = false;
+      blocker.style.display = 'none';
+      const mobileOverlay = document.getElementById('mobileControlsOverlay');
+      if (mobileOverlay && typeof gameState !== 'undefined' && gameState === 'playing' && isMobileDevice) {
+        mobileOverlay.style.visibility = 'visible';
+      }
+      const crosshair = document.getElementById('hudCrosshair');
+      if (crosshair && typeof gameState !== 'undefined' && gameState === 'playing') {
+        crosshair.style.display = 'block';
+      }
+
+      if (wasBlocked && renderer && camera) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+    }
+  }
+
+  async function requestLandscapeMode() {
+    try {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        await docEl.requestFullscreen();
+      } else if (docEl.webkitRequestFullscreen) {
+        await docEl.webkitRequestFullscreen();
+      } else if (docEl.msRequestFullscreen) {
+        await docEl.msRequestFullscreen();
+      }
+    } catch (e) {
+      console.warn('[Orientation] Fullscreen request notice:', e.message);
+    }
+
+    try {
+      if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+        checkDeviceOrientation();
+        return;
+      }
+    } catch (e) {
+      console.warn('[Orientation] Orientation lock notice:', e.message);
+    }
+
+    showToast('Please physically rotate your phone sideways');
+    checkDeviceOrientation();
+  }
+
   function setupMobileTouchControls() {
     const overlay = document.getElementById('mobileControlsOverlay');
     if (!overlay) return;
@@ -8473,6 +8636,9 @@
       }
     }, { passive: false });
 
+    let smoothedLookDeltaX = 0;
+    let smoothedLookDeltaY = 0;
+
     window.addEventListener('touchmove', e => {
       if (activeLookTouchId === null) return;
 
@@ -8484,9 +8650,13 @@
           lastLookTouchX = touch.clientX;
           lastLookTouchY = touch.clientY;
 
+          // Exponential Moving Average (EMA) smoothing for silky 60 FPS camera rotation
+          smoothedLookDeltaX = smoothedLookDeltaX * 0.30 + deltaX * 0.70;
+          smoothedLookDeltaY = smoothedLookDeltaY * 0.30 + deltaY * 0.70;
+
           const sens = settings.touchSensitivity || 0.0035;
-          player.targetYaw -= deltaX * sens;
-          player.targetPitch -= deltaY * sens;
+          player.targetYaw -= smoothedLookDeltaX * sens;
+          player.targetPitch -= smoothedLookDeltaY * sens;
           player.targetPitch = Math.max(-Math.PI / 2 + 0.02, Math.min(Math.PI / 2 - 0.02, player.targetPitch));
           break;
         }
