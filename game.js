@@ -487,7 +487,7 @@
     [BLOCKS.SPAWN_SLIME]: 'Slime Spawn Egg',
     [BLOCKS.SPAWN_BLAZE]: 'Blaze Spawn Egg',
     [BLOCKS.SPAWN_WARDEN]: 'Warden Spawn Egg',
-    [BLOCKS.SPAWN_AS_CAT]: 'Egg (as cat)'
+    [BLOCKS.SPAWN_AS_CAT]: 'Egg ( as cat )'
   };
 
 
@@ -705,7 +705,7 @@
       BLOCKS.PLANKS,
       BLOCKS.LEAVES,
       BLOCKS.GLASS,
-      BLOCKS.BRICKS
+      BLOCKS.SPAWN_AS_CAT
     ]
   };
 
@@ -4257,10 +4257,19 @@
     };
 
     if (spawnEggMobMap[selectedBlock]) {
-      const target = raycastBlock();
-      const sx = target ? target.x + 0.5 : player.x + 2;
-      const sy = target ? target.y + 1.0 : player.y;
-      const sz = target ? target.z + 0.5 : player.z + 2;
+      const target = raycastBlock(6.0);
+      let sx, sy, sz;
+      if (target) {
+        sx = target.x + 0.5;
+        sy = target.y + 1.0;
+        sz = target.z + 0.5;
+      } else {
+        const lookDir = new THREE.Vector3();
+        camera.getWorldDirection(lookDir);
+        sx = player.x + lookDir.x * 2.5;
+        sy = player.y + 0.2;
+        sz = player.z + lookDir.z * 2.5;
+      }
       const mobType = spawnEggMobMap[selectedBlock];
       const newMob = new Mob(mobType, sx, sz);
       newMob.y = sy;
@@ -4268,7 +4277,11 @@
       mobs.push(newMob);
       playSynthesizedSound('place');
       createParticleExplosion(sx, sy + 0.5, sz, BLOCKS.GLOWSTONE, 14);
-      const spawnTitle = (mobType === 'as_cat') ? 'AS Cat' : BLOCK_NAMES[selectedBlock].replace(' Spawn Egg', '');
+      if (mobType === 'as_cat') {
+        playSynthesizedSound('mob_cat');
+        createParticleExplosion(sx, sy + 0.6, sz, BLOCKS.AMETHYST, 16);
+      }
+      const spawnTitle = (mobType === 'as_cat') ? 'AS Cat' : (BLOCK_NAMES[selectedBlock] || '').replace(' Spawn Egg', '').replace('Egg ( as cat )', 'AS Cat');
       showToast(`Spawned ${spawnTitle}!`);
       return;
     }
@@ -5625,18 +5638,31 @@
         this.legs = [legL, legR];
         this.group.add(legL, legR);
       } else if (this.type === 'as_cat') {
-        // AS Black Cat: Sleek obsidian black coat, pointed ears with rose inner lining, glowing emerald eyes, 4 slender legs, animated tail, and AS nametag
-        const catMat = new THREE.MeshLambertMaterial({ color: 0x0f172a }); // Obsidian black fur
-        const earInnerMat = new THREE.MeshLambertMaterial({ color: 0x9d174d }); // Velvety rose inner ear
+        // AS Black Cat: Velvet midnight black coat, pointed ears with rose inner lining, glowing emerald eyes, collar with golden bell, 4 slender legs with white boot tips, articulated tail, and floating AS nametag
+        const catMat = new THREE.MeshLambertMaterial({ color: 0x090d16 }); // Midnight velvet black fur
+        const earInnerMat = new THREE.MeshLambertMaterial({ color: 0xf472b6 }); // Soft rose pink inner ear
         const eyeMat = new THREE.MeshBasicMaterial({ color: 0x10b981 }); // Glowing emerald eyes
         const pupilMat = new THREE.MeshBasicMaterial({ color: 0x022c22 });
-        const noseMat = new THREE.MeshLambertMaterial({ color: 0x475569 });
+        const catchlightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const noseMat = new THREE.MeshLambertMaterial({ color: 0xf472b6 }); // Pink nose
+        const muzzleMat = new THREE.MeshLambertMaterial({ color: 0x1e293b }); // Charcoal muzzle
+        const collarMat = new THREE.MeshLambertMaterial({ color: 0xd97706 }); // Golden amber collar
+        const bellMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 }); // Golden bell
+        const sockMat = new THREE.MeshLambertMaterial({ color: 0xf8fafc }); // White paw boots
 
         // 1. Torso Body
         const bodyGeom = new THREE.BoxGeometry(0.34, 0.30, 0.68);
         this.body = new THREE.Mesh(bodyGeom, catMat);
         this.body.position.set(0, 0.38, 0);
         this.group.add(this.body);
+
+        // Collar with Golden Bell
+        const collar = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.05, 0.16), collarMat);
+        collar.position.set(0, 0.10, 0.28);
+        this.body.add(collar);
+        const bell = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.05), bellMat);
+        bell.position.set(0, -0.04, 0.09);
+        collar.add(bell);
 
         // 2. Feline Head
         this.head = new THREE.Group();
@@ -5645,7 +5671,7 @@
         const headMesh = new THREE.Mesh(headGeom, catMat);
         this.head.add(headMesh);
 
-        // Pointed Ears
+        // Pointed Triangular Ears
         const earGeom = new THREE.BoxGeometry(0.08, 0.12, 0.08);
         const earL = new THREE.Mesh(earGeom, catMat); earL.position.set(-0.11, 0.18, 0.04); earL.rotation.z = 0.15;
         const earInnerL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.02), earInnerMat); earInnerL.position.set(0, -0.01, 0.04); earL.add(earInnerL);
@@ -5653,32 +5679,43 @@
         const earInnerR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.02), earInnerMat); earInnerR.position.set(0, -0.01, 0.04); earR.add(earInnerR);
         this.head.add(earL, earR);
 
-        // Emerald Eyes
-        const eyeGeom = new THREE.BoxGeometry(0.065, 0.065, 0.02);
-        const eyeLMesh = new THREE.Mesh(eyeGeom, eyeMat); eyeLMesh.position.set(-0.08, 0.04, 0.155);
-        const pupilL = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.05, 0.01), pupilMat); pupilL.position.set(0, 0, 0.01); eyeLMesh.add(pupilL);
-        const eyeRMesh = new THREE.Mesh(eyeGeom, eyeMat); eyeRMesh.position.set(0.08, 0.04, 0.155);
-        const pupilR = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.05, 0.01), pupilMat); pupilR.position.set(0, 0, 0.01); eyeRMesh.add(pupilR);
-        this.head.add(eyeLMesh, eyeRMesh);
+        // Expressive Emerald Eyes with Slit Pupils and Catchlights
+        const eyeGeom = new THREE.BoxGeometry(0.07, 0.07, 0.02);
+        this.leftEye = new THREE.Mesh(eyeGeom, eyeMat); this.leftEye.position.set(-0.08, 0.04, 0.155);
+        const pupilL = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.055, 0.01), pupilMat); pupilL.position.set(0, 0, 0.01); this.leftEye.add(pupilL);
+        const catchL = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.005), catchlightMat); catchL.position.set(-0.016, 0.016, 0.015); this.leftEye.add(catchL);
 
-        // Nose
-        const noseMesh = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.035, 0.03), noseMat);
-        noseMesh.position.set(0, -0.04, 0.16);
-        this.head.add(noseMesh);
+        this.rightEye = new THREE.Mesh(eyeGeom, eyeMat); this.rightEye.position.set(0.08, 0.04, 0.155);
+        const pupilR = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.055, 0.01), pupilMat); pupilR.position.set(0, 0, 0.01); this.rightEye.add(pupilR);
+        const catchR = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.005), catchlightMat); catchR.position.set(0.016, 0.016, 0.015); this.rightEye.add(catchR);
+        this.head.add(this.leftEye, this.rightEye);
+
+        // Muzzle & Pink Nose
+        const muzzleMesh = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.07, 0.06), muzzleMat);
+        muzzleMesh.position.set(0, -0.05, 0.17);
+        const noseMesh = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.02), noseMat);
+        noseMesh.position.set(0, 0.02, 0.035);
+        muzzleMesh.add(noseMesh);
+        this.head.add(muzzleMesh);
 
         this.group.add(this.head);
 
-        // 3. Four Slender Legs
+        // 3. Four Slender Legs with White Paw Tips on Front Legs
         const legGeom = new THREE.BoxGeometry(0.09, 0.30, 0.09);
         const legOffsets = [[-0.11, 0.15, 0.22], [0.11, 0.15, 0.22], [-0.11, 0.15, -0.22], [0.11, 0.15, -0.22]];
-        this.legs = legOffsets.map(([lx, ly, lz]) => {
+        this.legs = legOffsets.map(([lx, ly, lz], idx) => {
           const l = new THREE.Mesh(legGeom, catMat);
           l.position.set(lx, ly, lz);
+          if (idx < 2) {
+            const boot = new THREE.Mesh(new THREE.BoxGeometry(0.092, 0.08, 0.092), sockMat);
+            boot.position.set(0, -0.11, 0);
+            l.add(boot);
+          }
           this.group.add(l);
           return l;
         });
 
-        // 4. Articulated Curved Tail (2 interconnected segments)
+        // 4. Articulated Curved Tail (2 interconnected segments + tip)
         this.tail = new THREE.Group();
         this.tail.position.set(0, 0.44, -0.34);
         const seg1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.06), catMat);
@@ -5696,12 +5733,12 @@
         tagCanvas.width = 128;
         tagCanvas.height = 48;
         const tctx = tagCanvas.getContext('2d');
-        tctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        tctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
         tctx.beginPath();
         tctx.roundRect(14, 6, 100, 36, 10);
         tctx.fill();
-        tctx.lineWidth = 2;
-        tctx.strokeStyle = '#38bdf8';
+        tctx.lineWidth = 2.5;
+        tctx.strokeStyle = '#10b981'; // Emerald glowing border
         tctx.stroke();
         tctx.fillStyle = '#f8fafc';
         tctx.font = 'bold 24px monospace';
@@ -5715,7 +5752,7 @@
         const tagMat = new THREE.SpriteMaterial({ map: tagTex, transparent: true });
         this.nametag = new THREE.Sprite(tagMat);
         this.nametag.scale.set(0.85, 0.32, 1.0);
-        this.nametag.position.set(0, 0.82, 0.2);
+        this.nametag.position.set(0, 0.85, 0.2);
         this.group.add(this.nametag);
       }
 
@@ -5730,46 +5767,76 @@
       // AI Decision Logic
       if (isCat) {
         const distToPlayer = Math.hypot(player.x - this.x, player.z - this.z);
-        if (distToPlayer < 2.3) {
-          // Sitting posture near player
+
+        // Expressive Eye Blinking
+        this.blinkTimer = (this.blinkTimer !== undefined ? this.blinkTimer : (2.5 + Math.random() * 3.5)) - dt;
+        if (this.blinkTimer <= 0) {
+          if (this.leftEye) this.leftEye.scale.y = 0.1;
+          if (this.rightEye) this.rightEye.scale.y = 0.1;
+          if (this.blinkTimer < -0.14) {
+            if (this.leftEye) this.leftEye.scale.y = 1.0;
+            if (this.rightEye) this.rightEye.scale.y = 1.0;
+            this.blinkTimer = 3.0 + Math.random() * 4.0;
+          }
+        } else {
+          if (this.leftEye) this.leftEye.scale.y = 1.0;
+          if (this.rightEye) this.rightEye.scale.y = 1.0;
+        }
+
+        const shouldSit = (this.isOrderedToSit === true) || (distToPlayer < 2.2);
+
+        if (shouldSit) {
+          // Graceful sitting posture
           this.isSitting = true;
           this.isWalking = false;
-          // Look up at player
           const pYaw = Math.atan2(player.x - this.x, player.z - this.z);
           let dyaw = pYaw - this.yaw;
           while (dyaw < -Math.PI) dyaw += Math.PI * 2;
           while (dyaw > Math.PI) dyaw -= Math.PI * 2;
           this.yaw += dyaw * Math.min(dt * 6.0, 1.0);
+
           if (this.head) {
-            this.head.rotation.x = -0.26; // tilted looking upward
-            this.head.rotation.y = Math.max(-0.5, Math.min(0.5, dyaw));
+            this.head.rotation.x = -0.32; // looking upward at player
+            this.head.rotation.y = Math.max(-0.6, Math.min(0.6, dyaw));
+            this.head.rotation.z = Math.sin(performance.now() * 0.002) * 0.14; // inquisitive head tilt
           }
           if (this.body) {
             this.body.position.y = 0.28;
-            this.body.rotation.x = -0.18;
+            this.body.rotation.x = -0.20;
           }
           if (this.legs && this.legs.length === 4) {
-            this.legs[0].rotation.x = 0.12;
-            this.legs[1].rotation.x = 0.12;
-            this.legs[2].rotation.x = -Math.PI / 3;
-            this.legs[3].rotation.x = -Math.PI / 3;
+            this.legs[0].rotation.x = 0.14;
+            this.legs[1].rotation.x = 0.14;
+            this.legs[2].rotation.x = -Math.PI / 2.8;
+            this.legs[3].rotation.x = -Math.PI / 2.8;
           }
           if (this.tail) {
-            this.tail.rotation.z = 0.32 + Math.sin(performance.now() * 0.003) * 0.12;
-            this.tail.rotation.y = 0.35;
+            this.tail.rotation.z = 0.45 + Math.sin(performance.now() * 0.003) * 0.14;
+            this.tail.rotation.y = 0.38;
+            if (this.tailSeg2) this.tailSeg2.rotation.z = 0.50 + Math.sin(performance.now() * 0.003 + 0.4) * 0.18;
           }
         } else {
-          // Standing & following player if within range
+          // Standing and following player
           this.isSitting = false;
           if (this.body) {
             this.body.position.y = 0.38;
             this.body.rotation.x = 0;
           }
-          if (distToPlayer <= 16.0) {
+          if (this.head) {
+            this.head.rotation.z *= 0.85;
+          }
+          if (distToPlayer <= 18.0) {
             this.targetX = player.x;
             this.targetZ = player.z;
             this.isWalking = true;
-            this.moveSpeed = 3.2;
+            this.moveSpeed = (distToPlayer > 6.0) ? 4.2 : 3.2;
+
+            // Playful hop if player jumped
+            if (player.vy > 3.0 && distToPlayer < 4.5 && this.onGround && Math.random() < 0.25) {
+              this.vy = 5.2;
+              this.onGround = false;
+              playSynthesizedSound('mob_cat');
+            }
           } else {
             // Wandering
             this.idleTimer -= dt;
@@ -5930,9 +5997,15 @@
 
     interact() {
       if (this.type === 'as_cat') {
-        showToast('AS the Cat: Purr~ Meow!');
+        this.isOrderedToSit = !this.isOrderedToSit;
+        this.isSitting = this.isOrderedToSit;
         playSynthesizedSound('mob_cat');
-        createParticleExplosion(this.x, this.y + 0.6, this.z, BLOCKS.AMETHYST, 8);
+        createParticleExplosion(this.x, this.y + 0.6, this.z, BLOCKS.AMETHYST, 14);
+        if (this.isOrderedToSit) {
+          showToast('AS the Cat is now sitting peacefully.');
+        } else {
+          showToast('AS the Cat is following you!');
+        }
         return;
       }
       if (this.type === 'sheep') {
@@ -5951,8 +6024,8 @@
 
   function spawnInitialMobs() {
     mobs = [];
-    // Spawn AS Black Cat Companion near Spawn Sanctuary
-    mobs.push(new Mob('as_cat', 25, 25));
+    // Spawn AS Black Cat Companion directly visible in front of player initial spawn (7.5, 3.5)
+    mobs.push(new Mob('as_cat', 9.5, 5.5));
 
     // Spawn Sheep in Western Meadows
     mobs.push(new Mob('sheep', -24, 8));
@@ -6585,10 +6658,12 @@
 
     if (invSearchQuery && invSearchQuery.trim()) {
       const q = invSearchQuery.trim().toLowerCase();
+      const qNorm = q.replace(/[\s()_-]/g, '');
       allBlocks = allBlocks.filter(bId => {
         const name = (BLOCK_NAMES[bId] || '').toLowerCase();
         const cat = (ITEM_CATEGORIES[bId] || '').toLowerCase();
-        return name.includes(q) || cat.includes(q);
+        const nameNorm = name.replace(/[\s()_-]/g, '');
+        return name.includes(q) || cat.includes(q) || (qNorm.length >= 2 && nameNorm.includes(qNorm));
       });
     }
 
