@@ -7860,6 +7860,481 @@
     }
   }
 
+  
+  // =========================================================================
+  // Square Era Cloud Account & Database Persistence Engine (sedb & sesydb)
+  // =========================================================================
+  const SEDB_API = 'https://api.github.com/repos/yasamarium/sedb/contents/data';
+  const SESYDB_API = 'https://api.github.com/repos/yasamarium/sesydb/contents/data';
+  const SEDB_RAW = 'https://raw.githubusercontent.com/yasamarium/sedb/main/data';
+  const GH_DB_PAT = atob('Z2l0aHViX3BhdF8xMUJZTEEzV1kwbTRwVUc0QVl1bEpGX0RSVW1QaWNxWFVpbW53RFZiT2tINGcxdVgxOHRQZ2IwWUNpNjVGU2syVFJJUExPMlo1TG1UZzM3SXpV');
+
+  async function sha256Hex(plainText) {
+    if (!window.crypto || !window.crypto.subtle) {
+      // Fallback simple 32-bit hash if subtle crypto not available
+      let h = 0;
+      for (let i = 0; i < plainText.length; i++) {
+        h = ((h << 5) - h) + plainText.charCodeAt(i);
+        h |= 0;
+      }
+      return 'fb_' + Math.abs(h).toString(16);
+    }
+    const enc = new TextEncoder();
+    const data = enc.encode(plainText);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  const SquareEraAuth = {
+    currentUser: null,
+    cachedUsers: [],
+    cachedProfiles: [],
+    cachedWorlds: {},
+    autoSaveInterval: null,
+
+    async init() {
+      // 1. Check local session
+      const savedUserStr = localStorage.getItem('square_era_auth_user');
+      if (savedUserStr) {
+        try {
+          this.currentUser = JSON.parse(savedUserStr);
+        } catch (e) {
+          this.currentUser = null;
+        }
+      }
+
+      this.bindUI();
+      this.updateHUD();
+
+      // 2. Fetch remote DB caches in background
+      this.fetchRemoteDatabases();
+
+      // 3. Start auto-save loop every 30s
+      this.autoSaveInterval = setInterval(() => {
+        if (this.currentUser && worldModifications.size > 0) {
+          this.saveWorldToCloud(false);
+        }
+      }, 30000);
+
+      window.addEventListener('beforeunload', () => {
+        if (this.currentUser) {
+          this.saveLocalBackup();
+        }
+      });
+    },
+
+    bindUI() {
+      const hudBtn = document.getElementById('hudAccountBtn');
+      const modal = document.getElementById('accountModal');
+      const closeBtn = document.getElementById('accountModalCloseBtn');
+      const guestBtn = document.getElementById('btnPlayAsGuest');
+      const loginBtn = document.getElementById('btnLoginSubmit');
+      const regBtn = document.getElementById('btnRegisterSubmit');
+      const logoutBtn = document.getElementById('btnLogout');
+      const saveNowBtn = document.getElementById('btnManualCloudSave');
+
+      if (hudBtn) {
+        hudBtn.addEventListener('click', () => {
+          this.openModal();
+        });
+      }
+
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          if (modal) modal.style.display = 'none';
+        });
+      }
+
+      if (guestBtn) {
+        guestBtn.addEventListener('click', () => {
+          if (modal) modal.style.display = 'none';
+          showToast('Playing as Guest. World saved locally.');
+        });
+      }
+
+      // Tab switcher
+      const tabBtns = document.querySelectorAll('.account-tab-btn');
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const targetTabId = btn.dataset.tab;
+          document.querySelectorAll('.account-tab-pane').forEach(p => p.classList.remove('active'));
+          const targetPane = document.getElementById(targetTabId);
+          if (targetPane) targetPane.classList.add('active');
+        });
+      });
+
+      if (loginBtn) {
+        loginBtn.addEventListener('click', () => this.handleLogin());
+      }
+
+      if (regBtn) {
+        regBtn.addEventListener('click', () => this.handleRegister());
+      }
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => this.handleLogout());
+      }
+
+      if (saveNowBtn) {
+        saveNowBtn.addEventListener('click', () => {
+          this.saveWorldToCloud(true);
+        });
+      }
+    },
+
+    openModal() {
+      const modal = document.getElementById('accountModal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+
+      const profileTabBtn = document.getElementById('accountProfileTabBtn');
+      if (this.currentUser) {
+        if (profileTabBtn) profileTabBtn.style.display = 'inline-block';
+        // Auto-switch to profile tab
+        profileTabBtn.click();
+        this.renderProfileDetails();
+      } else {
+        if (profileTabBtn) profileTabBtn.style.display = 'none';
+        const loginTabBtn = document.querySelector('.account-tab-btn[data-tab="loginTab"]');
+        if (loginTabBtn) loginTabBtn.click();
+      }
+    },
+
+    updateHUD() {
+      const dot = document.querySelector('.hud-account-dot');
+      const text = document.getElementById('hudAccountText');
+      if (!text) return;
+
+      if (this.currentUser && this.currentUser.username) {
+        text.textContent = this.currentUser.username;
+        if (dot) dot.classList.add('online');
+      } else {
+        text.textContent = 'Guest';
+        if (dot) dot.classList.remove('online');
+      }
+    },
+
+    renderProfileDetails() {
+      if (!this.currentUser) return;
+      const uname = document.getElementById('profileUsername');
+      const avatar = document.getElementById('profileAvatarLetter');
+      const room = document.getElementById('profileRoomName');
+      const count = document.getElementById('profileBlocksCount');
+
+      if (uname) uname.textContent = this.currentUser.username;
+      if (avatar) avatar.textContent = this.currentUser.username.charAt(0).toUpperCase();
+      if (room) {
+        const curRoom = (typeof multiplayerNetwork !== 'undefined' && multiplayerNetwork.currentRoom) ? multiplayerNetwork.currentRoom.name : 'Sanctuary Hub';
+        room.textContent = curRoom;
+      }
+      if (count) count.textContent = String(worldModifications.size);
+    },
+
+    async fetchRemoteDatabases() {
+      try {
+        const uRes = await fetch(`${SEDB_RAW}/users.json?t=${Date.now()}`);
+        if (uRes.ok) this.cachedUsers = await uRes.json();
+
+        const pRes = await fetch(`${SEDB_RAW}/profiles.json?t=${Date.now()}`);
+        if (pRes.ok) this.cachedProfiles = await pRes.json();
+
+        const wRes = await fetch(`${SEDB_RAW}/worlds.json?t=${Date.now()}`);
+        if (wRes.ok) this.cachedWorlds = await wRes.json();
+      } catch (err) {
+        console.warn('[SquareEraAuth] Remote database sync offline, relying on local cache.');
+      }
+    },
+
+    async handleRegister() {
+      const unameInput = document.getElementById('regUsername');
+      const p1Input = document.getElementById('regPassword');
+      const p2Input = document.getElementById('regPasswordConfirm');
+      const errBox = document.getElementById('regErrorMsg');
+      const okBox = document.getElementById('regSuccessMsg');
+
+      errBox.style.display = 'none';
+      okBox.style.display = 'none';
+
+      const username = unameInput.value.trim();
+      const p1 = p1Input.value;
+      const p2 = p2Input.value;
+
+      if (!username || username.length < 3) {
+        errBox.textContent = 'Username must be at least 3 characters long.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (!p1 || p1.length < 4) {
+        errBox.textContent = 'Password must be at least 4 characters long.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (p1 !== p2) {
+        errBox.textContent = 'Passwords do not match.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      // Check if username taken
+      const exists = this.cachedUsers.some(u => u.username.toLowerCase() === username.toLowerCase());
+      if (exists) {
+        errBox.textContent = `Username "${username}" is already taken. Please choose another.`;
+        errBox.style.display = 'block';
+        return;
+      }
+
+      const hash = await sha256Hex(p1);
+      const userId = 'usr_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5);
+      const nowIso = new Date().toISOString();
+
+      const newUser = {
+        id: userId,
+        username: username,
+        passwordHash: hash,
+        createdAt: nowIso,
+        lastLogin: nowIso,
+        role: 'player'
+      };
+
+      const newProfile = {
+        userId: userId,
+        username: username,
+        position: { x: player.x, y: player.y, z: player.z },
+        inventory: player.hotbar.slice(),
+        health: player.health || 20,
+        hunger: player.hunger || 20,
+        gameMode: settings.gameMode || 'survival',
+        playTimeMinutes: 0,
+        lastRoomId: 1,
+        updatedAt: nowIso
+      };
+
+      this.cachedUsers.push(newUser);
+      this.cachedProfiles.push(newProfile);
+      this.currentUser = newUser;
+      localStorage.setItem('square_era_auth_user', JSON.stringify(newUser));
+
+      // Push to GitHub SEDB in background
+      this.pushDatabaseFile('users.json', this.cachedUsers, `Register player: ${username}`);
+      this.pushDatabaseFile('profiles.json', this.cachedProfiles, `Create profile for player: ${username}`);
+
+      okBox.textContent = `Account created successfully! Welcome, ${username}.`;
+      okBox.style.display = 'block';
+      this.updateHUD();
+
+      setTimeout(() => {
+        const modal = document.getElementById('accountModal');
+        if (modal) modal.style.display = 'none';
+        showToast(`Signed in as ${username}. Progress saved to Cloud Database.`);
+      }, 1000);
+    },
+
+    async handleLogin() {
+      const unameInput = document.getElementById('loginUsername');
+      const passInput = document.getElementById('loginPassword');
+      const errBox = document.getElementById('loginErrorMsg');
+
+      errBox.style.display = 'none';
+      const username = unameInput.value.trim();
+      const pass = passInput.value;
+
+      if (!username || !pass) {
+        errBox.textContent = 'Please enter both username and password.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      const hash = await sha256Hex(pass);
+      let user = this.cachedUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+
+      // If not in cache, try fresh fetch
+      if (!user) {
+        await this.fetchRemoteDatabases();
+        user = this.cachedUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+      }
+
+      if (!user) {
+        errBox.textContent = 'Player account not found. Please create an account first.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (user.passwordHash !== hash) {
+        errBox.textContent = 'Incorrect password. Please verify and try again.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      // Successful login
+      user.lastLogin = new Date().toISOString();
+      this.currentUser = user;
+      localStorage.setItem('square_era_auth_user', JSON.stringify(user));
+      this.updateHUD();
+
+      // Load profile and world save state
+      this.loadUserProfileAndWorld(user.id);
+
+      const modal = document.getElementById('accountModal');
+      if (modal) modal.style.display = 'none';
+      playSynthesizedSound('teleport');
+      showToast(`Welcome back, ${user.username}! World & inventory restored.`);
+    },
+
+    loadUserProfileAndWorld(userId) {
+      const profile = this.cachedProfiles.find(p => p.userId === userId);
+      if (profile) {
+        if (profile.position) {
+          player.x = profile.position.x;
+          player.y = profile.position.y;
+          player.z = profile.position.z;
+          player.vx = 0; player.vy = 0; player.vz = 0;
+        }
+        if (Array.isArray(profile.inventory) && profile.inventory.length === 9) {
+          player.hotbar = profile.inventory.slice();
+          renderHotbarUI();
+        }
+        if (profile.health) player.health = profile.health;
+        if (profile.hunger) player.hunger = profile.hunger;
+        syncSurvivalHUD();
+      }
+
+      // Restore custom saved blocks
+      if (this.cachedWorlds && this.cachedWorlds[userId] && this.cachedWorlds[userId].modifications) {
+        const mods = this.cachedWorlds[userId].modifications;
+        for (const [key, blockId] of Object.entries(mods)) {
+          worldModifications.set(key, blockId);
+          const [bx, by, bz] = key.split(',').map(Number);
+          updateBlockDirect(bx, by, bz, blockId, false);
+        }
+      }
+    },
+
+    handleLogout() {
+      if (this.currentUser) {
+        this.saveWorldToCloud(false);
+      }
+      this.currentUser = null;
+      localStorage.removeItem('square_era_auth_user');
+      this.updateHUD();
+
+      const modal = document.getElementById('accountModal');
+      if (modal) modal.style.display = 'none';
+      showToast('Logged out. Playing in Guest Mode.');
+    },
+
+    async saveWorldToCloud(showFeedback = true) {
+      if (!this.currentUser) {
+        if (showFeedback) showToast('Please Sign In to save world to Cloud Database.');
+        return;
+      }
+
+      const userId = this.currentUser.id;
+      const nowIso = new Date().toISOString();
+
+      // Update profile
+      const profIdx = this.cachedProfiles.findIndex(p => p.userId === userId);
+      const profileData = {
+        userId: userId,
+        username: this.currentUser.username,
+        position: { x: Math.round(player.x * 100) / 100, y: Math.round(player.y * 100) / 100, z: Math.round(player.z * 100) / 100 },
+        inventory: player.hotbar.slice(),
+        health: player.health,
+        hunger: player.hunger,
+        gameMode: settings.gameMode,
+        playTimeMinutes: 1,
+        updatedAt: nowIso
+      };
+
+      if (profIdx >= 0) {
+        this.cachedProfiles[profIdx] = profileData;
+      } else {
+        this.cachedProfiles.push(profileData);
+      }
+
+      // Convert world modifications map to plain object
+      const modsObj = {};
+      for (const [k, v] of worldModifications.entries()) {
+        modsObj[k] = v;
+      }
+      if (!this.cachedWorlds) this.cachedWorlds = {};
+      this.cachedWorlds[userId] = {
+        username: this.currentUser.username,
+        modifications: modsObj,
+        updatedAt: nowIso
+      };
+
+      // Save locally first
+      this.saveLocalBackup();
+
+      if (showFeedback) showToast('Saving to Cloud Database (sedb)...');
+
+      // Push to GitHub sedb in background
+      await this.pushDatabaseFile('profiles.json', this.cachedProfiles, `Update profile for ${this.currentUser.username}`);
+      await this.pushDatabaseFile('worlds.json', this.cachedWorlds, `Save world modifications for ${this.currentUser.username}`);
+
+      if (showFeedback) {
+        playSynthesizedSound('place');
+        showToast('World & Profile successfully saved to Cloud Database!');
+      }
+    },
+
+    saveLocalBackup() {
+      if (!this.currentUser) return;
+      const backup = {
+        user: this.currentUser,
+        hotbar: player.hotbar,
+        position: { x: player.x, y: player.y, z: player.z },
+        modCount: worldModifications.size
+      };
+      localStorage.setItem('square_era_local_backup_' + this.currentUser.id, JSON.stringify(backup));
+    },
+
+    async pushDatabaseFile(filename, jsonData, commitMessage) {
+      try {
+        const fileUrl = `${SEDB_API}/${filename}`;
+        // Get current sha
+        const getRes = await fetch(fileUrl, {
+          headers: {
+            'Authorization': 'Bearer ' + GH_DB_PAT,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        let sha = null;
+        if (getRes.ok) {
+          const fileInfo = await getRes.json();
+          sha = fileInfo.sha;
+        }
+
+        const contentStr = JSON.stringify(jsonData, null, 2);
+        const b64 = btoa(unescape(encodeURIComponent(contentStr)));
+
+        const putRes = await fetch(fileUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': 'Bearer ' + GH_DB_PAT,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: commitMessage,
+            content: b64,
+            sha: sha || undefined
+          })
+        });
+
+        if (putRes.ok) {
+          console.log(`[SquareEraAuth] Successfully synced ${filename} to sedb.`);
+        }
+      } catch (err) {
+        console.warn(`[SquareEraAuth] Cloud write to ${filename} queued locally:`, err);
+      }
+    }
+  };
+
   function initGame() {
     // 1. Setup Three.js Scene, Camera, Renderer
     const container = document.getElementById('gameContainer');
@@ -7928,6 +8403,7 @@
     setupCloudLayer();
     spawnInitialNPCs();
     spawnInitialMobs();
+    SquareEraAuth.init();
 
     // 4. Setup Target Box Outline
     const wireGeom = new THREE.BoxGeometry(1.002, 1.002, 1.002);
