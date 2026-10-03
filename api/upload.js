@@ -1,5 +1,5 @@
 // api/upload.js - AS Cloud Release Storage Database Uploader
-import { createShortLink } from "./shortener.js";
+import { createShortLink } from "../lib/shortener.js";
 
 export const config = {
   api: {

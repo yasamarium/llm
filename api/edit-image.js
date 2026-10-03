@@ -1,6 +1,6 @@
 // api/edit-image.js - AS Cloud Image-to-Image AI Editor (Nanobanana + Release Database)
 import { uploadBufferToRelease } from "./upload.js";
-import { createShortLink } from "./shortener.js";
+import { createShortLink } from "../lib/shortener.js";
 
 export const config = {
   api: {

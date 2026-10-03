@@ -1,5 +1,5 @@
 // api/i.js - AS Cloud Direct Short Image Streamer (/i/:id)
-import { resolveShortLink, sanitizeSlug } from "./shortener.js";
+import { resolveShortLink, sanitizeSlug } from "../lib/shortener.js";
 
 export const config = {
   maxDuration: 45,

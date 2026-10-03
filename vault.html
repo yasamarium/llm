@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AS Vault">
+  <meta name="theme-color" content="#030712">
+  <title>AS QuantumVault - High-Security Encryption Engine</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%2310b981%22/><path d=%22M50 20 L80 35 L80 65 L50 85 L20 65 L20 35 Z%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2210%22 fill=%22%23000%22/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #030712;
+      --surface: #0a1122;
+      --card: #0f172a;
+      --card-hover: #172554;
+      --border: #1e293b;
+      --border-accent: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.2);
+      --cyan: #06b6d4;
+      --blue: #3b82f6;
+      --danger: #ef4444;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .vault-layout {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 16px 60px 16px;
+    }
+
+    /* ── Navbar ── */
+    .vault-navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+      gap: 12px;
+    }
+
+    .nav-left-cluster {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .nav-back-link:hover {
+      color: #fff;
+      border-color: var(--text-muted);
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .shield-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-weight: 900;
+      box-shadow: 0 0 16px var(--emerald-glow);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title span {
+      color: var(--emerald);
+    }
+
+    .repo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--emerald);
+      text-decoration: none;
+    }
+
+    /* ── Hero ── */
+    .hero-banner {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .hero-title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--emerald) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto 16px auto;
+      line-height: 1.6;
+    }
+
+    .security-specs-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .spec-pill {
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: var(--text-muted);
+    }
+
+    .spec-pill strong {
+      color: var(--cyan);
+    }
+
+    /* ── Tab Switcher ── */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 10px 18px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+      font-family: var(--font);
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--emerald);
+      border-bottom-color: var(--emerald);
+    }
+
+    /* ── Panel Cards ── */
+    .panel-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-textarea {
+      font-family: var(--mono);
+      font-size: 13px;
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.5;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      border-color: var(--emerald);
+      box-shadow: 0 0 12px var(--emerald-glow);
+    }
+
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 90px;
+    }
+
+    .password-action-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+
+    .checkbox-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .checkbox-wrap input {
+      accent-color: var(--emerald);
+      width: 16px;
+      height: 16px;
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+      font-family: var(--font);
+    }
+
+    .action-btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .action-btn.secondary {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      box-shadow: 0 4px 20px rgba(14, 165, 233, 0.3);
+      color: #fff;
+    }
+
+    /* ── Results Container ── */
+    .result-box {
+      margin-top: 24px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+    }
+
+    .badge-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #f87171;
+    }
+
+    .code-display {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      word-break: break-all;
+      color: #38bdf8;
+      max-height: 180px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--text-muted);
+    }
+
+    /* ── Records Table ── */
+    .record-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .record-row:last-child {
+      border-bottom: none;
+    }
+
+    .record-id {
+      font-family: var(--mono);
+      color: var(--emerald);
+      font-weight: 600;
+    }
+
+    .record-size {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    @media (max-width: 600px) {
+      .hero-title { font-size: 24px; }
+      .panel-card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="vault-layout">
+
+  <!-- Navbar -->
+  <header class="vault-navbar">
+    <div class="nav-left-cluster">
+      <a href="/" class="nav-back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        AS Cloud
+      </a>
+      <a href="/services" class="nav-back-link">Services Hub</a>
+    </div>
+
+    <div class="brand-cluster">
+      <div class="shield-icon">V</div>
+      <div class="brand-title">AS <span>QuantumVault</span></div>
+    </div>
+
+    <a href="https://github.com/yasamarium/as-vault" target="_blank" rel="noopener noreferrer" class="repo-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      DB: as-vault
+    </a>
+  </header>
+
+  <!-- Hero Header -->
+  <div class="hero-banner">
+    <h1 class="hero-title">Zero-Knowledge Encryption Engine</h1>
+    <p class="hero-sub">
+      Multi-layer custom cryptographic pipeline with authenticated AES-256-GCM, PBKDF2 100k rounds, dynamic S-box bit diffusion, and permanent encrypted cloud persistence in GitHub database.
+    </p>
+
+    <div class="security-specs-bar">
+      <span class="spec-pill"><strong>PBKDF2:</strong> 100,000 Rounds</span>
+      <span class="spec-pill"><strong>Symmetric:</strong> AES-256-GCM (12-byte IV)</span>
+      <span class="spec-pill"><strong>Diffusion:</strong> Keyed 8-Round Bit Matrix</span>
+      <span class="spec-pill"><strong>Integrity:</strong> HMAC-SHA512</span>
+      <span class="spec-pill"><strong>Backend:</strong> yasamarium/as-vault</span>
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('encrypt')">Encrypt &amp; Store</button>
+    <button class="tab-btn" onclick="switchTab('decrypt')">Verify &amp; Decrypt</button>
+    <button class="tab-btn" onclick="switchTab('database')">Vault DB Browser</button>
+    <button class="tab-btn" onclick="switchTab('api')">API Endpoints</button>
+  </div>
+
+  <!-- TAB 1: ENCRYPT -->
+  <div id="tab-encrypt" class="tab-content active">
+    <div class="panel-card">
+      <div class="form-group">
+        <label class="form-label">Plaintext to Encrypt</label>
+        <textarea id="encText" class="form-textarea" placeholder="Enter sensitive notes, credentials, passwords, or text to securely lock..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Custom Passphrase (Optional - Leave blank for system master key)</label>
+        <div class="password-wrap">
+          <input type="password" id="encKey" class="form-input" placeholder="Enter a secret password or generate one..." />
+          <button type="button" class="password-action-btn" onclick="generateRandomPass()">Generate</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Title / Note Label (Optional)</label>
+        <input type="text" id="encTitle" class="form-input" placeholder="e.g. Master Seed / Private Key Note" />
+      </div>
+
+      <label class="checkbox-wrap">
+        <input type="checkbox" id="encStore" checked />
+        <span>Persist encrypted record into <strong>yasamarium/as-vault</strong> database</span>
+      </label>
+
+      <button id="encBtn" class="action-btn" onclick="doEncrypt()">Run Encryption</button>
+
+      <div id="encResult" style="display:none;" class="result-box">
+        <div class="result-badge badge-success">ASV1 Encrypted Successfully</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Armored Token Payload:</div>
+        <div id="encPayload" class="code-display"></div>
+
+        <div id="encRecordMeta" style="display:none;margin-bottom:12px;font-size:12px;">
+          <span style="color:var(--text-muted)">Record ID:</span> <strong id="encRecordId" style="color:var(--emerald);font-family:var(--mono)"></strong>
+          <span style="margin:0 8px;color:var(--border)">|</span>
+          <span style="color:var(--text-muted)">Share Link:</span> <a id="encShareLink" href="#" style="color:var(--cyan)"></a>
+        </div>
+
+        <div class="btn-row">
+          <button class="copy-btn" onclick="copyText('encPayload')">Copy Token</button>
+          <button id="copyShareBtn" class="copy-btn" style="display:none;" onclick="copyShareUrl()">Copy Vault URL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: DECRYPT -->
+  <div id="tab-decrypt" class="tab-content">
+    <div class="panel-card">
+      <div class="form-group">
+        <label class="form-label">Vault Record ID or Armored Token Payload</label>
+        <textarea id="decToken" class="form-textarea" placeholder="Paste an ASV1$... token or enter a record ID (e.g. asv_m9a12_f8bc)..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Secret Passphrase (Leave blank if system master key was used)</label>
+        <input type="password" id="decKey" class="form-input" placeholder="Enter the passphrase used during encryption..." />
+      </div>
+
+      <button id="decBtn" class="action-btn secondary" onclick="doDecrypt()">Run Decryption &amp; Integrity Verification</button>
+
+      <div id="decResult" style="display:none;" class="result-box">
+        <div id="decBadge" class="result-badge badge-success">Integrity Verified • Decrypted</div>
+        <div id="decMeta" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;"></div>
+        <div id="decPlaintext" class="code-display" style="color:#f8fafc;font-size:14px;white-space:pre-wrap;"></div>
+
+        <div class="btn-row">
+          <button class="copy-btn" onclick="copyText('decPlaintext')">Copy Plaintext</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: DATABASE BROWSER -->
+  <div id="tab-database" class="tab-content">
+    <div class="panel-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <h3 style="font-size:16px;font-weight:700;">Records in yasamarium/as-vault</h3>
+          <p style="font-size:12px;color:var(--text-muted)">Encrypted files stored in the GitHub repository database</p>
+        </div>
+        <button class="copy-btn" onclick="loadDatabaseRecords()">Refresh List</button>
+      </div>
+
+      <div id="dbListContainer" style="background:#020617;border:1px solid var(--border);border-radius:10px;">
+        <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Loading database records...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: API DOCS -->
+  <div id="tab-api" class="tab-content">
+    <div class="panel-card">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:14px;color:var(--emerald);">AS Cloud Encryption Vault API</h3>
+
+      <div style="margin-bottom:20px;">
+        <div class="form-label">1. Encrypt and Save to Database (POST /api/vault)</div>
+        <div class="code-display">curl -X POST "https://asllm.vercel.app/api/vault?action=encrypt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Secret note to protect",
+    "key": "OptionalPassword123",
+    "title": "My Note",
+    "store": true
+  }'</div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <div class="form-label">2. Decrypt Record by ID or Token (POST /api/vault)</div>
+        <div class="code-display">curl -X POST "https://asllm.vercel.app/api/vault?action=decrypt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "asv_m89_abc",
+    "key": "OptionalPassword123"
+  }'</div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <div class="form-label">3. List Stored Vault Records (GET /api/vault?action=list)</div>
+        <div class="code-display">curl -s "https://asllm.vercel.app/api/vault?action=list"</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(panel => panel.classList.remove('active'));
+
+  event.target.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+
+  if (name === 'database') {
+    loadDatabaseRecords();
+  }
+}
+
+function generateRandomPass() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*";
+  let pass = "";
+  for (let i = 0; i < 20; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  const el = document.getElementById('encKey');
+  el.value = pass;
+  el.type = 'text';
+}
+
+async function doEncrypt() {
+  const text = document.getElementById('encText').value.trim();
+  if (!text) {
+    alert('Please enter text to encrypt.');
+    return;
+  }
+
+  const key = document.getElementById('encKey').value;
+  const title = document.getElementById('encTitle').value;
+  const store = document.getElementById('encStore').checked;
+
+  const btn = document.getElementById('encBtn');
+  btn.disabled = true;
+  btn.textContent = 'Encrypting & Storing...';
+
+  try {
+    const res = await fetch('/api/vault?action=encrypt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, key, title, store })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Encryption failed');
+
+    document.getElementById('encResult').style.display = 'block';
+    document.getElementById('encPayload').textContent = data.payload;
+
+    if (data.db_stored && data.id) {
+      document.getElementById('encRecordMeta').style.display = 'block';
+      document.getElementById('encRecordId').textContent = data.id;
+      const share = window.location.origin + '/vault?id=' + data.id;
+      const shareLink = document.getElementById('encShareLink');
+      shareLink.textContent = share;
+      shareLink.href = share;
+      document.getElementById('copyShareBtn').style.display = 'inline-flex';
+    } else {
+      document.getElementById('encRecordMeta').style.display = 'none';
+      document.getElementById('copyShareBtn').style.display = 'none';
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Encryption';
+  }
+}
+
+async function doDecrypt() {
+  const raw = document.getElementById('decToken').value.trim();
+  if (!raw) {
+    alert('Please enter a record ID or armored token.');
+    return;
+  }
+
+  const key = document.getElementById('decKey').value;
+  const btn = document.getElementById('decBtn');
+  btn.disabled = true;
+  btn.textContent = 'Verifying Integrity & Decrypting...';
+
+  const isId = raw.startsWith('asv_') || (!raw.includes('$') && raw.length < 40);
+  const payload = {
+    key,
+    ...(isId ? { id: raw } : { payload: raw })
+  };
+
+  try {
+    const res = await fetch('/api/vault?action=decrypt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    const box = document.getElementById('decResult');
+    box.style.display = 'block';
+
+    if (!res.ok) {
+      document.getElementById('decBadge').className = 'result-badge badge-error';
+      document.getElementById('decBadge').textContent = 'Authentication Failed';
+      document.getElementById('decMeta').textContent = '';
+      document.getElementById('decPlaintext').textContent = data.error || 'Decryption failed.';
+      document.getElementById('decPlaintext').style.color = '#f87171';
+      return;
+    }
+
+    document.getElementById('decBadge').className = 'result-badge badge-success';
+    document.getElementById('decBadge').textContent = 'Integrity Verified • Decrypted';
+    document.getElementById('decPlaintext').textContent = data.decrypted_text;
+    document.getElementById('decPlaintext').style.color = '#f8fafc';
+
+    let meta = '';
+    if (data.title) meta += 'Title: ' + data.title + ' | ';
+    if (data.created_at) meta += 'Created: ' + new Date(data.created_at).toLocaleString();
+    document.getElementById('decMeta').textContent = meta;
+
+  } catch (err) {
+    alert('Error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Decryption & Integrity Verification';
+  }
+}
+
+async function loadDatabaseRecords() {
+  const container = document.getElementById('dbListContainer');
+  container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Querying yasamarium/as-vault repository...</div>';
+
+  try {
+    const res = await fetch('/api/vault?action=list');
+    const data = await res.json();
+    const list = data.records || [];
+
+    if (list.length === 0) {
+      container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">No encrypted records stored in database yet. Encrypt and store one above!</div>';
+      return;
+    }
+
+    container.innerHTML = list.map(item => `
+      <div class="record-row">
+        <div>
+          <div class="record-id">${item.id}</div>
+          <div class="record-size">${item.size} bytes stored in records/${item.id}.json</div>
+        </div>
+        <button class="copy-btn" onclick="openRecord('${item.id}')">Decrypt</button>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--danger);font-size:13px;">Failed to list records: ${err.message}</div>`;
+  }
+}
+
+function openRecord(id) {
+  document.getElementById('decToken').value = id;
+  switchTab('decrypt');
+  document.querySelector('.tab-btn:nth-child(2)').click();
+  document.getElementById('decBtn').focus();
+}
+
+function copyText(elemId) {
+  const text = document.getElementById(elemId).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Copied to clipboard.');
+  });
+}
+
+function copyShareUrl() {
+  const id = document.getElementById('encRecordId').textContent;
+  const url = window.location.origin + '/vault?id=' + id;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('Vault share URL copied to clipboard.');
+  });
+}
+
+// Auto-populate from URL query params
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (id) {
+    document.getElementById('decToken').value = id;
+    document.querySelector('.tab-btn:nth-child(2)').click();
+  }
+});
+</script>
+</body>
+</html>

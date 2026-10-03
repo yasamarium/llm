@@ -1,5 +1,5 @@
 // api/s.js - AS Cloud Short URL Redirector & Link Creator (/s/:id)
-import { resolveShortLink, sanitizeSlug, createShortLink } from "./shortener.js";
+import { resolveShortLink, sanitizeSlug, createShortLink } from "../lib/shortener.js";
 
 export const config = {
   maxDuration: 45,
