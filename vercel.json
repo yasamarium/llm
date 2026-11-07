@@ -13,11 +13,12 @@
     "api/vault.js": { "maxDuration": 60 }
   },
   "rewrites": [
+    { "source": "/chat", "destination": "/chat.html" },
     { "source": "/home", "destination": "/home.html" },
     { "source": "/webeditor", "destination": "/webeditor.html" },
     { "source": "/game", "destination": "/game.html" },
     { "source": "/services", "destination": "/services.html" },
-    { "source": "/nim", "destination": "/nim.html" },
+    { "source": "/nim", "destination": "/index.html" },
     { "source": "/vault", "destination": "/vault.html" },
     { "source": "/api/nim", "destination": "/api/chat?nim=1" },
     { "source": "/i/:id*", "destination": "/api/i?id=:id*" },

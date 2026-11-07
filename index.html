@@ -2,658 +2,989 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="AS Cloud">
+  <meta name="apple-mobile-web-app-title" content="NIM AI">
   <meta name="theme-color" content="#000000">
-  <title>AS Intelligence</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22black%22 stroke=%22white%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2220%22 fill=%22white%22/></svg>">
+  <title>NVIDIA NIM - AS Cloud</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2216%22 fill=%22%2376b900%22/><text y=%22.9em%22 font-size=%2272%22 font-family=%22Arial%22 font-weight=%22900%22 fill=%22white%22 x=%2212%22>N</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <!-- Markdown & Code Highlight -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
   <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --card: #111111;
+      --border: #1e1e1e;
+      --border2: #2a2a2a;
+      --text: #f0f0f0;
+      --muted: #666;
+      --muted2: #888;
+      --nv: #76b900;
+      --nv-dim: #4a7300;
+      --danger: #ff453a;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      height: 52px;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-back {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--nv);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 6px 8px;
+      border-radius: 8px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .nav-back:hover { background: rgba(118,185,0,0.08); }
+    .nav-back svg { flex-shrink: 0; }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-nv-logo {
+      width: 26px;
+      height: 26px;
+      background: var(--nv);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .nav-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .nav-title span {
+      color: var(--nv);
+    }
+
+    .nav-spacer { flex: 1; }
+
+    .nav-link-btn {
+      color: var(--muted2);
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 5px 9px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .nav-link-btn:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      border-color: var(--border2);
+    }
+
+    .model-count-chip {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted2);
+      background: var(--card);
+      border: 1px solid var(--border2);
+      padding: 3px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+
+    .nav-clear-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--muted2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .nav-clear-btn:hover { color: var(--danger); border-color: var(--danger); background: rgba(255,69,58,0.06); }
+
+    /* Model Selector Strip */
+    .model-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .model-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+
+    .model-select {
+      flex: 1;
+      padding: 8px 12px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: var(--font);
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px;
+      transition: border-color 0.15s;
+      max-width: 100%;
+    }
+
+    .model-select:focus { border-color: var(--nv); }
+    .model-select option { background: #111; color: var(--text); padding: 4px 6px; }
+    .model-select optgroup { color: var(--nv); font-weight: 700; font-size: 11px; }
+
+    .model-loading {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--nv);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Chat Area */
+    .chat-area {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      scroll-behavior: smooth;
+    }
+
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    /* Empty State */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 40px 20px;
+      min-height: 300px;
+    }
+
+    .empty-nv-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #76b900, #4a7300);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 900;
+      color: #000;
+      box-shadow: 0 0 30px rgba(118,185,0,0.15);
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .empty-sub {
+      font-size: 13px;
+      color: var(--muted2);
+      line-height: 1.6;
+      max-width: 320px;
+    }
+
+    .empty-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 380px;
+    }
+
+    .empty-chip {
+      padding: 7px 14px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 99px;
+      font-size: 12px;
+      color: var(--muted2);
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all 0.15s;
+    }
+
+    .empty-chip:hover { border-color: var(--nv); color: var(--nv); background: rgba(118,185,0,0.04); }
+
+    /* Message Bubbles */
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 8px;
+      animation: fadeUp 0.2s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.user { align-items: flex-end; }
+    .msg-row.assistant { align-items: flex-start; }
+
+    .msg-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 4px;
+      padding: 0 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .msg-label.nv-label { color: var(--nv); }
+
+    .msg-bubble {
+      max-width: min(80%, 720px);
+      padding: 11px 15px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+
+    .msg-bubble.user {
+      background: var(--nv);
+      color: #000;
+      border-bottom-right-radius: 5px;
+      font-weight: 500;
+    }
+
+    .msg-bubble.assistant {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-bottom-left-radius: 5px;
+    }
+
+    .msg-bubble.assistant p { margin-bottom: 10px; }
+    .msg-bubble.assistant p:last-child { margin-bottom: 0; }
+    .msg-bubble.assistant h1,.msg-bubble.assistant h2,.msg-bubble.assistant h3 { margin: 14px 0 6px; font-weight: 700; }
+    .msg-bubble.assistant ul,.msg-bubble.assistant ol { padding-left: 20px; margin-bottom: 10px; }
+    .msg-bubble.assistant li { margin-bottom: 4px; }
+    .msg-bubble.assistant code {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      background: rgba(255,255,255,0.06);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .msg-bubble.assistant pre {
+      background: #0d0d0d;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 12px;
+      margin: 10px 0;
+      overflow-x: auto;
+    }
+    .msg-bubble.assistant pre code {
+      background: none;
+      padding: 0;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .msg-bubble.assistant strong { color: #fff; }
+    .msg-bubble.assistant a { color: var(--nv); }
+    .msg-bubble.assistant blockquote {
+      border-left: 3px solid var(--nv);
+      padding-left: 12px;
+      color: var(--muted2);
+      margin: 8px 0;
+    }
+    .msg-bubble.assistant table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
+    .msg-bubble.assistant th,.msg-bubble.assistant td { border: 1px solid var(--border2); padding: 7px 10px; text-align: left; }
+    .msg-bubble.assistant th { background: rgba(118,185,0,0.08); color: var(--nv); }
+
+    /* Streaming cursor */
+    .stream-cursor::after {
+      content: '';
+      display: inline-block;
+      width: 2px;
+      height: 14px;
+      background: var(--nv);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.8s step-end infinite;
+    }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Thinking dots */
+    .thinking-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 11px 15px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 18px;
+      border-bottom-left-radius: 5px;
+    }
+
+    .thinking-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--nv);
+      border-radius: 50%;
+      animation: tDot 1.2s ease-in-out infinite;
+    }
+
+    .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes tDot {
+      0%,60%,100% { transform: translateY(0); opacity: 0.3; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* Input Dock */
+    .input-dock {
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 10px 10px 10px 14px;
+      transition: border-color 0.15s;
+    }
+
+    .input-row:focus-within { border-color: var(--nv); }
+
+    .chat-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 15px;
+      font-family: var(--font);
+      resize: none;
+      max-height: 130px;
+      min-height: 22px;
+      line-height: 1.45;
+    }
+
+    .chat-input::placeholder { color: var(--muted); }
+
+    .send-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: none;
+      background: var(--nv);
+      color: #000;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .send-btn:hover { opacity: 0.85; }
+    .send-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    .stop-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      background: var(--card);
+      color: var(--danger);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .stop-btn:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+    .system-msg {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .model-strip { flex-wrap: wrap; }
+      .msg-bubble { max-width: 90%; }
+      .nav-title { font-size: 14px; }
+      .nav-link-btn { display: none; }
+    }
+  </style>
 </head>
 <body>
-  <div id="app" class="ios-app">
-    <!-- Clean Minimalist iOS Navigation Bar with Safe Area Insets -->
-    <header class="ios-navbar">
-      <div class="nav-left">
-        <a href="/nim" id="navNimBtn" class="ios-nim-nav-btn" title="NVIDIA NIM AI Models" aria-label="NVIDIA NIM AI">
-          <span class="nim-nv-badge">N</span>
-          <span class="nim-nv-label">NIM</span>
-        </a>
-        <div class="nav-brand">
-          <div class="brand-glyph">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-          </div>
-          <span class="brand-title">AS Cloud</span>
-        </div>
-      </div>
+<div id="app">
 
-      <!-- AS Cloud Live Status Indicator -->
-      <div class="status-indicator">
-        <div id="statusPill" class="ios-pill checking">
-          <span class="status-pulse"></span>
-          <span id="statusLabel">Connecting to AS cloud...</span>
-        </div>
-      </div>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="/chat" class="nav-back" title="Switch to AS Cloud LLM">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+      AS Cloud
+    </a>
+    <div class="nav-brand">
+      <div class="nav-nv-logo">N</div>
+      <div class="nav-title">NVIDIA <span>NIM</span></div>
+    </div>
+    <div class="nav-spacer"></div>
+    <a href="/services" class="nav-link-btn" title="AS Services">Services</a>
+    <a href="/game" class="nav-link-btn" title="Square Era 3D Game">Game</a>
+    <div class="model-count-chip" id="modelCountChip">Loading...</div>
+    <button class="nav-clear-btn" onclick="clearChat()" title="Clear chat">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+      </svg>
+    </button>
+  </nav>
 
-      <!-- Navigation Actions -->
-      <div class="nav-actions">
-        <a href="/game" id="voxelGameBtn" class="ios-circle-btn" title="Square Era (3D Voxel Game)" aria-label="Square Era 3D Voxel Game">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-            <line x1="12" y1="22.08" x2="12" y2="12"/>
-          </svg>
-        </a>
-        <a href="/vault" id="vaultNavBtn" class="ios-circle-btn" title="AS QuantumVault (High-Security Encryption)" aria-label="AS QuantumVault">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </a>
-        <a href="/services" id="webServicesNavBtn" class="ios-circle-btn" title="AS Web Services Hub (Link Shortener, QR Studio, Pastebin, Dev Tools)" aria-label="AS Web Services Hub">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-            <polyline points="2 17 12 22 22 17"/>
-            <polyline points="2 12 12 17 22 12"/>
-          </svg>
-        </a>
-        <a href="/webeditor" id="webEditorBtn" class="ios-circle-btn" title="Web Editor (PC Only)" aria-label="Web Editor Website Builder">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <line x1="3" y1="9" x2="21" y2="9"/>
-            <line x1="9" y1="21" x2="9" y2="9"/>
-          </svg>
-        </a>
-        <a href="/home" id="liveMsgBtn" class="ios-circle-btn" title="Live Messaging (/home)" aria-label="Live Messaging System">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-        </a>
-        <button id="newChatBtn" class="ios-circle-btn" title="New Conversation" aria-label="New Conversation">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <path d="M12 5v14M5 12h14"/>
-          </svg>
-        </button>
-      </div>
-    </header>
-
-    <!-- Chat Messages Viewport -->
-    <main class="ios-chat-viewport" id="chatViewport">
-      <!-- iOS Pull-To-Refresh Activity Spinner (Strictly Zero Emojis) -->
-      <div class="ios-ptr-container" id="aiPtr">
-        <div class="ios-spinner-blade"></div>
-        <div class="ios-spinner-blade"></div>
-        <div class="ios-spinner-blade"></div>
-        <div class="ios-spinner-blade"></div>
-        <div class="ios-spinner-blade"></div>
-        <div class="ios-spinner-blade"></div>
-        <div class="ios-spinner-blade"></div>
-        <div class="ios-spinner-blade"></div>
-      </div>
-
-      <!-- Minimalist Welcome State -->
-      <div class="welcome-view" id="welcomeView">
-        <div class="welcome-content">
-          <div class="ios-sparkle-icon">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
-            </svg>
-          </div>
-          <h1 class="welcome-heading" id="welcomeHeading">How can I help you?</h1>
-          
-          <div class="suggestion-pills">
-            <button class="suggestion-chip" data-prompt="Who are you and what makes MAIKO YEN special?">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>Ask MAIKO YEN (Made by AS)
-            </button>
-            <button class="suggestion-chip" data-prompt="/play Alan Walker - Faded">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>/play Alan Walker - Faded
-            </button>
-            <button class="suggestion-chip" data-prompt="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><path d="M21.58 7.19a2.5 2.5 0 0 0-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42a2.5 2.5 0 0 0-1.76 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81a2.5 2.5 0 0 0 1.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 0 0 1.76-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>YouTube Video Downloader
-            </button>
-            <button class="suggestion-chip" data-prompt="/edit https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg Remove the background">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 3a9 9 0 0 1 0 18"/></svg>/edit Remove background
-            </button>
-            <button class="suggestion-chip" data-prompt="Explain quantum computing in simple terms.">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>Ask GPT-5 / S-62: Quantum Computing
-            </button>
-            <button class="suggestion-chip" data-prompt="Write a concise Python script to parse and clean a JSON dataset.">
-              Python script to clean data
-            </button>
-            <button class="suggestion-chip" data-prompt="Draft a polite and professional follow-up email.">
-              Professional follow-up email
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Messages Stream -->
-      <div class="messages-flow" id="messagesFlow"></div>
-    </main>
-
-    <!-- Claude / DeepSeek Style Bottom Dock -->
-    <footer class="ios-input-dock">
-      <div class="input-container">
-        <!-- Claude / DeepSeek Bottom Composer Bar -->
-        <div class="composer-top-bar">
-          <div class="model-picker-wrapper">
-            <button id="modelPickerBtn" class="model-picker-trigger" type="button" aria-haspopup="true" aria-expanded="false" title="Switch Model">
-              <span class="model-picker-glyph sym-17b" id="currentModelGlyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 12 12 22 2 12" fill="currentColor" fill-opacity="0.15"/><polygon points="12 6 18 12 12 18 6 12"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span>
-              <span class="model-picker-name" id="currentModelName">Qwen Medium</span>
-              <span class="model-picker-badge" id="currentModelBadge">4 Nodes</span>
-              <svg class="chevron-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Attached Image Thumbnail Preview -->
-        <div id="attachedImagePreview" class="attached-image-preview hidden">
-          <img id="attachedThumb" class="attached-thumb" src="" alt="preview" />
-          <span id="attachedFileName" class="attached-filename">image.png</span>
-          <button id="removeAttachedBtn" type="button" class="remove-attached-btn" title="Remove attachment">✕</button>
-        </div>
-
-        <!-- Input Capsule -->
-        <div class="input-capsule">
-          <button id="attachBtn" type="button" class="attach-capsule-btn" title="Attach image to edit">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-            </svg>
-          </button>
-          <input type="file" id="imageFileInput" accept="image/*" class="hidden" />
-
-          <textarea
-            id="messageInput"
-            rows="1"
-            placeholder="Message"
-            autocomplete="off"
-            autocorrect="on"
-            autocapitalize="sentences"
-            spellcheck="true"
-          ></textarea>
-
-          <div class="dock-actions">
-            <button id="stopBtn" class="stop-capsule-btn hidden" title="Stop">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="5" y="5" width="14" height="14" rx="2"/>
-              </svg>
-            </button>
-
-            <button id="sendBtn" class="send-capsule-btn" title="Send" aria-label="Send">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 19V5M5 12l7-7 7 7"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </footer>
-  </div>
-
-  <!-- iOS 18 Model Selector Modal / Native Bottom Sheet -->
-  <div id="modelModal" class="ios-model-modal hidden" aria-modal="true" role="dialog">
-    <div id="popoverBackdrop" class="popover-backdrop"></div>
-    <div id="modelPopover" class="ios-model-popover" role="menu">
-      <!-- Mobile Pull Handle -->
-      <div class="sheet-drag-handle"></div>
-
-      <div class="popover-header">
-        <div class="popover-header-text">
-          <span class="popover-title">Select AS Cloud Model</span>
-          <span class="popover-subtitle">Multi-node load balanced</span>
-        </div>
-        <button id="closePopoverBtn" class="popover-close-btn" type="button" aria-label="Close Model Menu">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-            <div class="popover-models-list">
-        <div class="popover-group-label maiko-group-label">MAIKO YEN DEDICATED CLUSTER • 30+ REPOS (5H AUTO-RESTART)</div>
-        <button class="popover-item maiko-yen-item" data-model="maiko-yen" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 3v6m0 6v6M3 12h6m6 0h6"/><circle cx="12" cy="3" r="1.8"/><circle cx="12" cy="21" r="1.8"/><circle cx="3" cy="12" r="1.8"/><circle cx="21" cy="12" r="1.8"/><path d="M5.6 5.6l4.2 4.2m4.4 4.4l4.2 4.2M5.6 18.4l4.2-4.2m4.4-4.4l4.2-4.2" stroke-dasharray="1 1.5"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">MAIKO YEN</div>
-            <div class="popover-item-desc">Dedicated 31-node workflow cluster • 5hr Auto-Restart • Made by AS</div>
-          </div>
-          <span class="popover-node-count badge-maiko-yen">31 Nodes</span>
-          <span class="popover-check">✓</span>
-        </button>
-        <div class="popover-group-label exclusive-group-label">EXCLUSIVE S-62 • FLAGSHIP CLOUD</div>
-        <button class="popover-item exclusive-s62-item" data-model="gpt-5" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l7.5 4.3v8.6L12 21.5l-7.5-6.1V6.8L12 2.5z" stroke-opacity="0.35"/><path d="M12 6.5l4.5 2.6v5.2L12 16.9l-4.5-2.6V9.1L12 6.5z" fill="currentColor" fill-opacity="0.18"/><path d="M12 6.5v10.4M7.5 9.1l9 5.2M7.5 14.3l9-5.2"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">GPT-5</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
-          </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item exclusive-s62-item" data-model="claude-opus-4.8" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 6.2 6.1 1.9-6.1 1.9L12 22l-1.9-8-6.1-1.9 6.1-1.9L12 2z"/><path d="M6.3 6.3l3.7 1.8-1.8 3.7-3.7-1.8 1.8-3.7zM17.7 6.3l-1.8 3.7 3.7 1.8 1.8-3.7-3.7-1.8zM6.3 17.7l1.8-3.7-3.7-1.8-1.8 3.7 3.7 1.8zM17.7 17.7l-3.7-1.8 1.8-3.7 3.7 1.8-1.8 3.7z" opacity="0.6"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Claude Opus 4.8</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
-          </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item exclusive-s62-item" data-model="kimi-k2.6" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" fill-opacity="0.2"/><circle cx="16.5" cy="7.5" r="2" fill="currentColor"/><path d="M16.5 3.5v1.8M16.5 9.7v1.8M12.5 7.5h1.8M18.7 7.5h1.8" stroke-width="1.5"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Kimi K2.6</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
-          </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item exclusive-s62-item" data-model="gemini-3-pro" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 5.523 4.477 10 10 10-5.523 0-10 4.477-10 10 0-5.523-4.477-10-10-10 5.523 0 10-4.477 10-10z"/><circle cx="12" cy="12" r="2.2" fill="#ffffff" opacity="0.9"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Gemini 3 Pro</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
-          </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item exclusive-s62-item" data-model="gemini-3.1-pro" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 2c0 4.418 3.582 8 8 8-4.418 0-8 3.582-8 8 0-4.418-3.582-8-8-8 4.418 0 8-3.582 8-8z"/><path d="M18.5 13.5c0 2.21 1.79 4 4 4-2.21 0-4 1.79-4 4 0-2.21-1.79-4-4-4 2.21 0 4-1.79 4-4z" opacity="0.85"/><circle cx="10" cy="10" r="1.8" fill="#ffffff" opacity="0.9"/><circle cx="18.5" cy="17.5" r="1" fill="#ffffff" opacity="0.9"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Gemini 3.1 Pro</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
-          </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item exclusive-s62-item" data-model="qwen3-max" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8.5 4.9v9.8L12 21.5 3.5 16.7V6.9L12 2z"/><path d="M12 2v9.8m0 0L3.5 6.9m8.5 4.9l8.5-4.9m-8.5 4.9v9.8"/><circle cx="12" cy="11.8" r="2.5" fill="currentColor"/><path d="M8 14.5l4-2.5 4 2.5" stroke-dasharray="1.5 1.5"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Qwen 3 Max</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
-          </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item exclusive-s62-item" data-model="deepseek-v4-flash" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" fill-opacity="0.2"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M7 4.5L4 8m13 8l3 3.5" stroke-width="1.4" opacity="0.6"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">DeepSeek V4 Flash</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
-          </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <div class="popover-group-label">HIGH CAPACITY & REASONING</div>
-        <button class="popover-item" data-model="r1" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5" fill="currentColor"/><circle cx="18" cy="6" r="2.5" fill="currentColor"/><circle cx="12" cy="12" r="3" fill="currentColor"/><circle cx="6" cy="18" r="2.5" fill="currentColor"/><circle cx="18" cy="18" r="2.5" fill="currentColor"/><path d="M6 6l6 6m0 0l6-6M6 18l6-6m0 0l6 6M6 6v12M18 6v12"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">DeepSeek High</div>
-            <div class="popover-item-desc">Chain-of-thought deep reasoning & logic</div>
-          </div>
-          <span class="popover-node-count">3 Nodes</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item" data-model="qwen3b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(-30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(30 12 12)"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Qwen High</div>
-            <div class="popover-item-desc">Flagship deep comprehension & knowledge</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item" data-model="llama3b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.178 8c2.11 0 3.822 1.79 3.822 4s-1.712 4-3.822 4c-2.73 0-4.66-2.58-6.178-4 1.518-1.42 3.448-4 6.178-4z"/><path d="M5.822 8C3.712 8 2 9.79 2 12s1.712 4 3.822 4c2.73 0 4.66-2.58 6.178-4-1.518-1.42-3.448-4-6.178-4z"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Llama High</div>
-            <div class="popover-item-desc">Meta advanced reasoning intelligence</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item" data-model="coder" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="14" y1="4" x2="10" y2="20"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Coder High</div>
-            <div class="popover-item-desc">Code writing, architecture & debugging</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <div class="popover-group-label">MEDIUM CAPACITY</div>
-        <button class="popover-item active" data-model="1.7b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 12 12 22 2 12" fill="currentColor" fill-opacity="0.15"/><polygon points="12 6 18 12 12 18 6 12"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Qwen Medium</div>
-            <div class="popover-item-desc">Balanced high-speed conversational model</div>
-          </div>
-          <span class="popover-node-count">4 Nodes</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item" data-model="gemma" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 21 2 9" fill="currentColor" fill-opacity="0.12"/><line x1="2" y1="9" x2="22" y2="9"/><polyline points="6 3 12 9 18 3"/><polyline points="12 21 7 9 12 3 17 9 12 21"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Gemma Medium</div>
-            <div class="popover-item-desc">Google high-precision assistant</div>
-          </div>
-          <span class="popover-node-count">1 Node</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item" data-model="math" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4H5l7 8-7 8h14"/><circle cx="17" cy="12" r="1.8" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Math Medium</div>
-            <div class="popover-item-desc">Mathematical formulas & step calculations</div>
-          </div>
-          <span class="popover-node-count">1 Node</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item" data-model="phi" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7" fill="currentColor" fill-opacity="0.15"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="5" y1="12" x2="19" y2="12" stroke-opacity="0.3"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Phi Medium</div>
-            <div class="popover-item-desc">Microsoft deep comprehension model</div>
-          </div>
-          <span class="popover-node-count">1 Node</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item" data-model="smol" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C12 22 4 17 4 10a8 8 0 0 1 16 0c0 7-8 12-8 12z" fill="currentColor" fill-opacity="0.15"/><path d="M12 7v10M12 11l4-3M12 14l-3-2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">SmolLM Medium</div>
-            <div class="popover-item-desc">Compact conversational assistant</div>
-          </div>
-          <span class="popover-node-count">1 Node</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <div class="popover-group-label">LIGHTWEIGHT & FAST</div>
-        <button class="popover-item" data-model="1b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h8l-2 8 10-12h-8l2-8z"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Llama Lightweight</div>
-            <div class="popover-item-desc">Instant low-latency responses</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <button class="popover-item" data-model="0.5b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 4.76a6 6 0 0 0-8.49 0L3.5 13.01l-.5 7.49 7.49-.5 8.25-8.25a6 6 0 0 0 0-8.49z" fill="currentColor" fill-opacity="0.15"/><line x1="3" y1="21" x2="14" y2="10"/><path d="M10 7l3 3M7 10l3 3M4 13l3 3"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Qwen Lightweight</div>
-            <div class="popover-item-desc">Ultra-compact fast inference</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check">✓</span>
-        </button>
-
-        <div class="popover-group-label">CREATIVE & MULTIMODAL</div>
-        <button class="popover-item" data-model="image" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><line x1="14.31" y1="8" x2="20.05" y2="17.94"/><line x1="9.69" y1="8" x2="21.17" y2="8"/><line x1="7.38" y1="12" x2="13.12" y2="2.06"/><line x1="9.69" y1="16" x2="3.95" y2="6.06"/><line x1="14.31" y1="16" x2="2.83" y2="16"/><line x1="16.62" y1="12" x2="10.88" y2="21.94"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Image Generator</div>
-            <div class="popover-item-desc">Real-time diffusion image generation</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check">✓</span>
-        </button>
+  <!-- Model Selector Strip -->
+  <div class="model-strip">
+    <span class="model-label">Model</span>
+    <div id="modelSelectWrapper" style="flex:1; display:flex; align-items:center; gap:8px;">
+      <div class="model-loading">
+        <div class="spinner"></div>
+        <span>Loading verified models...</span>
       </div>
     </div>
   </div>
 
-  <!-- iOS 18 Fullscreen Image Lightbox Modal -->
-  <div id="imageLightbox" class="ios-lightbox hidden" aria-modal="true" role="dialog">
-    <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
-    <div class="lightbox-dialog">
-      <div class="lightbox-header">
-        <span id="lightboxTitle" class="lightbox-title">Image Preview</span>
-        <button id="closeLightboxBtn" class="lightbox-close-btn" type="button" aria-label="Close Lightbox">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-      <div class="lightbox-stage">
-        <img id="lightboxImg" src="" alt="Full Preview" class="lightbox-image" />
-      </div>
-      <div class="lightbox-toolbar">
-        <a id="lightboxSaveBtn" href="" download="as_image.jpg" class="media-btn-primary" title="Save Image">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span>Save Image</span>
-        </a>
-        <button id="lightboxCopyBtn" type="button" class="media-btn-secondary" title="Copy Link">
-          <span>Copy URL</span>
-        </button>
-        <a id="lightboxTabBtn" href="" target="_blank" rel="noopener noreferrer" class="media-btn-secondary" title="Open in New Tab">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-          <span>Open in Tab</span>
-        </a>
+  <!-- Chat Area -->
+  <div class="chat-area" id="chatArea">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-nv-icon">N</div>
+      <div class="empty-title">NVIDIA NIM API</div>
+      <div class="empty-sub">Access verified high-performance models including Nemotron 3 Ultra 550B, Nemotron 3.5 Bolt, Laguna XS 2.1, and specialized research models via NVIDIA NIM cloud inference.</div>
+      <div class="empty-chips">
+        <button class="empty-chip" onclick="insertPrompt('Explain how transformer neural networks work.')">Explain Transformers</button>
+        <button class="empty-chip" onclick="insertPrompt('Write a Python function to sort a list of dictionaries by a key.')">Python sort function</button>
+        <button class="empty-chip" onclick="insertPrompt('What are the key differences between Llama and Nemotron models?')">Llama vs Nemotron</button>
+        <button class="empty-chip" onclick="insertPrompt('Write a short poem about artificial intelligence.')">AI poem</button>
       </div>
     </div>
   </div>
 
-  <!-- iOS 18 Context Menu & Floating Tapback Bar for AI messages (Strictly Zero Emojis) -->
-  <div id="aiMessageContextMenu" class="ios-context-overlay" style="display: none;">
-    <div class="ios-context-backdrop" id="aiContextBackdrop"></div>
-    <div class="ios-context-wrapper" id="aiContextWrapper">
-      <div class="ios-tapback-bar" id="aiTapbackBar">
-        <button class="tapback-btn" data-reaction="heart" title="Heart" aria-label="Heart">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#ff2d55"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        </button>
-        <button class="tapback-btn" data-reaction="thumbsup" title="Thumbs Up" aria-label="Thumbs Up">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#34c759"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
-        </button>
-        <button class="tapback-btn" data-reaction="thumbsdown" title="Thumbs Down" aria-label="Thumbs Down">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#ff9500"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
-        </button>
-        <button class="tapback-btn" data-reaction="haha" title="HaHa" aria-label="HaHa">
-          <span class="tapback-typography" style="color: #ff9f0a; font-weight: 800; font-size: 13px;">HA</span>
-        </button>
-        <button class="tapback-btn" data-reaction="exclaim" title="Exclamation" aria-label="Exclamation">
-          <span class="tapback-typography" style="color: #ff375f; font-weight: 900; font-size: 17px;">!!</span>
-        </button>
-        <button class="tapback-btn" data-reaction="question" title="Question" aria-label="Question">
-          <span class="tapback-typography" style="color: #bf5af2; font-weight: 900; font-size: 17px;">?</span>
-        </button>
-      </div>
-      <div class="ios-context-preview" id="aiContextPreview"></div>
-      <div class="ios-context-action-menu" id="aiActionMenu">
-        <button class="ios-context-action-item" id="aiCtxCopyBtn" type="button">
-          <span>Copy Message</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-        </button>
-        <button class="ios-context-action-item" id="aiCtxShareBtn" type="button">
-          <span>Share</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-        </button>
-      </div>
+  <!-- Input Dock -->
+  <div class="input-dock">
+    <div class="input-row">
+      <textarea class="chat-input" id="chatInput" placeholder="Message NIM..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+      </button>
     </div>
   </div>
 
-    <!-- iOS Native Offline Screen with Animated Walking Cat Searching for Internet (Strictly Zero Emojis) -->
-  <div id="iosOfflineOverlay" class="ios-offline-overlay" aria-hidden="true" style="display: none;">
-    <div class="ios-offline-backdrop"></div>
+</div>
 
-    <!-- Floating Compact Status Card -->
-    <div class="ios-offline-card">
-      <div class="offline-badge-row">
-        <span class="offline-badge-pill">
-          <span class="offline-pulse-dot"></span>
-          <span class="offline-badge-text">Offline • Cat Radar Active</span>
-        </span>
-      </div>
+<script>
+// Verified responding models catalog
+const MODEL_META = {
+  "nvidia/nemotron-3-ultra-550b-a55b": {
+    name: "Nemotron 3 Ultra 550B",
+    tag: "Flagship",
+    badge: "550B",
+    desc: "Top-tier conversational, reasoning and instruction model"
+  },
+  "nvidia/nemotron-3.5-bolt-e4b": {
+    name: "Nemotron 3.5 Bolt e4b",
+    tag: "Ultra Fast",
+    badge: "Bolt",
+    desc: "Lightning fast generation with high precision"
+  },
+  "poolside/laguna-xs-2.1": {
+    name: "Laguna XS 2.1",
+    tag: "Intelligence",
+    badge: "Poolside",
+    desc: "Advanced conversational reasoning and coding assistant"
+  },
+  "nvidia/ising-calibration-1.5-31b": {
+    name: "Ising Calibration 1.5 31B",
+    tag: "Quantum",
+    badge: "Science",
+    desc: "Quantum computing and specialized scientific data analysis"
+  },
+  "nvidia/riva-translate-4b-instruct-v2": {
+    name: "Riva Translate 4B v2",
+    tag: "Multilingual",
+    badge: "Riva",
+    desc: "Neural multilingual translation and instruction following"
+  },
+  "meta/llama-guard-4-12b": {
+    name: "Llama Guard 4 12B",
+    tag: "Moderation",
+    badge: "Meta",
+    desc: "Content safety and prompt moderation classifier"
+  },
+  "nvidia/llama-3.1-nemotron-safety-guard-8b-v3": {
+    name: "Nemotron Safety Guard 8B v3",
+    tag: "Security",
+    badge: "Safety",
+    desc: "AI safety and input/output policy verification"
+  }
+};
 
-      <h2 class="offline-title">Searching for Signal...</h2>
-      <p class="offline-description">
-        Internet connection lost. Cat is actively roaming to find signal packets and restore connectivity.
-      </p>
+const FALLBACK_MODELS = [
+  "nvidia/nemotron-3-ultra-550b-a55b",
+  "nvidia/nemotron-3.5-bolt-e4b",
+  "poolside/laguna-xs-2.1",
+  "nvidia/ising-calibration-1.5-31b",
+  "nvidia/riva-translate-4b-instruct-v2",
+  "meta/llama-guard-4-12b",
+  "nvidia/llama-3.1-nemotron-safety-guard-8b-v3"
+];
 
-      <div class="offline-actions">
-        <button id="offlineRetryBtn" class="offline-retry-btn" type="button">
-          <svg class="offline-retry-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
-          <span class="retry-btn-label">Check Connection</span>
-        </button>
-      </div>
+// State
+let chatHistory = [];
+let streamController = null;
+let isStreaming = false;
+let models = [];
+let modelsLoaded = false;
 
-      <div class="offline-footer-meta">
-        <span id="offlineTimerNotice">Auto-reconnecting when online</span>
-      </div>
-    </div>
+function renderModelDropdown(modelList) {
+  const wrapper = document.getElementById('modelSelectWrapper');
+  models = modelList;
+  modelsLoaded = true;
 
-    <!-- Roaming Walking Cat (Continuously walks & wanders randomly across screen) -->
-    <div id="offlineRoamingCat" class="offline-roaming-cat cat-is-walking" aria-hidden="true">
-      <svg class="walking-cat-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <!-- Cat Fur Shading Gradient -->
-    <linearGradient id="furGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#22222b"/>
-      <stop offset="45%" stop-color="#14141a"/>
-      <stop offset="100%" stop-color="#09090c"/>
-    </linearGradient>
+  document.getElementById('modelCountChip').textContent = models.length + ' verified';
 
-    <!-- Far Leg Darker Gradient -->
-    <linearGradient id="furFarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#16161d"/>
-      <stop offset="100%" stop-color="#060608"/>
-    </linearGradient>
+  const sel = document.createElement('select');
+  sel.className = 'model-select';
+  sel.id = 'modelSelect';
 
-    <!-- Signal Glow Filter -->
-    <filter id="catSignalGlow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="1.8" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
+  const groups = {};
+  models.forEach(m => {
+    const id = typeof m === 'string' ? m : m.id;
+    const provider = id.split('/')[0] || 'other';
+    if (!groups[provider]) groups[provider] = [];
+    groups[provider].push(id);
+  });
 
-  <!-- Ground Shadow (Tracks and squashes with gait) -->
-  <ellipse class="cat-walk-shadow" cx="72" cy="112" rx="44" ry="5.5" fill="#000000" opacity="0.6"/>
+  const providers = Object.keys(groups).sort((a, b) => {
+    if (a === 'nvidia') return -1;
+    if (b === 'nvidia') return 1;
+    return a.localeCompare(b);
+  });
 
-  <!-- Wi-Fi Radar Arcs Searching Ahead of Cat -->
-  <g class="cat-wifi-scanner" transform="translate(122, 14)">
-    <path class="scanner-arc arc-1" d="M 6 12 A 10 10 0 0 1 18 2" stroke="#ff453a" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <path class="scanner-arc arc-2" d="M 12 18 A 18 18 0 0 1 28 4" stroke="#ff453a" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <path class="scanner-arc arc-3" d="M 18 24 A 26 26 0 0 1 38 6" stroke="#ff453a" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <circle class="scanner-diode" cx="2" cy="18" r="2.8" fill="#ff453a" filter="url(#catSignalGlow)"/>
-  </g>
+  providers.forEach(prov => {
+    const grp = document.createElement('optgroup');
+    grp.label = prov.toUpperCase();
+    groups[prov].forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      const meta = MODEL_META[id];
+      opt.textContent = meta ? (meta.name + ' [' + meta.tag + ']') : (id.includes('/') ? id.split('/')[1] : id);
+      opt.title = meta ? meta.desc : id;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  });
 
-  <!-- Far Legs (Rendered behind body) -->
-  <g class="legs-far">
-    <!-- Far Back Leg -->
-    <g class="leg-joint leg-back-far">
-      <path d="M 46 54 C 44 68, 35 78, 38 90 C 40 98, 42 104, 38 109 C 36 111, 44 112, 46 110 C 49 104, 46 95, 47 84 C 52 74, 55 64, 52 54 Z" fill="url(#furFarGrad)"/>
-    </g>
+  wrapper.innerHTML = '';
+  wrapper.appendChild(sel);
 
-    <!-- Far Front Leg -->
-    <g class="leg-joint leg-front-far">
-      <path d="M 98 62 C 96 74, 94 86, 96 96 C 97 102, 98 107, 95 109 C 93 111, 100 112, 102 110 C 104 105, 103 96, 103 86 C 105 76, 107 68, 104 62 Z" fill="url(#furFarGrad)"/>
-    </g>
-  </g>
+  const last = localStorage.getItem('nim_model');
+  const validIds = models.map(m => typeof m === 'string' ? m : m.id);
+  if (last && validIds.includes(last)) {
+    sel.value = last;
+  } else if (validIds.includes('nvidia/nemotron-3-ultra-550b-a55b')) {
+    sel.value = 'nvidia/nemotron-3-ultra-550b-a55b';
+  } else if (validIds.length > 0) {
+    sel.value = validIds[0];
+  }
 
-  <!-- Cat Torso Assembly (Bobs with walking rhythm) -->
-  <g class="cat-walk-torso">
-    <!-- Tail (Graceful waving whip) -->
-    <g class="cat-walk-tail">
-      <path d="M 36 50 C 22 46, 10 32, 14 18 C 16 10, 24 8, 27 14 C 29 20, 21 28, 24 38 C 26 44, 32 47, 36 50 Z" fill="url(#furGrad)"/>
-    </g>
+  const sub = document.querySelector('.empty-sub');
+  if (sub) {
+    sub.textContent = 'Access verified high-performance models including Nemotron 3 Ultra 550B, Nemotron 3.5 Bolt, Laguna XS 2.1, and specialized research models via NVIDIA NIM cloud inference.';
+  }
+}
 
-    <!-- Torso Spine & Belly -->
-    <path class="cat-torso-mass" d="M 38 52 C 34 46, 44 38, 58 40 C 74 42, 90 44, 104 48 C 114 52, 116 62, 112 70 C 106 74, 98 73, 90 73 C 74 73, 62 76, 48 72 C 38 68, 35 58, 38 52 Z" fill="url(#furGrad)"/>
-    <!-- Subtle Spine Arch Highlight -->
-    <path d="M 45 44 C 60 42, 85 45, 106 50 C 100 48, 75 44, 45 44 Z" stroke="#333342" stroke-width="1.5" stroke-linecap="round"/>
+// Load Models
+async function loadModels() {
+  try {
+    const res = await fetch('/api/nim');
+    if (res.ok) {
+      const data = await res.json();
+      const rawList = data.data || data;
+      if (Array.isArray(rawList) && rawList.length > 0) {
+        const filtered = rawList
+          .map(m => typeof m === 'string' ? m : m.id)
+          .filter(id => FALLBACK_MODELS.includes(id));
+        if (filtered.length > 0) {
+          renderModelDropdown(filtered);
+          return;
+        }
+      }
+    }
+  } catch (_) {}
 
-    <!-- Collar & Antenna Rod -->
-    <rect x="106" y="47" width="6" height="15" rx="3" fill="#2d2d38" transform="rotate(-15 106 47)"/>
-    <line x1="112" y1="46" x2="124" y2="28" stroke="#4a4a5a" stroke-width="1.8" stroke-linecap="round"/>
-    <circle cx="124" cy="28" r="2.5" fill="#0a84ff" filter="url(#catSignalGlow)"/>
+  renderModelDropdown(FALLBACK_MODELS);
+}
 
-    <!-- Head & Neck -->
-    <g class="cat-walk-head">
-      <!-- Neck connection -->
-      <path d="M 104 48 C 110 42, 116 38, 122 36 C 126 44, 122 56, 112 60 Z" fill="url(#furGrad)"/>
-      <!-- Ears -->
-      <polygon points="116,28 122,10 130,25" fill="#181820"/>
-      <polygon points="119,26 123,14 128,24" fill="#3a2234"/>
-      <polygon points="126,26 134,8 140,24" fill="#121218"/>
-      <polygon points="128,25 134,12 138,23" fill="#3a2234"/>
+// Helpers
+function getSelectedModel() {
+  const sel = document.getElementById('modelSelect');
+  return sel ? sel.value : '';
+}
 
-      <!-- Head Skull -->
-      <circle cx="128" cy="34" r="14" fill="url(#furGrad)"/>
-      <!-- Snout -->
-      <path d="M 136 34 C 142 36, 144 42, 138 45 C 132 47, 126 44, 124 40 Z" fill="#15151c"/>
-      <polygon points="142,38 144,38 143,40" fill="#ff7da7"/>
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+}
 
-      <!-- Glowing Cyan-Green Eye -->
-      <ellipse cx="132" cy="32" rx="3.5" ry="4.5" fill="#050508"/>
-      <ellipse cx="132" cy="32" rx="3.2" ry="4.2" fill="#30d158" filter="url(#catSignalGlow)"/>
-      <ellipse cx="132.5" cy="32" rx="1.2" ry="3.2" fill="#050508"/>
-      <circle cx="131" cy="30.5" r="0.9" fill="#ffffff" opacity="0.95"/>
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (isStreaming) stopStream();
+    else sendMessage();
+  }
+}
 
-      <!-- Whiskers -->
-      <line x1="138" y1="39" x2="154" y2="36" stroke="#555566" stroke-width="0.8" stroke-linecap="round"/>
-      <line x1="138" y1="41" x2="155" y2="42" stroke="#555566" stroke-width="0.8" stroke-linecap="round"/>
-      <line x1="137" y1="43" x2="152" y2="48" stroke="#555566" stroke-width="0.8" stroke-linecap="round"/>
-    </g>
-  </g>
+function setSendBtn(streaming) {
+  const btn = document.getElementById('sendBtn');
+  if (streaming) {
+    btn.className = 'stop-btn';
+    btn.id = 'sendBtn';
+    btn.onclick = stopStream;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
+    btn.disabled = false;
+  } else {
+    btn.className = 'send-btn';
+    btn.onclick = sendMessage;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+    btn.disabled = false;
+  }
+}
 
-  <!-- Near Legs (Rendered in foreground) -->
-  <g class="legs-near">
-    <!-- Near Back Leg (Hip thigh mass + articulated lower leg) -->
-    <g class="leg-joint leg-back-near">
-      <path d="M 38 48 C 28 58, 28 72, 36 82 C 40 88, 38 98, 34 108 C 32 111, 40 112, 43 109 C 47 101, 46 91, 44 82 C 48 72, 54 62, 50 48 Z" fill="url(#furGrad)"/>
-    </g>
+function stopStream() {
+  if (streamController) streamController.abort();
+  isStreaming = false;
+  setSendBtn(false);
+}
 
-    <!-- Near Front Leg (Shoulder mass + articulated lower leg) -->
-    <g class="leg-joint leg-front-near">
-      <path d="M 104 56 C 100 68, 102 78, 104 90 C 105 98, 107 104, 103 108 C 101 111, 109 112, 111 109 C 114 104, 112 95, 111 84 C 112 74, 114 65, 110 56 Z" fill="url(#furGrad)"/>
-    </g>
-  </g>
-</svg>
-    </div>
-  </div>
+function scrollToBottom() {
+  const area = document.getElementById('chatArea');
+  area.scrollTop = area.scrollHeight;
+}
 
-  <script src="app.js"></script>
+function insertPrompt(text) {
+  const inp = document.getElementById('chatInput');
+  inp.value = text;
+  autoResize(inp);
+  inp.focus();
+}
+
+function clearChat() {
+  chatHistory = [];
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '';
+  const empty = document.createElement('div');
+  empty.className = 'empty-state';
+  empty.id = 'emptyState';
+  empty.innerHTML = `
+    <div class="empty-nv-icon">N</div>
+    <div class="empty-title">NVIDIA NIM API</div>
+    <div class="empty-sub">Access verified high-performance models including Nemotron 3 Ultra 550B, Nemotron 3.5 Bolt, Laguna XS 2.1, and specialized research models via NVIDIA NIM cloud inference.</div>
+    <div class="empty-chips">
+      <button class="empty-chip" onclick="insertPrompt('Explain how transformer neural networks work.')">Explain Transformers</button>
+      <button class="empty-chip" onclick="insertPrompt('Write a Python function to sort a list of dictionaries by a key.')">Python sort function</button>
+      <button class="empty-chip" onclick="insertPrompt('What are the key differences between Llama and Nemotron models?')">Llama vs Nemotron</button>
+      <button class="empty-chip" onclick="insertPrompt('Write a short poem about artificial intelligence.')">AI poem</button>
+    </div>`;
+  area.appendChild(empty);
+  stopStream();
+}
+
+function addUserBubble(text) {
+  const empty = document.getElementById('emptyState');
+  if (empty) empty.remove();
+
+  const area = document.getElementById('chatArea');
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+  row.innerHTML = '<div class="msg-label">You</div><div class="msg-bubble user">' + escHtml(text) + '</div>';
+  area.appendChild(row);
+  scrollToBottom();
+}
+
+function addThinkingIndicator() {
+  const area = document.getElementById('chatArea');
+  const row = document.createElement('div');
+  row.className = 'msg-row assistant';
+  row.id = 'thinkingRow';
+  const modelId = getSelectedModel();
+  const label = modelId ? (MODEL_META[modelId]?.name || modelId.split('/').pop()) : 'NIM';
+  row.innerHTML = '<div class="msg-label nv-label">' + escHtml(label) + '</div><div class="thinking-indicator"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div></div>';
+  area.appendChild(row);
+  scrollToBottom();
+  return row;
+}
+
+function replaceThinkingWithBubble(modelId) {
+  const row = document.getElementById('thinkingRow');
+  if (row) {
+    row.removeAttribute('id');
+    const label = modelId ? (MODEL_META[modelId]?.name || modelId.split('/').pop()) : 'NIM';
+    row.innerHTML = '<div class="msg-label nv-label">' + escHtml(label) + '</div><div class="msg-bubble assistant stream-cursor" id="streamBubble"></div>';
+  }
+  return document.getElementById('streamBubble');
+}
+
+function finalizeAssistantBubble(bubble, fullText) {
+  if (!bubble) return;
+  bubble.classList.remove('stream-cursor');
+  bubble.removeAttribute('id');
+  try {
+    marked.setOptions({ breaks: true, gfm: true });
+    bubble.innerHTML = marked.parse(fullText);
+    bubble.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+  } catch(e) {
+    bubble.textContent = fullText;
+  }
+}
+
+function addSystemMsg(text) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'system-msg';
+  div.textContent = text;
+  area.appendChild(div);
+  scrollToBottom();
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Send
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const modelId = getSelectedModel();
+  if (!modelId) {
+    alert('Please select a model first.');
+    return;
+  }
+
+  localStorage.setItem('nim_model', modelId);
+
+  chatHistory.push({ role: 'user', content: text });
+  addUserBubble(text);
+
+  input.value = '';
+  input.style.height = 'auto';
+  input.blur();
+
+  addThinkingIndicator();
+  isStreaming = true;
+  setSendBtn(true);
+
+  const controller = new AbortController();
+  streamController = controller;
+
+  let bubble = null;
+  let fullText = '';
+
+  try {
+    const res = await fetch('/api/nim', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: modelId,
+        messages: chatHistory.slice(-24),
+        max_tokens: 2048,
+        stream: true,
+        temperature: 0.7
+      }),
+      signal: controller.signal
+    });
+
+    if (!res.ok) {
+      let errMsg = 'HTTP ' + res.status;
+      try {
+        const ej = await res.json();
+        errMsg = ej.detail || ej.title || ej.message || errMsg;
+      } catch(e) {}
+      throw new Error(errMsg);
+    }
+
+    bubble = replaceThinkingWithBubble(modelId);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t || !t.startsWith('data: ')) continue;
+        const j = t.slice(6);
+        if (j === '[DONE]') continue;
+        try {
+          const chunk = JSON.parse(j);
+          const delta = chunk.choices?.[0]?.delta?.content;
+          if (delta) {
+            fullText += delta;
+            if (bubble) {
+              bubble.textContent = fullText;
+              scrollToBottom();
+            }
+          }
+        } catch(e) {}
+      }
+    }
+
+    if (bubble) finalizeAssistantBubble(bubble, fullText);
+    if (fullText) chatHistory.push({ role: 'assistant', content: fullText });
+
+  } catch (err) {
+    const thinking = document.getElementById('thinkingRow');
+    if (thinking) thinking.remove();
+
+    if (err.name === 'AbortError') {
+      if (bubble) {
+        finalizeAssistantBubble(bubble, fullText + '\n\n*[Stopped]*');
+        if (fullText) chatHistory.push({ role: 'assistant', content: fullText });
+      } else {
+        if (fullText) addSystemMsg('[Stopped]');
+      }
+    } else {
+      chatHistory.pop();
+      addSystemMsg('Error: ' + err.message);
+    }
+  }
+
+  isStreaming = false;
+  streamController = null;
+  setSendBtn(false);
+  scrollToBottom();
+}
+
+// Boot
+loadModels();
+</script>
 </body>
 </html>
