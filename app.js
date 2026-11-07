@@ -44,7 +44,7 @@
   const lightboxTabBtn = document.getElementById("lightboxTabBtn");
 
   let attachedImage = null; // { data: base64/url, name: "file.jpg", type: "image/jpeg" }
-  let selectedModel = "1.7b";
+  let selectedModel = "nvidia/nemotron-3-ultra-550b-a55b";
   let conversation = [];
   let abortController = null;
   let isGenerating = false;
@@ -221,172 +221,75 @@
   });
 
     const MODEL_CONFIG = {
-    "maiko-yen": {
-      name: "MAIKO YEN",
-      badge: "31 Nodes",
-      title: "MAIKO YEN (31 Dedicated Nodes • 5h Auto-Restart • Made by AS)",
-      placeholder: "Message MAIKO YEN (31-Node Dedicated Cluster • Made by AS)...",
-      isExclusive: false,
-      isMaiko: true,
-      symClass: "sym-maiko-yen",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 3v6m0 6v6M3 12h6m6 0h6"/><circle cx="12" cy="3" r="1.8"/><circle cx="12" cy="21" r="1.8"/><circle cx="3" cy="12" r="1.8"/><circle cx="21" cy="12" r="1.8"/><path d="M5.6 5.6l4.2 4.2m4.4 4.4l4.2 4.2M5.6 18.4l4.2-4.2m4.4-4.4l4.2-4.2" stroke-dasharray="1 1.5"/></svg>`,
-    },
-    "gpt-5": {
-      name: "GPT-5",
-      badge: "EXCLUSIVE S-62",
-      title: "How can GPT-5 help you today?",
-      placeholder: "Message GPT-5 (Runs on AS cloud EXCLUSIVE S-62)...",
+    "nvidia/nemotron-3-ultra-550b-a55b": {
+      name: "Nemotron 3 Ultra 550B",
+      badge: "550B Flagship",
+      title: "How can Nemotron 3 Ultra help you today?",
+      placeholder: "Message Nemotron 3 Ultra (550B Flagship)...",
       isExclusive: true,
       symClass: "sym-gpt5",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l7.5 4.3v8.6L12 21.5l-7.5-6.1V6.8L12 2.5z" stroke-opacity="0.35"/><path d="M12 6.5l4.5 2.6v5.2L12 16.9l-4.5-2.6V9.1L12 6.5z" fill="currentColor" fill-opacity="0.18"/><path d="M12 6.5v10.4M7.5 9.1l9 5.2M7.5 14.3l9-5.2"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>`,
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
     },
-    "claude-opus-4.8": {
-      name: "Claude Opus 4.8",
-      badge: "EXCLUSIVE S-62",
-      title: "How can Claude Opus help you today?",
-      placeholder: "Message Claude Opus 4.8 (Runs on AS cloud EXCLUSIVE S-62)...",
-      isExclusive: true,
-      symClass: "sym-claude",
-      svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 6.2 6.1 1.9-6.1 1.9L12 22l-1.9-8-6.1-1.9 6.1-1.9L12 2z"/><path d="M6.3 6.3l3.7 1.8-1.8 3.7-3.7-1.8 1.8-3.7zM17.7 6.3l-1.8 3.7 3.7 1.8 1.8-3.7-3.7-1.8zM6.3 17.7l1.8-3.7-3.7-1.8-1.8 3.7 3.7 1.8zM17.7 17.7l-3.7-1.8 1.8-3.7 3.7 1.8-1.8 3.7z" opacity="0.6"/></svg>`,
-    },
-    "kimi-k2.6": {
-      name: "Kimi K2.6",
-      badge: "EXCLUSIVE S-62",
-      title: "How can Kimi help you today?",
-      placeholder: "Message Kimi K2.6 (Runs on AS cloud EXCLUSIVE S-62)...",
-      isExclusive: true,
-      symClass: "sym-kimi",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" fill-opacity="0.2"/><circle cx="16.5" cy="7.5" r="2" fill="currentColor"/><path d="M16.5 3.5v1.8M16.5 9.7v1.8M12.5 7.5h1.8M18.7 7.5h1.8" stroke-width="1.5"/></svg>`,
-    },
-    "gemini-3-pro": {
-      name: "Gemini 3 Pro",
-      badge: "EXCLUSIVE S-62",
-      title: "How can Gemini 3 Pro help you today?",
-      placeholder: "Message Gemini 3 Pro (Runs on AS cloud EXCLUSIVE S-62)...",
-      isExclusive: true,
-      symClass: "sym-gemini-pro",
-      svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 5.523 4.477 10 10 10-5.523 0-10 4.477-10 10 0-5.523-4.477-10-10-10 5.523 0 10-4.477 10-10z"/><circle cx="12" cy="12" r="2.2" fill="#ffffff" opacity="0.9"/></svg>`,
-    },
-    "gemini-3.1-pro": {
-      name: "Gemini 3.1 Pro",
-      badge: "EXCLUSIVE S-62",
-      title: "How can Gemini 3.1 Pro help you today?",
-      placeholder: "Message Gemini 3.1 Pro (Runs on AS cloud EXCLUSIVE S-62)...",
-      isExclusive: true,
-      symClass: "sym-gemini-31",
-      svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 2c0 4.418 3.582 8 8 8-4.418 0-8 3.582-8 8 0-4.418-3.582-8-8-8 4.418 0 8-3.582 8-8z"/><path d="M18.5 13.5c0 2.21 1.79 4 4 4-2.21 0-4 1.79-4 4 0-2.21-1.79-4-4-4 2.21 0 4-1.79 4-4z" opacity="0.85"/><circle cx="10" cy="10" r="1.8" fill="#ffffff" opacity="0.9"/><circle cx="18.5" cy="17.5" r="1" fill="#ffffff" opacity="0.9"/></svg>`,
-    },
-    "qwen3-max": {
-      name: "Qwen 3 Max",
-      badge: "EXCLUSIVE S-62",
-      title: "Qwen 3 Max (Deep Thinking & Reasoning)",
-      placeholder: "Ask complex reasoning, coding or analysis (Thinking Mode enabled)...",
-      isExclusive: true,
-      symClass: "sym-qwen-max",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8.5 4.9v9.8L12 21.5 3.5 16.7V6.9L12 2z"/><path d="M12 2v9.8m0 0L3.5 6.9m8.5 4.9l8.5-4.9m-8.5 4.9v9.8"/><circle cx="12" cy="11.8" r="2.5" fill="currentColor"/><path d="M8 14.5l4-2.5 4 2.5" stroke-dasharray="1.5 1.5"/></svg>`,
-    },
-    "deepseek-v4-flash": {
-      name: "DeepSeek V4 Flash",
-      badge: "EXCLUSIVE S-62",
-      title: "DeepSeek V4 Flash (Ultra Fast & Reasoning)",
-      placeholder: "Message DeepSeek V4 Flash (Runs on AS cloud EXCLUSIVE S-62)...",
-      isExclusive: true,
-      symClass: "sym-deepseek-flash",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" fill-opacity="0.2"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M7 4.5L4 8m13 8l3 3.5" stroke-width="1.4" opacity="0.6"/></svg>`,
-    },
-    "1.7b": {
-      name: "Qwen Medium",
-      badge: "4 Nodes",
-      title: "How can Qwen Medium help you?",
-      placeholder: "Message Qwen Medium...",
+    "nvidia/nemotron-3.5-bolt-e4b": {
+      name: "Nemotron 3.5 Bolt",
+      badge: "Ultra Fast",
+      title: "Nemotron 3.5 Bolt (Lightning Fast)",
+      placeholder: "Message Nemotron 3.5 Bolt...",
+      isExclusive: false,
       symClass: "sym-17b",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 12 12 22 2 12" fill="currentColor" fill-opacity="0.15"/><polygon points="12 6 18 12 12 18 6 12"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>`,
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
     },
-    "r1": {
-      name: "DeepSeek High",
-      badge: "3 Nodes",
-      title: "DeepSeek High (Reasoning)",
-      placeholder: "Ask a complex reasoning or logic problem...",
-      symClass: "sym-r1",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5" fill="currentColor"/><circle cx="18" cy="6" r="2.5" fill="currentColor"/><circle cx="12" cy="12" r="3" fill="currentColor"/><circle cx="6" cy="18" r="2.5" fill="currentColor"/><circle cx="18" cy="18" r="2.5" fill="currentColor"/><path d="M6 6l6 6m0 0l6-6M6 18l6-6m0 0l6 6M6 6v12M18 6v12"/></svg>`,
-    },
-    "llama3b": {
-      name: "Llama High",
-      badge: "2 Nodes",
-      title: "Llama High (Meta)",
-      placeholder: "Message Llama High...",
-      symClass: "sym-llama3b",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.178 8c2.11 0 3.822 1.79 3.822 4s-1.712 4-3.822 4c-2.73 0-4.66-2.58-6.178-4 1.518-1.42 3.448-4 6.178-4z"/><path d="M5.822 8C3.712 8 2 9.79 2 12s1.712 4 3.822 4c2.73 0 4.66-2.58 6.178-4-1.518-1.42-3.448-4-6.178-4z"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>`,
-    },
-    "qwen3b": {
-      name: "Qwen High",
-      badge: "2 Nodes",
-      title: "Qwen High (Flagship)",
-      placeholder: "Message Qwen High...",
-      symClass: "sym-qwen3b",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(-30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(30 12 12)"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>`,
-    },
-    "coder": {
-      name: "Coder High",
-      badge: "2 Nodes",
-      title: "Coder High (Coding & Architecture)",
-      placeholder: "Ask for code, architecture, or debugging...",
+    "poolside/laguna-xs-2.1": {
+      name: "Laguna XS 2.1",
+      badge: "Intelligence",
+      title: "Laguna XS 2.1 (Coding & Reasoning)",
+      placeholder: "Message Laguna XS 2.1...",
+      isExclusive: false,
       symClass: "sym-coder",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="14" y1="4" x2="10" y2="20"/></svg>`,
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
     },
-    "gemma": {
-      name: "Gemma Medium",
-      badge: "1 Node",
-      title: "Gemma Medium (Google)",
-      placeholder: "Message Gemma Medium...",
-      symClass: "sym-gemma",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 21 2 9" fill="currentColor" fill-opacity="0.12"/><line x1="2" y1="9" x2="22" y2="9"/><polyline points="6 3 12 9 18 3"/><polyline points="12 21 7 9 12 3 17 9 12 21"/></svg>`,
-    },
-    "math": {
-      name: "Math Medium",
-      badge: "1 Node",
-      title: "Math Medium (Calculations)",
-      placeholder: "Enter a math problem or equation...",
+    "nvidia/ising-calibration-1.5-31b": {
+      name: "Ising Calibration 1.5 31B",
+      badge: "Quantum",
+      title: "Ising Calibration (Quantum Science)",
+      placeholder: "Message Ising Calibration...",
+      isExclusive: false,
       symClass: "sym-math",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4H5l7 8-7 8h14"/><circle cx="17" cy="12" r="1.8" fill="currentColor"/></svg>`,
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3.6" y1="9" x2="20.4" y2="9"/><line x1="3.6" y1="15" x2="20.4" y2="15"/><line x1="12" y1="3" x2="12" y2="21"/></svg>`,
     },
-    "phi": {
-      name: "Phi Medium",
-      badge: "1 Node",
-      title: "Phi Medium (Microsoft)",
-      placeholder: "Message Phi Medium...",
+    "nvidia/riva-translate-4b-instruct-v2": {
+      name: "Riva Translate 4B v2",
+      badge: "Multilingual",
+      title: "Riva Translate (Multilingual Neural Translation)",
+      placeholder: "Message Riva Translate...",
+      isExclusive: false,
       symClass: "sym-phi",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7" fill="currentColor" fill-opacity="0.15"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="5" y1="12" x2="19" y2="12" stroke-opacity="0.3"/></svg>`,
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>`,
     },
-    "1b": {
-      name: "Llama Lightweight",
-      badge: "2 Nodes",
-      title: "Llama Lightweight",
-      placeholder: "Message Llama Lightweight...",
-      symClass: "sym-1b",
-      svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h8l-2 8 10-12h-8l2-8z"/></svg>`,
+    "meta/llama-guard-4-12b": {
+      name: "Llama Guard 4 12B",
+      badge: "Moderation",
+      title: "Llama Guard 4 (Safety Classifier)",
+      placeholder: "Test content safety or policy check...",
+      isExclusive: false,
+      symClass: "sym-llama3b",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
     },
-    "smol": {
-      name: "SmolLM Medium",
-      badge: "1 Node",
-      title: "SmolLM Medium",
-      placeholder: "Message SmolLM Medium...",
+    "nvidia/llama-3.1-nemotron-safety-guard-8b-v3": {
+      name: "Nemotron Safety Guard 8B",
+      badge: "Security",
+      title: "Nemotron Safety Guard 8B",
+      placeholder: "Verify input/output AI safety...",
+      isExclusive: false,
       symClass: "sym-smol",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C12 22 4 17 4 10a8 8 0 0 1 16 0c0 7-8 12-8 12z" fill="currentColor" fill-opacity="0.15"/><path d="M12 7v10M12 11l4-3M12 14l-3-2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg>`,
-    },
-    "0.5b": {
-      name: "Qwen Lightweight",
-      badge: "2 Nodes",
-      title: "Qwen Lightweight",
-      placeholder: "Message Qwen Lightweight...",
-      symClass: "sym-05b",
-      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 4.76a6 6 0 0 0-8.49 0L3.5 13.01l-.5 7.49 7.49-.5 8.25-8.25a6 6 0 0 0 0-8.49z" fill="currentColor" fill-opacity="0.15"/><line x1="3" y1="21" x2="14" y2="10"/><path d="M10 7l3 3M7 10l3 3M4 13l3 3"/></svg>`,
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
     },
     "image": {
       name: "Image Generator",
-      badge: "2 Nodes",
+      badge: "Image AI",
       title: "What would you like to imagine?",
       placeholder: "Describe an image to generate...",
+      isExclusive: false,
       symClass: "sym-image",
       svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><line x1="14.31" y1="8" x2="20.05" y2="17.94"/><line x1="9.69" y1="8" x2="21.17" y2="8"/><line x1="7.38" y1="12" x2="13.12" y2="2.06"/><line x1="9.69" y1="16" x2="3.95" y2="6.06"/><line x1="14.31" y1="16" x2="2.83" y2="16"/><line x1="16.62" y1="12" x2="10.88" y2="21.94"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>`,
     },
@@ -561,11 +464,11 @@
   // ---------------------------------------------------------------------------
   async function checkConnection() {
     try {
-      const res = await fetch(`/api/health?model=${selectedModel}&_t=${Date.now()}`);
+      const res = await fetch(`/api/health?model=${encodeURIComponent(selectedModel)}&_t=${Date.now()}`);
       const data = await res.json();
 
       if (data.status === "ok") {
-        updateStatus("online", `Connected to AS cloud (${data.model || selectedModel.toUpperCase()})`);
+        updateStatus("online", "AS Cloud • NIM Online");
         return true;
       } else {
         updateStatus("checking", "Connecting to AS cloud...");
@@ -2483,9 +2386,9 @@
 
     if (cfg?.isExclusive) {
       const s62Replies = [
-        `Hello! I am **${modelName}**, running on **AS Cloud (EXCLUSIVE S-62)**. How can I assist you today?`,
-        `Greetings! **${modelName}** is active on **AS Cloud (EXCLUSIVE S-62)**. What would you like to explore or solve?`,
-        `Welcome! **${modelName} (EXCLUSIVE S-62)** is ready. Ask any question, brainstorm ideas, or generate code.`,
+        `Hello! I am **${modelName}**, powered by **AS Cloud (NVIDIA NIM)**. How can I assist you today?`,
+        `Greetings! **${modelName}** is active on **AS Cloud (NVIDIA NIM)**. What would you like to explore or solve?`,
+        `Welcome! **${modelName}** is ready. Ask any question, brainstorm ideas, or generate code.`,
       ];
       return s62Replies[Math.floor(Math.random() * s62Replies.length)];
     }
@@ -3223,9 +3126,7 @@
     const fullMessages = [
       {
         role: "system",
-        content: currentReqModel === "maiko-yen"
-          ? "You are MAIKO YEN, an advanced artificial intelligence system created and made by AS. You run on a distributed network of 20+ cloud workflow nodes. Whenever asked about your identity or creator, you always proudly and clearly state that your name is MAIKO YEN and you were made by AS. Be helpful, intelligent, polite, and comprehensive."
-          : "You are a helpful, concise, and polite AI assistant."
+        content: "You are AS Intelligence, a helpful, precise, and advanced AI assistant powered by AS Cloud."
       },
       ...conversation,
     ];

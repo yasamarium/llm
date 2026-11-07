@@ -39,9 +39,9 @@
 
       <!-- AS Cloud Live Status Indicator -->
       <div class="status-indicator">
-        <div id="statusPill" class="ios-pill checking">
+        <div id="statusPill" class="ios-pill online">
           <span class="status-pulse"></span>
-          <span id="statusLabel">Connecting to AS cloud...</span>
+          <span id="statusLabel">AS Cloud • NIM Online</span>
         </div>
       </div>
 
@@ -112,20 +112,17 @@
           <h1 class="welcome-heading" id="welcomeHeading">How can I help you?</h1>
           
           <div class="suggestion-pills">
-            <button class="suggestion-chip" data-prompt="Who are you and what makes MAIKO YEN special?">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>Ask MAIKO YEN (Made by AS)
+            <button class="suggestion-chip" data-prompt="Explain how transformer neural networks work.">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>Explain Transformers
             </button>
-            <button class="suggestion-chip" data-prompt="/play Alan Walker - Faded">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>/play Alan Walker - Faded
+            <button class="suggestion-chip" data-prompt="Write a Python function to sort a list of dictionaries by key.">
+              Python Sort Function
             </button>
-            <button class="suggestion-chip" data-prompt="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><path d="M21.58 7.19a2.5 2.5 0 0 0-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42a2.5 2.5 0 0 0-1.76 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81a2.5 2.5 0 0 0 1.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 0 0 1.76-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>YouTube Video Downloader
-            </button>
-            <button class="suggestion-chip" data-prompt="/edit https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg Remove the background">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 3a9 9 0 0 1 0 18"/></svg>/edit Remove background
+            <button class="suggestion-chip" data-prompt="What are the key differences between Nemotron and Llama models?">
+              Nemotron vs Llama
             </button>
             <button class="suggestion-chip" data-prompt="Explain quantum computing in simple terms.">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>Ask GPT-5 / S-62: Quantum Computing
+              Quantum Computing Basics
             </button>
             <button class="suggestion-chip" data-prompt="Write a concise Python script to parse and clean a JSON dataset.">
               Python script to clean data
@@ -149,8 +146,8 @@
           <div class="model-picker-wrapper">
             <button id="modelPickerBtn" class="model-picker-trigger" type="button" aria-haspopup="true" aria-expanded="false" title="Switch Model">
               <span class="model-picker-glyph sym-17b" id="currentModelGlyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 12 12 22 2 12" fill="currentColor" fill-opacity="0.15"/><polygon points="12 6 18 12 12 18 6 12"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span>
-              <span class="model-picker-name" id="currentModelName">Qwen Medium</span>
-              <span class="model-picker-badge" id="currentModelBadge">4 Nodes</span>
+              <span class="model-picker-name" id="currentModelName">Nemotron 3 Ultra</span>
+              <span class="model-picker-badge" id="currentModelBadge">550B Flagship</span>
               <svg class="chevron-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M6 9l6 6 6-6"/>
               </svg>
@@ -212,7 +209,7 @@
       <div class="popover-header">
         <div class="popover-header-text">
           <span class="popover-title">Select AS Cloud Model</span>
-          <span class="popover-subtitle">Multi-node load balanced</span>
+          <span class="popover-subtitle">NVIDIA NIM Verified Cloud API</span>
         </div>
         <button id="closePopoverBtn" class="popover-close-btn" type="button" aria-label="Close Model Menu">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -223,209 +220,168 @@
       </div>
 
             <div class="popover-models-list">
-        <div class="popover-group-label maiko-group-label">MAIKO YEN DEDICATED CLUSTER • 30+ REPOS (5H AUTO-RESTART)</div>
-        <button class="popover-item maiko-yen-item" data-model="maiko-yen" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 3v6m0 6v6M3 12h6m6 0h6"/><circle cx="12" cy="3" r="1.8"/><circle cx="12" cy="21" r="1.8"/><circle cx="3" cy="12" r="1.8"/><circle cx="21" cy="12" r="1.8"/><path d="M5.6 5.6l4.2 4.2m4.4 4.4l4.2 4.2M5.6 18.4l4.2-4.2m4.4-4.4l4.2-4.2" stroke-dasharray="1 1.5"/></svg></span>
+        <div class="popover-group-label">VERIFIED NVIDIA NIM CLOUD API</div>
+
+        <button class="popover-item active" data-model="nvidia/nemotron-3-ultra-550b-a55b" role="menuitem">
+          <span class="popover-item-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </span>
           <div class="popover-item-info">
-            <div class="popover-item-name">MAIKO YEN</div>
-            <div class="popover-item-desc">Dedicated 31-node workflow cluster • 5hr Auto-Restart • Made by AS</div>
+            <div class="popover-item-name">Nemotron 3 Ultra 550B</div>
+            <div class="popover-item-desc">Flagship 550B reasoning, chat & instruction model</div>
           </div>
-          <span class="popover-node-count badge-maiko-yen">31 Nodes</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-        <div class="popover-group-label exclusive-group-label">EXCLUSIVE S-62 • FLAGSHIP CLOUD</div>
-        <button class="popover-item exclusive-s62-item" data-model="gpt-5" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l7.5 4.3v8.6L12 21.5l-7.5-6.1V6.8L12 2.5z" stroke-opacity="0.35"/><path d="M12 6.5l4.5 2.6v5.2L12 16.9l-4.5-2.6V9.1L12 6.5z" fill="currentColor" fill-opacity="0.18"/><path d="M12 6.5v10.4M7.5 9.1l9 5.2M7.5 14.3l9-5.2"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">GPT-5</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
-          </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="popover-node-count badge-exclusive-s62">550B Flagship</span>
+          <span class="popover-check">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
         </button>
 
-        <button class="popover-item exclusive-s62-item" data-model="claude-opus-4.8" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 6.2 6.1 1.9-6.1 1.9L12 22l-1.9-8-6.1-1.9 6.1-1.9L12 2z"/><path d="M6.3 6.3l3.7 1.8-1.8 3.7-3.7-1.8 1.8-3.7zM17.7 6.3l-1.8 3.7 3.7 1.8 1.8-3.7-3.7-1.8zM6.3 17.7l1.8-3.7-3.7-1.8-1.8 3.7 3.7 1.8zM17.7 17.7l-3.7-1.8 1.8-3.7 3.7 1.8-1.8 3.7z" opacity="0.6"/></svg></span>
+        <button class="popover-item" data-model="nvidia/nemotron-3.5-bolt-e4b" role="menuitem">
+          <span class="popover-item-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </span>
           <div class="popover-item-info">
-            <div class="popover-item-name">Claude Opus 4.8</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
+            <div class="popover-item-name">Nemotron 3.5 Bolt</div>
+            <div class="popover-item-desc">Ultra-fast high-throughput generation & instant answers</div>
           </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="popover-node-count badge-maiko-yen">Ultra Fast</span>
+          <span class="popover-check">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
         </button>
 
-        <button class="popover-item exclusive-s62-item" data-model="kimi-k2.6" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" fill-opacity="0.2"/><circle cx="16.5" cy="7.5" r="2" fill="currentColor"/><path d="M16.5 3.5v1.8M16.5 9.7v1.8M12.5 7.5h1.8M18.7 7.5h1.8" stroke-width="1.5"/></svg></span>
+        <button class="popover-item" data-model="poolside/laguna-xs-2.1" role="menuitem">
+          <span class="popover-item-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </span>
           <div class="popover-item-info">
-            <div class="popover-item-name">Kimi K2.6</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
+            <div class="popover-item-name">Laguna XS 2.1</div>
+            <div class="popover-item-desc">Poolside conversational intelligence & code architecture</div>
           </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="popover-node-count">Intelligence</span>
+          <span class="popover-check">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
         </button>
 
-        <button class="popover-item exclusive-s62-item" data-model="gemini-3-pro" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 5.523 4.477 10 10 10-5.523 0-10 4.477-10 10 0-5.523-4.477-10-10-10 5.523 0 10-4.477 10-10z"/><circle cx="12" cy="12" r="2.2" fill="#ffffff" opacity="0.9"/></svg></span>
+        <button class="popover-item" data-model="nvidia/ising-calibration-1.5-31b" role="menuitem">
+          <span class="popover-item-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <line x1="3.6" y1="9" x2="20.4" y2="9"/>
+              <line x1="3.6" y1="15" x2="20.4" y2="15"/>
+              <line x1="12" y1="3" x2="12" y2="21"/>
+            </svg>
+          </span>
           <div class="popover-item-info">
-            <div class="popover-item-name">Gemini 3 Pro</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
+            <div class="popover-item-name">Ising Calibration 1.5 31B</div>
+            <div class="popover-item-desc">Quantum computing & specialized scientific research</div>
           </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="popover-node-count">Quantum</span>
+          <span class="popover-check">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
         </button>
 
-        <button class="popover-item exclusive-s62-item" data-model="gemini-3.1-pro" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 2c0 4.418 3.582 8 8 8-4.418 0-8 3.582-8 8 0-4.418-3.582-8-8-8 4.418 0 8-3.582 8-8z"/><path d="M18.5 13.5c0 2.21 1.79 4 4 4-2.21 0-4 1.79-4 4 0-2.21-1.79-4-4-4 2.21 0 4-1.79 4-4z" opacity="0.85"/><circle cx="10" cy="10" r="1.8" fill="#ffffff" opacity="0.9"/><circle cx="18.5" cy="17.5" r="1" fill="#ffffff" opacity="0.9"/></svg></span>
+        <button class="popover-item" data-model="nvidia/riva-translate-4b-instruct-v2" role="menuitem">
+          <span class="popover-item-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 8l6 6"/>
+              <path d="M4 14l6-6 2-3"/>
+              <path d="M2 5h12"/>
+              <path d="M7 2h1"/>
+              <path d="M22 22l-5-10-5 10"/>
+              <path d="M14 18h6"/>
+            </svg>
+          </span>
           <div class="popover-item-info">
-            <div class="popover-item-name">Gemini 3.1 Pro</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
+            <div class="popover-item-name">Riva Translate 4B v2</div>
+            <div class="popover-item-desc">Multilingual neural translation & cross-lingual instructions</div>
           </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="popover-node-count">Multilingual</span>
+          <span class="popover-check">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
         </button>
 
-        <button class="popover-item exclusive-s62-item" data-model="qwen3-max" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8.5 4.9v9.8L12 21.5 3.5 16.7V6.9L12 2z"/><path d="M12 2v9.8m0 0L3.5 6.9m8.5 4.9l8.5-4.9m-8.5 4.9v9.8"/><circle cx="12" cy="11.8" r="2.5" fill="currentColor"/><path d="M8 14.5l4-2.5 4 2.5" stroke-dasharray="1.5 1.5"/></svg></span>
+        <button class="popover-item" data-model="meta/llama-guard-4-12b" role="menuitem">
+          <span class="popover-item-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </span>
           <div class="popover-item-info">
-            <div class="popover-item-name">Qwen 3 Max</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
+            <div class="popover-item-name">Llama Guard 4 12B</div>
+            <div class="popover-item-desc">Meta safety moderation & policy classification</div>
           </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="popover-node-count">Moderation</span>
+          <span class="popover-check">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
         </button>
 
-        <button class="popover-item exclusive-s62-item" data-model="deepseek-v4-flash" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" fill-opacity="0.2"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M7 4.5L4 8m13 8l3 3.5" stroke-width="1.4" opacity="0.6"/></svg></span>
+        <button class="popover-item" data-model="nvidia/llama-3.1-nemotron-safety-guard-8b-v3" role="menuitem">
+          <span class="popover-item-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
           <div class="popover-item-info">
-            <div class="popover-item-name">DeepSeek V4 Flash</div>
-            <div class="popover-item-desc">Runs on AS cloud ( <span class="badge-exclusive-s62">EXCLUSIVE S-62</span> )</div>
+            <div class="popover-item-name">Nemotron Safety Guard 8B</div>
+            <div class="popover-item-desc">AI safety, trust and input/output policy verification</div>
           </div>
-          <span class="popover-node-count badge-exclusive-s62">EXCLUSIVE S-62</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <div class="popover-group-label">HIGH CAPACITY & REASONING</div>
-        <button class="popover-item" data-model="r1" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5" fill="currentColor"/><circle cx="18" cy="6" r="2.5" fill="currentColor"/><circle cx="12" cy="12" r="3" fill="currentColor"/><circle cx="6" cy="18" r="2.5" fill="currentColor"/><circle cx="18" cy="18" r="2.5" fill="currentColor"/><path d="M6 6l6 6m0 0l6-6M6 18l6-6m0 0l6 6M6 6v12M18 6v12"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">DeepSeek High</div>
-            <div class="popover-item-desc">Chain-of-thought deep reasoning & logic</div>
-          </div>
-          <span class="popover-node-count">3 Nodes</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <button class="popover-item" data-model="qwen3b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(-30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(30 12 12)"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Qwen High</div>
-            <div class="popover-item-desc">Flagship deep comprehension & knowledge</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <button class="popover-item" data-model="llama3b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.178 8c2.11 0 3.822 1.79 3.822 4s-1.712 4-3.822 4c-2.73 0-4.66-2.58-6.178-4 1.518-1.42 3.448-4 6.178-4z"/><path d="M5.822 8C3.712 8 2 9.79 2 12s1.712 4 3.822 4c2.73 0 4.66-2.58 6.178-4-1.518-1.42-3.448-4-6.178-4z"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Llama High</div>
-            <div class="popover-item-desc">Meta advanced reasoning intelligence</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <button class="popover-item" data-model="coder" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="14" y1="4" x2="10" y2="20"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Coder High</div>
-            <div class="popover-item-desc">Code writing, architecture & debugging</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <div class="popover-group-label">MEDIUM CAPACITY</div>
-        <button class="popover-item active" data-model="1.7b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 12 12 22 2 12" fill="currentColor" fill-opacity="0.15"/><polygon points="12 6 18 12 12 18 6 12"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Qwen Medium</div>
-            <div class="popover-item-desc">Balanced high-speed conversational model</div>
-          </div>
-          <span class="popover-node-count">4 Nodes</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <button class="popover-item" data-model="gemma" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 21 2 9" fill="currentColor" fill-opacity="0.12"/><line x1="2" y1="9" x2="22" y2="9"/><polyline points="6 3 12 9 18 3"/><polyline points="12 21 7 9 12 3 17 9 12 21"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Gemma Medium</div>
-            <div class="popover-item-desc">Google high-precision assistant</div>
-          </div>
-          <span class="popover-node-count">1 Node</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <button class="popover-item" data-model="math" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4H5l7 8-7 8h14"/><circle cx="17" cy="12" r="1.8" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Math Medium</div>
-            <div class="popover-item-desc">Mathematical formulas & step calculations</div>
-          </div>
-          <span class="popover-node-count">1 Node</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <button class="popover-item" data-model="phi" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7" fill="currentColor" fill-opacity="0.15"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="5" y1="12" x2="19" y2="12" stroke-opacity="0.3"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Phi Medium</div>
-            <div class="popover-item-desc">Microsoft deep comprehension model</div>
-          </div>
-          <span class="popover-node-count">1 Node</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <button class="popover-item" data-model="smol" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C12 22 4 17 4 10a8 8 0 0 1 16 0c0 7-8 12-8 12z" fill="currentColor" fill-opacity="0.15"/><path d="M12 7v10M12 11l4-3M12 14l-3-2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">SmolLM Medium</div>
-            <div class="popover-item-desc">Compact conversational assistant</div>
-          </div>
-          <span class="popover-node-count">1 Node</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <div class="popover-group-label">LIGHTWEIGHT & FAST</div>
-        <button class="popover-item" data-model="1b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h8l-2 8 10-12h-8l2-8z"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Llama Lightweight</div>
-            <div class="popover-item-desc">Instant low-latency responses</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </button>
-
-        <button class="popover-item" data-model="0.5b" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 4.76a6 6 0 0 0-8.49 0L3.5 13.01l-.5 7.49 7.49-.5 8.25-8.25a6 6 0 0 0 0-8.49z" fill="currentColor" fill-opacity="0.15"/><line x1="3" y1="21" x2="14" y2="10"/><path d="M10 7l3 3M7 10l3 3M4 13l3 3"/></svg></span>
-          <div class="popover-item-info">
-            <div class="popover-item-name">Qwen Lightweight</div>
-            <div class="popover-item-desc">Ultra-compact fast inference</div>
-          </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="popover-node-count">Safety</span>
+          <span class="popover-check">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
         </button>
 
         <div class="popover-group-label">CREATIVE & MULTIMODAL</div>
         <button class="popover-item" data-model="image" role="menuitem">
-          <span class="popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><line x1="14.31" y1="8" x2="20.05" y2="17.94"/><line x1="9.69" y1="8" x2="21.17" y2="8"/><line x1="7.38" y1="12" x2="13.12" y2="2.06"/><line x1="9.69" y1="16" x2="3.95" y2="6.06"/><line x1="14.31" y1="16" x2="2.83" y2="16"/><line x1="16.62" y1="12" x2="10.88" y2="21.94"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg></span>
+          <span class="popover-item-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9.5"/>
+              <line x1="14.31" y1="8" x2="20.05" y2="17.94"/>
+              <line x1="9.69" y1="8" x2="21.17" y2="8"/>
+              <line x1="7.38" y1="12" x2="13.12" y2="2.06"/>
+              <line x1="9.69" y1="16" x2="3.95" y2="6.06"/>
+              <line x1="14.31" y1="16" x2="2.83" y2="16"/>
+              <line x1="16.62" y1="12" x2="10.88" y2="21.94"/>
+              <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+            </svg>
+          </span>
           <div class="popover-item-info">
             <div class="popover-item-name">Image Generator</div>
-            <div class="popover-item-desc">Real-time diffusion image generation</div>
+            <div class="popover-item-desc">High-speed diffusion image generation</div>
           </div>
-          <span class="popover-node-count">2 Nodes</span>
-          <span class="popover-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="popover-node-count">Image</span>
+          <span class="popover-check">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
         </button>
       </div>
     </div>
