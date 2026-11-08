@@ -91,10 +91,11 @@ async function handleChannelFetch(req, res) {
 
     // Resolve the channel entity, then fetch messages
     let messages = [];
-    let channelTitle = "Live Updates";
+    let channelTitle = "Live Updates Feed";
     try {
       const entity = await client.getEntity(TG_CHANNEL);
-      if (entity?.title) channelTitle = entity.title;
+      // Keep title clean and branded
+      channelTitle = "Live Updates Feed";
       messages = await client.getMessages(entity, { limit });
     } catch (innerErr) {
       // Fallback: try passing channel ID as BigInt directly

@@ -596,7 +596,7 @@
         }
 
         lastFetchTime = Date.now();
-        if (data.title) channelHeading.textContent = data.title;
+        channelHeading.textContent = data.title || "Live Updates Feed";
         feedSubtitle.textContent = `Updated ${new Date().toLocaleTimeString()} • ${data.count || 0} recent updates`;
 
         if (!data.messages || data.messages.length === 0) {
