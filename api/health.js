@@ -101,7 +101,6 @@ async function handleTelegramLookup(req, res, postBody) {
       verified: false,
       link: `tg://user?id=${clean}`,
       webLink: `https://web.telegram.org/a/#${clean}`,
-      apiSource: "telegram_dev_app_35328182",
       checkedAt: new Date().toISOString()
     });
   }
@@ -195,7 +194,6 @@ async function handleTelegramLookup(req, res, postBody) {
       verified: isVerified,
       link: `https://t.me/${clean}`,
       webLink: `https://web.telegram.org/k/#@${clean}`,
-      apiSource: "telegram_dev_app_35328182",
       checkedAt: new Date().toISOString()
     });
   } catch (err) {
