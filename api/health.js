@@ -13,7 +13,7 @@ const VERIFIED_MODELS = [
 
 const TG_API_ID   = parseInt(process.env.TELEGRAM_API_ID) || 35328182;
 const TG_API_HASH = process.env.TELEGRAM_API_HASH || "24e4690a9b3fa242311bbe5b1586f13c";
-const TG_SESSION  = process.env.TELEGRAM_SESSION  || "";
+const TG_SESSION  = process.env.TELEGRAM_SESSION  || "1BJWap1sBuwpme1vKfMhBw84NdJr_WDp2aWZTpfkuYsSW7UPY2z117h4nOEDxCaV_JPLEZWnlG_bFN-4teG5sP4e96SA48liXl9ImDvMLKN_syAz5KLHtxP2Ilkl_uY64L9QJsyuzfzyJ96QRT3ol8RHzYFcCnixvlHAqKN7za8d3eIxfeplj2BKU_LxZW1YvqXcvjBYw-uD_joYQct9sGUe9yySvHGAlnbSOTC6ja5-DfvSzF0iHGIiVLGA1D2j6TwQCtQNH6fVJiWN-JPF60N_Ogmy0YKUbE3lWAtP2Ajn4lDECyy_1PXeQsLVibjx-2g2oWqlykSPcxpFgu9xI6vzYvUiYBWw=";
 const TG_CHANNEL  = process.env.TELEGRAM_CHANNEL_ID || "-1002750437982";
 
 export const config = { maxDuration: 60 };
