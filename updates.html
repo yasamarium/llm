@@ -132,6 +132,140 @@
       border-color: rgba(42, 171, 238, 0.35);
     }
 
+    /* Apps Dropdown */
+    .apps-nav-wrapper {
+      position: relative;
+    }
+
+    .apps-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .apps-nav-btn:hover, .apps-nav-btn.open {
+      background: rgba(42, 171, 238, 0.14);
+      border-color: rgba(42, 171, 238, 0.4);
+      color: #fff;
+    }
+
+    .apps-dropdown-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 320px;
+      background: rgba(13, 15, 22, 0.96);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(42, 171, 238, 0.15);
+      padding: 14px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+      animation: modalSpring 0.22s var(--ease-spring) forwards;
+    }
+
+    .apps-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .apps-panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+
+    .apps-panel-badge {
+      font-size: 10px;
+      font-family: var(--mono);
+      background: rgba(42, 171, 238, 0.15);
+      color: #7dd3fc;
+      padding: 2px 7px;
+      border-radius: 10px;
+      border: 1px solid rgba(42, 171, 238, 0.3);
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .app-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid transparent;
+      transition: all 0.16s ease;
+    }
+
+    .app-item:hover {
+      background: rgba(42, 171, 238, 0.12);
+      border-color: rgba(42, 171, 238, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .app-item.active {
+      background: rgba(42, 171, 238, 0.2);
+      border-color: rgba(42, 171, 238, 0.5);
+    }
+
+    .app-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .app-meta {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .app-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .app-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
     /* Main Container */
     .container {
       max-width: 720px;
@@ -1190,21 +1324,90 @@
 
   <!-- Navbar -->
   <nav class="navbar">
-    <a href="/nim" class="nav-brand">
-      <div class="nav-logo-icon">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="white">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <a href="/" class="nav-brand">
+        <div class="nav-logo-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="white">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span>AS Cloud</span>
+      </a>
+
+      <!-- Apps Hub Dropdown -->
+      <div class="apps-nav-wrapper">
+        <button id="appsMenuBtn" class="apps-nav-btn" onclick="toggleAppsMenu(event)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="3" y="3" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="9.75" y="3" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="16.5" y="3" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="3" y="9.75" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="16.5" y="9.75" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="3" y="16.5" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="9.75" y="16.5" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="16.5" y="16.5" width="4.5" height="4.5" rx="1.2"/>
+          </svg>
+          <span>Apps</span>
+        </button>
+
+        <div id="appsDropdownMenu" class="apps-dropdown-panel">
+          <div class="apps-panel-header">
+            <span class="apps-panel-title">AS Cloud Ecosystem</span>
+            <span class="apps-panel-badge">7 Services</span>
+          </div>
+          <div class="apps-grid">
+            <a href="/" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">💬</div>
+              <div class="app-meta">
+                <div class="app-name">AI Intelligence</div>
+                <div class="app-desc">Conversational LLM</div>
+              </div>
+            </a>
+            <a href="/music" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);">🎵</div>
+              <div class="app-meta">
+                <div class="app-name">Audio Studio</div>
+                <div class="app-desc">Stream & Lossless MP3</div>
+              </div>
+            </a>
+            <a href="/updates" class="app-item active">
+              <div class="app-icon" style="background: linear-gradient(135deg, #2AABEE 0%, #0077b6 100%);">📱</div>
+              <div class="app-meta">
+                <div class="app-name">Telecom Relay</div>
+                <div class="app-desc">Virtual Numbers & OTP</div>
+              </div>
+            </a>
+            <a href="/webeditor" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">💻</div>
+              <div class="app-meta">
+                <div class="app-name">Code Studio</div>
+                <div class="app-desc">HTML/CSS/JS Sandbox</div>
+              </div>
+            </a>
+            <a href="/game" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);">🎮</div>
+              <div class="app-meta">
+                <div class="app-name">Voxel Arena</div>
+                <div class="app-desc">3D Arcade Game</div>
+              </div>
+            </a>
+            <a href="/vault" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">🔐</div>
+              <div class="app-meta">
+                <div class="app-name">Secure Vault</div>
+                <div class="app-desc">Client Credentials</div>
+              </div>
+            </a>
+          </div>
+        </div>
       </div>
-      <span>AS Cloud</span>
-    </a>
+    </div>
 
     <div class="nav-links">
-      <a href="/nim" class="nav-btn" title="NVIDIA NIM AI">AI</a>
-      <a href="/home" class="nav-btn" title="Live Messaging">Messager</a>
-      <a href="/game" class="nav-btn" title="3D Voxel Game">Game</a>
-      <a href="/telegram" class="nav-btn" title="Identity Resolver">Checker</a>
-      <a href="/updates" class="nav-btn nav-btn-active" title="Virtual Carrier Feed">Updates</a>
+      <a href="/" class="nav-btn" title="AI Intelligence">Chat</a>
+      <a href="/music" class="nav-btn" title="Audio Studio">Music</a>
+      <a href="/updates" class="nav-btn nav-btn-active" title="Telecom Relay">Updates</a>
     </div>
   </nav>
 
@@ -1912,6 +2115,25 @@
         if (btn) btn.innerHTML = "<span>🔄 Rotate Number</span>";
       }
     }
+
+    // Apps Hub Dropdown
+    function toggleAppsMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById("appsDropdownMenu");
+      const btn = document.getElementById("appsMenuBtn");
+      const isOpen = menu.style.display === "flex";
+      menu.style.display = isOpen ? "none" : "flex";
+      btn.classList.toggle("open", !isOpen);
+    }
+
+    document.addEventListener("click", (e) => {
+      const menu = document.getElementById("appsDropdownMenu");
+      const btn = document.getElementById("appsMenuBtn");
+      if (menu && menu.style.display === "flex" && !menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.style.display = "none";
+        btn.classList.remove("open");
+      }
+    });
 
     // Auto-load user's active number on start + Auto-sync loop
     document.addEventListener("DOMContentLoaded", () => {

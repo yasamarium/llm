@@ -46,6 +46,11 @@ export default async function handler(req, res) {
     return handleBotOperations(req, res, postBody);
   }
 
+  // ── Route: Music Audio Studio & Downloader (@MusicsHuntersbot) ────────────
+  if (action === "music" || action === "audio" || postBody.action === "music" || postBody.action === "audio") {
+    return handleMusicOperations(req, res, postBody);
+  }
+
   // ── Route: Telegram profile lookup ───────────────────────────────────────
   const isTgQuery =
     action === "telegram" ||
@@ -592,7 +597,6 @@ async function fetchBotNumber(countryData, serviceParam, userId) {
   userSessionsMap.set(userId, userRecord);
   return userRecord;
 }
-
 // ── Bot Helper: change number ────────────────────────────────────────────────
 async function changeBotNumber(userId) {
   const { TelegramClient, Api } = await import("telegram");
@@ -666,4 +670,330 @@ async function changeBotNumber(userId) {
 
   userSessionsMap.set(userId, userRecord);
   return userRecord;
+}
+
+// ── AS Cloud Audio Studio & Music Downloader (@MusicsHuntersbot) ───────────
+const TG_MUSIC_BOT_USERNAME = process.env.TELEGRAM_MUSIC_BOT || "MusicsHuntersbot";
+const TG_MUSIC_BOT_ID = 6773656102;
+
+let musicLockQueue = Promise.resolve();
+function runMusicLocked(fn) {
+  const run = () => fn();
+  const next = musicLockQueue.then(run, run);
+  musicLockQueue = next.catch(() => {});
+  return next;
+}
+
+const musicSearchCache = globalThis.__as_music_search_cache || (globalThis.__as_music_search_cache = new Map());
+const audioDocCache = globalThis.__as_music_audio_cache || (globalThis.__as_music_audio_cache = new Map());
+const audioMsgMap = globalThis.__as_music_msg_map || (globalThis.__as_music_msg_map = new Map());
+
+async function handleMusicOperations(req, res, postBody) {
+  const op = (req.query?.op || postBody.op || "search").trim().toLowerCase();
+
+  // 1. Search tracks
+  if (op === "search") {
+    const query = (req.query?.query || req.query?.q || postBody.query || postBody.q || "").trim();
+    if (!query) {
+      return res.status(400).json({ success: false, error: "Please provide a track title or artist name." });
+    }
+
+    const cacheKey = query.toLowerCase();
+    if (musicSearchCache.has(cacheKey)) {
+      const cached = musicSearchCache.get(cacheKey);
+      if (Date.now() - cached.timestamp < 15 * 60 * 1000) {
+        return res.status(200).json({ success: true, cached: true, ...cached.data });
+      }
+    }
+
+    try {
+      const searchData = await runMusicLocked(() => searchMusicTracks(query));
+      musicSearchCache.set(cacheKey, { timestamp: Date.now(), data: searchData });
+      return res.status(200).json({ success: true, cached: false, ...searchData });
+    } catch (err) {
+      console.error("[music-search]", err);
+      return res.status(502).json({
+        success: false,
+        error: "Audio network temporarily busy. Please retry your search in a few seconds."
+      });
+    }
+  }
+
+  // 2. Select track & prepare audio file
+  if (op === "select" || op === "prepare") {
+    const msgId = parseInt(req.query?.msg_id || postBody.msg_id);
+    const callbackData = (req.query?.callback_data || postBody.callback_data || "").trim();
+
+    if (!callbackData) {
+      return res.status(400).json({ success: false, error: "Missing track identifier." });
+    }
+
+    if (audioDocCache.has(callbackData)) {
+      return res.status(200).json({ success: true, cached: true, ...audioDocCache.get(callbackData) });
+    }
+
+    try {
+      const audioData = await runMusicLocked(() => requestMusicAudio(msgId, callbackData));
+      audioDocCache.set(callbackData, audioData);
+      audioMsgMap.set(audioData.msg_id, audioData);
+      return res.status(200).json({ success: true, cached: false, ...audioData });
+    } catch (err) {
+      console.error("[music-select]", err);
+      return res.status(504).json({
+        success: false,
+        error: "Audio processing took longer than expected. Please retry downloading or selecting the track."
+      });
+    }
+  }
+
+  // 3. Stream or Download audio file
+  if (op === "stream" || op === "download") {
+    const msgId = parseInt(req.query?.msg_id || postBody.msg_id);
+    if (!msgId || isNaN(msgId)) {
+      return res.status(400).json({ success: false, error: "Missing or invalid audio track ID." });
+    }
+    return streamMusicAudio(req, res, msgId, op === "download");
+  }
+
+  return res.status(400).json({ success: false, error: `Unsupported music operation '${op}'` });
+}
+
+async function searchMusicTracks(query) {
+  const { TelegramClient } = await import("telegram");
+  const { StringSession } = await import("telegram/sessions/index.js");
+
+  const session = new StringSession(TG_SESSION);
+  const client = new TelegramClient(session, TG_API_ID, TG_API_HASH, {
+    connectionRetries: 2,
+    requestRetries: 1,
+    baseLogger: null,
+    useWSS: false,
+    autoReconnect: false,
+  });
+  client._loopStarted = true;
+
+  await client.connect();
+  const bot = await client.getEntity(TG_MUSIC_BOT_USERNAME);
+
+  const sentMsg = await client.sendMessage(bot, { message: query });
+
+  let found = null;
+  for (let i = 0; i < 9; i++) {
+    await new Promise(r => setTimeout(r, 650));
+    const recent = await client.getMessages(bot, { limit: 4 });
+    const reply = recent.find(m => m.id > sentMsg.id && (m.text?.includes("Searching for") || (m.replyMarkup && m.replyMarkup.rows?.length > 0)));
+    if (reply) {
+      found = reply;
+      break;
+    }
+  }
+
+  if (!found) {
+    await client.disconnect().catch(() => {});
+    throw new Error("No response received from audio search engine.");
+  }
+
+  const trackMap = new Map();
+  const lines = (found.text || "").split("\n");
+  for (const line of lines) {
+    const match = line.match(/^\*\*(\d+)\.\*\*\s*(.+?)(?:\s*__\((.*?)\)__)?$/);
+    if (match) {
+      const num = parseInt(match[1]);
+      const fullTitle = match[2].trim().replace(/^🅴\s*/, '');
+      const duration = match[3] || "";
+      let artist = "Master Audio";
+      let title = fullTitle;
+      if (fullTitle.includes(" - ")) {
+        const parts = fullTitle.split(" - ");
+        artist = parts[0].trim();
+        title = parts.slice(1).join(" - ").trim();
+      }
+      trackMap.set(num, { num, fullTitle, title, artist, duration });
+    }
+  }
+
+  const tracks = [];
+  if (found.replyMarkup?.rows) {
+    for (const r of found.replyMarkup.rows) {
+      for (const b of r.buttons) {
+        const num = parseInt(b.text);
+        if (!isNaN(num) && trackMap.has(num)) {
+          const item = trackMap.get(num);
+          tracks.push({
+            ...item,
+            data: b.data ? Buffer.from(b.data).toString("utf8") : "",
+            msg_id: found.id,
+          });
+        }
+      }
+    }
+  }
+
+  await client.disconnect().catch(() => {});
+
+  return {
+    query,
+    count: tracks.length,
+    engine: "AS Cloud Audio Engine",
+    tracks,
+  };
+}
+
+async function requestMusicAudio(msgId, callbackData) {
+  const { TelegramClient, Api } = await import("telegram");
+  const { StringSession } = await import("telegram/sessions/index.js");
+
+  const session = new StringSession(TG_SESSION);
+  const client = new TelegramClient(session, TG_API_ID, TG_API_HASH, {
+    connectionRetries: 2,
+    requestRetries: 1,
+    baseLogger: null,
+    useWSS: false,
+    autoReconnect: false,
+  });
+  client._loopStarted = true;
+
+  await client.connect();
+  const bot = await client.getEntity(TG_MUSIC_BOT_USERNAME);
+
+  // Invoke callback to request audio file
+  await client.invoke(new Api.messages.GetBotCallbackAnswer({
+    peer: bot,
+    msgId: msgId,
+    data: Buffer.from(callbackData, "utf8"),
+  }));
+
+  let audioMsg = null;
+  for (let i = 0; i < 15; i++) {
+    await new Promise(r => setTimeout(r, 800));
+    const recent = await client.getMessages(bot, { limit: 4 });
+    const found = recent.find(m => m.media?.document && m.id > msgId);
+    if (found) {
+      audioMsg = found;
+      break;
+    }
+  }
+
+  if (!audioMsg) {
+    await client.disconnect().catch(() => {});
+    throw new Error("Timed out awaiting audio master track.");
+  }
+
+  const doc = audioMsg.media.document;
+  let title = "Unknown Track";
+  let performer = "AS Cloud Audio";
+  let duration = 0;
+  let fileName = `track_${audioMsg.id}.mp3`;
+
+  if (doc.attributes) {
+    for (const attr of doc.attributes) {
+      if (attr.className === "DocumentAttributeAudio") {
+        if (attr.title) title = attr.title;
+        if (attr.performer) performer = attr.performer;
+        if (attr.duration) duration = attr.duration;
+      }
+      if (attr.className === "DocumentAttributeFilename" && attr.fileName) {
+        fileName = attr.fileName;
+      }
+    }
+  }
+
+  await client.disconnect().catch(() => {});
+
+  return {
+    msg_id: audioMsg.id,
+    doc_id: doc.id.toString(),
+    title,
+    artist: performer,
+    duration,
+    size: Number(doc.size),
+    fileName,
+    mimeType: doc.mimeType || "audio/mpeg",
+    streamUrl: `/api/music?op=stream&msg_id=${audioMsg.id}`,
+    downloadUrl: `/api/music?op=download&msg_id=${audioMsg.id}`,
+  };
+}
+
+async function streamMusicAudio(req, res, msgId, isDownload = false) {
+  const { TelegramClient, Api } = await import("telegram");
+  const { StringSession } = await import("telegram/sessions/index.js");
+  const { iterDownload } = await import("telegram/client/downloads.js");
+
+  const session = new StringSession(TG_SESSION);
+  const client = new TelegramClient(session, TG_API_ID, TG_API_HASH, {
+    connectionRetries: 2,
+    requestRetries: 1,
+    baseLogger: null,
+    useWSS: false,
+    autoReconnect: false,
+  });
+  client._loopStarted = true;
+
+  try {
+    await client.connect();
+    const bot = await client.getEntity(TG_MUSIC_BOT_USERNAME);
+    const msgs = await client.getMessages(bot, { ids: [msgId] });
+    const msg = msgs[0];
+
+    if (!msg?.media?.document) {
+      await client.disconnect().catch(() => {});
+      return res.status(404).json({ success: false, error: "Audio track file not found." });
+    }
+
+    const doc = msg.media.document;
+    let fileName = `track_${msgId}.mp3`;
+    if (doc.attributes) {
+      for (const attr of doc.attributes) {
+        if (attr.className === "DocumentAttributeFilename" && attr.fileName) {
+          fileName = attr.fileName;
+        }
+      }
+    }
+
+    const safeName = fileName.replace(/[^\w\s\.\-\(\)]/gi, "_");
+
+    res.setHeader("Content-Type", doc.mimeType || "audio/mpeg");
+    res.setHeader("Content-Length", Number(doc.size));
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    if (isDownload) {
+      res.setHeader("Content-Disposition", `attachment; filename="${safeName}"`);
+    } else {
+      res.setHeader("Content-Disposition", `inline; filename="${safeName}"`);
+    }
+
+    const location = new Api.InputDocumentFileLocation({
+      id: doc.id,
+      accessHash: doc.accessHash,
+      fileReference: doc.fileReference,
+      thumbSize: "",
+    });
+
+    let aborted = false;
+    req.on("close", () => {
+      aborted = true;
+      client.disconnect().catch(() => {});
+    });
+
+    for await (const chunk of iterDownload(client, {
+      file: location,
+      dcId: doc.dcId,
+      fileSize: doc.size,
+      requestSize: 128 * 1024,
+    })) {
+      if (aborted) break;
+      res.write(chunk);
+    }
+
+    if (!aborted) res.end();
+  } catch (err) {
+    console.error("[stream-audio-err]", err);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: "Failed to stream audio track." });
+    } else {
+      res.end();
+    }
+  } finally {
+    await client.disconnect().catch(() => {});
+  }
 }
