@@ -278,7 +278,7 @@ async function handleBotOperations(req, res, postBody) {
     return res.status(200).json({
       success: true,
       services: BOT_SERVICES,
-      bot: "@" + TG_BOT_USERNAME
+      network: "AS Cloud Telecom Verification Relay"
     });
   }
 
@@ -403,7 +403,7 @@ async function fetchBotCountries(targetData, serviceId) {
 
   if (!svcMsg) {
     await client.disconnect().catch(() => {});
-    throw new Error("Could not open service menu from bot.");
+    throw new Error("Service gateway busy. Please retry in a few seconds.");
   }
 
   let svcBtn = null;
@@ -419,7 +419,7 @@ async function fetchBotCountries(targetData, serviceId) {
 
   if (!svcBtn) {
     await client.disconnect().catch(() => {});
-    throw new Error(`Service '${serviceId}' not available on bot.`);
+    throw new Error(`Service '${serviceId}' is currently undergoing maintenance.`);
   }
 
   // Click the service button via GetBotCallbackAnswer
@@ -435,7 +435,7 @@ async function fetchBotCountries(targetData, serviceId) {
 
   if (!countryMsg || !countryMsg.replyMarkup) {
     await client.disconnect().catch(() => {});
-    throw new Error("Country list not returned by bot.");
+    throw new Error("Regional lines busy. Please retry in a moment.");
   }
 
   const countries = [];
@@ -520,7 +520,7 @@ async function fetchBotNumber(countryData, serviceParam, userId) {
 
   if (!countryMsg) {
     await client.disconnect().catch(() => {});
-    throw new Error("Could not find requested country on bot. Please retry.");
+    throw new Error("Selected country line is currently unavailable. Please pick another country.");
   }
 
   // Click the country button!
@@ -536,7 +536,7 @@ async function fetchBotNumber(countryData, serviceParam, userId) {
 
   if (!numMsg) {
     await client.disconnect().catch(() => {});
-    throw new Error("Numbers not received from bot. Country might be out of stock.");
+    throw new Error("Region pool currently at capacity. Please select another country or rotate line.");
   }
 
   const rawNumbers = [];
@@ -556,7 +556,7 @@ async function fetchBotNumber(countryData, serviceParam, userId) {
   await client.disconnect().catch(() => {});
 
   if (rawNumbers.length === 0) {
-    throw new Error("No phone numbers found in bot response.");
+    throw new Error("Line assignment timed out. Please retry.");
   }
 
   // Separate number allocation so multiple users don't get the same number
@@ -615,7 +615,7 @@ async function changeBotNumber(userId) {
 
   if (!numMsg) {
     await client.disconnect().catch(() => {});
-    throw new Error("No active number to change. Please pick a country first.");
+    throw new Error("No active virtual line found to rotate. Please select a country first.");
   }
 
   // Click 'change_number'
@@ -647,7 +647,7 @@ async function changeBotNumber(userId) {
   await client.disconnect().catch(() => {});
 
   if (rawNumbers.length === 0) {
-    throw new Error("Unable to change number. Country pool might be exhausted.");
+    throw new Error("Carrier line rotation complete or region pool busy. Please select another country.");
   }
 
   const assigned = rawNumbers[0];

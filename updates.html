@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Live Channel Updates • AS Cloud</title>
-  <meta name="description" content="Minimalist real-time updates feed from private Telegram channel & temporary number generation.">
+  <title>AS Cloud Numbers • Global Virtual Carrier Relay & Live SMS Feed</title>
+  <meta name="description" content="Dedicated global virtual verification numbers, private carrier lines, and real-time OTP routing on AS Cloud.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%232AABEE%22/><path d=%22M22 50l48-20-8 44-16-12-8 8v-12l24-18-30 14z%22 fill=%22white%22/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,14 +16,14 @@
       --bg: #000000;
       --surface: #0a0a0c;
       --card: #111215;
-      --card-hover: #16181d;
+      --card-hover: #16181e;
       --border: #1e2026;
-      --border-accent: rgba(42, 171, 238, 0.35);
+      --border-accent: rgba(42, 171, 238, 0.4);
       --text: #f5f5f7;
       --text-muted: #86868b;
       --tg: #2AABEE;
-      --tg-dark: #229ED9;
-      --tg-glow: rgba(42, 171, 238, 0.15);
+      --tg-dark: #0077b6;
+      --tg-glow: rgba(42, 171, 238, 0.2);
       --success: #30d158;
       --danger: #ff453a;
       --warning: #ff9f0a;
@@ -46,7 +46,7 @@
     .navbar {
       height: 56px;
       padding: 0 18px;
-      background: rgba(10, 10, 12, 0.88);
+      background: rgba(10, 10, 12, 0.9);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
@@ -71,12 +71,12 @@
     .nav-logo-icon {
       width: 28px;
       height: 28px;
-      background: var(--tg);
-      border-radius: 50%;
+      background: linear-gradient(135deg, #2AABEE 0%, #0077b6 100%);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 16px rgba(42, 171, 238, 0.35);
+      box-shadow: 0 0 16px rgba(42, 171, 238, 0.4);
       flex-shrink: 0;
     }
 
@@ -110,7 +110,7 @@
 
     /* Main Container */
     .container {
-      max-width: 680px;
+      max-width: 700px;
       width: 100%;
       margin: 0 auto;
       padding: 24px 16px 80px;
@@ -142,7 +142,7 @@
     }
 
     .feed-title {
-      font-size: 20px;
+      font-size: 21px;
       font-weight: 700;
       letter-spacing: -0.4px;
     }
@@ -163,7 +163,7 @@
     }
 
     .feed-subtitle {
-      font-size: 12px;
+      font-size: 12.5px;
       color: var(--text-muted);
     }
 
@@ -178,7 +178,7 @@
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      padding: 8px 14px;
+      padding: 8px 15px;
       background: linear-gradient(135deg, #2AABEE 0%, #0077b6 100%);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
@@ -207,21 +207,22 @@
       align-items: center;
       gap: 7px;
       padding: 8px 14px;
-      background: rgba(42, 171, 238, 0.12);
-      border: 1px solid rgba(42, 171, 238, 0.35);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      color: var(--tg);
+      color: #ddd;
       font-family: var(--font);
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
       user-select: none;
     }
 
     .refresh-btn:hover:not(:disabled) {
-      background: rgba(42, 171, 238, 0.22);
-      border-color: var(--tg);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #fff;
       transform: translateY(-1px);
     }
 
@@ -245,19 +246,19 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Active Number Banner */
+    /* Active Dedicated Number Banner */
     .active-number-banner {
-      background: linear-gradient(135deg, rgba(42, 171, 238, 0.12) 0%, rgba(17, 18, 21, 0.95) 100%);
+      background: linear-gradient(135deg, rgba(42, 171, 238, 0.12) 0%, rgba(17, 18, 22, 0.95) 100%);
       border: 1px solid rgba(42, 171, 238, 0.35);
-      border-radius: 16px;
-      padding: 14px 18px;
+      border-radius: 18px;
+      padding: 16px 20px;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       flex-wrap: wrap;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
       animation: fadeIn 0.3s ease;
     }
 
@@ -269,7 +270,7 @@
     .anb-main {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .anb-dot {
@@ -285,20 +286,23 @@
     .anb-details {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
 
     .anb-tag {
       font-size: 11px;
       color: var(--tg);
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .anb-phone {
-      font-size: 17px;
-      font-weight: 700;
+      font-size: 20px;
+      font-weight: 800;
       font-family: var(--mono);
       color: #fff;
       letter-spacing: 0.5px;
@@ -308,6 +312,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-wrap: wrap;
     }
 
     .anb-btn {
@@ -319,6 +324,9 @@
       cursor: pointer;
       border: none;
       transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .anb-copy {
@@ -328,6 +336,7 @@
 
     .anb-copy:hover {
       background: var(--tg-dark);
+      transform: translateY(-1px);
     }
 
     .anb-change {
@@ -344,12 +353,54 @@
     .anb-dismiss {
       background: transparent;
       color: var(--text-muted);
-      font-size: 18px;
-      padding: 4px 8px;
+      font-size: 20px;
+      padding: 2px 6px;
+      border-radius: 6px;
     }
 
     .anb-dismiss:hover {
       color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Live Feed Filter Bar */
+    .feed-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 10px;
+    }
+
+    .feed-search-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .feed-search-input {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 14px 8px 34px;
+      font-size: 13px;
+      color: #fff;
+      outline: none;
+      font-family: var(--font);
+      transition: border-color 0.15s;
+    }
+
+    .feed-search-input:focus {
+      border-color: var(--tg);
+    }
+
+    .feed-search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
     }
 
     /* Feed List */
@@ -377,22 +428,22 @@
     /* Highlighted card when OTP matches user number */
     .msg-card.user-matched-card {
       border-color: var(--gold);
-      background: linear-gradient(135deg, rgba(255, 214, 10, 0.08) 0%, #16181d 100%);
-      box-shadow: 0 0 20px rgba(255, 214, 10, 0.2);
+      background: linear-gradient(135deg, rgba(255, 214, 10, 0.09) 0%, #16181e 100%);
+      box-shadow: 0 0 24px rgba(255, 214, 10, 0.22);
     }
 
     .matched-banner {
       background: rgba(255, 214, 10, 0.15);
       border: 1px solid rgba(255, 214, 10, 0.4);
       color: var(--gold);
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12.5px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .msg-meta {
@@ -453,14 +504,14 @@
 
     /* Highlighted Code / OTP inside message */
     .highlight-otp {
-      background: rgba(42, 171, 238, 0.14);
+      background: rgba(42, 171, 238, 0.15);
       border: 1px solid rgba(42, 171, 238, 0.4);
       color: #79d4ff;
       padding: 2px 8px;
       border-radius: 6px;
       font-family: var(--mono);
       font-weight: 700;
-      font-size: 14px;
+      font-size: 14.5px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -470,7 +521,7 @@
     }
 
     .highlight-otp:hover {
-      background: rgba(42, 171, 238, 0.28);
+      background: rgba(42, 171, 238, 0.3);
       border-color: var(--tg);
       transform: scale(1.02);
     }
@@ -579,9 +630,9 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -600,15 +651,15 @@
     .modal-card {
       background: #111216;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 20px;
+      border-radius: 22px;
       max-width: 520px;
       width: 100%;
-      max-height: 85vh;
+      max-height: 88vh;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
       overflow: hidden;
-      transform: scale(0.96) translateY(10px);
+      transform: scale(0.96) translateY(12px);
       transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -622,7 +673,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(17, 18, 22, 0.85);
+      background: rgba(17, 18, 22, 0.88);
     }
 
     .modal-title-group {
@@ -636,13 +687,14 @@
       border: 1px solid var(--border);
       color: #fff;
       border-radius: 8px;
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       font-size: 13px;
+      transition: background 0.15s;
     }
 
     .modal-back-btn:hover {
@@ -652,6 +704,7 @@
     .modal-title {
       font-size: 16px;
       font-weight: 700;
+      letter-spacing: -0.2px;
     }
 
     .modal-close-btn {
@@ -662,6 +715,8 @@
       cursor: pointer;
       line-height: 1;
       padding: 4px;
+      border-radius: 6px;
+      transition: color 0.15s;
     }
 
     .modal-close-btn:hover {
@@ -686,14 +741,16 @@
     .step-pill {
       font-size: 11px;
       font-weight: 600;
-      padding: 3px 10px;
+      padding: 4px 10px;
       border-radius: 12px;
       background: rgba(255, 255, 255, 0.05);
       color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
     }
 
     .step-pill.active {
-      background: rgba(42, 171, 238, 0.15);
+      background: rgba(42, 171, 238, 0.16);
       color: var(--tg);
       border: 1px solid rgba(42, 171, 238, 0.35);
     }
@@ -719,15 +776,15 @@
     }
 
     .svc-card:hover {
-      background: rgba(42, 171, 238, 0.08);
-      border-color: rgba(42, 171, 238, 0.4);
+      background: rgba(42, 171, 238, 0.09);
+      border-color: rgba(42, 171, 238, 0.45);
       transform: translateY(-1px);
     }
 
     .svc-icon {
       font-size: 22px;
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 10px;
       display: flex;
@@ -775,7 +832,7 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 11px 14px;
+      padding: 12px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -795,7 +852,7 @@
     }
 
     .country-flag {
-      font-size: 18px;
+      font-size: 19px;
     }
 
     .country-name {
@@ -818,7 +875,7 @@
     /* Number Display View */
     .allocated-card {
       text-align: center;
-      padding: 16px 10px;
+      padding: 16px 8px;
     }
 
     .allocated-badge {
@@ -828,20 +885,20 @@
       background: rgba(42, 171, 238, 0.15);
       border: 1px solid rgba(42, 171, 238, 0.3);
       color: var(--tg);
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: 16px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       margin-bottom: 14px;
     }
 
     .allocated-number {
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 800;
       font-family: var(--mono);
       letter-spacing: 0.5px;
       color: #fff;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       user-select: all;
     }
 
@@ -851,18 +908,25 @@
       margin-bottom: 22px;
     }
 
-    .allocated-btn-row {
+    /* Action Button Rows inside Modal */
+    .modal-btn-cluster {
       display: flex;
+      flex-direction: column;
       gap: 10px;
-      justify-content: center;
       margin-bottom: 20px;
+    }
+
+    .modal-btn-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
       flex-wrap: wrap;
     }
 
     .modal-action-btn {
-      padding: 10px 18px;
-      border-radius: 12px;
-      font-size: 13px;
+      padding: 9px 16px;
+      border-radius: 11px;
+      font-size: 12.5px;
       font-weight: 600;
       font-family: var(--font);
       cursor: pointer;
@@ -880,6 +944,7 @@
 
     .btn-blue:hover {
       background: var(--tg-dark);
+      transform: translateY(-1px);
     }
 
     .btn-gray {
@@ -893,11 +958,22 @@
       color: #fff;
     }
 
+    .btn-switch {
+      background: rgba(42, 171, 238, 0.08);
+      border: 1px solid rgba(42, 171, 238, 0.25);
+      color: var(--tg);
+    }
+
+    .btn-switch:hover {
+      background: rgba(42, 171, 238, 0.18);
+      border-color: var(--tg);
+    }
+
     .waiting-box {
       background: rgba(255, 159, 10, 0.08);
       border: 1px dashed rgba(255, 159, 10, 0.3);
       border-radius: 12px;
-      padding: 12px;
+      padding: 12px 16px;
       font-size: 12.5px;
       color: var(--warning);
       display: flex;
@@ -940,8 +1016,8 @@
       .nav-links .nav-btn { padding: 5px 8px; font-size: 11.5px; }
       .services-grid { grid-template-columns: 1fr; }
       .active-number-banner { flex-direction: column; align-items: flex-start; }
-      .anb-actions { width: 100%; justify-content: flex-end; }
-      .allocated-number { font-size: 22px; }
+      .anb-actions { width: 100%; justify-content: flex-start; }
+      .allocated-number { font-size: 23px; }
     }
   </style>
 </head>
@@ -962,8 +1038,8 @@
       <a href="/nim" class="nav-btn" title="NVIDIA NIM AI">AI</a>
       <a href="/home" class="nav-btn" title="Live Messaging">Messager</a>
       <a href="/game" class="nav-btn" title="3D Voxel Game">Game</a>
-      <a href="/telegram" class="nav-btn" title="Telegram Checker">Telegram</a>
-      <a href="/updates" class="nav-btn nav-btn-active" title="Live Feed">Updates</a>
+      <a href="/telegram" class="nav-btn" title="Identity Resolver">Checker</a>
+      <a href="/updates" class="nav-btn nav-btn-active" title="Virtual Carrier Feed">Updates</a>
     </div>
   </nav>
 
@@ -972,16 +1048,16 @@
     <div class="feed-header">
       <div class="feed-title-wrap">
         <div class="feed-title-row">
-          <span class="live-dot" title="Live MTProto Connection"></span>
-          <h1 class="feed-title" id="channelHeading">Live Updates Feed</h1>
+          <span class="live-dot" title="AS Cloud Verification Network Active"></span>
+          <h1 class="feed-title" id="channelHeading">Live Verification Feed</h1>
         </div>
-        <div class="feed-subtitle" id="feedSubtitle">Connecting to live channel...</div>
+        <div class="feed-subtitle" id="feedSubtitle">Connecting to AS Cloud telecom relay...</div>
       </div>
 
       <div class="header-actions">
-        <!-- GET NUMBER BUTTON (Direct corner placement) -->
+        <!-- GET NUMBER BUTTON (User Request: "updates ke corner pe hi get number ka option hoga") -->
         <button class="get-num-btn" id="openGetNumberBtn" onclick="openGetNumberModal()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <rect x="5" y="2" width="14" height="20" rx="3" ry="3"/>
             <line x1="12" y1="18" x2="12.01" y2="18"/>
           </svg>
@@ -997,19 +1073,36 @@
       </div>
     </div>
 
-    <!-- Active Assigned Number Banner (Separate for each visitor) -->
+    <!-- Active Dedicated Number Banner (Includes Change Country & Change Service) -->
     <div class="active-number-banner" id="activeNumberBanner" style="display: none;">
       <div class="anb-main">
         <div class="anb-dot"></div>
         <div class="anb-details">
-          <div class="anb-tag">Assigned Number &bull; <span id="anbService">WhatsApp</span> &bull; <span id="anbCountry">Country</span></div>
+          <div class="anb-tag">
+            <span>DEDICATED VIRTUAL LINE</span> &bull; 
+            <span id="anbService">WhatsApp</span> &bull; 
+            <span id="anbCountry">Carrier Pool</span>
+          </div>
           <div class="anb-phone" id="anbNumber">+00 0000000000</div>
         </div>
       </div>
       <div class="anb-actions">
-        <button class="anb-btn anb-copy" onclick="copyActiveNumber()">📋 Copy</button>
-        <button class="anb-btn anb-change" onclick="triggerChangeNumber()">🔄 Change</button>
+        <button class="anb-btn anb-copy" onclick="copyActiveNumber()" title="Copy phone number">📋 Copy</button>
+        <button class="anb-btn anb-change" onclick="triggerChangeNumber()" title="Rotate to new number">🔄 Rotate</button>
+        <button class="anb-btn anb-change" onclick="openChangeCountry()" title="Change Country">🌍 Country</button>
+        <button class="anb-btn anb-change" onclick="openChangeService()" title="Change Service">⚡ Service</button>
         <button class="anb-btn anb-dismiss" onclick="dismissActiveNumber()" title="Hide banner">&times;</button>
+      </div>
+    </div>
+
+    <!-- Live Search / Filter Bar -->
+    <div class="feed-controls">
+      <div class="feed-search-wrap">
+        <svg class="feed-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="feed-search-input" id="feedSearchInput" placeholder="Filter incoming verification messages..." oninput="filterFeedList()">
       </div>
     </div>
 
@@ -1040,7 +1133,7 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <button class="modal-back-btn" id="modalBackBtn" onclick="goBackModalStep()" style="display: none;">&larr;</button>
-          <div class="modal-title" id="modalTitle">Get Temporary Number</div>
+          <div class="modal-title" id="modalTitle">AS Cloud Virtual Line</div>
         </div>
         <button class="modal-close-btn" onclick="closeGetNumberModal()">&times;</button>
       </div>
@@ -1048,8 +1141,8 @@
       <div class="modal-body">
         <!-- Step Indicators -->
         <div class="step-indicator">
-          <span class="step-pill active" id="pillStep1">1. Service</span>
-          <span class="step-pill" id="pillStep2">2. Country</span>
+          <span class="step-pill active" id="pillStep1" onclick="showStep1()">1. Service</span>
+          <span class="step-pill" id="pillStep2" onclick="if(currentServiceObj) showStep2(currentServiceObj)">2. Country</span>
           <span class="step-pill" id="pillStep3">3. Number</span>
         </div>
 
@@ -1063,35 +1156,48 @@
         <!-- STEP 2: Countries List -->
         <div id="stepCountriesView" style="display: none;">
           <div class="countries-search-box">
-            <input type="text" class="search-input" id="countrySearchInput" placeholder="Search countries..." oninput="filterCountriesList()">
+            <input type="text" class="search-input" id="countrySearchInput" placeholder="Search countries / regions..." oninput="filterCountriesList()">
           </div>
           <div class="countries-list" id="countriesList">
             <!-- Populated dynamically -->
           </div>
         </div>
 
-        <!-- STEP 3: Number Display -->
+        <!-- STEP 3: Number Display with Change Country & Change Service -->
         <div id="stepNumberView" style="display: none;">
           <div class="allocated-card">
             <div class="allocated-badge" id="numServiceBadge">💬 WhatsApp</div>
             <div class="allocated-number" id="displayPhoneNumber">+00 0000000000</div>
-            <div class="allocated-sub" id="displayCountrySub">Country Pool</div>
+            <div class="allocated-sub" id="displayCountrySub">Carrier Verification Line &bull; Dedicated to your session</div>
 
-            <div class="allocated-btn-row">
-              <button class="modal-action-btn btn-blue" onclick="copySnippet(currentActiveNumber)">
-                <span>📋 Copy Full Number</span>
-              </button>
-              <button class="modal-action-btn btn-gray" onclick="copyNumberWithoutCC()">
-                <span>Copy without CC</span>
-              </button>
-              <button class="modal-action-btn btn-gray" id="btnChangeNumberModal" onclick="triggerChangeNumber()">
-                <span>🔄 Change</span>
-              </button>
+            <div class="modal-btn-cluster">
+              <!-- Primary Copy Actions -->
+              <div class="modal-btn-row">
+                <button class="modal-action-btn btn-blue" onclick="copySnippet(currentActiveNumber)">
+                  <span>📋 Copy Full Number</span>
+                </button>
+                <button class="modal-action-btn btn-gray" onclick="copyNumberWithoutCC()">
+                  <span>Copy without CC</span>
+                </button>
+              </div>
+
+              <!-- Switching Options (Change Number / Change Country / Change Service) -->
+              <div class="modal-btn-row">
+                <button class="modal-action-btn btn-switch" id="btnChangeNumberModal" onclick="triggerChangeNumber()" title="Get another number in current country">
+                  <span>🔄 Rotate Number</span>
+                </button>
+                <button class="modal-action-btn btn-switch" onclick="openChangeCountry()" title="Switch to another country">
+                  <span>🌍 Change Country</span>
+                </button>
+                <button class="modal-action-btn btn-switch" onclick="openChangeService()" title="Switch to another service">
+                  <span>⚡ Change Service</span>
+                </button>
+              </div>
             </div>
 
             <div class="waiting-box">
               <span class="live-dot" style="background:#ff9f0a; box-shadow:0 0 8px #ff9f0a;"></span>
-              <span>Waiting for OTP... Keep this page open, code will appear in the feed below!</span>
+              <span>Waiting for SMS code... Keep this page open, OTP will stream live into the feed!</span>
             </div>
           </div>
         </div>
@@ -1106,7 +1212,7 @@
     let lastFetchTime = 0;
     const COOLDOWN_SEC = 5;
 
-    // Separate Client ID so every user has isolated numbers:
+    // Distinct client ID to prevent number intermixing across users:
     let CLIENT_ID = localStorage.getItem("as_client_id");
     if (!CLIENT_ID) {
       CLIENT_ID = "as_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
@@ -1117,6 +1223,7 @@
     let currentServiceObj = null;
     let currentCountryList = [];
     let modalStep = 1;
+    let cachedFeedMessages = [];
 
     function escapeHtml(str) {
       if (!str) return "";
@@ -1182,15 +1289,26 @@
 
     function copyNumberWithoutCC() {
       if (!currentActiveNumber) return;
-      // remove non-digits
       const digits = currentActiveNumber.replace(/\D/g, '');
-      // remove country code heuristic: if starts with 92, 977, 995, 266, etc. take last 10 digits
       const withoutCc = digits.length > 10 ? digits.slice(-10) : digits;
       copySnippet(withoutCc);
     }
 
     function dismissActiveNumber() {
       document.getElementById("activeNumberBanner").style.display = "none";
+    }
+
+    function openChangeCountry() {
+      if (!currentServiceObj) {
+        currentServiceObj = { id: "whatsapp", name: "WhatsApp", icon: "💬", data: "pick_svc_whatsapp" };
+      }
+      openGetNumberModal();
+      showStep2(currentServiceObj);
+    }
+
+    function openChangeService() {
+      openGetNumberModal();
+      showStep1();
     }
 
     // ── Number Check & Highlight against active number ─────────────────────────
@@ -1201,7 +1319,6 @@
       const last3 = cleanTarget.slice(-3);
       const prefix4 = cleanTarget.slice(0, 4);
 
-      // Check if message mentions matching prefix or suffix
       return messageText.includes(last4) || (messageText.includes(prefix4) && messageText.includes(last3));
     }
 
@@ -1212,92 +1329,35 @@
 
       const refreshBtn = document.getElementById("refreshBtn");
       const refreshBtnText = document.getElementById("refreshBtnText");
-      const feedList = document.getElementById("feedList");
       const feedSubtitle = document.getElementById("feedSubtitle");
       const channelHeading = document.getElementById("channelHeading");
 
       refreshBtn.classList.add("spinning");
       refreshBtn.disabled = true;
-      refreshBtnText.textContent = "Fetching...";
+      refreshBtnText.textContent = "Syncing...";
 
       try {
         const res = await fetch("/api/health?action=channel&limit=30");
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          throw new Error(data.error || "Failed to fetch channel updates.");
+          throw new Error(data.error || "Failed to sync verification feed.");
         }
 
         lastFetchTime = Date.now();
-        channelHeading.textContent = data.title || "Live Updates Feed";
-        feedSubtitle.textContent = `Updated ${new Date().toLocaleTimeString()} • ${data.count || 0} recent updates`;
+        channelHeading.textContent = "Live Verification Feed";
+        feedSubtitle.textContent = `Carrier sync active • ${data.count || 0} recent verification events`;
 
-        if (!data.messages || data.messages.length === 0) {
-          feedList.innerHTML = `
-            <div class="state-box">
-              <div class="state-icon">📭</div>
-              <div class="state-title">No updates yet</div>
-              <div class="state-desc">There are no recent messages in this channel. Check back soon!</div>
-              <button class="state-retry-btn" onclick="fetchUpdates()">Refresh</button>
-            </div>
-          `;
-          return;
-        }
-
-        feedList.innerHTML = data.messages.map(m => {
-          const rawText = m.text || "";
-          const formatted = formatMessageText(rawText);
-          const timeRel = formatRelativeTime(m.date);
-          const fullTime = m.date ? new Date(m.date).toLocaleString() : "";
-          const safeRawForAttr = encodeURIComponent(rawText);
-
-          const isUserMatch = currentActiveNumber ? checkNumberMatch(rawText, currentActiveNumber) : false;
-
-          return `
-            <div class="msg-card ${isUserMatch ? 'user-matched-card' : ''}">
-              ${isUserMatch ? `
-                <div class="matched-banner">
-                  <span>⭐</span>
-                  <span>OTP RECEIVED FOR YOUR NUMBER: ${currentActiveNumber}</span>
-                </div>
-              ` : ''}
-
-              <div class="msg-meta">
-                <div class="msg-time-badge" title="${fullTime}">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  <span>${timeRel}</span>
-                </div>
-                <div class="msg-badges">
-                  ${m.hasMedia ? '<span class="tag-badge tag-media">📎 Media</span>' : ''}
-                  <span class="tag-badge tag-id">#${m.id}</span>
-                </div>
-              </div>
-
-              <div class="msg-body">${formatted || '<span style="color:#666;">(Media message)</span>'}</div>
-
-              <div class="msg-footer">
-                <button class="copy-msg-btn" onclick="copyFullMessage(decodeURIComponent('${safeRawForAttr}'))">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                  </svg>
-                  Copy Text
-                </button>
-              </div>
-            </div>
-          `;
-        }).join("");
+        cachedFeedMessages = data.messages || [];
+        renderFeedList(cachedFeedMessages);
 
       } catch (err) {
         console.error("Updates fetch error:", err);
-        feedSubtitle.textContent = "Error fetching channel feed";
-        feedList.innerHTML = `
+        feedSubtitle.textContent = "Carrier relay temporary sync issue";
+        document.getElementById("feedList").innerHTML = `
           <div class="state-box">
             <div class="state-icon">⚠️</div>
-            <div class="state-title">Unable to load updates</div>
+            <div class="state-title">Unable to connect to verification relay</div>
             <div class="state-desc">${escapeHtml(err.message)}</div>
             <button class="state-retry-btn" onclick="fetchUpdates()">Try Again</button>
           </div>
@@ -1310,12 +1370,85 @@
       }
     }
 
+    function renderFeedList(messages) {
+      const feedList = document.getElementById("feedList");
+
+      if (!messages || messages.length === 0) {
+        feedList.innerHTML = `
+          <div class="state-box">
+            <div class="state-icon">📭</div>
+            <div class="state-title">No verification codes yet</div>
+            <div class="state-desc">Waiting for incoming SMS streams. Codes appear here in real-time.</div>
+            <button class="state-retry-btn" onclick="fetchUpdates()">Refresh</button>
+          </div>
+        `;
+        return;
+      }
+
+      feedList.innerHTML = messages.map(m => {
+        const rawText = m.text || "";
+        const formatted = formatMessageText(rawText);
+        const timeRel = formatRelativeTime(m.date);
+        const fullTime = m.date ? new Date(m.date).toLocaleString() : "";
+        const safeRawForAttr = encodeURIComponent(rawText);
+
+        const isUserMatch = currentActiveNumber ? checkNumberMatch(rawText, currentActiveNumber) : false;
+
+        return `
+          <div class="msg-card ${isUserMatch ? 'user-matched-card' : ''}">
+            ${isUserMatch ? `
+              <div class="matched-banner">
+                <span>⭐</span>
+                <span>VERIFICATION CODE FOR YOUR LINE: ${currentActiveNumber}</span>
+              </div>
+            ` : ''}
+
+            <div class="msg-meta">
+              <div class="msg-time-badge" title="${fullTime}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>${timeRel}</span>
+              </div>
+              <div class="msg-badges">
+                ${m.hasMedia ? '<span class="tag-badge tag-media">Attachment</span>' : ''}
+                <span class="tag-badge tag-id">#${m.id}</span>
+              </div>
+            </div>
+
+            <div class="msg-body">${formatted || '<span style="color:#666;">(Media verification packet)</span>'}</div>
+
+            <div class="msg-footer">
+              <button class="copy-msg-btn" onclick="copyFullMessage(decodeURIComponent('${safeRawForAttr}'))">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Copy Text
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function filterFeedList() {
+      const q = (document.getElementById("feedSearchInput").value || "").toLowerCase().trim();
+      if (!q) {
+        renderFeedList(cachedFeedMessages);
+        return;
+      }
+      const filtered = cachedFeedMessages.filter(m => (m.text || "").toLowerCase().includes(q));
+      renderFeedList(filtered);
+    }
+
     function triggerRefresh() {
       const now = Date.now();
       const elapsed = (now - lastFetchTime) / 1000;
       if (elapsed < COOLDOWN_SEC) {
         const remaining = Math.ceil(COOLDOWN_SEC - elapsed);
-        showToast(`Please wait ${remaining}s before refreshing`);
+        showToast(`Wait ${remaining}s before refreshing`);
         return;
       }
       fetchUpdates();
@@ -1396,7 +1529,7 @@
 
     async function showStep2(svc) {
       modalStep = 2;
-      document.getElementById("modalTitle").textContent = `${svc.name} - Select Country`;
+      document.getElementById("modalTitle").textContent = `${svc.name} - Choose Region`;
       document.getElementById("modalBackBtn").style.display = "flex";
       document.getElementById("pillStep1").className = "step-pill";
       document.getElementById("pillStep2").className = "step-pill active";
@@ -1412,7 +1545,7 @@
           <div class="refresh-icon" style="width:24px; height:24px; margin:0 auto 10px; animation:spin 0.8s linear infinite;">
             <svg viewBox="0 0 24 24" fill="none" stroke="#2AABEE" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
           </div>
-          <div>Fetching live country stock...</div>
+          <div>Checking live carrier stock across regions...</div>
         </div>
       `;
 
@@ -1421,7 +1554,7 @@
         const data = await res.json();
 
         if (!data.success || !data.countries || data.countries.length === 0) {
-          throw new Error(data.error || "No countries available for this service right now.");
+          throw new Error(data.error || "No regions available for this service right now.");
         }
 
         currentCountryList = data.countries;
@@ -1439,7 +1572,7 @@
     function renderCountriesList(countries) {
       const list = document.getElementById("countriesList");
       if (countries.length === 0) {
-        list.innerHTML = '<div style="text-align:center; padding:30px; color:#888;">No countries found.</div>';
+        list.innerHTML = '<div style="text-align:center; padding:30px; color:#888;">No matching regions found.</div>';
         return;
       }
 
@@ -1449,7 +1582,7 @@
             <span class="country-flag">${c.flag}</span>
             <span class="country-name">${escapeHtml(c.name)}</span>
           </div>
-          ${c.stock ? `<span class="country-stock">${Number(c.stock).toLocaleString()} stock</span>` : ''}
+          ${c.stock ? `<span class="country-stock">${Number(c.stock).toLocaleString()} available</span>` : ''}
         </div>
       `).join("");
     }
@@ -1467,7 +1600,7 @@
     // STEP 3: Request Number for selected Country
     async function selectCountry(countryData, countryName) {
       modalStep = 3;
-      document.getElementById("modalTitle").textContent = "Assigning Number...";
+      document.getElementById("modalTitle").textContent = "Provisioning Virtual Line...";
       document.getElementById("modalBackBtn").style.display = "none";
       document.getElementById("pillStep1").className = "step-pill";
       document.getElementById("pillStep2").className = "step-pill";
@@ -1482,15 +1615,15 @@
       const svcBadge = document.getElementById("numServiceBadge");
 
       svcBadge.textContent = `${currentServiceObj ? currentServiceObj.icon : '📱'} ${currentServiceObj ? currentServiceObj.name : 'Service'}`;
-      displayNum.textContent = "Connecting to Bot...";
-      displaySub.textContent = `Allocating fresh ${countryName} number for you...`;
+      displayNum.textContent = "Assigning Line...";
+      displaySub.textContent = `Allocating fresh ${countryName} dedicated line for you...`;
 
       try {
         const res = await fetch(`/api/health?action=bot&op=get_number&country_data=${encodeURIComponent(countryData)}&service=${encodeURIComponent(currentServiceObj ? currentServiceObj.id : 'whatsapp')}&user_id=${encodeURIComponent(CLIENT_ID)}`);
         const data = await res.json();
 
         if (!data.success || !data.number) {
-          throw new Error(data.error || "Failed to generate number. Please choose another country.");
+          throw new Error(data.error || "Failed to allocate number. Please select another region.");
         }
 
         const record = {
@@ -1514,7 +1647,7 @@
       modalStep = 3;
       currentActiveNumber = record.number;
 
-      document.getElementById("modalTitle").textContent = "Your Number is Ready";
+      document.getElementById("modalTitle").textContent = "Virtual Line Ready";
       document.getElementById("modalBackBtn").style.display = "flex";
       document.getElementById("pillStep1").className = "step-pill";
       document.getElementById("pillStep2").className = "step-pill";
@@ -1524,9 +1657,9 @@
       document.getElementById("stepCountriesView").style.display = "none";
       document.getElementById("stepNumberView").style.display = "block";
 
-      document.getElementById("numServiceBadge").textContent = record.service || "Service";
+      document.getElementById("numServiceBadge").textContent = `${record.service || 'Service'}`;
       document.getElementById("displayPhoneNumber").textContent = record.number;
-      document.getElementById("displayCountrySub").textContent = `${record.country || 'Assigned Pool'} • Isolated for your session`;
+      document.getElementById("displayCountrySub").textContent = `${record.country || 'Carrier Pool'} • Dedicated line for your session`;
 
       // Update banner on main page
       const banner = document.getElementById("activeNumberBanner");
@@ -1539,15 +1672,15 @@
     // Change Number Action
     async function triggerChangeNumber() {
       const btn = document.getElementById("btnChangeNumberModal");
-      if (btn) btn.textContent = "Changing...";
+      if (btn) btn.textContent = "Rotating...";
 
-      showToast("Requesting a new number from bot pool...");
+      showToast("Rotating line to new number in current region...");
       try {
         const res = await fetch(`/api/health?action=bot&op=change_number&user_id=${encodeURIComponent(CLIENT_ID)}`);
         const data = await res.json();
 
         if (!data.success || !data.number) {
-          throw new Error(data.error || "Pool exhausted. Please select another country.");
+          throw new Error(data.error || "Region line pool exhausted. Please select another country.");
         }
 
         const saved = localStorage.getItem("as_user_number_record");
@@ -1557,11 +1690,11 @@
         localStorage.setItem("as_user_number_record", JSON.stringify(rec));
 
         showStep3(rec);
-        showToast("New number assigned: " + data.number);
+        showToast("New virtual line assigned: " + data.number);
       } catch (err) {
         showToast("Error: " + err.message);
       } finally {
-        if (btn) btn.innerHTML = "<span>🔄 Change</span>";
+        if (btn) btn.innerHTML = "<span>🔄 Rotate Number</span>";
       }
     }
 
