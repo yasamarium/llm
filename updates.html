@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Live Channel Updates • AS Cloud</title>
-  <meta name="description" content="Minimalist real-time updates feed from private Telegram channel.">
+  <meta name="description" content="Minimalist real-time updates feed from private Telegram channel & temporary number generation.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%232AABEE%22/><path d=%22M22 50l48-20-8 44-16-12-8 8v-12l24-18-30 14z%22 fill=%22white%22/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -26,6 +26,8 @@
       --tg-glow: rgba(42, 171, 238, 0.15);
       --success: #30d158;
       --danger: #ff453a;
+      --warning: #ff9f0a;
+      --gold: #ffd60a;
       --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       --mono: 'JetBrains Mono', monospace;
     }
@@ -120,9 +122,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .feed-title-wrap {
@@ -161,6 +165,40 @@
     .feed-subtitle {
       font-size: 12px;
       color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Get Number Action Button */
+    .get-num-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      background: linear-gradient(135deg, #2AABEE 0%, #0077b6 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      color: #fff;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(42, 171, 238, 0.35);
+      user-select: none;
+    }
+
+    .get-num-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(42, 171, 238, 0.5);
+    }
+
+    .get-num-btn:active {
+      transform: translateY(0);
     }
 
     /* Refresh Button */
@@ -207,6 +245,113 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Active Number Banner */
+    .active-number-banner {
+      background: linear-gradient(135deg, rgba(42, 171, 238, 0.12) 0%, rgba(17, 18, 21, 0.95) 100%);
+      border: 1px solid rgba(42, 171, 238, 0.35);
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .anb-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .anb-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--warning);
+      box-shadow: 0 0 10px var(--warning);
+      animation: pulse 1.5s infinite ease-in-out;
+      flex-shrink: 0;
+    }
+
+    .anb-details {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .anb-tag {
+      font-size: 11px;
+      color: var(--tg);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .anb-phone {
+      font-size: 17px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .anb-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .anb-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+    }
+
+    .anb-copy {
+      background: var(--tg);
+      color: #fff;
+    }
+
+    .anb-copy:hover {
+      background: var(--tg-dark);
+    }
+
+    .anb-change {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ddd;
+      border: 1px solid var(--border);
+    }
+
+    .anb-change:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+
+    .anb-dismiss {
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 18px;
+      padding: 4px 8px;
+    }
+
+    .anb-dismiss:hover {
+      color: #fff;
+    }
+
     /* Feed List */
     .feed-list {
       display: flex;
@@ -227,6 +372,27 @@
     .msg-card:hover {
       border-color: rgba(255, 255, 255, 0.15);
       background: var(--card-hover);
+    }
+
+    /* Highlighted card when OTP matches user number */
+    .msg-card.user-matched-card {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, rgba(255, 214, 10, 0.08) 0%, #16181d 100%);
+      box-shadow: 0 0 20px rgba(255, 214, 10, 0.2);
+    }
+
+    .matched-banner {
+      background: rgba(255, 214, 10, 0.15);
+      border: 1px solid rgba(255, 214, 10, 0.4);
+      color: var(--gold);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .msg-meta {
@@ -287,25 +453,26 @@
 
     /* Highlighted Code / OTP inside message */
     .highlight-otp {
-      background: rgba(42, 171, 238, 0.12);
-      border: 1px solid rgba(42, 171, 238, 0.35);
+      background: rgba(42, 171, 238, 0.14);
+      border: 1px solid rgba(42, 171, 238, 0.4);
       color: #79d4ff;
-      padding: 2px 6px;
+      padding: 2px 8px;
       border-radius: 6px;
       font-family: var(--mono);
-      font-weight: 600;
-      font-size: 13.5px;
+      font-weight: 700;
+      font-size: 14px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       margin: 2px 0;
       transition: all 0.15s ease;
     }
 
     .highlight-otp:hover {
-      background: rgba(42, 171, 238, 0.25);
+      background: rgba(42, 171, 238, 0.28);
       border-color: var(--tg);
+      transform: scale(1.02);
     }
 
     .msg-footer {
@@ -364,7 +531,7 @@
       100% { background-position: -200% 0; }
     }
 
-    /* States (Empty & Error) */
+    /* States */
     .state-box {
       text-align: center;
       padding: 60px 20px;
@@ -408,6 +575,337 @@
       background: var(--tg-dark);
     }
 
+    /* Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #111216;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      transform: scale(0.96) translateY(10px);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-overlay.open .modal-card {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(17, 18, 22, 0.85);
+    }
+
+    .modal-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-back-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: #fff;
+      border-radius: 8px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .modal-back-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .modal-close-btn:hover {
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Step Indicators */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .step-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+
+    .step-pill.active {
+      background: rgba(42, 171, 238, 0.15);
+      color: var(--tg);
+      border: 1px solid rgba(42, 171, 238, 0.35);
+    }
+
+    /* Grid for Services */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .svc-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+
+    .svc-card:hover {
+      background: rgba(42, 171, 238, 0.08);
+      border-color: rgba(42, 171, 238, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .svc-icon {
+      font-size: 22px;
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .svc-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Countries View */
+    .countries-search-box {
+      margin-bottom: 14px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13.5px;
+      color: #fff;
+      outline: none;
+      font-family: var(--font);
+    }
+
+    .search-input:focus {
+      border-color: var(--tg);
+    }
+
+    .countries-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 380px;
+      overflow-y: auto;
+    }
+
+    .country-row {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .country-row:hover {
+      background: rgba(42, 171, 238, 0.1);
+      border-color: rgba(42, 171, 238, 0.35);
+    }
+
+    .country-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .country-flag {
+      font-size: 18px;
+    }
+
+    .country-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .country-stock {
+      font-size: 11.5px;
+      color: var(--success);
+      background: rgba(48, 209, 88, 0.1);
+      border: 1px solid rgba(48, 209, 88, 0.25);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-family: var(--mono);
+    }
+
+    /* Number Display View */
+    .allocated-card {
+      text-align: center;
+      padding: 16px 10px;
+    }
+
+    .allocated-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(42, 171, 238, 0.15);
+      border: 1px solid rgba(42, 171, 238, 0.3);
+      color: var(--tg);
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .allocated-number {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: var(--mono);
+      letter-spacing: 0.5px;
+      color: #fff;
+      margin-bottom: 8px;
+      user-select: all;
+    }
+
+    .allocated-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+    }
+
+    .allocated-btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .modal-action-btn {
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-blue {
+      background: var(--tg);
+      border: none;
+      color: #fff;
+    }
+
+    .btn-blue:hover {
+      background: var(--tg-dark);
+    }
+
+    .btn-gray {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: #ddd;
+    }
+
+    .btn-gray:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .waiting-box {
+      background: rgba(255, 159, 10, 0.08);
+      border: 1px dashed rgba(255, 159, 10, 0.3);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12.5px;
+      color: var(--warning);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
     /* Toast */
     .toast {
       position: fixed;
@@ -425,7 +923,7 @@
       opacity: 0;
       pointer-events: none;
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      z-index: 200;
+      z-index: 2000;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -440,6 +938,10 @@
       .container { padding: 16px 12px 60px; }
       .feed-title { font-size: 18px; }
       .nav-links .nav-btn { padding: 5px 8px; font-size: 11.5px; }
+      .services-grid { grid-template-columns: 1fr; }
+      .active-number-banner { flex-direction: column; align-items: flex-start; }
+      .anb-actions { width: 100%; justify-content: flex-end; }
+      .allocated-number { font-size: 22px; }
     }
   </style>
 </head>
@@ -471,17 +973,44 @@
       <div class="feed-title-wrap">
         <div class="feed-title-row">
           <span class="live-dot" title="Live MTProto Connection"></span>
-          <h1 class="feed-title" id="channelHeading">Live Updates</h1>
+          <h1 class="feed-title" id="channelHeading">Live Updates Feed</h1>
         </div>
         <div class="feed-subtitle" id="feedSubtitle">Connecting to live channel...</div>
       </div>
 
-      <button class="refresh-btn" id="refreshBtn" onclick="triggerRefresh()">
-        <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        <span id="refreshBtnText">Refresh</span>
-      </button>
+      <div class="header-actions">
+        <!-- GET NUMBER BUTTON (Direct corner placement) -->
+        <button class="get-num-btn" id="openGetNumberBtn" onclick="openGetNumberModal()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="5" y="2" width="14" height="20" rx="3" ry="3"/>
+            <line x1="12" y1="18" x2="12.01" y2="18"/>
+          </svg>
+          <span>Get Number</span>
+        </button>
+
+        <button class="refresh-btn" id="refreshBtn" onclick="triggerRefresh()">
+          <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span id="refreshBtnText">Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Assigned Number Banner (Separate for each visitor) -->
+    <div class="active-number-banner" id="activeNumberBanner" style="display: none;">
+      <div class="anb-main">
+        <div class="anb-dot"></div>
+        <div class="anb-details">
+          <div class="anb-tag">Assigned Number &bull; <span id="anbService">WhatsApp</span> &bull; <span id="anbCountry">Country</span></div>
+          <div class="anb-phone" id="anbNumber">+00 0000000000</div>
+        </div>
+      </div>
+      <div class="anb-actions">
+        <button class="anb-btn anb-copy" onclick="copyActiveNumber()">📋 Copy</button>
+        <button class="anb-btn anb-change" onclick="triggerChangeNumber()">🔄 Change</button>
+        <button class="anb-btn anb-dismiss" onclick="dismissActiveNumber()" title="Hide banner">&times;</button>
+      </div>
     </div>
 
     <!-- Feed Items Container -->
@@ -505,12 +1034,89 @@
     </div>
   </main>
 
+  <!-- Get Number Modal Flow -->
+  <div class="modal-overlay" id="getNumberModal" onclick="closeModalOnBackdrop(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <button class="modal-back-btn" id="modalBackBtn" onclick="goBackModalStep()" style="display: none;">&larr;</button>
+          <div class="modal-title" id="modalTitle">Get Temporary Number</div>
+        </div>
+        <button class="modal-close-btn" onclick="closeGetNumberModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Step Indicators -->
+        <div class="step-indicator">
+          <span class="step-pill active" id="pillStep1">1. Service</span>
+          <span class="step-pill" id="pillStep2">2. Country</span>
+          <span class="step-pill" id="pillStep3">3. Number</span>
+        </div>
+
+        <!-- STEP 1: Services Grid -->
+        <div id="stepServicesView">
+          <div class="services-grid" id="servicesGrid">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- STEP 2: Countries List -->
+        <div id="stepCountriesView" style="display: none;">
+          <div class="countries-search-box">
+            <input type="text" class="search-input" id="countrySearchInput" placeholder="Search countries..." oninput="filterCountriesList()">
+          </div>
+          <div class="countries-list" id="countriesList">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- STEP 3: Number Display -->
+        <div id="stepNumberView" style="display: none;">
+          <div class="allocated-card">
+            <div class="allocated-badge" id="numServiceBadge">💬 WhatsApp</div>
+            <div class="allocated-number" id="displayPhoneNumber">+00 0000000000</div>
+            <div class="allocated-sub" id="displayCountrySub">Country Pool</div>
+
+            <div class="allocated-btn-row">
+              <button class="modal-action-btn btn-blue" onclick="copySnippet(currentActiveNumber)">
+                <span>📋 Copy Full Number</span>
+              </button>
+              <button class="modal-action-btn btn-gray" onclick="copyNumberWithoutCC()">
+                <span>Copy without CC</span>
+              </button>
+              <button class="modal-action-btn btn-gray" id="btnChangeNumberModal" onclick="triggerChangeNumber()">
+                <span>🔄 Change</span>
+              </button>
+            </div>
+
+            <div class="waiting-box">
+              <span class="live-dot" style="background:#ff9f0a; box-shadow:0 0 8px #ff9f0a;"></span>
+              <span>Waiting for OTP... Keep this page open, code will appear in the feed below!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast">Copied to clipboard</div>
 
   <script>
     let isLoading = false;
     let lastFetchTime = 0;
-    const COOLDOWN_SEC = 5; // smooth 5s refresh throttle for responsive experience
+    const COOLDOWN_SEC = 5;
+
+    // Separate Client ID so every user has isolated numbers:
+    let CLIENT_ID = localStorage.getItem("as_client_id");
+    if (!CLIENT_ID) {
+      CLIENT_ID = "as_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+      localStorage.setItem("as_client_id", CLIENT_ID);
+    }
+
+    let currentActiveNumber = null;
+    let currentServiceObj = null;
+    let currentCountryList = [];
+    let modalStep = 1;
 
     function escapeHtml(str) {
       if (!str) return "";
@@ -553,26 +1159,53 @@
       const toast = document.getElementById("toast");
       toast.textContent = msg;
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 2000);
+      setTimeout(() => toast.classList.remove("show"), 2500);
     }
 
     function copySnippet(text, event) {
       if (event) event.stopPropagation();
+      if (!text) return;
       navigator.clipboard.writeText(text).then(() => {
-        showToast("Code copied: " + text);
+        showToast("Copied: " + text);
       }).catch(() => {
         showToast("Failed to copy");
       });
     }
 
     function copyFullMessage(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        showToast("Message copied to clipboard");
-      }).catch(() => {
-        showToast("Failed to copy");
-      });
+      copySnippet(text);
     }
 
+    function copyActiveNumber() {
+      if (currentActiveNumber) copySnippet(currentActiveNumber);
+    }
+
+    function copyNumberWithoutCC() {
+      if (!currentActiveNumber) return;
+      // remove non-digits
+      const digits = currentActiveNumber.replace(/\D/g, '');
+      // remove country code heuristic: if starts with 92, 977, 995, 266, etc. take last 10 digits
+      const withoutCc = digits.length > 10 ? digits.slice(-10) : digits;
+      copySnippet(withoutCc);
+    }
+
+    function dismissActiveNumber() {
+      document.getElementById("activeNumberBanner").style.display = "none";
+    }
+
+    // ── Number Check & Highlight against active number ─────────────────────────
+    function checkNumberMatch(messageText, targetNum) {
+      if (!targetNum || !messageText) return false;
+      const cleanTarget = targetNum.replace(/\D/g, '');
+      const last4 = cleanTarget.slice(-4);
+      const last3 = cleanTarget.slice(-3);
+      const prefix4 = cleanTarget.slice(0, 4);
+
+      // Check if message mentions matching prefix or suffix
+      return messageText.includes(last4) || (messageText.includes(prefix4) && messageText.includes(last3));
+    }
+
+    // ── Feed Fetch ─────────────────────────────────────────────────────────────
     async function fetchUpdates() {
       if (isLoading) return;
       isLoading = true;
@@ -618,8 +1251,17 @@
           const fullTime = m.date ? new Date(m.date).toLocaleString() : "";
           const safeRawForAttr = encodeURIComponent(rawText);
 
+          const isUserMatch = currentActiveNumber ? checkNumberMatch(rawText, currentActiveNumber) : false;
+
           return `
-            <div class="msg-card">
+            <div class="msg-card ${isUserMatch ? 'user-matched-card' : ''}">
+              ${isUserMatch ? `
+                <div class="matched-banner">
+                  <span>⭐</span>
+                  <span>OTP RECEIVED FOR YOUR NUMBER: ${currentActiveNumber}</span>
+                </div>
+              ` : ''}
+
               <div class="msg-meta">
                 <div class="msg-time-badge" title="${fullTime}">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -679,8 +1321,266 @@
       fetchUpdates();
     }
 
-    // Auto-fetch on page load
+    // ── Get Number Modal Logic ─────────────────────────────────────────────────
+    function openGetNumberModal() {
+      const modal = document.getElementById("getNumberModal");
+      modal.classList.add("open");
+
+      // Check if user already has an active number
+      const saved = localStorage.getItem("as_user_number_record");
+      if (saved) {
+        try {
+          const rec = JSON.parse(saved);
+          if (rec && rec.number) {
+            showStep3(rec);
+            return;
+          }
+        } catch (_) {}
+      }
+
+      showStep1();
+    }
+
+    function closeGetNumberModal() {
+      document.getElementById("getNumberModal").classList.remove("open");
+    }
+
+    function closeModalOnBackdrop(e) {
+      if (e.target.id === "getNumberModal") {
+        closeGetNumberModal();
+      }
+    }
+
+    function goBackModalStep() {
+      if (modalStep === 2) showStep1();
+      else if (modalStep === 3) showStep2(currentServiceObj);
+    }
+
+    // STEP 1: Services
+    async function showStep1() {
+      modalStep = 1;
+      document.getElementById("modalTitle").textContent = "Select Service";
+      document.getElementById("modalBackBtn").style.display = "none";
+      document.getElementById("pillStep1").className = "step-pill active";
+      document.getElementById("pillStep2").className = "step-pill";
+      document.getElementById("pillStep3").className = "step-pill";
+
+      document.getElementById("stepServicesView").style.display = "block";
+      document.getElementById("stepCountriesView").style.display = "none";
+      document.getElementById("stepNumberView").style.display = "none";
+
+      const grid = document.getElementById("servicesGrid");
+      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:#888;">Loading services...</div>';
+
+      try {
+        const res = await fetch("/api/health?action=bot&op=services");
+        const data = await res.json();
+        const services = data.services || [];
+
+        grid.innerHTML = services.map(s => `
+          <div class="svc-card" onclick="selectService('${s.id}', '${escapeHtml(s.name)}', '${s.icon}', '${s.data}')">
+            <div class="svc-icon">${s.icon}</div>
+            <div class="svc-name">${s.name}</div>
+          </div>
+        `).join("");
+      } catch (e) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:#ff453a;">Failed to load services. Please retry.</div>';
+      }
+    }
+
+    // STEP 2: Countries
+    async function selectService(id, name, icon, data) {
+      currentServiceObj = { id, name, icon, data };
+      showStep2(currentServiceObj);
+    }
+
+    async function showStep2(svc) {
+      modalStep = 2;
+      document.getElementById("modalTitle").textContent = `${svc.name} - Select Country`;
+      document.getElementById("modalBackBtn").style.display = "flex";
+      document.getElementById("pillStep1").className = "step-pill";
+      document.getElementById("pillStep2").className = "step-pill active";
+      document.getElementById("pillStep3").className = "step-pill";
+
+      document.getElementById("stepServicesView").style.display = "none";
+      document.getElementById("stepCountriesView").style.display = "block";
+      document.getElementById("stepNumberView").style.display = "none";
+
+      const list = document.getElementById("countriesList");
+      list.innerHTML = `
+        <div style="text-align:center; padding:40px 10px; color:#888;">
+          <div class="refresh-icon" style="width:24px; height:24px; margin:0 auto 10px; animation:spin 0.8s linear infinite;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#2AABEE" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          </div>
+          <div>Fetching live country stock...</div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch(`/api/health?action=bot&op=countries&service=${encodeURIComponent(svc.id)}`);
+        const data = await res.json();
+
+        if (!data.success || !data.countries || data.countries.length === 0) {
+          throw new Error(data.error || "No countries available for this service right now.");
+        }
+
+        currentCountryList = data.countries;
+        renderCountriesList(currentCountryList);
+      } catch (err) {
+        list.innerHTML = `
+          <div style="text-align:center; padding:30px 10px; color:#ff453a;">
+            <div>⚠️ ${escapeHtml(err.message)}</div>
+            <button class="modal-action-btn btn-gray" style="margin-top:12px;" onclick="showStep2(currentServiceObj)">Retry</button>
+          </div>
+        `;
+      }
+    }
+
+    function renderCountriesList(countries) {
+      const list = document.getElementById("countriesList");
+      if (countries.length === 0) {
+        list.innerHTML = '<div style="text-align:center; padding:30px; color:#888;">No countries found.</div>';
+        return;
+      }
+
+      list.innerHTML = countries.map(c => `
+        <div class="country-row" onclick="selectCountry('${escapeHtml(c.data)}', '${escapeHtml(c.name)}')">
+          <div class="country-name-wrap">
+            <span class="country-flag">${c.flag}</span>
+            <span class="country-name">${escapeHtml(c.name)}</span>
+          </div>
+          ${c.stock ? `<span class="country-stock">${Number(c.stock).toLocaleString()} stock</span>` : ''}
+        </div>
+      `).join("");
+    }
+
+    function filterCountriesList() {
+      const q = (document.getElementById("countrySearchInput").value || "").toLowerCase().trim();
+      if (!q) {
+        renderCountriesList(currentCountryList);
+        return;
+      }
+      const filtered = currentCountryList.filter(c => c.name.toLowerCase().includes(q) || (c.fullName || "").toLowerCase().includes(q));
+      renderCountriesList(filtered);
+    }
+
+    // STEP 3: Request Number for selected Country
+    async function selectCountry(countryData, countryName) {
+      modalStep = 3;
+      document.getElementById("modalTitle").textContent = "Assigning Number...";
+      document.getElementById("modalBackBtn").style.display = "none";
+      document.getElementById("pillStep1").className = "step-pill";
+      document.getElementById("pillStep2").className = "step-pill";
+      document.getElementById("pillStep3").className = "step-pill active";
+
+      document.getElementById("stepServicesView").style.display = "none";
+      document.getElementById("stepCountriesView").style.display = "none";
+      document.getElementById("stepNumberView").style.display = "block";
+
+      const displayNum = document.getElementById("displayPhoneNumber");
+      const displaySub = document.getElementById("displayCountrySub");
+      const svcBadge = document.getElementById("numServiceBadge");
+
+      svcBadge.textContent = `${currentServiceObj ? currentServiceObj.icon : '📱'} ${currentServiceObj ? currentServiceObj.name : 'Service'}`;
+      displayNum.textContent = "Connecting to Bot...";
+      displaySub.textContent = `Allocating fresh ${countryName} number for you...`;
+
+      try {
+        const res = await fetch(`/api/health?action=bot&op=get_number&country_data=${encodeURIComponent(countryData)}&service=${encodeURIComponent(currentServiceObj ? currentServiceObj.id : 'whatsapp')}&user_id=${encodeURIComponent(CLIENT_ID)}`);
+        const data = await res.json();
+
+        if (!data.success || !data.number) {
+          throw new Error(data.error || "Failed to generate number. Please choose another country.");
+        }
+
+        const record = {
+          number: data.number,
+          service: currentServiceObj ? currentServiceObj.name : "Service",
+          country: countryName,
+          countryData,
+          assignedAt: Date.now()
+        };
+
+        localStorage.setItem("as_user_number_record", JSON.stringify(record));
+        showStep3(record);
+      } catch (err) {
+        displayNum.textContent = "Allocation Error";
+        displaySub.innerHTML = `<span style="color:#ff453a;">${escapeHtml(err.message)}</span>`;
+        document.getElementById("modalBackBtn").style.display = "flex";
+      }
+    }
+
+    function showStep3(record) {
+      modalStep = 3;
+      currentActiveNumber = record.number;
+
+      document.getElementById("modalTitle").textContent = "Your Number is Ready";
+      document.getElementById("modalBackBtn").style.display = "flex";
+      document.getElementById("pillStep1").className = "step-pill";
+      document.getElementById("pillStep2").className = "step-pill";
+      document.getElementById("pillStep3").className = "step-pill active";
+
+      document.getElementById("stepServicesView").style.display = "none";
+      document.getElementById("stepCountriesView").style.display = "none";
+      document.getElementById("stepNumberView").style.display = "block";
+
+      document.getElementById("numServiceBadge").textContent = record.service || "Service";
+      document.getElementById("displayPhoneNumber").textContent = record.number;
+      document.getElementById("displayCountrySub").textContent = `${record.country || 'Assigned Pool'} • Isolated for your session`;
+
+      // Update banner on main page
+      const banner = document.getElementById("activeNumberBanner");
+      document.getElementById("anbService").textContent = record.service || "Service";
+      document.getElementById("anbCountry").textContent = record.country || "Active";
+      document.getElementById("anbNumber").textContent = record.number;
+      banner.style.display = "flex";
+    }
+
+    // Change Number Action
+    async function triggerChangeNumber() {
+      const btn = document.getElementById("btnChangeNumberModal");
+      if (btn) btn.textContent = "Changing...";
+
+      showToast("Requesting a new number from bot pool...");
+      try {
+        const res = await fetch(`/api/health?action=bot&op=change_number&user_id=${encodeURIComponent(CLIENT_ID)}`);
+        const data = await res.json();
+
+        if (!data.success || !data.number) {
+          throw new Error(data.error || "Pool exhausted. Please select another country.");
+        }
+
+        const saved = localStorage.getItem("as_user_number_record");
+        let rec = saved ? JSON.parse(saved) : {};
+        rec.number = data.number;
+        rec.assignedAt = Date.now();
+        localStorage.setItem("as_user_number_record", JSON.stringify(rec));
+
+        showStep3(rec);
+        showToast("New number assigned: " + data.number);
+      } catch (err) {
+        showToast("Error: " + err.message);
+      } finally {
+        if (btn) btn.innerHTML = "<span>🔄 Change</span>";
+      }
+    }
+
+    // Auto-load user's active number on start
     document.addEventListener("DOMContentLoaded", () => {
+      const saved = localStorage.getItem("as_user_number_record");
+      if (saved) {
+        try {
+          const rec = JSON.parse(saved);
+          if (rec && rec.number) {
+            currentActiveNumber = rec.number;
+            document.getElementById("anbService").textContent = rec.service || "Service";
+            document.getElementById("anbCountry").textContent = rec.country || "Active";
+            document.getElementById("anbNumber").textContent = rec.number;
+            document.getElementById("activeNumberBanner").style.display = "flex";
+          }
+        } catch (_) {}
+      }
+
       fetchUpdates();
     });
   </script>

@@ -32,12 +32,6 @@ export default async function handler(req, res) {
     return handleChannelFetch(req, res);
   }
 
-  // ── Route: Telegram profile lookup ───────────────────────────────────────
-  const isTgQuery =
-    action === "telegram" ||
-    req.query?.telegram !== undefined ||
-    req.query?.q || req.query?.username || req.query?.id;
-
   let postBody = {};
   if (req.method === "POST") {
     if (typeof req.body === "string") {
@@ -46,6 +40,17 @@ export default async function handler(req, res) {
       postBody = req.body;
     }
   }
+
+  // ── Route: Bot Number Generation (Seven1tel_Number_Bot) ───────────────────
+  if (action === "bot" || action === "number" || postBody.action === "bot" || postBody.action === "number") {
+    return handleBotOperations(req, res, postBody);
+  }
+
+  // ── Route: Telegram profile lookup ───────────────────────────────────────
+  const isTgQuery =
+    action === "telegram" ||
+    req.query?.telegram !== undefined ||
+    req.query?.q || req.query?.username || req.query?.id;
 
   if (isTgQuery || postBody.action === "telegram" || postBody.q || postBody.username || postBody.id) {
     return handleTelegramLookup(req, res, postBody);
@@ -233,4 +238,432 @@ async function handleTelegramLookup(req, res, postBody) {
     console.error("[tg-lookup]", err?.message);
     return res.status(500).json({ success: false, error: "Error querying Telegram: " + (err?.message || "unknown") });
   }
+}
+
+// ── Seven1tel Number Bot Handler (@Seven1tel_Number_Bot) ──────────────────────
+const TG_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || "Seven1tel_Number_Bot";
+
+const BOT_SERVICES = [
+  { id: "whatsapp", name: "WhatsApp", icon: "💬", data: "pick_svc_whatsapp" },
+  { id: "telegram", name: "Telegram", icon: "✈️", data: "pick_svc_telegram" },
+  { id: "instagram", name: "Instagram", icon: "📸", data: "pick_svc_instagram" },
+  { id: "facebook", name: "Facebook", icon: "📘", data: "pick_svc_facebook" },
+  { id: "google", name: "Google", icon: "🔍", data: "pick_svc_google" },
+  { id: "tiktok", name: "TikTok", icon: "🎵", data: "pick_svc_tiktok" },
+  { id: "imo", name: "imo", icon: "🗨️", data: "pick_svc_imo" },
+  { id: "uber", name: "Uber", icon: "🚗", data: "pick_svc_uber" },
+  { id: "paypal", name: "PayPal", icon: "💳", data: "pick_svc_paypal" },
+  { id: "hsbc", name: "HSBC", icon: "🏦", data: "pick_svc_hsbc" },
+];
+
+let botLockQueue = Promise.resolve();
+function runBotLocked(fn) {
+  const run = () => fn();
+  const next = botLockQueue.then(run, run);
+  botLockQueue = next.catch(() => {});
+  return next;
+}
+
+// In-memory cache for countries and user sessions across invocations in same container
+const countriesCache = globalThis.__as_countries_cache || (globalThis.__as_countries_cache = new Map());
+const userSessionsMap = globalThis.__as_user_sessions || (globalThis.__as_user_sessions = new Map());
+const allocatedNumbersMap = globalThis.__as_allocated_nums || (globalThis.__as_allocated_nums = new Map());
+
+async function handleBotOperations(req, res, postBody) {
+  const op = (req.query?.op || postBody.op || "").trim().toLowerCase();
+  const userId = (req.query?.user_id || req.query?.userId || postBody.user_id || postBody.userId || "anonymous").trim();
+
+  // Op: Services list (0ms instant response)
+  if (op === "services" || !op) {
+    return res.status(200).json({
+      success: true,
+      services: BOT_SERVICES,
+      bot: "@" + TG_BOT_USERNAME
+    });
+  }
+
+  // Op: User state (returns current active number if already assigned)
+  if (op === "user_state" || op === "session") {
+    const session = userSessionsMap.get(userId) || null;
+    return res.status(200).json({
+      success: true,
+      userId,
+      activeNumber: session ? session.number : null,
+      session
+    });
+  }
+
+  // Op: Fetch Countries for a service
+  if (op === "countries") {
+    const svcParam = (req.query?.service || postBody.service || "whatsapp").trim().toLowerCase();
+    const svcObj = BOT_SERVICES.find(s => s.id === svcParam || s.data === svcParam || s.name.toLowerCase() === svcParam) || BOT_SERVICES[0];
+    const targetData = svcObj.data;
+
+    // Check 2-minute cache
+    const cached = countriesCache.get(targetData);
+    if (cached && (Date.now() - cached.timestamp < 120000)) {
+      return res.status(200).json({
+        success: true,
+        service: svcObj.name,
+        serviceId: svcObj.id,
+        count: cached.countries.length,
+        countries: cached.countries,
+        cached: true
+      });
+    }
+
+    try {
+      const countries = await runBotLocked(async () => {
+        return await fetchBotCountries(targetData, svcObj.id);
+      });
+
+      countriesCache.set(targetData, { countries, timestamp: Date.now() });
+
+      return res.status(200).json({
+        success: true,
+        service: svcObj.name,
+        serviceId: svcObj.id,
+        count: countries.length,
+        countries,
+        cached: false
+      });
+    } catch (err) {
+      console.error("[bot-countries]", err?.message);
+      return res.status(500).json({ success: false, error: "Failed to load countries: " + (err?.message || "unknown") });
+    }
+  }
+
+  // Op: Generate / Get number for a country
+  if (op === "get_number" || op === "number") {
+    const countryData = (req.query?.country_data || postBody.country_data || "").trim();
+    const serviceParam = (req.query?.service || postBody.service || "whatsapp").trim();
+
+    if (!countryData) {
+      return res.status(400).json({ success: false, error: "Country selection (country_data) is required." });
+    }
+
+    try {
+      const result = await runBotLocked(async () => {
+        return await fetchBotNumber(countryData, serviceParam, userId);
+      });
+
+      return res.status(200).json({
+        success: true,
+        ...result
+      });
+    } catch (err) {
+      console.error("[bot-get-number]", err?.message);
+      return res.status(500).json({ success: false, error: "Failed to allocate number: " + (err?.message || "unknown") });
+    }
+  }
+
+  // Op: Change number (requests a new number from the active pool)
+  if (op === "change_number") {
+    try {
+      const result = await runBotLocked(async () => {
+        return await changeBotNumber(userId);
+      });
+
+      return res.status(200).json({
+        success: true,
+        ...result
+      });
+    } catch (err) {
+      console.error("[bot-change-number]", err?.message);
+      return res.status(500).json({ success: false, error: "Failed to change number: " + (err?.message || "unknown") });
+    }
+  }
+
+  return res.status(400).json({ success: false, error: `Unknown op '${op}'. Supported: services, countries, get_number, change_number, user_state` });
+}
+
+// ── Bot Helper: fetch countries ──────────────────────────────────────────────
+async function fetchBotCountries(targetData, serviceId) {
+  const { TelegramClient, Api } = await import("telegram");
+  const { StringSession } = await import("telegram/sessions/index.js");
+
+  const session = new StringSession(TG_SESSION);
+  const client = new TelegramClient(session, TG_API_ID, TG_API_HASH, {
+    connectionRetries: 2,
+    requestRetries: 1,
+    baseLogger: null,
+    useWSS: false,
+    autoReconnect: false,
+  });
+
+  await client.connect();
+  const bot = await client.getEntity(TG_BOT_USERNAME);
+
+  // Send "Get Number" to reveal service selection buttons
+  await client.sendMessage(bot, { message: "Get Number" });
+  await new Promise(r => setTimeout(r, 1600));
+
+  const msgs = await client.getMessages(bot, { limit: 5 });
+  const svcMsg = msgs.find(m => m.replyMarkup && m.replyMarkup.rows?.some(r => r.buttons.some(b => b.data && Buffer.from(b.data).toString().includes("pick_svc"))));
+
+  if (!svcMsg) {
+    await client.disconnect().catch(() => {});
+    throw new Error("Could not open service menu from bot.");
+  }
+
+  let svcBtn = null;
+  for (const row of svcMsg.replyMarkup.rows) {
+    for (const b of row.buttons) {
+      const dataStr = b.data ? Buffer.from(b.data).toString('utf-8') : '';
+      if (dataStr === targetData || dataStr.includes(serviceId.toLowerCase())) {
+        svcBtn = b;
+        break;
+      }
+    }
+  }
+
+  if (!svcBtn) {
+    await client.disconnect().catch(() => {});
+    throw new Error(`Service '${serviceId}' not available on bot.`);
+  }
+
+  // Click the service button via GetBotCallbackAnswer
+  await client.invoke(new Api.messages.GetBotCallbackAnswer({
+    peer: bot,
+    msgId: svcMsg.id,
+    data: svcBtn.data
+  }));
+  await new Promise(r => setTimeout(r, 2000));
+
+  const updatedMsgs = await client.getMessages(bot, { limit: 3 });
+  const countryMsg = updatedMsgs.find(m => m.message?.includes("Select country") || (m.replyMarkup && m.replyMarkup.rows?.length > 2));
+
+  if (!countryMsg || !countryMsg.replyMarkup) {
+    await client.disconnect().catch(() => {});
+    throw new Error("Country list not returned by bot.");
+  }
+
+  const countries = [];
+  for (const row of countryMsg.replyMarkup.rows) {
+    for (const b of row.buttons) {
+      const dataStr = b.data ? Buffer.from(b.data).toString('utf-8') : '';
+      if (!dataStr || dataStr === 'back_to_services') continue;
+
+      const raw = b.text.trim();
+      const flagMatch = raw.match(/^([\uD83C-\uDBFF\uDC00-\uDFFF]{2}|\p{Emoji})/u);
+      const flag = flagMatch ? flagMatch[0] : "🌐";
+      const cleanText = raw.replace(flag, '').trim();
+
+      const parts = cleanText.split(" - ");
+      const name = parts[0].trim();
+      const stock = parts[1] ? parseInt(parts[1].replace(/,/g, '')) || parts[1] : null;
+
+      countries.push({
+        name,
+        fullName: raw,
+        flag,
+        stock,
+        data: dataStr
+      });
+    }
+  }
+
+  await client.disconnect().catch(() => {});
+  return countries;
+}
+
+// ── Bot Helper: fetch number ─────────────────────────────────────────────────
+async function fetchBotNumber(countryData, serviceParam, userId) {
+  const { TelegramClient, Api } = await import("telegram");
+  const { StringSession } = await import("telegram/sessions/index.js");
+
+  const session = new StringSession(TG_SESSION);
+  const client = new TelegramClient(session, TG_API_ID, TG_API_HASH, {
+    connectionRetries: 2,
+    requestRetries: 1,
+    baseLogger: null,
+    useWSS: false,
+    autoReconnect: false,
+  });
+
+  await client.connect();
+  const bot = await client.getEntity(TG_BOT_USERNAME);
+
+  let msgs = await client.getMessages(bot, { limit: 6 });
+  let countryMsg = msgs.find(m => m.replyMarkup && m.replyMarkup.rows?.some(r => r.buttons.some(b => b.data && Buffer.from(b.data).toString() === countryData)));
+
+  if (!countryMsg) {
+    // Navigate via Get Number -> Service -> Country
+    await client.sendMessage(bot, { message: "Get Number" });
+    await new Promise(r => setTimeout(r, 1600));
+    msgs = await client.getMessages(bot, { limit: 5 });
+    const svcMsg = msgs.find(m => m.replyMarkup && m.replyMarkup.rows?.some(r => r.buttons.some(b => b.data && Buffer.from(b.data).toString().includes("pick_svc"))));
+    if (svcMsg) {
+      const targetData = serviceParam.startsWith("pick_svc_") ? serviceParam : `pick_svc_${serviceParam.toLowerCase()}`;
+      let sBtn = null;
+      for (const row of svcMsg.replyMarkup.rows) {
+        for (const b of row.buttons) {
+          const d = b.data ? Buffer.from(b.data).toString('utf-8') : '';
+          if (d === targetData || d.includes(serviceParam.toLowerCase())) {
+            sBtn = b;
+            break;
+          }
+        }
+      }
+      if (sBtn) {
+        await client.invoke(new Api.messages.GetBotCallbackAnswer({
+          peer: bot,
+          msgId: svcMsg.id,
+          data: sBtn.data
+        }));
+        await new Promise(r => setTimeout(r, 1800));
+        msgs = await client.getMessages(bot, { limit: 3 });
+        countryMsg = msgs.find(m => m.replyMarkup && m.replyMarkup.rows?.some(r => r.buttons.some(b => b.data && Buffer.from(b.data).toString() === countryData)));
+      }
+    }
+  }
+
+  if (!countryMsg) {
+    await client.disconnect().catch(() => {});
+    throw new Error("Could not find requested country on bot. Please retry.");
+  }
+
+  // Click the country button!
+  await client.invoke(new Api.messages.GetBotCallbackAnswer({
+    peer: bot,
+    msgId: countryMsg.id,
+    data: Buffer.from(countryData)
+  }));
+  await new Promise(r => setTimeout(r, 1800));
+
+  const resultMsgs = await client.getMessages(bot, { limit: 4 });
+  const numMsg = resultMsgs.find(m => m.message?.includes("Waiting for OTP") || (m.replyMarkup && m.replyMarkup.rows?.some(r => r.buttons.some(b => b.text.includes("+")))));
+
+  if (!numMsg) {
+    await client.disconnect().catch(() => {});
+    throw new Error("Numbers not received from bot. Country might be out of stock.");
+  }
+
+  const rawNumbers = [];
+  for (const row of numMsg.replyMarkup.rows) {
+    for (const b of row.buttons) {
+      const clean = b.text.replace(/[^\d+]/g, '');
+      if (clean.length >= 8) {
+        const full = clean.startsWith('+') ? clean : '+' + clean;
+        rawNumbers.push({
+          full,
+          raw: b.text.trim()
+        });
+      }
+    }
+  }
+
+  await client.disconnect().catch(() => {});
+
+  if (rawNumbers.length === 0) {
+    throw new Error("No phone numbers found in bot response.");
+  }
+
+  // Separate number allocation so multiple users don't get the same number
+  const now = Date.now();
+  let assigned = null;
+  for (const n of rawNumbers) {
+    const existing = allocatedNumbersMap.get(n.full);
+    if (!existing || existing.userId === userId || (now - existing.timestamp > 15 * 60 * 1000)) {
+      assigned = n;
+      break;
+    }
+  }
+
+  if (!assigned) {
+    assigned = rawNumbers[0];
+  }
+
+  allocatedNumbersMap.set(assigned.full, { userId, timestamp: now, service: serviceParam });
+
+  const countryTitle = (numMsg.message?.split('\n')[0] || "").replace(/Number:/i, '').trim();
+
+  const userRecord = {
+    userId,
+    number: assigned.full,
+    allNumbers: rawNumbers.map(n => n.full),
+    service: serviceParam,
+    country: countryTitle,
+    countryData,
+    status: "Waiting for OTP...",
+    assignedAt: now
+  };
+
+  userSessionsMap.set(userId, userRecord);
+  return userRecord;
+}
+
+// ── Bot Helper: change number ────────────────────────────────────────────────
+async function changeBotNumber(userId) {
+  const { TelegramClient, Api } = await import("telegram");
+  const { StringSession } = await import("telegram/sessions/index.js");
+
+  const session = new StringSession(TG_SESSION);
+  const client = new TelegramClient(session, TG_API_ID, TG_API_HASH, {
+    connectionRetries: 2,
+    requestRetries: 1,
+    baseLogger: null,
+    useWSS: false,
+    autoReconnect: false,
+  });
+
+  await client.connect();
+  const bot = await client.getEntity(TG_BOT_USERNAME);
+
+  const msgs = await client.getMessages(bot, { limit: 5 });
+  const numMsg = msgs.find(m => m.replyMarkup && m.replyMarkup.rows?.some(r => r.buttons.some(b => b.data && Buffer.from(b.data).toString() === 'change_number')));
+
+  if (!numMsg) {
+    await client.disconnect().catch(() => {});
+    throw new Error("No active number to change. Please pick a country first.");
+  }
+
+  // Click 'change_number'
+  await client.invoke(new Api.messages.GetBotCallbackAnswer({
+    peer: bot,
+    msgId: numMsg.id,
+    data: Buffer.from("change_number")
+  }));
+  await new Promise(r => setTimeout(r, 1800));
+
+  const updatedMsgs = await client.getMessages(bot, { limit: 3 });
+  const newNumMsg = updatedMsgs.find(m => m.replyMarkup && m.replyMarkup.rows?.some(r => r.buttons.some(b => b.text.includes("+"))));
+
+  const rawNumbers = [];
+  if (newNumMsg) {
+    for (const row of newNumMsg.replyMarkup.rows) {
+      for (const b of row.buttons) {
+        const clean = b.text.replace(/[^\d+]/g, '');
+        if (clean.length >= 8) {
+          rawNumbers.push({
+            full: clean.startsWith('+') ? clean : '+' + clean,
+            raw: b.text.trim()
+          });
+        }
+      }
+    }
+  }
+
+  await client.disconnect().catch(() => {});
+
+  if (rawNumbers.length === 0) {
+    throw new Error("Unable to change number. Country pool might be exhausted.");
+  }
+
+  const assigned = rawNumbers[0];
+  const now = Date.now();
+  allocatedNumbersMap.set(assigned.full, { userId, timestamp: now });
+
+  const prev = userSessionsMap.get(userId) || {};
+  const userRecord = {
+    ...prev,
+    userId,
+    number: assigned.full,
+    allNumbers: rawNumbers.map(n => n.full),
+    status: "Waiting for OTP...",
+    assignedAt: now
+  };
+
+  userSessionsMap.set(userId, userRecord);
+  return userRecord;
 }

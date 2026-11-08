@@ -26,6 +26,7 @@
     { "source": "/api/nim", "destination": "/api/chat?nim=1" },
     { "source": "/api/telegram", "destination": "/api/health?action=telegram" },
     { "source": "/api/updates", "destination": "/api/health?action=channel" },
+    { "source": "/api/bot", "destination": "/api/health?action=bot" },
     { "source": "/i/:id*", "destination": "/api/i?id=:id*" },
     { "source": "/s/:id*", "destination": "/api/s?id=:id*" }
   ]
