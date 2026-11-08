@@ -10,8 +10,7 @@
     "api/i.js": { "maxDuration": 60 },
     "api/s.js": { "maxDuration": 60 },
     "api/msg.js": { "maxDuration": 60 },
-    "api/vault.js": { "maxDuration": 60 },
-    "api/telegram.js": { "maxDuration": 60 }
+    "api/vault.js": { "maxDuration": 60 }
   },
   "rewrites": [
     { "source": "/chat", "destination": "/chat.html" },

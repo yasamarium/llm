@@ -5,10 +5,6 @@
 const TELEGRAM_API_ID = process.env.TELEGRAM_API_ID || 35328182;
 const TELEGRAM_API_HASH = process.env.TELEGRAM_API_HASH || "24e4690a9b3fa242311bbe5b1586f13c";
 
-export const config = {
-  maxDuration: 60,
-};
-
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
