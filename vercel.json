@@ -10,13 +10,16 @@
     "api/i.js": { "maxDuration": 60 },
     "api/s.js": { "maxDuration": 60 },
     "api/msg.js": { "maxDuration": 60 },
-    "api/vault.js": { "maxDuration": 60 }
+    "api/vault.js": { "maxDuration": 60 },
+    "api/telegram.js": { "maxDuration": 30 }
   },
   "rewrites": [
     { "source": "/chat", "destination": "/chat.html" },
     { "source": "/home", "destination": "/home.html" },
     { "source": "/webeditor", "destination": "/webeditor.html" },
     { "source": "/game", "destination": "/game.html" },
+    { "source": "/telegram", "destination": "/telegram.html" },
+    { "source": "/api/telegram", "destination": "/api/telegram.js" },
     { "source": "/services", "destination": "/services.html" },
     { "source": "/nim", "destination": "/index.html" },
     { "source": "/vault", "destination": "/vault.html" },

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Telegram ID & Profile Checker • AS Cloud</title>
+  <meta name="description" content="Check if any Telegram ID or username exists in real-time. View public profile details, bio, avatar, and verification status silently.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%232AABEE%22/><path d=%22M22 50l48-20-8 44-16-12-8 8v-12l24-18-30 14z%22 fill=%22white%22/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #0a0a0c;
+      --card: #121316;
+      --card-hover: #18191e;
+      --border: #202228;
+      --border-accent: #2AABEE;
+      --text: #f5f5f7;
+      --text-muted: #86868b;
+      --tg: #2AABEE;
+      --tg-dark: #229ED9;
+      --success: #30d158;
+      --danger: #ff453a;
+      --warning: #ff9f0a;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Navbar */
+    .navbar {
+      height: 56px;
+      padding: 0 20px;
+      background: rgba(10, 10, 12, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .nav-logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--tg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(42, 171, 238, 0.35);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-btn.active {
+      color: #fff;
+      background: rgba(42, 171, 238, 0.12);
+      border-color: rgba(42, 171, 238, 0.35);
+    }
+
+    /* Container */
+    .container {
+      max-width: 640px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 18px 80px;
+      flex: 1;
+    }
+
+    .hero-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(42, 171, 238, 0.1);
+      border: 1px solid rgba(42, 171, 238, 0.25);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--tg);
+      margin-bottom: 14px;
+    }
+
+    .hero-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      margin-bottom: 8px;
+    }
+
+    .hero-sub {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* Search Box */
+    .search-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      margin-bottom: 24px;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-card:focus-within {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 3px rgba(42, 171, 238, 0.15);
+    }
+
+    .search-input-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-icon {
+      color: var(--tg);
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 16px;
+      font-family: var(--font);
+    }
+
+    .search-input::placeholder {
+      color: #555;
+    }
+
+    .search-btn {
+      background: var(--tg);
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .search-btn:hover {
+      background: var(--tg-dark);
+      transform: translateY(-1px);
+    }
+
+    .search-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Quick suggestions */
+    .quick-tags {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+
+    .quick-tag-label {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .quick-tag {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--tg);
+      padding: 3px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .quick-tag:hover {
+      background: rgba(42, 171, 238, 0.15);
+      border-color: rgba(42, 171, 238, 0.4);
+    }
+
+    /* Results */
+    #resultSection {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .profile-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+    }
+
+    .profile-banner {
+      height: 90px;
+      background: linear-gradient(135deg, rgba(42, 171, 238, 0.35), rgba(34, 158, 217, 0.1));
+      position: relative;
+    }
+
+    .profile-body {
+      padding: 0 24px 24px;
+      position: relative;
+    }
+
+    .profile-avatar-wrap {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: #111;
+      border: 4px solid var(--card);
+      margin-top: -42px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+    }
+
+    .profile-avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-fallback {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #2AABEE, #1a7bb8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .profile-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .profile-name-group {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .verified-icon {
+      color: var(--tg);
+      display: inline-flex;
+    }
+
+    .profile-username {
+      color: var(--tg);
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 2px;
+      font-family: var(--mono);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-pill.exists {
+      background: rgba(48, 209, 88, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(48, 209, 88, 0.3);
+    }
+
+    .status-pill.not-found {
+      background: rgba(255, 69, 58, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(255, 69, 58, 0.3);
+    }
+
+    .status-pill.bot {
+      background: rgba(255, 159, 10, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(255, 159, 10, 0.3);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .profile-bio {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #d1d1d6;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin: 14px 0 20px;
+      word-break: break-word;
+    }
+
+    .profile-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+
+    .stat-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+    }
+
+    .action-btn-primary {
+      background: var(--tg);
+      color: #fff;
+    }
+
+    .action-btn-primary:hover {
+      background: var(--tg-dark);
+      transform: translateY(-1px);
+    }
+
+    .action-btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      border: 1px solid var(--border);
+    }
+
+    .action-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .silent-note {
+      text-align: center;
+      color: #555;
+      font-size: 11.5px;
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation (AI, Messager, Game, Telegram Only) -->
+  <nav class="navbar">
+    <a href="/nim" class="nav-brand">
+      <div class="nav-logo-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+          <path d="M22 50l48-20-8 44-16-12-8 8v-12l24-18-30 14z" transform="scale(0.35) translate(4, 4)"/>
+        </svg>
+      </div>
+      <span>Telegram Check</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="/nim" class="nav-btn" title="NVIDIA NIM AI">AI</a>
+      <a href="/home" class="nav-btn" title="Live Messaging">Messager</a>
+      <a href="/game" class="nav-btn" title="3D Voxel Game">Game</a>
+      <a href="/telegram" class="nav-btn active" title="Telegram Profile & ID Checker">Telegram</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container">
+    <div class="hero-header">
+      <div class="hero-badge">
+        <span>⚡ Silent Lookup Engine</span>
+      </div>
+      <h1 class="hero-title">Telegram Profile & ID Checker</h1>
+      <p class="hero-sub">Enter any Telegram username, numeric ID, or profile link to verify existence and inspect public profile data silently.</p>
+    </div>
+
+    <!-- Search Input Form -->
+    <div class="search-card">
+      <form id="searchForm" onsubmit="event.preventDefault(); performLookup();">
+        <div class="search-input-group">
+          <div class="search-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <input 
+            type="text" 
+            id="queryInput" 
+            class="search-input" 
+            placeholder="e.g. @durov, botfather, 123456789..." 
+            autocomplete="off" 
+            autofocus 
+            required
+          />
+          <button type="submit" id="searchBtn" class="search-btn">
+            <span id="btnText">Check</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Quick Suggestion Tags -->
+      <div class="quick-tags">
+        <span class="quick-tag-label">Try:</span>
+        <button class="quick-tag" onclick="setQuery('durov')">@durov</button>
+        <button class="quick-tag" onclick="setQuery('botfather')">@botfather</button>
+        <button class="quick-tag" onclick="setQuery('telegram')">@telegram</button>
+      </div>
+    </div>
+
+    <!-- Result Card -->
+    <div id="resultSection">
+      <div class="profile-card" id="profileCard">
+        <div class="profile-banner"></div>
+        <div class="profile-body">
+          <div class="profile-avatar-wrap" id="avatarWrap" onclick="viewPhoto()">
+            <div id="avatarPlaceholder" class="avatar-fallback">U</div>
+            <img id="avatarImg" src="" alt="Avatar" style="display: none;" />
+          </div>
+
+          <div class="profile-header-row">
+            <div class="profile-name-group">
+              <h2 class="profile-name" id="profileName">
+                <span id="nameText">User Name</span>
+                <span id="verifiedBadge" class="verified-icon" style="display: none;" title="Verified Account">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#2AABEE">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </span>
+              </h2>
+              <div class="profile-username" id="profileHandle">@username</div>
+            </div>
+
+            <div id="statusBadge" class="status-pill exists">
+              <span class="status-dot"></span>
+              <span id="statusText">Active</span>
+            </div>
+          </div>
+
+          <div class="profile-bio" id="profileBio">Bio information will appear here.</div>
+
+          <div class="profile-stats-grid">
+            <div class="stat-box">
+              <div class="stat-label">Entity Type</div>
+              <div class="stat-val" id="statType">User Account</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Extra Info</div>
+              <div class="stat-val" id="statExtra">—</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Resolution API</div>
+              <div class="stat-val" style="color:#2AABEE; font-family:var(--mono); font-size:12px;">App 35328182</div>
+            </div>
+          </div>
+
+          <div class="profile-actions">
+            <a id="btnOpenTg" href="#" target="_blank" rel="noopener noreferrer" class="action-btn action-btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22 50l48-20-8 44-16-12-8 8v-12l24-18-30 14z" transform="scale(0.35) translate(4, 4)"/>
+              </svg>
+              <span>Open in Telegram</span>
+            </a>
+            <button onclick="copyProfileLink()" class="action-btn action-btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="copyBtnText">Copy Link</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="silent-note">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span>Silent query: Zero messages or notifications are ever sent to this account.</span>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentPhotoUrl = null;
+    let currentTgLink = '#';
+
+    function setQuery(username) {
+      document.getElementById('queryInput').value = username;
+      performLookup();
+    }
+
+    async function performLookup() {
+      const input = document.getElementById('queryInput');
+      const q = input.value.trim();
+      if (!q) return;
+
+      const btn = document.getElementById('searchBtn');
+      const btnText = document.getElementById('btnText');
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span>';
+
+      const resultSection = document.getElementById('resultSection');
+
+      try {
+        const res = await fetch(`/api/telegram?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        if (!data.success && data.error) {
+          alert(data.error);
+          return;
+        }
+
+        renderResult(data);
+        resultSection.style.display = 'block';
+      } catch (err) {
+        alert('Network error while querying Telegram: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btnText.innerText = 'Check';
+      }
+    }
+
+    function renderResult(data) {
+      const nameText = document.getElementById('nameText');
+      const profileHandle = document.getElementById('profileHandle');
+      const profileBio = document.getElementById('profileBio');
+      const verifiedBadge = document.getElementById('verifiedBadge');
+      const statusBadge = document.getElementById('statusBadge');
+      const statusText = document.getElementById('statusText');
+      const statType = document.getElementById('statType');
+      const statExtra = document.getElementById('statExtra');
+      const avatarImg = document.getElementById('avatarImg');
+      const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+      const btnOpenTg = document.getElementById('btnOpenTg');
+
+      if (!data.exists) {
+        nameText.innerText = data.username || data.query;
+        profileHandle.innerText = 'Not Found / Available';
+        profileBio.innerText = data.message || 'This username does not exist or has been deleted/released on Telegram.';
+        verifiedBadge.style.display = 'none';
+
+        statusBadge.className = 'status-pill not-found';
+        statusText.innerText = 'Does Not Exist';
+
+        statType.innerText = 'Unregistered';
+        statExtra.innerText = 'Available / Inactive';
+
+        avatarImg.style.display = 'none';
+        avatarPlaceholder.style.display = 'flex';
+        avatarPlaceholder.innerText = '✕';
+        avatarPlaceholder.style.background = 'linear-gradient(135deg, #ff453a, #b31d14)';
+
+        btnOpenTg.href = `https://t.me/${data.query.replace('@', '')}`;
+        currentTgLink = btnOpenTg.href;
+        currentPhotoUrl = null;
+        return;
+      }
+
+      // User / Entity Exists
+      nameText.innerText = data.name || data.username;
+      profileHandle.innerText = data.username || `ID: ${data.id}`;
+      profileBio.innerText = data.bio || 'No public bio set.';
+      verifiedBadge.style.display = data.verified ? 'inline-flex' : 'none';
+
+      // Status pill
+      if (data.type === 'bot') {
+        statusBadge.className = 'status-pill bot';
+        statusText.innerText = 'Verified Bot';
+      } else {
+        statusBadge.className = 'status-pill exists';
+        statusText.innerText = 'Active Profile';
+      }
+
+      // Entity type
+      const typeLabels = {
+        user: 'User Profile',
+        channel: 'Telegram Channel',
+        group: 'Supergroup / Chat',
+        bot: 'Automated Bot',
+        numeric_id: 'Numerical User ID'
+      };
+      statType.innerText = typeLabels[data.type] || 'User Profile';
+      statExtra.innerText = data.extra || (data.verified ? 'Official Account' : 'Public Profile');
+
+      // Avatar
+      if (data.photo) {
+        avatarImg.src = data.photo;
+        avatarImg.style.display = 'block';
+        avatarPlaceholder.style.display = 'none';
+        currentPhotoUrl = data.photo;
+      } else {
+        avatarImg.style.display = 'none';
+        avatarPlaceholder.style.display = 'flex';
+        avatarPlaceholder.innerText = data.avatarPlaceholder || 'U';
+        avatarPlaceholder.style.background = 'linear-gradient(135deg, #2AABEE, #1a7bb8)';
+        currentPhotoUrl = null;
+      }
+
+      // Action Link
+      btnOpenTg.href = data.link || `https://t.me/${(data.username || '').replace('@', '')}`;
+      currentTgLink = btnOpenTg.href;
+    }
+
+    function viewPhoto() {
+      if (currentPhotoUrl) {
+        window.open(currentPhotoUrl, '_blank');
+      }
+    }
+
+    function copyProfileLink() {
+      navigator.clipboard.writeText(currentTgLink).then(() => {
+        const txt = document.getElementById('copyBtnText');
+        txt.innerText = 'Copied!';
+        setTimeout(() => { txt.innerText = 'Copy Link'; }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
