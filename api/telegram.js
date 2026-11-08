@@ -6,11 +6,11 @@ const TELEGRAM_API_ID = process.env.TELEGRAM_API_ID || 35328182;
 const TELEGRAM_API_HASH = process.env.TELEGRAM_API_HASH || "24e4690a9b3fa242311bbe5b1586f13c";
 
 export const config = {
-  maxDuration: 30,
+  maxDuration: 60,
 };
 
 export default async function handler(req, res) {
-  // CORS
+  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -21,10 +21,19 @@ export default async function handler(req, res) {
 
   let query = "";
   if (req.method === "GET") {
-    query = req.query.id || req.query.q || req.query.username || "";
+    query = (req.query && (req.query.id || req.query.q || req.query.username)) || "";
   } else if (req.method === "POST") {
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
-    query = body.id || body.q || body.username || "";
+    let body = {};
+    if (typeof req.body === "string") {
+      try {
+        body = JSON.parse(req.body);
+      } catch (_) {
+        body = {};
+      }
+    } else if (req.body && typeof req.body === "object") {
+      body = req.body;
+    }
+    query = (body && (body.id || body.q || body.username)) || "";
   }
 
   query = (query || "").trim();
