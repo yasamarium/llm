@@ -142,18 +142,21 @@
       position: absolute;
       top: calc(100% + 10px);
       left: 0;
-      width: 320px;
-      background: rgba(13, 15, 22, 0.96);
-      backdrop-filter: blur(28px) saturate(190%);
-      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      width: 440px;
+      max-width: calc(100vw - 20px);
+      box-sizing: border-box;
+      background: rgba(11, 13, 20, 0.97);
+      backdrop-filter: blur(32px) saturate(200%);
+      -webkit-backdrop-filter: blur(32px) saturate(200%);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 16px;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(99, 102, 241, 0.15);
-      padding: 14px;
+      border-radius: 18px;
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(99, 102, 241, 0.18);
+      padding: 16px;
       display: none;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       z-index: 1000;
+      overflow: hidden;
       animation: modalSpring 0.22s var(--ease-spring) forwards;
     }
 
@@ -161,8 +164,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 4px 6px 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 2px 4px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .apps-panel-title {
@@ -185,64 +188,77 @@
 
     .apps-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .app-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 9px;
-      border-radius: 10px;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
       text-decoration: none;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid transparent;
-      transition: all 0.16s ease;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      min-width: 0;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .app-item:hover {
-      background: rgba(99, 102, 241, 0.12);
-      border-color: rgba(99, 102, 241, 0.35);
-      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
     }
 
     .app-item.active {
-      background: rgba(99, 102, 241, 0.2);
+      background: rgba(99, 102, 241, 0.16);
       border-color: rgba(99, 102, 241, 0.5);
     }
 
     .app-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
       flex-shrink: 0;
+      box-sizing: border-box;
     }
 
     .app-meta {
       display: flex;
       flex-direction: column;
+      min-width: 0;
+      flex: 1;
       overflow: hidden;
     }
 
     .app-name {
-      font-size: 12.5px;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
+      letter-spacing: -0.2px;
     }
 
     .app-desc {
-      font-size: 10px;
+      font-size: 11px;
       color: var(--text-muted);
       white-space: nowrap;
       text-overflow: ellipsis;
+      overflow: hidden;
+      margin-top: 2px;
+    }
       overflow: hidden;
     }
 
@@ -1013,35 +1029,75 @@
           </div>
           <div class="apps-grid">
             <a href="/" class="app-item">
-              <div class="app-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">💬</div>
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.35) 100%); border: 1px solid rgba(16, 185, 129, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="3.5" fill="#34d399"/>
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
               <div class="app-meta">
                 <div class="app-name">AI Intelligence</div>
                 <div class="app-desc">Conversational LLM</div>
               </div>
             </a>
+
             <a href="/music" class="app-item active">
-              <div class="app-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);">🎵</div>
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(99, 102, 241, 0.35) 100%); border: 1px solid rgba(139, 92, 246, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="10" width="2.5" height="4" rx="1.25" fill="#a78bfa"/>
+                  <rect x="7" y="6" width="2.5" height="12" rx="1.25" fill="#a78bfa"/>
+                  <rect x="11" y="3" width="2.5" height="18" rx="1.25" fill="#c4b5fd"/>
+                  <rect x="15" y="7" width="2.5" height="10" rx="1.25" fill="#a78bfa"/>
+                  <rect x="19" y="10" width="2.5" height="4" rx="1.25" fill="#a78bfa"/>
+                </svg>
+              </div>
               <div class="app-meta">
                 <div class="app-name">Audio Studio</div>
                 <div class="app-desc">Stream & Lossless MP3</div>
               </div>
             </a>
+
             <a href="/updates" class="app-item">
-              <div class="app-icon" style="background: linear-gradient(135deg, #2AABEE 0%, #0077b6 100%);">📱</div>
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(42, 171, 238, 0.22) 0%, rgba(0, 119, 182, 0.35) 100%); border: 1px solid rgba(42, 171, 238, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 20h20"/>
+                  <path d="M5 20l5-14 4 14"/>
+                  <path d="M7.5 13h5"/>
+                  <path d="M12 6V3"/>
+                  <circle cx="12" cy="3" r="1" fill="#38bdf8"/>
+                  <path d="M16 4a5 5 0 0 1 0 7"/>
+                  <path d="M18.5 2a8.5 8.5 0 0 1 0 11"/>
+                </svg>
+              </div>
               <div class="app-meta">
                 <div class="app-name">Telecom Relay</div>
                 <div class="app-desc">Virtual Numbers & OTP</div>
               </div>
             </a>
+
             <a href="/webeditor" class="app-item">
-              <div class="app-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">💻</div>
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.35) 100%); border: 1px solid rgba(245, 158, 11, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 18 22 12 16 6"/>
+                  <polyline points="8 6 2 12 8 18"/>
+                  <line x1="14" y1="4" x2="10" y2="20"/>
+                </svg>
+              </div>
               <div class="app-meta">
                 <div class="app-name">Code Studio</div>
                 <div class="app-desc">HTML/CSS/JS Sandbox</div>
               </div>
             </a>
+
             <a href="/game" class="app-item">
-              <div class="app-icon" style="background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);">🎮</div>
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.22) 0%, rgba(190, 24, 93, 0.35) 100%); border: 1px solid rgba(236, 72, 153, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="6" width="20" height="12" rx="4"/>
+                  <path d="M6 12h4M8 10v4"/>
+                  <circle cx="16" cy="10" r="1" fill="#f472b6"/>
+                  <circle cx="18" cy="12" r="1" fill="#f472b6"/>
+                </svg>
+              </div>
               <div class="app-meta">
                 <div class="app-name">Voxel Arena</div>
                 <div class="app-desc">3D Arcade Game</div>
