@@ -22,6 +22,7 @@
     { "source": "/nim", "destination": "/index.html" },
     { "source": "/vault", "destination": "/vault.html" },
     { "source": "/api/nim", "destination": "/api/chat?nim=1" },
+    { "source": "/api/telegram", "destination": "/api/health?action=telegram" },
     { "source": "/i/:id*", "destination": "/api/i?id=:id*" },
     { "source": "/s/:id*", "destination": "/api/s?id=:id*" }
   ]
