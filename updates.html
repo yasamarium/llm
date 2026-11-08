@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Live Channel Updates • AS Cloud</title>
+  <meta name="description" content="Minimalist real-time updates feed from private Telegram channel.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%232AABEE%22/><path d=%22M22 50l48-20-8 44-16-12-8 8v-12l24-18-30 14z%22 fill=%22white%22/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #0a0a0c;
+      --card: #111215;
+      --card-hover: #16181d;
+      --border: #1e2026;
+      --border-accent: rgba(42, 171, 238, 0.35);
+      --text: #f5f5f7;
+      --text-muted: #86868b;
+      --tg: #2AABEE;
+      --tg-dark: #229ED9;
+      --tg-glow: rgba(42, 171, 238, 0.15);
+      --success: #30d158;
+      --danger: #ff453a;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Navbar */
+    .navbar {
+      height: 56px;
+      padding: 0 18px;
+      background: rgba(10, 10, 12, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .nav-logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--tg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(42, 171, 238, 0.35);
+      flex-shrink: 0;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-btn {
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 500;
+      text-decoration: none;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-btn.nav-btn-active {
+      color: var(--tg);
+      background: rgba(42, 171, 238, 0.1);
+      border-color: rgba(42, 171, 238, 0.3);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+      flex: 1;
+    }
+
+    /* Header Strip */
+    .feed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .feed-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .feed-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feed-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      display: inline-block;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .feed-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Refresh Button */
+    .refresh-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      background: rgba(42, 171, 238, 0.12);
+      border: 1px solid rgba(42, 171, 238, 0.35);
+      border-radius: 12px;
+      color: var(--tg);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .refresh-btn:hover:not(:disabled) {
+      background: rgba(42, 171, 238, 0.22);
+      border-color: var(--tg);
+      transform: translateY(-1px);
+    }
+
+    .refresh-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .refresh-icon {
+      width: 15px;
+      height: 15px;
+      transition: transform 0.4s ease;
+    }
+
+    .refresh-btn.spinning .refresh-icon {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Feed List */
+    .feed-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Card */
+    .msg-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 18px;
+      transition: border-color 0.18s ease, transform 0.15s ease;
+      position: relative;
+    }
+
+    .msg-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: var(--card-hover);
+    }
+
+    .msg-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .msg-time-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .msg-time-badge svg {
+      opacity: 0.7;
+    }
+
+    .msg-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag-badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .tag-media {
+      background: rgba(255, 159, 10, 0.12);
+      border: 1px solid rgba(255, 159, 10, 0.3);
+      color: #ff9f0a;
+    }
+
+    .tag-id {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: #666;
+      font-family: var(--mono);
+      font-size: 10.5px;
+    }
+
+    .msg-body {
+      font-size: 14.5px;
+      line-height: 1.55;
+      color: #eaeaea;
+      word-break: break-word;
+      white-space: pre-wrap;
+      font-family: var(--font);
+    }
+
+    /* Highlighted Code / OTP inside message */
+    .highlight-otp {
+      background: rgba(42, 171, 238, 0.12);
+      border: 1px solid rgba(42, 171, 238, 0.35);
+      color: #79d4ff;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 13.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin: 2px 0;
+      transition: all 0.15s ease;
+    }
+
+    .highlight-otp:hover {
+      background: rgba(42, 171, 238, 0.25);
+      border-color: var(--tg);
+    }
+
+    .msg-footer {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .copy-msg-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      font-family: var(--font);
+    }
+
+    .copy-msg-btn:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* Loading Skeletons */
+    .skeleton-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .skeleton-line {
+      height: 14px;
+      background: linear-gradient(90deg, #18191e 25%, #22242c 50%, #18191e 75%);
+      background-size: 200% 100%;
+      border-radius: 6px;
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* States (Empty & Error) */
+    .state-box {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+
+    .state-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .state-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .state-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 380px;
+      margin: 0 auto 16px;
+      line-height: 1.5;
+    }
+
+    .state-retry-btn {
+      background: var(--tg);
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .state-retry-btn:hover {
+      background: var(--tg-dark);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(50px);
+      background: #1c1d22;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 16px 12px 60px; }
+      .feed-title { font-size: 18px; }
+      .nav-links .nav-btn { padding: 5px 8px; font-size: 11.5px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="/nim" class="nav-brand">
+      <div class="nav-logo-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="white">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span>AS Cloud</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="/nim" class="nav-btn" title="NVIDIA NIM AI">AI</a>
+      <a href="/home" class="nav-btn" title="Live Messaging">Messager</a>
+      <a href="/game" class="nav-btn" title="3D Voxel Game">Game</a>
+      <a href="/telegram" class="nav-btn" title="Telegram Checker">Telegram</a>
+      <a href="/updates" class="nav-btn nav-btn-active" title="Live Feed">Updates</a>
+    </div>
+  </nav>
+
+  <!-- Feed Container -->
+  <main class="container">
+    <div class="feed-header">
+      <div class="feed-title-wrap">
+        <div class="feed-title-row">
+          <span class="live-dot" title="Live MTProto Connection"></span>
+          <h1 class="feed-title" id="channelHeading">Live Updates</h1>
+        </div>
+        <div class="feed-subtitle" id="feedSubtitle">Connecting to live channel...</div>
+      </div>
+
+      <button class="refresh-btn" id="refreshBtn" onclick="triggerRefresh()">
+        <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span id="refreshBtnText">Refresh</span>
+      </button>
+    </div>
+
+    <!-- Feed Items Container -->
+    <div class="feed-list" id="feedList">
+      <!-- Loading Skeleton -->
+      <div class="skeleton-card">
+        <div class="skeleton-line" style="width: 30%;"></div>
+        <div class="skeleton-line" style="width: 85%;"></div>
+        <div class="skeleton-line" style="width: 60%;"></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-line" style="width: 25%;"></div>
+        <div class="skeleton-line" style="width: 90%;"></div>
+        <div class="skeleton-line" style="width: 70%;"></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-line" style="width: 35%;"></div>
+        <div class="skeleton-line" style="width: 75%;"></div>
+        <div class="skeleton-line" style="width: 50%;"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+  <script>
+    let isLoading = false;
+    let lastFetchTime = 0;
+    const COOLDOWN_SEC = 5; // smooth 5s refresh throttle for responsive experience
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatRelativeTime(timestamp) {
+      if (!timestamp) return "Recently";
+      const now = Date.now();
+      const diffSec = Math.floor((now - timestamp) / 1000);
+
+      if (diffSec < 15) return "Just now";
+      if (diffSec < 60) return `${diffSec}s ago`;
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const diffHour = Math.floor(diffMin / 60);
+      if (diffHour < 24) return `${diffHour}h ago`;
+      const diffDays = Math.floor(diffHour / 24);
+      return `${diffDays}d ago`;
+    }
+
+    function formatMessageText(text) {
+      let safe = escapeHtml(text);
+
+      // Detect OTP / Codes like "code: 350-283" or "code is 123456"
+      safe = safe.replace(/(code:?\s*|code is\s*|verification code:?\s*)([0-9]{3,4}[-\s]?[0-9]{3,4}|[0-9]{4,8})/gi, (match, prefix, code) => {
+        const cleanCode = code.replace(/[\s-]/g, "");
+        return `${prefix}<span class="highlight-otp" onclick="copySnippet('${cleanCode}', event)" title="Click to copy code">${code} 📋</span>`;
+      });
+
+      return safe;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+
+    function copySnippet(text, event) {
+      if (event) event.stopPropagation();
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Code copied: " + text);
+      }).catch(() => {
+        showToast("Failed to copy");
+      });
+    }
+
+    function copyFullMessage(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Message copied to clipboard");
+      }).catch(() => {
+        showToast("Failed to copy");
+      });
+    }
+
+    async function fetchUpdates() {
+      if (isLoading) return;
+      isLoading = true;
+
+      const refreshBtn = document.getElementById("refreshBtn");
+      const refreshBtnText = document.getElementById("refreshBtnText");
+      const feedList = document.getElementById("feedList");
+      const feedSubtitle = document.getElementById("feedSubtitle");
+      const channelHeading = document.getElementById("channelHeading");
+
+      refreshBtn.classList.add("spinning");
+      refreshBtn.disabled = true;
+      refreshBtnText.textContent = "Fetching...";
+
+      try {
+        const res = await fetch("/api/health?action=channel&limit=30");
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Failed to fetch channel updates.");
+        }
+
+        lastFetchTime = Date.now();
+        if (data.title) channelHeading.textContent = data.title;
+        feedSubtitle.textContent = `Updated ${new Date().toLocaleTimeString()} • ${data.count || 0} recent updates`;
+
+        if (!data.messages || data.messages.length === 0) {
+          feedList.innerHTML = `
+            <div class="state-box">
+              <div class="state-icon">📭</div>
+              <div class="state-title">No updates yet</div>
+              <div class="state-desc">There are no recent messages in this channel. Check back soon!</div>
+              <button class="state-retry-btn" onclick="fetchUpdates()">Refresh</button>
+            </div>
+          `;
+          return;
+        }
+
+        feedList.innerHTML = data.messages.map(m => {
+          const rawText = m.text || "";
+          const formatted = formatMessageText(rawText);
+          const timeRel = formatRelativeTime(m.date);
+          const fullTime = m.date ? new Date(m.date).toLocaleString() : "";
+          const safeRawForAttr = encodeURIComponent(rawText);
+
+          return `
+            <div class="msg-card">
+              <div class="msg-meta">
+                <div class="msg-time-badge" title="${fullTime}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span>${timeRel}</span>
+                </div>
+                <div class="msg-badges">
+                  ${m.hasMedia ? '<span class="tag-badge tag-media">📎 Media</span>' : ''}
+                  <span class="tag-badge tag-id">#${m.id}</span>
+                </div>
+              </div>
+
+              <div class="msg-body">${formatted || '<span style="color:#666;">(Media message)</span>'}</div>
+
+              <div class="msg-footer">
+                <button class="copy-msg-btn" onclick="copyFullMessage(decodeURIComponent('${safeRawForAttr}'))">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  Copy Text
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+      } catch (err) {
+        console.error("Updates fetch error:", err);
+        feedSubtitle.textContent = "Error fetching channel feed";
+        feedList.innerHTML = `
+          <div class="state-box">
+            <div class="state-icon">⚠️</div>
+            <div class="state-title">Unable to load updates</div>
+            <div class="state-desc">${escapeHtml(err.message)}</div>
+            <button class="state-retry-btn" onclick="fetchUpdates()">Try Again</button>
+          </div>
+        `;
+      } finally {
+        isLoading = false;
+        refreshBtn.classList.remove("spinning");
+        refreshBtnText.textContent = "Refresh";
+        refreshBtn.disabled = false;
+      }
+    }
+
+    function triggerRefresh() {
+      const now = Date.now();
+      const elapsed = (now - lastFetchTime) / 1000;
+      if (elapsed < COOLDOWN_SEC) {
+        const remaining = Math.ceil(COOLDOWN_SEC - elapsed);
+        showToast(`Please wait ${remaining}s before refreshing`);
+        return;
+      }
+      fetchUpdates();
+    }
+
+    // Auto-fetch on page load
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchUpdates();
+    });
+  </script>
+</body>
+</html>
