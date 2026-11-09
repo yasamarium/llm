@@ -10,13 +10,16 @@
     "api/proxy-image.js": { "maxDuration": 60 },
     "api/i.js": { "maxDuration": 60 },
     "api/s.js": { "maxDuration": 60 },
-    "api/msg.js": { "maxDuration": 60 }
+    "api/msg.js": { "maxDuration": 60 },
+    "api/youtube.js": { "maxDuration": 60 }
   },
   "rewrites": [
     { "source": "/", "destination": "/chat.html" },
     { "source": "/chat", "destination": "/chat.html" },
     { "source": "/insta", "destination": "/insta.html" },
     { "source": "/download", "destination": "/insta.html" },
+    { "source": "/yt", "destination": "/yt.html" },
+    { "source": "/youtube", "destination": "/youtube.html" },
     { "source": "/music", "destination": "/music.html" },
     { "source": "/home", "destination": "/home.html" },
     { "source": "/webeditor", "destination": "/webeditor.html" },
@@ -24,6 +27,7 @@
     { "source": "/telegram", "destination": "/telegram.html" },
     { "source": "/updates", "destination": "/updates.html" },
     { "source": "/services", "destination": "/services.html" },
+    { "source": "/api/youtube", "destination": "/api/youtube.js" },
     { "source": "/api/music", "destination": "/api/health?action=music" },
     { "source": "/api/telegram", "destination": "/api/health?action=telegram" },
     { "source": "/api/updates", "destination": "/api/health?action=channel" },

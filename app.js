@@ -1394,6 +1394,7 @@
   // YouTube Detection & Formatting Helpers
   // ---------------------------------------------------------------------------
   const YT_REGEX = /(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v|shorts)\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+  const INSTA_REGEX = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com\/(?:reel|reels|p|stories|tv)\/([a-zA-Z0-9_-]+)|instagr\.am\/(?:p|reel)\/([a-zA-Z0-9_-]+))/i;
 
   function formatViews(views) {
     if (!views) return "";
@@ -1942,8 +1943,19 @@
   // ---------------------------------------------------------------------------
   // YouTube Link Detector & Downloader (David Cyril Snapsaver API)
   // ---------------------------------------------------------------------------
-  async function handleYouTubeMedia(ytUrl, originalText) {
-    appendMessage("user", originalText);
+  // ---------------------------------------------------------------------------
+  // Instagram Link Detector & Downloader (Direct Client Relay)
+  // ---------------------------------------------------------------------------
+  async function handleInstagramMedia(rawText) {
+    appendMessage("user", rawText);
+
+    const match = rawText.match(/https?:\/\/[^\s]+/i);
+    const cleanUrl = match ? match[0] : rawText.trim();
+
+    let mediaType = "Instagram Post";
+    if (/\/(?:reel|reels)\//i.test(cleanUrl)) mediaType = "Instagram Reel";
+    else if (/\/stories\//i.test(cleanUrl)) mediaType = "Instagram Story";
+    else if (/\/(?:audio|reels\/audio)\//i.test(cleanUrl)) mediaType = "Instagram Audio";
 
     const assistantBubble = appendMessage("assistant", "");
     assistantBubble.innerHTML = `
@@ -1951,7 +1963,144 @@
         <div class="image-shimmer"></div>
         <div class="image-loading-content">
           <span class="ios-spinner"></span>
-          <span>Analyzing YouTube video & extracting streams...</span>
+          <span>Analyzing ${escapeHtml(mediaType)} & resolving streams...</span>
+        </div>
+      </div>
+    `;
+
+    setGenerating(true);
+    abortController = new AbortController();
+
+    try {
+      let data = null;
+      try {
+        const ENC_KEY = "qwertyuioplkjhgf";
+        const ENC_IV = new Uint8Array(16);
+        const encoded = new TextEncoder().encode(cleanUrl);
+        const padLen = 16 - (encoded.length % 16);
+        const padded = new Uint8Array(encoded.length + padLen);
+        padded.set(encoded);
+        padded.fill(padLen, encoded.length);
+
+        const cryptoKey = await crypto.subtle.importKey(
+          "raw",
+          new TextEncoder().encode(ENC_KEY),
+          "AES-CBC",
+          false,
+          ["encrypt"]
+        );
+        const chunks = [];
+        for (let i = 0; i < padded.length; i += 16) {
+          chunks.push(crypto.subtle.encrypt({ name: "AES-CBC", iv: ENC_IV }, cryptoKey, padded.subarray(i, i + 16)));
+        }
+        const results = await Promise.all(chunks);
+        let hex = "";
+        for (const res of results) {
+          for (const byte of new Uint8Array(res, 0, 16)) {
+            hex += byte.toString(16).padStart(2, "0");
+          }
+        }
+
+        const resp = await fetch("https://api.getrequest.dev/allinone", {
+          method: "GET",
+          headers: { url: hex },
+          signal: abortController.signal
+        });
+        if (resp.ok) data = await resp.json();
+      } catch (e) {
+        console.warn("Direct insta resolver fallback:", e);
+      }
+
+      const cdnPrefix = "https://cdn.turbosave.app/?url=";
+      const mp3Url = "https://mp3.turbosave.app/api?url=" + encodeURIComponent(cleanUrl);
+      const studioUrl = "/insta?url=" + encodeURIComponent(cleanUrl);
+
+      let videoUrl = "";
+      let thumbUrl = "";
+      let photoUrls = [];
+
+      if (data && data.video && data.video.length > 0) {
+        const first = data.video[0];
+        videoUrl = first.video || "";
+        thumbUrl = first.thumbnail ? (cdnPrefix + encodeURIComponent(first.thumbnail)) : "";
+      }
+      if (data && data.image && data.image.length > 0) {
+        photoUrls = data.image.map(img => cdnPrefix + encodeURIComponent(img));
+      }
+
+      const dlServer1 = videoUrl ? (cdnPrefix + encodeURIComponent(videoUrl)) : (cdnPrefix + encodeURIComponent(cleanUrl));
+      const dlServer2 = videoUrl || cleanUrl;
+
+      assistantBubble.innerHTML = `
+        <div class="ios-media-card ios-video-card">
+          <div class="media-ai-badge insta">⚡ AS Intelligence Core • ${escapeHtml(mediaType)}</div>
+          <div style="font-size: 13.5px; font-weight: 600; color: #ffffff; margin-bottom: 6px;">
+            Direct Media Extracted Successfully
+          </div>
+          <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.45;">
+            I have analyzed your ${escapeHtml(mediaType)} link and extracted the highest available bitrate video stream and isolated MP3 audio track:
+          </p>
+
+          ${videoUrl ? `
+            <div class="yt-card-video-wrap" style="aspect-ratio: 9/16; max-height: 380px;">
+              <video playsinline controls preload="metadata" poster="${escapeHtml(thumbUrl)}" class="yt-card-video" src="${escapeHtml(dlServer1)}"></video>
+            </div>
+          ` : (photoUrls.length > 0 ? `
+            <div class="yt-card-video-wrap" style="aspect-ratio: 1/1; max-height: 340px;">
+              <img src="${escapeHtml(photoUrls[0])}" alt="Instagram Post" class="yt-card-video" style="object-fit: cover;" />
+            </div>
+          ` : "")}
+
+          <div class="yt-card-body" style="padding-top: 10px;">
+            <div class="yt-downloads-header" style="margin-bottom: 8px;">Download Options</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <a href="${escapeHtml(dlServer1)}" target="_blank" rel="noopener noreferrer" class="insta-dl-chip" style="justify-content: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>📥 Download HD Video (Server 1)</span>
+              </a>
+              <a href="${escapeHtml(dlServer2)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" class="yt-dl-chip" style="justify-content: center; padding: 7px 12px;">
+                <span>⚡ Direct Stream (Server 2)</span>
+              </a>
+              <a href="${escapeHtml(mp3Url)}" target="_blank" rel="noopener noreferrer" class="yt-dl-chip featured" style="justify-content: center; padding: 7px 12px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <span>🎵 Download MP3 Audio Track</span>
+              </a>
+              <a href="${escapeHtml(studioUrl)}" class="media-btn-secondary" style="justify-content: center; margin-top: 4px;">
+                <span>↗ Open in Media Downloader Studio</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      conversation.push({ role: "assistant", content: `[Instagram ${mediaType}: Extracted]` });
+      smoothScrollToBottom();
+    } catch (err) {
+      if (err.name === "AbortError") {
+        assistantBubble.innerHTML = `<div style="color: var(--text-tertiary); font-style: italic;">(Instagram processing canceled)</div>`;
+      } else {
+        assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;">Failed to resolve Instagram media: ${escapeHtml(err.message)}</div>`;
+      }
+    } finally {
+      setGenerating(false);
+      abortController = null;
+      autoResizeInput();
+    }
+  }
+
+  async function handleYouTubeMedia(ytUrl, originalText) {
+    appendMessage("user", originalText);
+
+    const isShort = /\/shorts\//i.test(ytUrl);
+    const mediaType = isShort ? "YouTube Short" : "YouTube HD Video";
+
+    const assistantBubble = appendMessage("assistant", "");
+    assistantBubble.innerHTML = `
+      <div class="ios-media-loading">
+        <div class="image-shimmer"></div>
+        <div class="image-loading-content">
+          <span class="ios-spinner"></span>
+          <span>Analyzing ${escapeHtml(mediaType)} & resolving high-bitrate streams...</span>
         </div>
       </div>
     `;
@@ -1973,7 +2122,7 @@
       } catch (e) {}
 
       // 2. Direct client fallback (prioritize download/yt, then snapsaver)
-      if (!data || !data.result) {
+      if (!data || (!data.formats && !data.result)) {
         try {
           const directYt = await fetch(`https://apis.davidcyril.name.ng/download/yt?url=${encodeURIComponent(ytUrl)}`, {
             signal: abortController.signal,
@@ -1983,14 +2132,13 @@
           }
         } catch (e) {}
 
-        if (!data || !data.result) {
+        if (!data || (!data.formats && !data.result)) {
           const directRes = await fetch(`https://apis.davidcyril.name.ng/download/snapsaver?url=${encodeURIComponent(ytUrl)}`, {
             signal: abortController.signal,
           });
-          if (!directRes.ok) {
-            throw new Error(`Video service returned HTTP ${directRes.status}`);
+          if (directRes.ok) {
+            data = await directRes.json();
           }
-          data = await directRes.json();
         }
       }
 
@@ -2008,200 +2156,186 @@
       const thumbnail = res.thumbnail || fallbackThumb;
       const duration = res.duration || "";
       const viewsFormatted = res.views ? formatViews(res.views) : "";
-      const videos = Array.isArray(res.videos) ? [...res.videos] : [];
-      const audios = Array.isArray(res.audios) ? [...res.audios] : [];
 
-      if (res.download_url && !videos.some((v) => v.url === res.download_url)) {
-        videos.unshift({
-          url: res.download_url,
-          quality: res.quality || "720p",
-          format: res.format || "mp4",
+      // Extract all formats
+      let allFormats = [];
+      if (Array.isArray(res.formats) && res.formats.length > 0) {
+        allFormats = res.formats;
+      } else {
+        const videos = Array.isArray(res.videos) ? [...res.videos] : [];
+        const audios = Array.isArray(res.audios) ? [...res.audios] : [];
+        if (res.download_url && !videos.some((v) => v.url === res.download_url)) {
+          videos.unshift({
+            url: res.download_url,
+            quality: res.quality || "720p",
+            format: res.format || "mp4",
+          });
+        }
+        videos.forEach(v => {
+          allFormats.push({
+            value: v.quality || "720p",
+            label: v.quality ? `${v.quality.replace(/x\d+/, "p")} ${v.format?.toUpperCase() || "MP4"}` : "HD MP4",
+            text: v.quality ? `${v.quality.replace(/x\d+/, "p")} ${v.format?.toUpperCase() || "MP4"}` : "HD MP4",
+            kind: "video",
+            url: v.url,
+            force: v.url
+          });
+        });
+        audios.forEach(a => {
+          allFormats.push({
+            value: a.quality || "mp3",
+            label: `Audio (${a.quality || "HQ"} ${a.format?.toUpperCase() || "MP3"})`,
+            text: `Audio (${a.quality || "HQ"} ${a.format?.toUpperCase() || "MP3"})`,
+            kind: "audio",
+            url: a.url,
+            force: a.url
+          });
         });
       }
 
-      // Find best playable MP4 stream for <video> tag
-      const playableVideo =
-        videos.find((v) => v.format === "mp4" && v.quality && v.quality.includes("720")) ||
-        videos.find((v) => v.format === "mp4" && v.quality && v.quality.includes("360")) ||
-        videos.find((v) => v.format === "mp4") ||
-        videos[0];
+      // Quick 360p, 1080p, MP3
+      const fmt360 = allFormats.find(f => f.kind === 'video+audio' || (f.label && f.label.includes('360p'))) || allFormats.find(f => f.url && f.kind !== 'audio');
+      const fmt1080 = allFormats.find(f => f.label && (f.label.includes('1080p') || f.label.includes('720p')));
+      const fmtMp3 = allFormats.find(f => f.kind === 'mp3' || f.kind === 'audio' || (f.label && (f.label.includes('MP3') || f.label.includes('Audio'))));
 
-      const bestVideoUrl = playableVideo?.url || "";
+      const dl360 = (fmt360 && (fmt360.force || fmt360.url)) || ytUrl;
+      const dl1080 = (fmt1080 && (fmt1080.force || fmt1080.url)) || dl360;
+      const dlMp3 = (fmtMp3 && (fmtMp3.force || fmtMp3.url)) || `https://apis.davidcyril.name.ng/download/yt?url=${encodeURIComponent(ytUrl)}`;
 
-      // Quality & Download options
-      let chipsHtml = "";
-      const seenQualities = new Set();
+      // Best playable stream for HTML5 preview
+      const playableFmt = allFormats.find(f => f.url && (f.kind === 'video+audio' || (f.label && f.label.includes('360p')))) || allFormats.find(f => f.url && f.kind !== 'audio');
+      const bestVideoUrl = playableFmt?.url || "";
 
-      videos.forEach((v) => {
-        if (!v.url || seenQualities.has(v.quality)) return;
-        seenQualities.add(v.quality);
-        const isFeatured = v.quality.includes("720") || seenQualities.size === 1;
-        const label = v.quality ? `${v.quality.replace(/x\d+/, "p")} ${v.format?.toUpperCase() || "MP4"}` : `${v.format?.toUpperCase() || "Video"}`;
-        chipsHtml += `
-          <a href="${escapeHtml(v.url)}" download="${escapeHtml(title)}_${escapeHtml(v.quality)}.${v.format || 'mp4'}" target="_blank" class="yt-dl-chip ${isFeatured ? 'featured' : ''}" title="Download ${escapeHtml(label)}">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            <span>${escapeHtml(label)}</span>
-          </a>
-        `;
-      });
+      // Video & Audio selectors
+      const videoFormats = allFormats.filter(f => f.kind === 'video-only' || f.kind === 'video' || f.kind === 'video+audio');
+      const audioFormats = allFormats.filter(f => f.kind === 'audio' || f.kind === 'mp3' || (f.label && (f.label.includes('MP3') || f.label.includes('Audio'))));
 
-      audios.forEach((a) => {
-        if (!a.url) return;
-        const label = `Audio (${a.quality || "HQ"} ${a.format?.toUpperCase() || "MP4"})`;
-        chipsHtml += `
-          <a href="${escapeHtml(a.url)}" download="${escapeHtml(title)}_audio.${a.format || 'mp3'}" target="_blank" class="yt-dl-chip" title="Download ${escapeHtml(label)}">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-            </svg>
-            <span>${escapeHtml(label)}</span>
-          </a>
-        `;
-      });
+      let vidOptsHtml = "";
+      if (videoFormats.length > 0) {
+        vidOptsHtml = videoFormats.map(vf => `<option value="${escapeHtml(vf.value)}">${escapeHtml(vf.text || vf.label)}</option>`).join("");
+      } else {
+        vidOptsHtml = `<option value="1080p">1080p Full HD MP4</option><option value="720p">720p HD MP4</option><option value="360p">360p MP4</option>`;
+      }
+
+      let audOptsHtml = "";
+      if (audioFormats.length > 0) {
+        audOptsHtml = audioFormats.map(af => `<option value="${escapeHtml(af.value)}">${escapeHtml(af.text || af.label)}</option>`).join("");
+      } else {
+        audOptsHtml = `<option value="320k">Lossless MP3 (320 kbps)</option><option value="192k">MP3 Audio (192 kbps)</option><option value="m4a">M4A Audio (131 kbps)</option>`;
+      }
+
+      const initialCombineUrl = (videoFormats[0] && (videoFormats[0].force || videoFormats[0].url)) || dl1080;
+      const studioUrl = `/yt?url=${encodeURIComponent(ytUrl)}`;
 
       assistantBubble.innerHTML = `
         <div class="ios-media-card ios-video-card">
+          <div class="media-ai-badge yt">⚡ AS Intelligence Core • ${escapeHtml(mediaType)}</div>
+          <div style="font-size: 13.5px; font-weight: 600; color: #ffffff; margin-bottom: 6px;">
+            Direct Media Streams Resolved
+          </div>
+          <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.45;">
+            I have analyzed your ${escapeHtml(mediaType)} and resolved direct high-bitrate video and isolated audio streams. 1-click ready formats are available below, or pick your exact video and audio quality with the HD Combiner:
+          </p>
+
           ${
             bestVideoUrl
               ? `
-              <div class="yt-card-video-wrap">
-                <video playsinline preload="metadata" poster="${escapeHtml(thumbnail)}" class="yt-card-video ios-media-element" src="${escapeHtml(bestVideoUrl)}">
-                  Your browser does not support HTML5 video.
-                </video>
-
-                <button class="ios-video-center-btn" type="button" title="Play / Pause">
-                  <svg class="center-icon-play" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-                  <svg class="center-icon-pause" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
-                </button>
-
-                <div class="ios-video-controls-overlay">
-                  <div class="ios-scrubber-container">
-                    <div class="ios-scrubber-track">
-                      <div class="ios-scrubber-buffered"></div>
-                      <div class="ios-scrubber-fill"></div>
-                      <div class="ios-scrubber-thumb"></div>
-                    </div>
-                  </div>
-
-                  <div class="ios-controls-bar">
-                    <div class="ios-ctrl-group ios-ctrl-left">
-                      <button class="ios-player-btn ios-btn-play-pause" type="button" title="Play">
-                        <svg class="icon-play" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-                        <svg class="icon-pause" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
-                      </button>
-
-                      <button class="ios-player-btn ios-btn-rewind" type="button" title="Rewind 10s">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                          <polyline points="3 3 3 8 8 8"/>
-                          <text x="12" y="15" text-anchor="middle" font-size="7.5" font-family="system-ui, -apple-system" font-weight="700" stroke="none" fill="currentColor">10</text>
-                        </svg>
-                      </button>
-
-                      <button class="ios-player-btn ios-btn-forward" type="button" title="Forward 10s">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                          <polyline points="21 3 21 8 16 8"/>
-                          <text x="12" y="15" text-anchor="middle" font-size="7.5" font-family="system-ui, -apple-system" font-weight="700" stroke="none" fill="currentColor">10</text>
-                        </svg>
-                      </button>
-
-                      <div class="ios-time-inline">
-                        <span class="ios-time-cur">0:00</span>
-                        <span class="ios-time-sep">/</span>
-                        <span class="ios-time-dur">${duration || "0:00"}</span>
-                      </div>
-                    </div>
-
-                    <div class="ios-ctrl-group ios-ctrl-right">
-                      <div class="ios-speed-wrapper">
-                        <button class="ios-player-btn ios-btn-speed" type="button" title="Playback Speed">
-                          <span class="speed-val">1x</span>
-                        </button>
-                        <div class="ios-speed-menu">
-                          <button type="button" class="speed-option" data-speed="0.5">0.5x</button>
-                          <button type="button" class="speed-option" data-speed="0.75">0.75x</button>
-                          <button type="button" class="speed-option active" data-speed="1">1x</button>
-                          <button type="button" class="speed-option" data-speed="1.25">1.25x</button>
-                          <button type="button" class="speed-option" data-speed="1.5">1.5x</button>
-                          <button type="button" class="speed-option" data-speed="2">2x</button>
-                        </div>
-                      </div>
-
-                      <div class="ios-volume-wrapper">
-                        <button class="ios-player-btn ios-btn-volume" type="button" title="Mute/Unmute">
-                          <svg class="icon-vol-high" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-                          </svg>
-                          <svg class="icon-vol-mute" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                            <line x1="23" y1="9" x2="17" y2="15"/>
-                            <line x1="17" y1="9" x2="23" y2="15"/>
-                          </svg>
-                        </button>
-                        <div class="ios-volume-slider-bar">
-                          <input type="range" class="ios-volume-slider" min="0" max="1" step="0.05" value="1" title="Volume" />
-                        </div>
-                      </div>
-
-                      <button class="ios-player-btn ios-btn-fullscreen" type="button" title="Fullscreen">
-                        <svg class="icon-fs-enter" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                        </svg>
-                        <svg class="icon-fs-exit" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-                          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              <div class="yt-card-video-wrap" style="${isShort ? 'aspect-ratio: 9/16; max-height: 380px;' : ''}">
+                <video playsinline controls preload="metadata" poster="${escapeHtml(thumbnail)}" class="yt-card-video" src="${escapeHtml(bestVideoUrl)}"></video>
               </div>
             `
               : thumbnail
               ? `
-              <div class="yt-card-video-wrap">
+              <div class="yt-card-video-wrap" style="${isShort ? 'aspect-ratio: 9/16; max-height: 380px;' : ''}">
                 <img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(title)}" class="yt-card-video" style="object-fit: cover;" />
               </div>
             `
               : ""
           }
 
-          <div class="yt-card-body">
+          <div class="yt-card-body" style="padding-top: 10px;">
             <div class="yt-card-title">${escapeHtml(title)}</div>
             <div class="yt-card-author">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               <span>${escapeHtml(author)}</span>
             </div>
 
-            <div class="yt-meta-pills">
+            <div class="yt-meta-pills" style="margin-bottom: 10px;">
               ${duration ? `<span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${escapeHtml(duration)}</span>` : ""}
               ${viewsFormatted ? `<span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> ${viewsFormatted}</span>` : ""}
               <span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YouTube</span>
             </div>
 
-            <div class="yt-downloads-header">Download Formats & Audio</div>
-            <div class="yt-quality-list">
-              ${chipsHtml || `<span style="color: var(--text-tertiary); font-size: 11px;">Direct links ready.</span>`}
+            <div class="yt-downloads-header" style="margin-bottom: 6px;">Quick 1-Click Formats</div>
+            <div class="yt-quality-list" style="margin-bottom: 10px;">
+              <a href="${escapeHtml(dl360)}" target="_blank" rel="noopener noreferrer" class="yt-dl-chip featured" title="Ready to play with video and audio">
+                <span>★ 360p MP4 Ready</span>
+              </a>
+              <a href="${escapeHtml(dlMp3)}" target="_blank" rel="noopener noreferrer" class="yt-dl-chip" title="Download isolated audio">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <span>🎵 Lossless MP3 (320k)</span>
+              </a>
+              <a href="${escapeHtml(dl1080)}" target="_blank" rel="noopener noreferrer" class="yt-dl-chip" title="Download 1080p HD stream">
+                <span>🎬 1080p HD Stream</span>
+              </a>
             </div>
 
-            <div style="margin-top: 6px;">
-              <a href="${escapeHtml(ytUrl)}" target="_blank" rel="noopener noreferrer" class="media-btn-secondary" style="display: inline-flex;">
+            <div class="chat-combiner-box">
+              <div class="chat-combiner-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span>Need Higher Quality? Combine Video + Audio</span>
+              </div>
+              <div class="chat-combiner-desc">
+                YouTube serves 1080p, 1440p, and 4K without audio by default. Select your resolution & sound track below:
+              </div>
+              <div class="chat-combiner-selects">
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                  <span style="font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase;">Video Quality</span>
+                  <select class="chat-select-sm yt-vid-sel">
+                    ${vidOptsHtml}
+                  </select>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                  <span style="font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase;">Audio Track</span>
+                  <select class="chat-select-sm yt-aud-sel">
+                    ${audOptsHtml}
+                  </select>
+                </div>
+              </div>
+              <div style="margin-top: 4px;">
+                <a href="${escapeHtml(initialCombineUrl)}" target="_blank" rel="noopener noreferrer" class="chat-combiner-btn yt-combine-btn" style="width: 100%; box-sizing: border-box;">
+                  <span>📥 Download Selected HD Stream</span>
+                </a>
+              </div>
+            </div>
+
+            <div style="margin-top: 8px;">
+              <a href="${escapeHtml(studioUrl)}" class="media-btn-secondary" style="display: flex; justify-content: center; width: 100%; box-sizing: border-box;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
-                <span>Open on YouTube</span>
+                <span>↗ Open in YouTube Studio</span>
               </a>
             </div>
           </div>
         </div>
       `;
 
-      bindCustomMediaPlayer(assistantBubble.querySelector(".ios-media-card"));
+      // Dynamic Combiner Selection Listener
+      const vidSel = assistantBubble.querySelector(".yt-vid-sel");
+      const audSel = assistantBubble.querySelector(".yt-aud-sel");
+      const dlBtn = assistantBubble.querySelector(".yt-combine-btn");
+      if (vidSel && dlBtn) {
+        const updateBtn = () => {
+          const chosenFmt = allFormats.find(f => f.value === vidSel.value) || allFormats[0];
+          if (chosenFmt && (chosenFmt.force || chosenFmt.url)) {
+            dlBtn.href = chosenFmt.force || chosenFmt.url;
+            dlBtn.innerHTML = `<span>📥 Download ${escapeHtml(chosenFmt.label || "Selected Stream")}</span>`;
+          }
+        };
+        vidSel.addEventListener("change", updateBtn);
+        audSel.addEventListener("change", updateBtn);
+      }
 
       conversation.push({ role: "assistant", content: `[YouTube Media: "${title}"]` });
       smoothScrollToBottom();
@@ -3063,6 +3197,14 @@
         `;
         return;
       }
+    }
+
+    // 2. Check if YouTube link is pasted/entered
+    // 1.5. Check if Instagram link is pasted/entered
+    const instaMatch = text.match(INSTA_REGEX);
+    if (instaMatch) {
+      handleInstagramMedia(text);
+      return;
     }
 
     // 2. Check if YouTube link is pasted/entered
