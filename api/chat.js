@@ -87,6 +87,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: { message: "Method not allowed." } });
   }
 
+  const startTime = Date.now();
+
   const {
     messages,
     model = DEFAULT_MODEL,
@@ -120,7 +122,18 @@ export default async function handler(req, res) {
       return res.end();
     } else {
       return res.status(200).json({
-        choices: [{ message: { role: "assistant", content: greetingText } }],
+        id: "chatcmpl-as-" + Date.now(),
+        object: "chat.completion",
+        created: Math.floor(Date.now() / 1000),
+        model: targetModel,
+        choices: [{
+          index: 0,
+          message: { role: "assistant", content: greetingText },
+          finish_reason: "stop"
+        }],
+        usage: { prompt_tokens: 4, completion_tokens: 24, total_tokens: 28 },
+        service: "AS Cloud AI API Services",
+        latency_ms: Math.max(1, Date.now() - startTime)
       });
     }
   }
@@ -165,6 +178,10 @@ export default async function handler(req, res) {
       return res.end();
     } else {
       const data = await upstreamRes.json();
+      if (data && typeof data === "object") {
+        data.service = "AS Cloud AI API Services";
+        data.latency_ms = Date.now() - startTime;
+      }
       return res.status(200).json(data);
     }
   } catch (err) {

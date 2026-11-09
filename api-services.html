@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AS Cloud API Services | High-Speed AI Inference & Endpoints</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'%3E%3Cpath d='M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6' stroke='%23ffffff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #000000;
+      --card-bg: rgba(18, 19, 25, 0.88);
+      --border: rgba(255, 255, 255, 0.1);
+      --border-accent: rgba(99, 102, 241, 0.35);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #38bdf8;
+      --green: #30d158;
+      --amber: #fbbf24;
+      --text: #f5f5f7;
+      --text-muted: #8e92a2;
+      --font-code: "JetBrains Mono", Menlo, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding-bottom: 60px;
+      overflow-x: hidden;
+    }
+
+    /* Top Bar */
+    .top-nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: inherit;
+    }
+    .brand-logo {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(168, 85, 247, 0.35) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.5);
+      color: #a5b4fc; display: flex; align-items: center; justify-content: center;
+    }
+    .brand-title { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+    .brand-pill {
+      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px;
+      background: rgba(99, 102, 241, 0.18); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.35);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .nav-status {
+      display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8e92a2; font-family: var(--font-code);
+    }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 8px var(--green); animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
+
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+    .nav-back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border);
+      color: var(--text); padding: 6px 12px; border-radius: 10px;
+      font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s;
+    }
+    .nav-back-btn:hover { background: rgba(255, 255, 255, 0.12); }
+
+    /* Page Container */
+    .container {
+      max-width: 1100px; margin: 0 auto; padding: 32px 20px;
+      display: flex; flex-direction: column; gap: 32px;
+    }
+
+    /* Hero */
+    .hero-banner {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.12) 0%, rgba(0, 0, 0, 0) 100%);
+      border: 1px solid var(--border-accent);
+      border-radius: 24px; padding: 36px 30px;
+      display: flex; flex-direction: column; gap: 16px;
+      position: relative; overflow: hidden;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(99, 102, 241, 0.15); color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.35); border-radius: 20px;
+      padding: 4px 12px; font-size: 11px; font-weight: 700; width: fit-content;
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .hero-title {
+      font-size: 32px; font-weight: 800; letter-spacing: -0.8px;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: 15px; color: var(--text-muted); max-width: 720px; line-height: 1.6;
+    }
+    .hero-endpoint-bar {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px; padding: 8px 14px; width: fit-content; max-width: 100%;
+      overflow-x: auto; font-family: var(--font-code); font-size: 13px;
+    }
+    .http-method {
+      background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 700;
+      padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3);
+      font-size: 11px;
+    }
+    .endpoint-url { color: #f8fafc; font-weight: 500; }
+    .copy-btn-mini {
+      background: rgba(255, 255, 255, 0.08); border: none; color: #cbd5e1;
+      padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; font-family: var(--font-sans);
+    }
+    .copy-btn-mini:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
+
+    /* Cards */
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 24px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    .card-header-row {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .card-title-wrap { display: flex; align-items: center; gap: 10px; }
+    .card-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(99, 102, 241, 0.18); color: #a5b4fc;
+    }
+    .card-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .card-desc { font-size: 13px; color: var(--text-muted); }
+
+    /* API Key Box */
+    .key-display-box {
+      background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .key-text {
+      font-family: var(--font-code); font-size: 14px; color: #a5b4fc; letter-spacing: 0.5px;
+      word-break: break-all;
+    }
+    .key-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-action {
+      background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border);
+      color: #fff; font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 8px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.18s;
+      font-family: inherit;
+    }
+    .btn-action:hover { background: rgba(255, 255, 255, 0.14); }
+    .btn-action.btn-danger { color: #ff6961; }
+    .btn-action.btn-danger:hover { background: rgba(255, 69, 58, 0.15); }
+
+    .key-meta-row {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+      font-size: 12px; color: var(--text-muted);
+    }
+    .quota-pill {
+      background: rgba(48, 209, 88, 0.12); color: var(--green); border: 1px solid rgba(48, 209, 88, 0.3);
+      padding: 3px 8px; border-radius: 6px; font-weight: 600; font-family: var(--font-code);
+    }
+
+    /* Playground Grid */
+    .playground-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
+    @media (max-width: 860px) {
+      .playground-grid { grid-template-columns: 1fr; }
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #cbd5e1; }
+    .form-select, .form-input, .form-textarea {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px; color: #fff; font-family: inherit; font-size: 13px; padding: 10px 12px;
+      outline: none; transition: border-color 0.2s, background 0.2s;
+    }
+    .form-select:focus, .form-input:focus, .form-textarea:focus {
+      border-color: rgba(99, 102, 241, 0.6); background: rgba(255, 255, 255, 0.08);
+    }
+    .form-textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+
+    .param-sliders-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .slider-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .slider-header { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
+
+    .run-btn {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #fff; border: none; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 4px 18px rgba(79, 70, 229, 0.35); transition: all 0.2s; font-family: inherit;
+    }
+    .run-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .run-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* JSON Output Box */
+    .json-output-wrap {
+      background: #06070a; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px;
+      padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 340px;
+    }
+    .json-header {
+      display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px; font-size: 12px;
+    }
+    .json-metrics { display: flex; align-items: center; gap: 10px; }
+    .metric-tag {
+      font-family: var(--font-code); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px;
+    }
+    .metric-status-ok { background: rgba(48, 209, 88, 0.15); color: #30d158; border: 1px solid rgba(48, 209, 88, 0.3); }
+    .metric-latency { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .metric-tokens { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    .json-code-box {
+      flex: 1; overflow-y: auto; font-family: var(--font-code); font-size: 12px; line-height: 1.6;
+      white-space: pre-wrap; word-break: break-all; color: #cbd5e1;
+    }
+    .json-key { color: #38bdf8; font-weight: 600; }
+    .json-string { color: #34d399; }
+    .json-number { color: #fbbf24; }
+    .json-boolean { color: #f472b6; }
+
+    /* Code Tabs */
+    .code-tabs-header {
+      display: flex; gap: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px;
+      overflow-x: auto;
+    }
+    .code-tab-btn {
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 12px; font-weight: 600; padding: 6px 12px;
+      border-radius: 8px; cursor: pointer; transition: all 0.18s; font-family: inherit;
+    }
+    .code-tab-btn.active {
+      background: rgba(99, 102, 241, 0.2); color: #fff; border-color: rgba(99, 102, 241, 0.4);
+    }
+    .code-snippet-box {
+      background: #06070a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
+      padding: 16px; font-family: var(--font-code); font-size: 12px; line-height: 1.6;
+      overflow-x: auto; color: #e2e8f0; position: relative;
+    }
+    .copy-snippet-float {
+      position: absolute; top: 12px; right: 12px;
+    }
+
+    /* Model Cards Grid */
+    .models-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;
+    }
+    .model-card {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px;
+      transition: all 0.2s;
+    }
+    .model-card:hover {
+      border-color: rgba(99, 102, 241, 0.4); transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    }
+    .model-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .model-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .model-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px;
+      background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .model-id-code {
+      font-family: var(--font-code); font-size: 11px; color: #818cf8;
+      background: rgba(99, 102, 241, 0.08); padding: 4px 8px; border-radius: 6px; width: fit-content;
+    }
+    .model-specs {
+      display: flex; gap: 12px; font-size: 11px; color: var(--text-muted); font-family: var(--font-code);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: #18181b; border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); display: none; align-items: center; gap: 8px;
+      animation: toastIn 0.2s ease-out;
+    }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-nav">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <a href="/" class="nav-brand">
+        <div class="brand-logo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <span class="brand-title">AS Cloud</span>
+        <span class="brand-pill">API Platform</span>
+      </a>
+    </div>
+
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span>API Edge Online (ugv0 DB)</span>
+    </div>
+
+    <div class="nav-actions">
+      <a href="/" class="nav-back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>Back to Chat</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Hero -->
+    <section class="hero-banner">
+      <div class="hero-badge">⚡ Sub-Second AI Inference & JSON Output</div>
+      <h1 class="hero-title">AS Cloud AI API Services</h1>
+      <p class="hero-sub">
+        Access enterprise-grade LLMs directly from your applications, scripts, and backends. High-speed JSON response format, OpenAI-compatible syntax, and personal developer API keys powered by our global edge cluster.
+      </p>
+
+      <div class="hero-endpoint-bar">
+        <span class="http-method">POST</span>
+        <span class="endpoint-url" id="endpointUrlText">https://asllm.vercel.app/api/v1/chat/completions</span>
+        <button class="copy-btn-mini" onclick="copyText('https://asllm.vercel.app/api/v1/chat/completions', 'Endpoint copied')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <span>Copy</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Developer API Key Management -->
+    <section class="glass-card">
+      <div class="card-header-row">
+        <div class="card-title-wrap">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4M15.5 7.5 13 10M15.5 7.5 9 14l-4 4-2-2 4-4 6.5-6.5"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="card-title">Developer API Key</h2>
+            <p class="card-desc">Use this secret key in the <code>Authorization: Bearer &lt;key&gt;</code> header of your requests.</p>
+          </div>
+        </div>
+        <div id="keyUserBadge" class="quota-pill">Connected: ugv0 DB</div>
+      </div>
+
+      <div class="key-display-box">
+        <div class="key-text" id="apiKeyDisplay">Loading your secret API key...</div>
+        <div class="key-actions">
+          <button class="btn-action" id="toggleKeyVisibilityBtn" onclick="toggleKeyVisibility()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span id="toggleKeyText">Reveal</span>
+          </button>
+          <button class="btn-action" onclick="copyApiKey()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span>Copy Key</span>
+          </button>
+          <button class="btn-action btn-danger" onclick="rotateApiKey()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+            <span>Rotate</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="key-meta-row">
+        <span>Tier: <strong style="color: #fff;" id="tierText">Developer Free Tier</strong></span>
+        <span>Rate Limit: <strong style="color: #fff;">1,000 requests / min</strong></span>
+        <span>Output Format: <strong style="color: var(--accent);">Structured JSON & Streams</strong></span>
+      </div>
+    </section>
+
+    <!-- Interactive Live Playground -->
+    <section class="glass-card">
+      <div class="card-header-row">
+        <div class="card-title-wrap">
+          <div class="card-icon" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="card-title">Live API Playground & JSON Console</h2>
+            <p class="card-desc">Execute real-time test requests directly against our live production endpoint.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="playground-grid">
+        <!-- Request Builder Column -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="form-group">
+            <label for="modelSelect">Select AI Model</label>
+            <select id="modelSelect" class="form-select" onchange="updateSnippets()">
+              <option value="nvidia/nemotron-3.5-bolt-e4b" selected>Nemotron 3.5 Bolt (Ultra Fast &bull; &lt; 150ms)</option>
+              <option value="nvidia/nemotron-3-ultra-550b-a55b">Nemotron 3 Ultra 550B (Flagship Reasoning &bull; 128k)</option>
+              <option value="poolside/laguna-xs-2.1">Laguna XS 2.1 (Programming & Code Logic)</option>
+              <option value="nvidia/ising-calibration-1.5-31b">Ising Quantum 31B (Mathematics & Science)</option>
+              <option value="nvidia/riva-translate-4b-instruct-v2">Riva Translate 4B (Multilingual Machine Translation)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="formatSelect">Response Format</label>
+            <select id="formatSelect" class="form-select">
+              <option value="json" selected>JSON Object Mode (Fast Structured JSON)</option>
+              <option value="text">Standard Text Output</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="systemPrompt">System Directive</label>
+            <textarea id="systemPrompt" class="form-textarea" placeholder="System instructions..." style="min-height: 60px;">You are an ultra-fast, professional AI model running on AS Cloud API Services. Return clean, concise, valid JSON output.</textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="userPrompt">User Prompt</label>
+            <textarea id="userPrompt" class="form-textarea" placeholder="Type prompt to send...">Give me 3 practical microservice design principles with a name and 1-line description in JSON format.</textarea>
+          </div>
+
+          <div class="param-sliders-row">
+            <div class="slider-wrap">
+              <div class="slider-header">
+                <span>Temperature</span>
+                <span id="tempVal">0.7</span>
+              </div>
+              <input type="range" id="tempRange" min="0" max="1" step="0.1" value="0.7" oninput="document.getElementById('tempVal').textContent = this.value; updateSnippets();">
+            </div>
+            <div class="slider-wrap">
+              <div class="slider-header">
+                <span>Max Tokens</span>
+                <span id="tokensVal">1024</span>
+              </div>
+              <input type="range" id="tokensRange" min="128" max="4096" step="128" value="1024" oninput="document.getElementById('tokensVal').textContent = this.value; updateSnippets();">
+            </div>
+          </div>
+
+          <button id="sendApiRequestBtn" class="run-btn" onclick="executePlaygroundRequest()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Execute API Request</span>
+          </button>
+        </div>
+
+        <!-- Live JSON Inspector Column -->
+        <div class="json-output-wrap">
+          <div class="json-header">
+            <div class="json-metrics">
+              <span id="statusTag" class="metric-tag metric-status-ok">200 OK</span>
+              <span id="latencyTag" class="metric-tag metric-latency">⏱️ 0 ms</span>
+              <span id="tokensTag" class="metric-tag metric-tokens">0 Tokens</span>
+            </div>
+            <button class="copy-btn-mini" onclick="copyJsonOutput()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span>Copy JSON</span>
+            </button>
+          </div>
+
+          <div class="json-code-box" id="jsonCodeBox">// Response will appear here after executing request...
+{
+  "status": "ready",
+  "message": "Click 'Execute API Request' to test live inference from https://asllm.vercel.app/api/v1/chat/completions"
+}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Code Snippets Generator -->
+    <section class="glass-card">
+      <div class="card-header-row">
+        <div class="card-title-wrap">
+          <div class="card-icon" style="background: rgba(245, 158, 11, 0.18); color: #fbbf24;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="card-title">Code Integration</h2>
+            <p class="card-desc">Copy production-ready code in your preferred programming language.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-tabs-header">
+        <button class="code-tab-btn active" onclick="switchSnippetTab('curl', this)">cURL</button>
+        <button class="code-tab-btn" onclick="switchSnippetTab('node', this)">Node.js (Fetch)</button>
+        <button class="code-tab-btn" onclick="switchSnippetTab('py-openai', this)">Python (OpenAI SDK)</button>
+        <button class="code-tab-btn" onclick="switchSnippetTab('py-requests', this)">Python (Requests)</button>
+        <button class="code-tab-btn" onclick="switchSnippetTab('go', this)">Go</button>
+      </div>
+
+      <div class="code-snippet-box">
+        <button class="copy-btn-mini copy-snippet-float" onclick="copyCurrentSnippet()">Copy Code</button>
+        <pre id="snippetCode">// Code snippet loading...</pre>
+      </div>
+    </section>
+
+    <!-- Verified Models Catalog -->
+    <section class="glass-card">
+      <div class="card-header-row">
+        <div class="card-title-wrap">
+          <div class="card-icon" style="background: rgba(168, 85, 247, 0.18); color: #c084fc;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="card-title">Available AI Model Fleet</h2>
+            <p class="card-desc">All models are available under the standard endpoint with zero setup.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="models-grid">
+        <div class="model-card">
+          <div class="model-card-top">
+            <span class="model-name">Nemotron 3.5 Bolt</span>
+            <span class="model-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">⚡ Ultra Fast</span>
+          </div>
+          <div class="model-id-code">nvidia/nemotron-3.5-bolt-e4b</div>
+          <p class="card-desc">Engineered for sub-150ms real-time latency, high throughput, and lightning-fast JSON processing.</p>
+          <div class="model-specs">
+            <span>520 tok/sec</span> &bull; <span>32k Context</span> &bull; <span>JSON Native</span>
+          </div>
+        </div>
+
+        <div class="model-card">
+          <div class="model-card-top">
+            <span class="model-name">Nemotron 3 Ultra 550B</span>
+            <span class="model-badge">Flagship</span>
+          </div>
+          <div class="model-id-code">nvidia/nemotron-3-ultra-550b-a55b</div>
+          <p class="card-desc">Massive 550B parameter dense intelligence for complex multi-step reasoning, analysis, and architecture.</p>
+          <div class="model-specs">
+            <span>210 tok/sec</span> &bull; <span>128k Context</span> &bull; <span>High Depth</span>
+          </div>
+        </div>
+
+        <div class="model-card">
+          <div class="model-card-top">
+            <span class="model-name">Laguna XS 2.1</span>
+            <span class="model-badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">Code Specialist</span>
+          </div>
+          <div class="model-id-code">poolside/laguna-xs-2.1</div>
+          <p class="card-desc">Trained specifically for coding, syntax tree analysis, refactoring, algorithms, and strict schema validation.</p>
+          <div class="model-specs">
+            <span>340 tok/sec</span> &bull; <span>64k Context</span> &bull; <span>Full Stack</span>
+          </div>
+        </div>
+
+        <div class="model-card">
+          <div class="model-card-top">
+            <span class="model-name">Ising Calibration 1.5 31B</span>
+            <span class="model-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">Quantum & Math</span>
+          </div>
+          <div class="model-id-code">nvidia/ising-calibration-1.5-31b</div>
+          <p class="card-desc">Specialized mathematical formulation, physical simulation calculations, and scientific synthesis.</p>
+          <div class="model-specs">
+            <span>280 tok/sec</span> &bull; <span>32k Context</span> &bull; <span>STEM</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#30d158" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="toastMsg">Copied</span>
+  </div>
+
+  <script>
+    let rawApiKey = "sk-as-demo-key-guest";
+    let isKeyMasked = true;
+    let currentTab = "curl";
+    let currentUser = null;
+    let sessionToken = null;
+
+    // Toast Notification
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      const m = document.getElementById("toastMsg");
+      if (!t || !m) return;
+      m.textContent = msg || "Copied to clipboard";
+      t.style.display = "flex";
+      setTimeout(() => { t.style.display = "none"; }, 2200);
+    }
+
+    function copyText(str, msg) {
+      navigator.clipboard.writeText(str).then(() => {
+        showToast(msg || "Copied to clipboard!");
+      }).catch(() => {
+        prompt("Copy text:", str);
+      });
+    }
+
+    function copyApiKey() {
+      copyText(rawApiKey, "API Key copied to clipboard!");
+    }
+
+    function toggleKeyVisibility() {
+      isKeyMasked = !isKeyMasked;
+      renderKeyDisplay();
+    }
+
+    function renderKeyDisplay() {
+      const d = document.getElementById("apiKeyDisplay");
+      const btn = document.getElementById("toggleKeyText");
+      if (!d) return;
+      if (isKeyMasked) {
+        d.textContent = rawApiKey.substring(0, 7) + "••••••••••••••••••••••••••••" + rawApiKey.slice(-4);
+        if (btn) btn.textContent = "Reveal";
+      } else {
+        d.textContent = rawApiKey;
+        if (btn) btn.textContent = "Hide";
+      }
+    }
+
+    // Load or generate user API key
+    async function loadUserApiKey() {
+      try {
+        const savedUser = localStorage.getItem("as_user") || localStorage.getItem("as_msg_current_user");
+        const savedToken = localStorage.getItem("as_token") || localStorage.getItem("as_msg_token");
+        if (savedUser && savedToken) {
+          currentUser = JSON.parse(savedUser);
+          sessionToken = savedToken;
+          document.getElementById("keyUserBadge").textContent = "@" + currentUser.username + " (ugv0 DB)";
+
+          const res = await fetch("/api/msg?action=get_api_key&token=" + encodeURIComponent(sessionToken), {
+            headers: { Authorization: "Bearer " + sessionToken }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.apiKey) {
+              rawApiKey = data.apiKey;
+              if (data.tier) document.getElementById("tierText").textContent = data.tier;
+              renderKeyDisplay();
+              updateSnippets();
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load user API key:", err);
+      }
+
+      // Guest / Demo Key
+      rawApiKey = "sk-as-" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+      renderKeyDisplay();
+      updateSnippets();
+    }
+
+    async function rotateApiKey() {
+      if (!sessionToken) {
+        alert("Please log in to AS Cloud to generate and rotate personal API keys.");
+        window.location.href = "/";
+        return;
+      }
+      if (!confirm("Are you sure you want to rotate your API key? The old key will immediately stop working.")) return;
+
+      try {
+        const res = await fetch("/api/msg?action=regenerate_api_key&token=" + encodeURIComponent(sessionToken), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionToken }
+        });
+        const data = await res.json();
+        if (res.ok && data.apiKey) {
+          rawApiKey = data.apiKey;
+          renderKeyDisplay();
+          updateSnippets();
+          showToast("API Key rotated successfully!");
+        } else {
+          alert(data.error || "Failed to rotate API key");
+        }
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    }
+
+    // Execute Playground Request
+    async function executePlaygroundRequest() {
+      const btn = document.getElementById("sendApiRequestBtn");
+      const model = document.getElementById("modelSelect").value;
+      const format = document.getElementById("formatSelect").value;
+      const systemPrompt = document.getElementById("systemPrompt").value;
+      const userPrompt = document.getElementById("userPrompt").value;
+      const temperature = parseFloat(document.getElementById("tempRange").value) || 0.7;
+      const max_tokens = parseInt(document.getElementById("tokensRange").value, 10) || 1024;
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>Inferencing...</span>`;
+
+      const startTime = performance.now();
+      const codeBox = document.getElementById("jsonCodeBox");
+      codeBox.textContent = "// Request in-flight to https://asllm.vercel.app/api/v1/chat/completions ...";
+
+      try {
+        const payload = {
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          temperature,
+          max_tokens,
+          stream: false
+        };
+        if (format === "json") {
+          payload.response_format = { type: "json_object" };
+        }
+
+        const res = await fetch("/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + rawApiKey
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const elapsed = Math.round(performance.now() - startTime);
+        document.getElementById("latencyTag").textContent = `⏱️ ${elapsed} ms`;
+
+        if (!res.ok) {
+          const errText = await res.text();
+          document.getElementById("statusTag").className = "metric-tag";
+          document.getElementById("statusTag").style.background = "rgba(255, 69, 58, 0.15)";
+          document.getElementById("statusTag").style.color = "#ff6961";
+          document.getElementById("statusTag").textContent = `${res.status} Error`;
+          codeBox.textContent = errText;
+          return;
+        }
+
+        const data = await res.json();
+        document.getElementById("statusTag").className = "metric-tag metric-status-ok";
+        document.getElementById("statusTag").textContent = "200 OK";
+
+        const totalTokens = data.usage?.total_tokens || 0;
+        document.getElementById("tokensTag").textContent = `${totalTokens} Tokens`;
+
+        // Render formatted JSON with color highlights
+        codeBox.innerHTML = syntaxHighlightJson(JSON.stringify(data, null, 2));
+      } catch (err) {
+        document.getElementById("statusTag").textContent = "Network Error";
+        codeBox.textContent = String(err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>Execute API Request</span>`;
+      }
+    }
+
+    function syntaxHighlightJson(json) {
+      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'json-number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'json-key';
+          } else {
+            cls = 'json-string';
+          }
+        } else if (/true|false/.test(match)) {
+          cls = 'json-boolean';
+        } else if (/null/.test(match)) {
+          cls = 'json-boolean';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+      });
+    }
+
+    function copyJsonOutput() {
+      const text = document.getElementById("jsonCodeBox").innerText;
+      copyText(text, "JSON response copied!");
+    }
+
+    // Code Snippets
+    function switchSnippetTab(tab, el) {
+      currentTab = tab;
+      document.querySelectorAll(".code-tab-btn").forEach(b => b.classList.remove("active"));
+      if (el) el.classList.add("active");
+      updateSnippets();
+    }
+
+    function updateSnippets() {
+      const model = document.getElementById("modelSelect")?.value || "nvidia/nemotron-3.5-bolt-e4b";
+      const snippetBox = document.getElementById("snippetCode");
+      if (!snippetBox) return;
+
+      const endpoint = "https://asllm.vercel.app/api/v1/chat/completions";
+
+      let code = "";
+      if (currentTab === "curl") {
+        code = `curl -X POST "${endpoint}" \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${rawApiKey}" \\
+  -d '{
+    "model": "${model}",
+    "messages": [
+      { "role": "system", "content": "You are a fast AI assistant. Always return valid JSON." },
+      { "role": "user", "content": "Generate a list of 3 cloud features." }
+    ],
+    "temperature": 0.7,
+    "max_tokens": 1024,
+    "stream": false
+  }'`;
+      } else if (currentTab === "node") {
+        code = `import fetch from "node-fetch"; // or built-in in Node 18+
+
+const response = await fetch("${endpoint}", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer ${rawApiKey}"
+  },
+  body: JSON.stringify({
+    model: "${model}",
+    messages: [
+      { role: "system", content: "You are a fast AI assistant. Return JSON." },
+      { role: "user", content: "Generate 3 cloud features." }
+    ],
+    temperature: 0.7,
+    max_tokens: 1024,
+    stream: false
+  })
+});
+
+const data = await response.json();
+console.log("Latency:", data.latency_ms + "ms");
+console.log("JSON Output:", data.choices[0].message.content);`;
+      } else if (currentTab === "py-openai") {
+        code = `from openai import OpenAI
+
+# AS Cloud is 100% OpenAI-compatible
+client = OpenAI(
+    base_url="https://asllm.vercel.app/api/v1",
+    api_key="${rawApiKey}"
+)
+
+completion = client.chat.completions.create(
+    model="${model}",
+    messages=[
+        {"role": "system", "content": "You are a fast AI model. Return JSON output."},
+        {"role": "user", "content": "Generate 3 cloud features."}
+    ],
+    temperature=0.7,
+    max_tokens=1024
+)
+
+print(completion.choices[0].message.content)`;
+      } else if (currentTab === "py-requests") {
+        code = `import requests
+
+url = "${endpoint}"
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer ${rawApiKey}"
+}
+payload = {
+    "model": "${model}",
+    "messages": [
+        {"role": "system", "content": "Return valid JSON."},
+        {"role": "user", "content": "Generate 3 cloud features."}
+    ],
+    "temperature": 0.7,
+    "max_tokens": 1024,
+    "stream": False
+}
+
+response = requests.post(url, json=payload, headers=headers)
+print("Status:", response.status_code)
+print("Response JSON:", response.json())`;
+      } else if (currentTab === "go") {
+        code = `package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+)
+
+func main() {
+	url := "${endpoint}"
+	payload := map[string]interface{}{
+		"model": "${model}",
+		"messages": []map[string]string{
+			{"role": "system", "content": "Return structured JSON."},
+			{"role": "user", "content": "Generate 3 cloud features."},
+		},
+		"temperature": 0.7,
+		"max_tokens":  1024,
+		"stream":      false,
+	}
+	body, _ := json.Marshal(payload)
+
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer ${rawApiKey}")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil { panic(err) }
+	defer resp.Body.Close()
+
+	resBody, _ := io.ReadAll(resp.Body)
+	fmt.Println(string(resBody))
+}`;
+      }
+
+      snippetBox.textContent = code;
+    }
+
+    function copyCurrentSnippet() {
+      const code = document.getElementById("snippetCode").textContent;
+      copyText(code, "Code snippet copied!");
+    }
+
+    // Initialize
+    loadUserApiKey();
+  </script>
+</body>
+</html>

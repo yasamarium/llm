@@ -16,6 +16,10 @@
   "rewrites": [
     { "source": "/", "destination": "/chat.html" },
     { "source": "/chat", "destination": "/chat.html" },
+    { "source": "/api-services", "destination": "/api-services.html" },
+    { "source": "/api/v1/chat/completions", "destination": "/api/chat.js" },
+    { "source": "/api/v1/models", "destination": "/api/chat.js" },
+    { "source": "/api/v1/key", "destination": "/api/msg.js?action=get_api_key" },
     { "source": "/insta", "destination": "/insta.html" },
     { "source": "/download", "destination": "/insta.html" },
     { "source": "/yt", "destination": "/yt.html" },

@@ -1229,6 +1229,60 @@ export default async function handler(req, res) {
       });
     }
 
+    // -------------------------------------------------------------------------
+    // 14. API Services & Developer API Keys (ugv0/as-db-users)
+    // -------------------------------------------------------------------------
+    if (action === "get_api_key") {
+      const verifiedUsername = verifySessionToken(token) || verifySessionToken(req.body?.token);
+      if (!verifiedUsername) {
+        return res.status(401).json({ error: "Unauthorized. Please log in to view or generate API keys." });
+      }
+
+      const users = await loadUsers(true);
+      const user = users.find(u => u.username.toLowerCase() === verifiedUsername);
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      if (!user.apiKey) {
+        user.apiKey = `sk-as-${crypto.randomBytes(20).toString("hex")}`;
+        user.apiKeyCreatedAt = Date.now();
+        await saveUsers(users);
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        apiKey: user.apiKey,
+        createdAt: user.apiKeyCreatedAt || Date.now(),
+        tier: (user.role === "owner" || verifiedUsername === "as" || verifiedUsername === "ugv0") ? "Enterprise Unmetered" : "Developer Tier",
+        rateLimit: "1,000 req/min",
+      });
+    }
+
+    if (action === "regenerate_api_key" && req.method === "POST") {
+      const verifiedUsername = verifySessionToken(token) || verifySessionToken(req.body?.token);
+      if (!verifiedUsername) {
+        return res.status(401).json({ error: "Unauthorized. Please log in to manage API keys." });
+      }
+
+      const users = await loadUsers(true);
+      const user = users.find(u => u.username.toLowerCase() === verifiedUsername);
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      user.apiKey = `sk-as-${crypto.randomBytes(20).toString("hex")}`;
+      user.apiKeyCreatedAt = Date.now();
+      await saveUsers(users);
+
+      return res.status(200).json({
+        status: "ok",
+        apiKey: user.apiKey,
+        createdAt: user.apiKeyCreatedAt,
+        message: "API Key successfully rotated.",
+      });
+    }
+
     return res.status(400).json({ error: `Unknown action: ${action}` });
   } catch (err) {
     console.error("API error in api/msg.js:", err);
