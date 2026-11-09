@@ -12,6 +12,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@distube/ytdl-core": "^5.2.1",
     "telegram": "^2.26.22"
   },
   "keywords": [
