@@ -727,14 +727,28 @@
           payload.response_format = { type: "json_object" };
         }
 
-        const res = await fetch("/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + rawApiKey
-          },
-          body: JSON.stringify(payload)
-        });
+        let res;
+        try {
+          res = await fetch("/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + rawApiKey
+            },
+            body: JSON.stringify(payload)
+          });
+        } catch (_) {}
+
+        if (!res || !res.ok) {
+          res = await fetch("/api/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + rawApiKey
+            },
+            body: JSON.stringify(payload)
+          });
+        }
 
         const elapsed = Math.round(performance.now() - startTime);
         document.getElementById("latencyTag").textContent = `⏱️ ${elapsed} ms`;
