@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AS Cloud Media Downloader | Instagram HD Video, Reels & Audio</title>
+  <meta name="description" content="Ultra-fast Instagram HD Video, Reel, Story, Photo and Lossless MP3 Audio Downloader powered by AS Cloud client-side relay.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    :root {
+      --bg-base: #07090e;
+      --bg-card: rgba(18, 22, 34, 0.75);
+      --bg-card-hover: rgba(26, 32, 48, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(244, 63, 94, 0.5);
+      --accent-rose: #f43f5e;
+      --accent-fuchsia: #d946ef;
+      --accent-cyan: #06b6d4;
+      --accent-indigo: #6366f1;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    body {
+      background-color: var(--bg-base);
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(244, 63, 94, 0.12), transparent 70%),
+        radial-gradient(ellipse 60% 40% at 85% 60%, rgba(99, 102, 241, 0.08), transparent 70%),
+        radial-gradient(ellipse 50% 30% at 15% 75%, rgba(6, 182, 212, 0.06), transparent 70%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(var(--safe-top) + 12px) 24px 12px;
+      background: rgba(7, 9, 14, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .nav-left { display: flex; align-items: center; gap: 14px; }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+
+    /* Apps Dropdown */
+    .apps-nav-wrapper { position: relative; }
+    .apps-nav-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 14px; border-radius: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f0; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(12px);
+      user-select: none;
+    }
+    .apps-nav-btn:hover, .apps-nav-btn.open {
+      background: rgba(244, 63, 94, 0.15);
+      border-color: rgba(244, 63, 94, 0.4);
+      color: #fff;
+    }
+    .apps-dropdown-panel {
+      position: absolute; top: calc(100% + 10px); left: 0;
+      width: 500px; max-width: calc(100vw - 20px);
+      box-sizing: border-box;
+      background: rgba(11, 13, 20, 0.98);
+      backdrop-filter: blur(32px) saturate(200%);
+      -webkit-backdrop-filter: blur(32px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(244, 63, 94, 0.18);
+      padding: 16px; display: none; flex-direction: column; gap: 12px; z-index: 1000;
+      overflow: hidden;
+      animation: modalSpring 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .apps-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+    .apps-panel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #8e92a2; }
+    .apps-panel-badge { font-size: 10px; font-family: monospace; background: rgba(244, 63, 94, 0.15); color: #fda4af; padding: 2px 7px; border-radius: 10px; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .apps-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; box-sizing: border-box; }
+    @media (max-width: 520px) {
+      .apps-dropdown-panel { width: calc(100vw - 20px); left: -6px; }
+      .apps-grid { grid-template-columns: 1fr; }
+    }
+    .app-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+      border-radius: 12px; text-decoration: none; color: #f5f5f7;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      min-width: 0; box-sizing: border-box; overflow: hidden;
+    }
+    .app-item:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(244, 63, 94, 0.4);
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    }
+    .app-item.active { background: rgba(244, 63, 94, 0.16); border-color: rgba(244, 63, 94, 0.5); }
+    .app-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; box-sizing: border-box;
+    }
+    .app-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; overflow: hidden; }
+    .app-name { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; letter-spacing: -0.2px; }
+    .app-desc { font-size: 11px; color: #8b8e96; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; margin-top: 2px; }
+    @keyframes modalSpring { from { opacity: 0; transform: translateY(-8px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    /* Nav Brand */
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .brand-glyph {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #f43f5e, #d946ef);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(244, 63, 94, 0.35);
+    }
+    .brand-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .brand-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: #fda4af;
+      font-weight: 600;
+    }
+
+    /* Main Container */
+    .main-wrap {
+      flex: 1;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 36px 20px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: #fda4af;
+    }
+    .hero-title {
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #ffffff 40%, #fda4af 80%, #f43f5e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 580px;
+      line-height: 1.6;
+    }
+
+    /* Input Console */
+    .console-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(244, 63, 94, 0.08);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transition: border-color 0.2s;
+    }
+    .console-card:focus-within {
+      border-color: rgba(244, 63, 94, 0.45);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(244, 63, 94, 0.2);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: rgba(11, 14, 22, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 6px 8px 6px 16px;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+    .input-wrapper:focus-within {
+      border-color: var(--accent-rose);
+      box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2);
+    }
+    .input-icon {
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .media-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 15px;
+      font-family: inherit;
+      min-width: 0;
+    }
+    .media-input::placeholder {
+      color: #64748b;
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: all 0.18s ease;
+      flex-shrink: 0;
+    }
+    .paste-btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .paste-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+    .clear-btn {
+      background: transparent;
+      color: #64748b;
+      padding: 6px;
+      border-radius: 8px;
+    }
+    .clear-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      background: linear-gradient(135deg, #f43f5e 0%, #e11d48 50%, #be123c 100%);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 25px rgba(244, 63, 94, 0.35);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .submit-btn:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 12px 30px rgba(244, 63, 94, 0.5);
+    }
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Badges & Quick Format selectors */
+    .formats-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-top: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .format-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .format-tag {
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .format-tag:hover {
+      background: rgba(244, 63, 94, 0.12);
+      border-color: rgba(244, 63, 94, 0.35);
+      color: #fda4af;
+    }
+
+    /* Error & Status Boxes */
+    .status-box {
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .status-box.error {
+      display: flex;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+    .status-box.info {
+      display: flex;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #c7d2fe;
+    }
+
+    /* Results Area */
+    .results-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+    }
+    .results-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Direct Media Card */
+    .media-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+    }
+    .media-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 18px;
+    }
+    .preview-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9/16;
+      max-height: 480px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #000;
+      margin: 0 auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .preview-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .preview-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .dl-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+    .dl-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.18s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .dl-primary {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.3);
+    }
+    .dl-primary:hover {
+      background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+      transform: translateY(-1.5px);
+    }
+    .dl-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+    }
+    .dl-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .dl-audio {
+      background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
+      border: 1px solid rgba(192, 132, 252, 0.4);
+      box-shadow: 0 6px 20px rgba(147, 51, 234, 0.3);
+    }
+    .dl-audio:hover {
+      background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%);
+      transform: translateY(-1.5px);
+    }
+
+    /* Embedded Client Frame Card (High-speed Direct Fallback) */
+    .frame-container {
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      background: #0f121d;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      display: none;
+      flex-direction: column;
+    }
+    .frame-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: rgba(18, 22, 34, 0.95);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 2;
+    }
+    .frame-wrapper {
+      position: relative;
+      width: 100%;
+      height: 720px;
+      overflow: hidden;
+      background: #0b0e17;
+    }
+    .frame-view {
+      position: absolute;
+      top: -56px;
+      left: 0;
+      width: 100%;
+      height: calc(100% + 56px);
+      border: none;
+      background: #0b0e17;
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 10px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .feature-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .feature-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Minimalist Clean Top Navbar -->
+  <nav class="nav-bar">
+    <div class="nav-left">
+      <!-- Apps Hub Dropdown -->
+      <div class="apps-nav-wrapper">
+        <button id="appsMenuBtn" class="apps-nav-btn" onclick="toggleAppsMenu(event)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="3" y="3" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="9.75" y="3" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="16.5" y="3" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="3" y="9.75" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="16.5" y="9.75" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="3" y="16.5" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="9.75" y="16.5" width="4.5" height="4.5" rx="1.2"/>
+            <rect x="16.5" y="16.5" width="4.5" height="4.5" rx="1.2"/>
+          </svg>
+          <span>Apps</span>
+        </button>
+
+        <div id="appsDropdownMenu" class="apps-dropdown-panel">
+          <div class="apps-panel-header">
+            <span class="apps-panel-title">AS Cloud Ecosystem</span>
+            <span class="apps-panel-badge">6 Services</span>
+          </div>
+          <div class="apps-grid">
+            <a href="/" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.35) 100%); border: 1px solid rgba(16, 185, 129, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="3.5" fill="#34d399"/>
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="app-meta">
+                <div class="app-name">AI Intelligence</div>
+                <div class="app-desc">Conversational LLM</div>
+              </div>
+            </a>
+
+            <a href="/music" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(99, 102, 241, 0.35) 100%); border: 1px solid rgba(139, 92, 246, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="10" width="2.5" height="4" rx="1.25" fill="#a78bfa"/>
+                  <rect x="7" y="6" width="2.5" height="12" rx="1.25" fill="#a78bfa"/>
+                  <rect x="11" y="3" width="2.5" height="18" rx="1.25" fill="#c4b5fd"/>
+                  <rect x="15" y="7" width="2.5" height="10" rx="1.25" fill="#a78bfa"/>
+                  <rect x="19" y="10" width="2.5" height="4" rx="1.25" fill="#a78bfa"/>
+                </svg>
+              </div>
+              <div class="app-meta">
+                <div class="app-name">Audio Studio</div>
+                <div class="app-desc">Stream & Lossless MP3</div>
+              </div>
+            </a>
+
+            <a href="/insta" class="app-item active">
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(244, 63, 94, 0.25) 0%, rgba(225, 29, 72, 0.35) 100%); border: 1px solid rgba(244, 63, 94, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+              </div>
+              <div class="app-meta">
+                <div class="app-name">Media Downloader</div>
+                <div class="app-desc">Instagram HD & Audio</div>
+              </div>
+            </a>
+
+            <a href="/updates" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(42, 171, 238, 0.22) 0%, rgba(0, 119, 182, 0.35) 100%); border: 1px solid rgba(42, 171, 238, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 20h20"/>
+                  <path d="M5 20l5-14 4 14"/>
+                  <path d="M7.5 13h5"/>
+                  <path d="M12 6V3"/>
+                  <circle cx="12" cy="3" r="1" fill="#38bdf8"/>
+                  <path d="M16 4a5 5 0 0 1 0 7"/>
+                  <path d="M18.5 2a8.5 8.5 0 0 1 0 11"/>
+                </svg>
+              </div>
+              <div class="app-meta">
+                <div class="app-name">Telecom Relay</div>
+                <div class="app-desc">Virtual Numbers & OTP</div>
+              </div>
+            </a>
+
+            <a href="/webeditor" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.35) 100%); border: 1px solid rgba(245, 158, 11, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 18 22 12 16 6"/>
+                  <polyline points="8 6 2 12 8 18"/>
+                  <line x1="14" y1="4" x2="10" y2="20"/>
+                </svg>
+              </div>
+              <div class="app-meta">
+                <div class="app-name">Code Studio</div>
+                <div class="app-desc">HTML/CSS/JS Sandbox</div>
+              </div>
+            </a>
+
+            <a href="/game" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.22) 0%, rgba(190, 24, 93, 0.35) 100%); border: 1px solid rgba(236, 72, 153, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="6" width="20" height="12" rx="4"/>
+                  <path d="M6 12h4M8 10v4"/>
+                  <circle cx="16" cy="10" r="1" fill="#f472b6"/>
+                  <circle cx="18" cy="12" r="1" fill="#f472b6"/>
+                </svg>
+              </div>
+              <div class="app-meta">
+                <div class="app-name">Voxel Arena</div>
+                <div class="app-desc">3D Arcade Game</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <a href="/" class="nav-brand">
+        <div class="brand-glyph">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </div>
+        <span class="brand-name">AS Cloud</span>
+        <span class="brand-badge">Media HD</span>
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <a href="/" style="text-decoration:none; color:var(--text-muted); font-size:13px; font-weight:600; padding:6px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); transition:all 0.15s ease;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">
+        Back to Chat
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Body Content -->
+  <main class="main-wrap">
+    <!-- Hero Header -->
+    <header class="hero">
+      <div class="hero-pill">
+        <span style="width:6px; height:6px; border-radius:50%; background:#f43f5e; box-shadow:0 0 8px #f43f5e;"></span>
+        Direct Client High-Speed Relay
+      </div>
+      <h1 class="hero-title">Instagram HD Media Downloader</h1>
+      <p class="hero-subtitle">
+        Paste any Instagram link to instantly download Reels, HD Videos, Photos, and high-fidelity isolated MP3 audio directly through your device.
+      </p>
+    </header>
+
+    <!-- Console Input Card -->
+    <section class="console-card">
+      <form id="mediaForm" onsubmit="handleDownload(event)">
+        <div class="input-wrapper">
+          <div class="input-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </div>
+          <input
+            id="urlInput"
+            type="url"
+            class="media-input"
+            placeholder="Paste Instagram link (e.g. https://www.instagram.com/reel/...)"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          />
+          <button type="button" id="clearBtn" class="action-btn clear-btn" style="display:none;" onclick="clearInput()" title="Clear">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          <button type="button" id="pasteBtn" class="action-btn paste-btn" onclick="pasteClipboard()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Paste</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 14px;">
+          <button type="submit" id="submitBtn" class="submit-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span id="btnText">Fetch HD Media</span>
+          </button>
+        </div>
+      </form>
+
+      <div class="formats-bar">
+        <span>Supported Content:</span>
+        <div class="format-pills">
+          <span class="format-tag" onclick="quickFill('reel')">🎬 Reels</span>
+          <span class="format-tag" onclick="quickFill('post')">📸 Carousel / Posts</span>
+          <span class="format-tag" onclick="quickFill('audio')">🎵 MP3 Audio</span>
+          <span class="format-tag" onclick="quickFill('story')">⚡ Stories</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error Alert Box -->
+    <div id="errorBox" class="status-box error">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span id="errorText">Unable to fetch media. The post might be private, expired, or link is invalid.</span>
+    </div>
+
+    <!-- Direct Results Card Container -->
+    <section id="resultsSection" class="results-container" style="display:none;">
+      <div class="results-title">
+        <span>Extracted Media</span>
+        <button type="button" class="action-btn paste-btn" onclick="resetSearch()">Search Another</button>
+      </div>
+      <div id="mediaOutput" class="media-card-grid"></div>
+    </section>
+
+    <!-- High-Speed Client Frame Runner (Fallback / Seamless direct runner) -->
+    <section id="frameContainer" class="frame-container">
+      <div class="frame-bar">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 10px #10b981;"></span>
+          AS Direct Media Stream Active
+        </span>
+        <button type="button" class="action-btn paste-btn" style="padding:4px 10px; font-size:12px;" onclick="resetSearch()">Close</button>
+      </div>
+      <div class="frame-wrapper">
+        <iframe id="clientFrame" class="frame-view" sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups" title="Media Processing Engine"></iframe>
+      </div>
+    </section>
+
+    <!-- Feature Highlights -->
+    <section class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(244,63,94,0.15); color:#fda4af;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div class="feature-title">Original 1080p Bitrate</div>
+        <div class="feature-desc">Preserves maximum available Instagram video resolution and bitrate with zero compression loss.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(147,51,234,0.15); color:#d8b4fe;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <div class="feature-title">Isolated MP3 Audio</div>
+        <div class="feature-desc">1-click audio track isolation. Download clean audio streams from Reels and videos into MP3 files.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(6,182,212,0.15); color:#67e8f9;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+          </svg>
+        </div>
+        <div class="feature-title">Full Carousel Unpacking</div>
+        <div class="feature-desc">Extract all multi-slide images and videos from a single carousel post in individual high-res files.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // --- Apps Hub Dropdown ---
+    function toggleAppsMenu(e) {
+      if (e) e.stopPropagation();
+      const menu = document.getElementById('appsDropdownMenu');
+      const btn = document.getElementById('appsMenuBtn');
+      const isOpen = menu.style.display === 'flex';
+      menu.style.display = isOpen ? 'none' : 'flex';
+      btn.classList.toggle('open', !isOpen);
+    }
+    document.addEventListener('click', (e) => {
+      const wrapper = document.querySelector('.apps-nav-wrapper');
+      if (wrapper && !wrapper.contains(e.target)) {
+        const menu = document.getElementById('appsDropdownMenu');
+        const btn = document.getElementById('appsMenuBtn');
+        if (menu) menu.style.display = 'none';
+        if (btn) btn.classList.remove('open');
+      }
+    });
+
+    // --- Input helpers ---
+    const urlInput = document.getElementById('urlInput');
+    const clearBtn = document.getElementById('clearBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const errorBox = document.getElementById('errorBox');
+    const errorText = document.getElementById('errorText');
+    const resultsSection = document.getElementById('resultsSection');
+    const mediaOutput = document.getElementById('mediaOutput');
+    const frameContainer = document.getElementById('frameContainer');
+    const clientFrame = document.getElementById('clientFrame');
+
+    urlInput.addEventListener('input', () => {
+      clearBtn.style.display = urlInput.value ? 'inline-flex' : 'none';
+      hideError();
+    });
+
+    function clearInput() {
+      urlInput.value = '';
+      clearBtn.style.display = 'none';
+      hideError();
+      urlInput.focus();
+    }
+
+    async function pasteClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          urlInput.value = text.trim();
+          clearBtn.style.display = 'inline-flex';
+          handleDownload();
+        }
+      } catch (err) {
+        const manual = prompt('Paste your Instagram URL here:');
+        if (manual) {
+          urlInput.value = manual.trim();
+          clearBtn.style.display = 'inline-flex';
+          handleDownload();
+        }
+      }
+    }
+
+    function quickFill(type) {
+      let sample = 'https://www.instagram.com/reel/';
+      if (type === 'post') sample = 'https://www.instagram.com/p/';
+      if (type === 'audio') sample = 'https://www.instagram.com/reels/audio/';
+      if (type === 'story') sample = 'https://www.instagram.com/stories/';
+      urlInput.value = sample;
+      clearBtn.style.display = 'inline-flex';
+      urlInput.focus();
+    }
+
+    function showError(msg) {
+      errorText.textContent = msg;
+      errorBox.style.display = 'flex';
+      errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function hideError() {
+      errorBox.style.display = 'none';
+    }
+
+    function resetSearch() {
+      resultsSection.style.display = 'none';
+      frameContainer.style.display = 'none';
+      clientFrame.src = 'about:blank';
+      mediaOutput.innerHTML = '';
+      urlInput.value = '';
+      clearBtn.style.display = 'none';
+      hideError();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // --- Client-Side Cryptographic Resolver (AES-128-CBC) ---
+    const ENC_KEY = "qwertyuioplkjhgf";
+    const ENC_IV = new Uint8Array(16);
+    let cachedCryptoKey;
+
+    async function getCryptoKey() {
+      if (!cachedCryptoKey) {
+        cachedCryptoKey = await crypto.subtle.importKey(
+          "raw",
+          new TextEncoder().encode(ENC_KEY),
+          "AES-CBC",
+          false,
+          ["encrypt"]
+        );
+      }
+      return cachedCryptoKey;
+    }
+
+    async function encryptUrlPayload(url) {
+      const encoded = new TextEncoder().encode(url);
+      const padLen = 16 - (encoded.length % 16);
+      const padded = new Uint8Array(encoded.length + padLen);
+      padded.set(encoded);
+      padded.fill(padLen, encoded.length);
+
+      const key = await getCryptoKey();
+      const chunks = [];
+      for (let i = 0; i < padded.length; i += 16) {
+        chunks.push(crypto.subtle.encrypt({ name: "AES-CBC", iv: ENC_IV }, key, padded.subarray(i, i + 16)));
+      }
+      const results = await Promise.all(chunks);
+      let hex = "";
+      for (const res of results) {
+        for (const byte of new Uint8Array(res, 0, 16)) {
+          hex += byte.toString(16).padStart(2, "0");
+        }
+      }
+      return hex;
+    }
+
+    // --- Media Fetch & Render Engine ---
+    async function handleDownload(e) {
+      if (e) e.preventDefault();
+      const rawUrl = urlInput.value.trim();
+      if (!rawUrl) return;
+
+      const match = rawUrl.match(/https?:\/\/[^\s]+/);
+      const cleanUrl = match ? match[0] : rawUrl;
+
+      hideError();
+      resultsSection.style.display = 'none';
+      frameContainer.style.display = 'none';
+
+      // Set loading state
+      submitBtn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span> Processing Media...';
+
+      try {
+        const encryptedHex = await encryptUrlPayload(cleanUrl);
+        const resp = await fetch("https://api.getrequest.dev/allinone", {
+          method: "GET",
+          headers: { url: encryptedHex }
+        });
+
+        if (!resp.ok) throw new Error("Network status " + resp.status);
+        const data = await resp.json();
+
+        if (data && (data.video || data.image || data.media || data.original)) {
+          renderMediaCards(data, cleanUrl);
+        } else {
+          fallbackToClientFrame(cleanUrl);
+        }
+      } catch (err) {
+        // Direct browser API call had CORS or challenge -> use seamless direct client engine
+        console.warn("Direct fetch exception, switching to client-side stream handler:", err);
+        fallbackToClientFrame(cleanUrl);
+      } finally {
+        submitBtn.disabled = false;
+        btnText.innerHTML = 'Fetch HD Media';
+      }
+    }
+
+    function fallbackToClientFrame(cleanUrl) {
+      // Seamless direct client stream handler
+      clientFrame.src = "https://fastvideosave.net/?url=" + encodeURIComponent(cleanUrl);
+      frameContainer.style.display = 'flex';
+      frameContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderMediaCards(data, origUrl) {
+      mediaOutput.innerHTML = '';
+      const cdnPrefix = "https://cdn.turbosave.app/?url=";
+
+      // 1. Videos (Reels / Feed Videos)
+      if (Array.isArray(data.video)) {
+        data.video.forEach((v, idx) => {
+          const card = document.createElement('div');
+          card.className = 'media-card';
+          const videoUrl = v.video || '';
+          const thumbUrl = v.thumbnail ? (cdnPrefix + encodeURIComponent(v.thumbnail)) : '';
+          const dlServer1 = cdnPrefix + encodeURIComponent(videoUrl);
+          const dlAudio = `https://mp3.turbosave.app/api?url=${encodeURIComponent(videoUrl)}`;
+
+          card.innerHTML = `
+            <div class="preview-box">
+              <video controls playsinline preload="metadata" poster="${thumbUrl}">
+                <source src="${dlServer1}" type="video/mp4">
+              </video>
+            </div>
+            <div class="dl-btn-group">
+              <a href="${dlServer1}" target="_blank" rel="noopener noreferrer" class="dl-btn dl-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download HD Video (Server 1)
+              </a>
+              <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" class="dl-btn dl-secondary">
+                Direct Stream (Server 2)
+              </a>
+              <a href="${dlAudio}" target="_blank" rel="noopener noreferrer" class="dl-btn dl-audio">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                Download MP3 Audio
+              </a>
+            </div>
+          `;
+          mediaOutput.appendChild(card);
+        });
+      }
+
+      // 2. Images (Photos & Carousels)
+      if (Array.isArray(data.image)) {
+        data.image.forEach((img, idx) => {
+          const card = document.createElement('div');
+          card.className = 'media-card';
+          const imgProxy = cdnPrefix + encodeURIComponent(img);
+          card.innerHTML = `
+            <div class="preview-box" style="aspect-ratio:1/1;">
+              <img src="${imgProxy}" alt="Instagram photo ${idx + 1}" loading="lazy"/>
+            </div>
+            <div class="dl-btn-group">
+              <a href="${imgProxy}&dl=1" target="_blank" rel="noopener noreferrer" class="dl-btn dl-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download High-Res Photo
+              </a>
+            </div>
+          `;
+          mediaOutput.appendChild(card);
+        });
+      }
+
+      // 3. Original Audio Tracks
+      if (Array.isArray(data.original)) {
+        data.original.forEach((aud) => {
+          const card = document.createElement('div');
+          card.className = 'media-card';
+          const audUrl = aud.url || '';
+          const dlAudio = `https://mp3.turbosave.app/api?url=${encodeURIComponent(audUrl)}${aud.title ? `&filename=${encodeURIComponent(aud.title)}` : ''}`;
+
+          card.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:#fda4af; font-family:'JetBrains Mono';">Audio Stream</span>
+              <div style="font-size:15px; font-weight:700; color:#fff;">${aud.title || "Original Audio Track"}</div>
+              ${aud.artist ? `<div style="font-size:13px; color:#94a3b8;">${aud.artist}</div>` : ''}
+              <audio controls style="width:100%; margin-top:10px;">
+                <source src="${cdnPrefix + encodeURIComponent(audUrl)}">
+              </audio>
+            </div>
+            <div class="dl-btn-group" style="margin-top:10px;">
+              <a href="${dlAudio}" target="_blank" rel="noopener noreferrer" class="dl-btn dl-audio">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                Download Isolated MP3
+              </a>
+            </div>
+          `;
+          mediaOutput.appendChild(card);
+        });
+      }
+
+      resultsSection.style.display = 'flex';
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Auto-fetch if 'url' query param present
+    const paramUrl = new URLSearchParams(window.location.search).get('url');
+    if (paramUrl) {
+      urlInput.value = paramUrl;
+      clearBtn.style.display = 'inline-flex';
+      handleDownload();
+    }
+  </script>
+</body>
+</html>

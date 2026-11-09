@@ -162,7 +162,7 @@
       position: absolute;
       top: calc(100% + 10px);
       left: 0;
-      width: 440px;
+      width: 500px;
       max-width: calc(100vw - 20px);
       box-sizing: border-box;
       background: rgba(11, 13, 20, 0.97);
@@ -212,6 +212,10 @@
       gap: 10px;
       width: 100%;
       box-sizing: border-box;
+    }
+    @media (max-width: 520px) {
+      .apps-dropdown-panel { width: calc(100vw - 20px) !important; left: -6px; }
+      .apps-grid { grid-template-columns: 1fr; }
     }
 
     .app-item {
@@ -1368,7 +1372,7 @@
         <div id="appsDropdownMenu" class="apps-dropdown-panel">
           <div class="apps-panel-header">
             <span class="apps-panel-title">AS Cloud Ecosystem</span>
-            <span class="apps-panel-badge">5 Services</span>
+            <span class="apps-panel-badge">6 Services</span>
           </div>
           <div class="apps-grid">
             <a href="/" class="app-item">
@@ -1397,6 +1401,20 @@
               <div class="app-meta">
                 <div class="app-name">Audio Studio</div>
                 <div class="app-desc">Stream & Lossless MP3</div>
+              </div>
+            </a>
+
+            <a href="/insta" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(244, 63, 94, 0.25) 0%, rgba(225, 29, 72, 0.35) 100%); border: 1px solid rgba(244, 63, 94, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+              </div>
+              <div class="app-meta">
+                <div class="app-name">Media Downloader</div>
+                <div class="app-desc">Instagram HD & Audio</div>
               </div>
             </a>
 
