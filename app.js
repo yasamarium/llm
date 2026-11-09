@@ -2092,196 +2092,49 @@
     appendMessage("user", originalText);
 
     const isShort = /\/shorts\//i.test(ytUrl);
-    const mediaType = isShort ? "YouTube Short" : "YouTube HD Video";
+    const mediaType = isShort ? "YouTube Short" : "YouTube Video";
 
     const assistantBubble = appendMessage("assistant", "");
     assistantBubble.innerHTML = `
-      <div class="ios-media-loading">
-        <div class="image-shimmer"></div>
-        <div class="image-loading-content">
-          <span class="ios-spinner"></span>
-          <span>Analyzing ${escapeHtml(mediaType)} & resolving high-bitrate streams...</span>
+      <div class="ios-media-card ios-video-card">
+        <div class="media-ai-badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">
+          ⚡ AS Intelligence Core • Maintenance Notice
+        </div>
+        <div style="font-size: 14.5px; font-weight: 700; color: #ffffff; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          YouTube Service Temporarily Unavailable
+        </div>
+        <p style="font-size: 12.8px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">
+          YouTube stream resolution for <strong>${escapeHtml(mediaType)}</strong> is currently <strong>Under Maintenance</strong>. Our engineering team is upgrading the direct high-speed stream nodes to ensure stable 4K, 1080p, and MP3 processing.
+        </p>
+
+        <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;">
+          <div style="font-size: 12px; font-weight: 600; color: #fbbf24; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#f59e0b; animation: pulse 1.5s infinite;"></span>
+            Status: Maintenance in Progress
+          </div>
+          <div style="font-size: 11.5px; color: #94a3b8; line-height: 1.4;">
+            YouTube links are temporarily paused. In the meantime, Instagram Reels/Posts/Stories and Audio Studio are running normally.
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="/insta" class="media-btn-primary" style="flex: 1; justify-content: center; text-decoration: none;">
+            <span>📸 Use Instagram Downloader</span>
+          </a>
+          <a href="/music" class="media-btn-secondary" style="flex: 1; justify-content: center; text-decoration: none;">
+            <span>🎵 Audio Studio</span>
+          </a>
         </div>
       </div>
     `;
 
-    setGenerating(true);
-    abortController = new AbortController();
-
-    try {
-      const idMatch = ytUrl.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/|\/shorts\/)([a-zA-Z0-9_-]{11})/i);
-      const normalizedUrl = idMatch ? ("https://www.youtube.com/watch?v=" + idMatch[1]) : ytUrl;
-
-      const proxyRes = await fetch("/api/youtube?url=" + encodeURIComponent(normalizedUrl), {
-        signal: abortController.signal,
-      });
-
-      const data = await proxyRes.json();
-      if (!proxyRes.ok || !data || data.error || !data.formats || data.formats.length === 0) {
-        throw new Error((data && data.error && data.error.message) || "Could not resolve stream for this YouTube link.");
-      }
-
-      const res = data;
-      const ytVideoId = idMatch ? idMatch[1] : "";
-      const fallbackThumb = ytVideoId ? ("https://i.ytimg.com/vi/" + ytVideoId + "/hqdefault.jpg") : "";
-
-      const title = res.title || "YouTube Video";
-      const thumbnail = res.thumbnail || fallbackThumb;
-      const duration = res.duration || "";
-      const allFormats = res.formats || [];
-
-      // Quick 360p, 1080p, MP3
-      const fmt360 = allFormats.find(f => f.kind === 'video+audio' || (f.label && f.label.includes('360p'))) || allFormats.find(f => f.url && f.kind !== 'audio');
-      const fmt1080 = allFormats.find(f => f.label && (f.label.includes('1080p') || f.label.includes('720p')));
-      const fmtMp3 = allFormats.find(f => f.kind === 'mp3' || f.kind === 'audio' || (f.label && (f.label.includes('MP3') || f.label.includes('Audio'))));
-
-      const dl360 = (fmt360 && (fmt360.force || fmt360.url)) || ytUrl;
-      const dl1080 = (fmt1080 && (fmt1080.force || fmt1080.url)) || dl360;
-      const dlMp3 = (fmtMp3 && (fmtMp3.force || fmtMp3.url)) || dl360;
-
-      // Best playable stream for HTML5 preview
-      const playableFmt = allFormats.find(f => f.url && (f.kind === 'video+audio' || (f.label && f.label.includes('360p')))) || allFormats.find(f => f.url && f.kind !== 'audio');
-      const bestVideoUrl = playableFmt?.url || "";
-
-      // Video & Audio selectors
-      const videoFormats = allFormats.filter(f => f.kind === 'video-only' || f.kind === 'video' || f.kind === 'video+audio');
-      const audioFormats = allFormats.filter(f => f.kind === 'audio' || f.kind === 'mp3' || (f.label && (f.label.includes('MP3') || f.label.includes('Audio'))));
-
-      let vidOptsHtml = "";
-      if (videoFormats.length > 0) {
-        vidOptsHtml = videoFormats.map(vf => `<option value="${escapeHtml(vf.value)}">${escapeHtml(vf.text || vf.label)}</option>`).join("");
-      } else {
-        vidOptsHtml = `<option value="1080p">1080p Full HD MP4</option><option value="720p">720p HD MP4</option><option value="360p">360p MP4</option>`;
-      }
-
-      let audOptsHtml = "";
-      if (audioFormats.length > 0) {
-        audOptsHtml = audioFormats.map(af => `<option value="${escapeHtml(af.value)}">${escapeHtml(af.text || af.label)}</option>`).join("");
-      } else {
-        audOptsHtml = `<option value="320k">Lossless MP3 (320 kbps)</option><option value="192k">MP3 Audio (192 kbps)</option><option value="m4a">M4A Audio (131 kbps)</option>`;
-      }
-
-      const initialCombineUrl = (videoFormats[0] && (videoFormats[0].force || videoFormats[0].url)) || dl1080;
-      const studioUrl = "/yt?url=" + encodeURIComponent(ytUrl);
-
-      assistantBubble.innerHTML = `
-        <div class="ios-media-card ios-video-card">
-          <div class="media-ai-badge yt">⚡ AS Intelligence Core • ${escapeHtml(mediaType)}</div>
-          <div style="font-size: 13.5px; font-weight: 600; color: #ffffff; margin-bottom: 6px;">
-            Direct Media Streams Resolved
-          </div>
-          <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.45;">
-            I have analyzed your ${escapeHtml(mediaType)} and resolved direct high-bitrate video and isolated audio streams. 1-click ready formats are available below, or pick your exact video and audio quality with the HD Combiner:
-          </p>
-
-          ${
-            bestVideoUrl
-              ? `
-              <div class="yt-card-video-wrap" style="${isShort ? 'aspect-ratio: 9/16; max-height: 380px;' : ''}">
-                <video playsinline controls preload="metadata" poster="${escapeHtml(thumbnail)}" class="yt-card-video" src="${escapeHtml(bestVideoUrl)}"></video>
-              </div>
-            `
-              : thumbnail
-              ? `
-              <div class="yt-card-video-wrap" style="${isShort ? 'aspect-ratio: 9/16; max-height: 380px;' : ''}">
-                <img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(title)}" class="yt-card-video" style="object-fit: cover;" />
-              </div>
-            `
-              : ""
-          }
-
-          <div class="yt-card-body" style="padding-top: 10px;">
-            <div class="yt-card-title">${escapeHtml(title)}</div>
-
-            <div class="yt-meta-pills" style="margin-bottom: 10px;">
-              ${duration ? `<span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${escapeHtml(duration)}</span>` : ""}
-              <span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> ${escapeHtml(mediaType)}</span>
-            </div>
-
-            <div class="yt-downloads-header" style="margin-bottom: 6px;">Quick 1-Click Formats</div>
-            <div class="yt-quality-list" style="margin-bottom: 10px;">
-              <a href="${escapeHtml(dl360)}" target="_blank" rel="noopener noreferrer" class="yt-dl-chip featured" title="Ready to play with video and audio">
-                <span>★ 360p MP4 Ready</span>
-              </a>
-              <a href="${escapeHtml(dlMp3)}" target="_blank" rel="noopener noreferrer" class="yt-dl-chip" title="Download isolated audio">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                <span>🎵 Lossless MP3</span>
-              </a>
-              <a href="${escapeHtml(dl1080)}" target="_blank" rel="noopener noreferrer" class="yt-dl-chip" title="Download 1080p HD stream">
-                <span>🎬 1080p HD Stream</span>
-              </a>
-            </div>
-
-            <div class="chat-combiner-box">
-              <div class="chat-combiner-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                <span>Need Higher Quality? Combine Video + Audio</span>
-              </div>
-              <div class="chat-combiner-desc">
-                YouTube serves 1080p, 1440p, and 4K without audio by default. Select your resolution & sound track below:
-              </div>
-              <div class="chat-combiner-selects">
-                <div style="display:flex; flex-direction:column; gap:3px;">
-                  <span style="font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase;">Video Quality</span>
-                  <select class="chat-select-sm yt-vid-sel">
-                    ${vidOptsHtml}
-                  </select>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:3px;">
-                  <span style="font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase;">Audio Track</span>
-                  <select class="chat-select-sm yt-aud-sel">
-                    ${audOptsHtml}
-                  </select>
-                </div>
-              </div>
-              <div style="margin-top: 4px;">
-                <a href="${escapeHtml(initialCombineUrl)}" target="_blank" rel="noopener noreferrer" class="chat-combiner-btn yt-combine-btn" style="width: 100%; box-sizing: border-box;">
-                  <span>📥 Download Selected HD Stream</span>
-                </a>
-              </div>
-            </div>
-
-            <div style="margin-top: 8px;">
-              <a href="${escapeHtml(studioUrl)}" class="media-btn-secondary" style="display: flex; justify-content: center; width: 100%; box-sizing: border-box;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-                <span>↗ Open in YouTube Studio</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // Dynamic Combiner Selection Listener
-      const vidSel = assistantBubble.querySelector(".yt-vid-sel");
-      const audSel = assistantBubble.querySelector(".yt-aud-sel");
-      const dlBtn = assistantBubble.querySelector(".yt-combine-btn");
-      if (vidSel && dlBtn) {
-        const updateBtn = () => {
-          const chosenFmt = allFormats.find(f => f.value === vidSel.value) || allFormats[0];
-          if (chosenFmt && (chosenFmt.force || chosenFmt.url)) {
-            dlBtn.href = chosenFmt.force || chosenFmt.url;
-            dlBtn.innerHTML = "<span>📥 Download " + escapeHtml(chosenFmt.label || "Selected Stream") + "</span>";
-          }
-        };
-        vidSel.addEventListener("change", updateBtn);
-        audSel.addEventListener("change", updateBtn);
-      }
-
-      conversation.push({ role: "assistant", content: "[YouTube Media: \"" + title + "\"]" });
-      smoothScrollToBottom();
-    } catch (err) {
-      if (err.name === "AbortError") {
-        assistantBubble.innerHTML = `<div style="color: var(--text-tertiary); font-style: italic;">(YouTube processing canceled)</div>`;
-      } else {
-        assistantBubble.innerHTML = `<div style="color: var(--status-red); padding: 4px 0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 5px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${escapeHtml(err.message)}</div>`;
-      }
-    } finally {
-      setGenerating(false);
-      abortController = null;
-      autoResizeInput();
-    }
+    conversation.push({ role: "assistant", content: `[YouTube Studio is temporarily under maintenance. Service paused.]` });
+    smoothScrollToBottom();
   }
 
   // ---------------------------------------------------------------------------

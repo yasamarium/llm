@@ -634,8 +634,8 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="5" fill="#ef4444"/><polygon points="10 8 16 12 10 16" fill="#ffffff"/></svg>
               </div>
               <div class="app-meta">
-                <div class="app-name">YouTube Studio</div>
-                <div class="app-desc">4K, 1080p & Lossless MP3</div>
+                <div class="app-name" style="display:flex; align-items:center; gap:6px;">YouTube Studio <span style="font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px; background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); text-transform:uppercase; letter-spacing:0.3px;">Maintenance</span></div>
+                <div class="app-desc">Temporarily Unavailable</div>
               </div>
             </a>
 
@@ -710,8 +710,8 @@
                 </svg>
               </div>
               <div class="app-meta">
-                <div class="app-name">YouTube Studio</div>
-                <div class="app-desc">4K, 1080p & Lossless MP3</div>
+                <div class="app-name" style="display:flex; align-items:center; gap:6px;">YouTube Studio <span style="font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px; background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); text-transform:uppercase; letter-spacing:0.3px;">Maintenance</span></div>
+                <div class="app-desc">Temporarily Unavailable</div>
               </div>
             </a>
 
@@ -787,18 +787,51 @@
   <main class="main-wrap">
     <!-- Hero Header -->
     <header class="hero">
-      <div class="hero-pill">
-        <span style="width:6px; height:6px; border-radius:50%; background:#ef4444; box-shadow:0 0 8px #ef4444;"></span>
-        Direct High-Speed YouTube Engine
+      <div class="hero-pill" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1);">
+        <span style="width:6px; height:6px; border-radius:50%; background:#f59e0b; box-shadow:0 0 8px #f59e0b;"></span>
+        Service Status: Under Maintenance
       </div>
-      <h1 class="hero-title">YouTube HD, 4K & MP3 Downloader</h1>
+      <h1 class="hero-title">YouTube Studio</h1>
       <p class="hero-subtitle">
-        Instant stream retrieval for YouTube Videos & Shorts. Choose your exact video resolution and audio stream with high-quality combination.
+        YouTube HD & Audio Downloader is temporarily unavailable due to scheduled upstream stream node maintenance.
       </p>
     </header>
 
-    <!-- Console Input Card -->
-    <section class="console-card">
+    <!-- Maintenance Notice Banner -->
+    <section class="console-card" style="border-color: rgba(245, 158, 11, 0.35); background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, rgba(18, 22, 34, 0.85) 100%);">
+      <div style="display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px;">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.18); border: 1px solid rgba(245, 158, 11, 0.35); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px;">
+            Temporarily Unavailable • Under Maintenance
+          </div>
+          <div style="font-size: 13px; color: #94a3b8; line-height: 1.5;">
+            Our engineering team is actively upgrading the YouTube stream extraction cluster to improve download speeds and stream reliability. This service will be restored soon.
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 14px;">
+        <a href="/insta" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); text-decoration: none; box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);">
+          <span>📸 Instagram Downloader (Active)</span>
+        </a>
+        <a href="/music" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); text-decoration: none; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);">
+          <span>🎵 Audio Studio (Active)</span>
+        </a>
+        <a href="/" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; color: #cbd5e1; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); text-decoration: none;">
+          <span>💬 Return to AI Chat</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Console Input Card (Disabled with Maintenance Tooltip) -->
+    <section class="console-card" style="opacity: 0.65;">
       <form id="ytForm" onsubmit="handleYtDownload(event)">
         <div class="input-wrapper">
           <div class="input-icon">
@@ -1095,35 +1128,8 @@
     // --- Media Fetch Handler ---
     async function handleYtDownload(e) {
       if (e) e.preventDefault();
-      const rawUrl = urlInput.value.trim();
-      if (!rawUrl) return;
-
-      const match = rawUrl.match(/https?:\/\/[^\s]+/);
-      const cleanUrl = match ? match[0] : rawUrl;
-
       hideError();
-      resultsSection.style.display = 'none';
-      frameContainer.style.display = 'none';
-
-      submitBtn.disabled = true;
-      btnText.innerHTML = '<span class="spinner"></span> Resolving Streams...';
-
-      try {
-        const resp = await fetch('/api/youtube?url=' + encodeURIComponent(cleanUrl));
-        const data = await resp.json();
-
-        if (data && data.success && data.formats && data.formats.length > 0) {
-          renderYouTubeResults(data, cleanUrl);
-        } else {
-          showError((data && data.error && data.error.message) || "Could not resolve video stream. Please verify the link.");
-        }
-      } catch (err) {
-        console.warn("Direct API call error:", err);
-        showError("Network connection error. Please try again: " + err.message);
-      } finally {
-        submitBtn.disabled = false;
-        btnText.innerHTML = 'Fetch Video Streams';
-      }
+      showError("YouTube Studio is temporarily unavailable under maintenance. Please try again later or use Instagram Downloader / Audio Studio.");
     }
 
     function fallbackToClientStream(cleanUrl) {
