@@ -75,13 +75,50 @@ export default async function handler(req, res) {
   });
 }
 
+// ── Continuous Relay Node Resolver ──────────────────────────────────────────
+let RELAY_CACHE = { url: null, timestamp: 0 };
+async function getActiveRelayUrl() {
+  const now = Date.now();
+  if (RELAY_CACHE.url && now - RELAY_CACHE.timestamp < 30000) {
+    return RELAY_CACHE.url;
+  }
+  try {
+    const rawRes = await fetch(`https://raw.githubusercontent.com/ugv0/as-telegram-relay/main/endpoint.txt?t=${now}`, {
+      signal: AbortSignal.timeout(2000),
+      cache: "no-store",
+    });
+    if (rawRes.ok) {
+      const text = (await rawRes.text()).trim();
+      if (text && text.startsWith("https://") && text.includes(".trycloudflare.com")) {
+        RELAY_CACHE = { url: text, timestamp: now };
+        return text;
+      }
+    }
+  } catch (_) {}
+  return RELAY_CACHE.url;
+}
+
 // ── Channel Messages Fetcher (GramJS / MTProto) ───────────────────────────────
 async function handleChannelFetch(req, res) {
+  const limit = Math.min(parseInt(req.query?.limit) || 25, 50);
+
+  // 1. Fast path: Delegate to active continuous relay server if online
+  const relayUrl = await getActiveRelayUrl();
+  if (relayUrl) {
+    try {
+      const relayRes = await fetch(`${relayUrl}/api/updates?limit=${limit}`, {
+        signal: AbortSignal.timeout(2800),
+      });
+      if (relayRes.ok) {
+        const data = await relayRes.json();
+        return res.status(200).json(data);
+      }
+    } catch (_) {}
+  }
+
   if (!TG_SESSION) {
     return res.status(503).json({ success: false, error: "Channel session not configured." });
   }
-
-  const limit = Math.min(parseInt(req.query?.limit) || 25, 50);
 
   try {
     // Dynamic import keeps startup fast for other actions
@@ -161,6 +198,20 @@ async function handleTelegramLookup(req, res, postBody) {
 
   if (!clean) {
     return res.status(400).json({ success: false, error: "Please enter a Telegram username, numeric ID, or profile link." });
+  }
+
+  // 1. Fast path: Delegate to active continuous relay server if online
+  const relayUrl = await getActiveRelayUrl();
+  if (relayUrl) {
+    try {
+      const relayRes = await fetch(`${relayUrl}/api/telegram?q=${encodeURIComponent(clean)}`, {
+        signal: AbortSignal.timeout(2800),
+      });
+      if (relayRes.ok) {
+        const data = await relayRes.json();
+        return res.status(200).json(data);
+      }
+    } catch (_) {}
   }
 
   if (/^\d+$/.test(clean)) {
