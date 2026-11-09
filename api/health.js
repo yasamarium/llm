@@ -11,9 +11,9 @@ const VERIFIED_MODELS = [
   "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
 ];
 
-const TG_API_ID   = parseInt(process.env.TELEGRAM_API_ID) || 35328182;
-const TG_API_HASH = process.env.TELEGRAM_API_HASH || "24e4690a9b3fa242311bbe5b1586f13c";
-const TG_SESSION  = process.env.TELEGRAM_SESSION  || "1BJWap1sBuwpme1vKfMhBw84NdJr_WDp2aWZTpfkuYsSW7UPY2z117h4nOEDxCaV_JPLEZWnlG_bFN-4teG5sP4e96SA48liXl9ImDvMLKN_syAz5KLHtxP2Ilkl_uY64L9QJsyuzfzyJ96QRT3ol8RHzYFcCnixvlHAqKN7za8d3eIxfeplj2BKU_LxZW1YvqXcvjBYw-uD_joYQct9sGUe9yySvHGAlnbSOTC6ja5-DfvSzF0iHGIiVLGA1D2j6TwQCtQNH6fVJiWN-JPF60N_Ogmy0YKUbE3lWAtP2Ajn4lDECyy_1PXeQsLVibjx-2g2oWqlykSPcxpFgu9xI6vzYvUiYBWw=";
+const TG_API_ID   = parseInt(process.env.TELEGRAM_API_ID) || 38648695;
+const TG_API_HASH = process.env.TELEGRAM_API_HASH || "9ea926414705c631aa6a908991cac059";
+const TG_SESSION  = process.env.TELEGRAM_SESSION  || "1BJWap1wBu4XVhGvlL4VHVzCCkNspHbbZMeASOrbV8-jAMM_EJU9GhA4W1WV2kWiEjLBlBaKDXDWglNGzG6sUT2Eo2zOjrOOShJ-SYBWxGJKVuXi7BUtVK0rrGfzFKkLNp4no398r7XNGVmQ-ASRJ0dAoa3Dha1ZlrRjiPyIG1--UVCg7BXS_ORfGsXubJU8wvAb8i7vc2uCwo7bneyVXvg4tTPw53SmUQKg6Z-D-Iz-WlI7fcbjitUutelS2Zhk-Q4PJcRw2u7g4AHKBV9zvbG3BCUPR7medlAMnP9ugVffVFHRngfAdxeX2FzQ2UG6VinSnBtFqL9_QGQLWDQxPqXcxshj1bPo=";
 const TG_CHANNEL  = process.env.TELEGRAM_CHANNEL_ID || "-1002750437982";
 
 export const config = { maxDuration: 60 };
