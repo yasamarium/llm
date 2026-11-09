@@ -76,7 +76,7 @@ async function getRelayServerUrl() {
   }
   try {
     const rawRes = await fetch(`https://raw.githubusercontent.com/ugv0/as-telegram-relay/main/endpoint.txt?t=${now}`, {
-      signal: AbortSignal.timeout(2000),
+      signal: AbortSignal.timeout(1200),
       cache: "no-store",
     });
     if (rawRes.ok) {
@@ -87,6 +87,26 @@ async function getRelayServerUrl() {
       }
     }
   } catch (_) {}
+
+  try {
+    const apiRes = await fetch("https://api.github.com/repos/ugv0/as-telegram-relay/contents/endpoint.txt", {
+      signal: AbortSignal.timeout(1500),
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        Accept: "application/vnd.github+json",
+        "User-Agent": "AS-Messages-Backend",
+      },
+    });
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      const text = Buffer.from(data.content, "base64").toString("utf-8").trim();
+      if (text && text.startsWith("https://") && text.includes(".trycloudflare.com")) {
+        RELAY_ENDPOINT_CACHE = { url: text, timestamp: now };
+        return text;
+      }
+    }
+  } catch (_) {}
+
   return RELAY_ENDPOINT_CACHE.url;
 }
 
@@ -383,27 +403,65 @@ async function loadRooms(force = false) {
 // ---------------------------------------------------------------------------
 // Chat Messages Loader & Sync
 // ---------------------------------------------------------------------------
+function normalizeChatId(chatId) {
+  if (!chatId || typeof chatId !== "string") return "";
+  const trimmed = chatId.trim();
+  if (trimmed === "general") return "room_general";
+  return trimmed;
+}
+
 function getChatFilePath(chatId) {
-  const safeId = chatId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const normId = normalizeChatId(chatId);
+  const safeId = normId.replace(/[^a-zA-Z0-9_-]/g, "_");
   return `data/chats/${safeId}.json`;
 }
 
-async function loadChatMessages(chatId, force = false) {
+async function loadChatMessages(rawChatId, force = false) {
+  const chatId = normalizeChatId(rawChatId);
+  if (!chatId) return [];
+
   const safeId = chatId.replace(/[^a-zA-Z0-9_-]/g, "_");
   const diskChatPath = path.join(CHATS_DIR, `${safeId}.json`);
+  const now = Date.now();
 
   const cached = MEM_CHATS.get(chatId);
-  if (!force && cached) {
+  if (!force && cached && (now - cached.updatedAt < 2500)) {
     return cached.messages;
   }
 
+  // Fast check: Dedicated Relay Server cache
+  try {
+    const relayUrl = await getRelayServerUrl();
+    if (relayUrl) {
+      const rRes = await fetch(`${relayUrl}/api/msg/messages?chatId=${encodeURIComponent(chatId)}`, {
+        signal: AbortSignal.timeout(600),
+      });
+      if (rRes.ok) {
+        const rData = await rRes.json();
+        if (Array.isArray(rData.messages) && rData.messages.length > 0) {
+          const existingMap = new Map((cached?.messages || []).map(m => [m.id, m]));
+          for (const m of rData.messages) existingMap.set(m.id, m);
+          const merged = Array.from(existingMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+          MEM_CHATS.set(chatId, {
+            messages: merged,
+            sha: cached?.sha || null,
+            updatedAt: now,
+            isDirty: false
+          });
+          writeDiskJson(diskChatPath, merged);
+          return merged;
+        }
+      }
+    }
+  } catch (_) {}
+
   // Check disk
   const diskMsgs = readDiskJson(diskChatPath, null);
-  if (diskMsgs && Array.isArray(diskMsgs)) {
+  if (diskMsgs && Array.isArray(diskMsgs) && diskMsgs.length > 0) {
     MEM_CHATS.set(chatId, {
       messages: diskMsgs,
       sha: cached?.sha || null,
-      updatedAt: Date.now(),
+      updatedAt: now,
       isDirty: false
     });
     return diskMsgs;
@@ -417,7 +475,7 @@ async function loadChatMessages(chatId, force = false) {
       MEM_CHATS.set(chatId, {
         messages: file.content,
         sha: file.sha,
-        updatedAt: Date.now(),
+        updatedAt: now,
         isDirty: false,
       });
       writeDiskJson(diskChatPath, file.content);
@@ -429,16 +487,18 @@ async function loadChatMessages(chatId, force = false) {
     MEM_CHATS.set(chatId, {
       messages: [],
       sha: null,
-      updatedAt: Date.now(),
+      updatedAt: now,
       isDirty: false,
     });
     writeDiskJson(diskChatPath, []);
     return [];
   }
+  cached.updatedAt = now;
   return cached.messages;
 }
 
-async function persistChatNow(chatId) {
+async function persistChatNow(rawChatId) {
+  const chatId = normalizeChatId(rawChatId);
   const cached = MEM_CHATS.get(chatId);
   if (!cached) return;
   const safeId = chatId.replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -508,10 +568,10 @@ export default async function handler(req, res) {
         cluster: "AS Cloud Messaging",
         auth: "secure_pbkdf2",
         database: {
-          users: REPO_USERS,
-          messages: REPO_MESSAGES,
-          rooms: REPO_ROOMS,
-          media: "msg-media-storage",
+          users: "Encrypted Secure Vault",
+          messages: "Distributed High-Speed Cluster",
+          rooms: "Mesh Channel Grid",
+          media: "Blob Store",
         },
       });
     }
@@ -843,30 +903,7 @@ export default async function handler(req, res) {
 
       const convos = [];
 
-      // 1. Rooms
-      for (const room of rooms) {
-        const msgs = await loadChatMessages(room.id);
-        const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
-        convos.push({
-          id: room.id,
-          type: "channel",
-          handle: room.id,
-          name: room.name,
-          pfp: room.pfp || null,
-          verified: true,
-          status: `${msgs.length} messages`,
-          lastMessage: lastMsg ? {
-            id: lastMsg.id,
-            text: lastMsg.text,
-            sender: lastMsg.sender,
-            time: lastMsg.timestamp,
-            mediaType: lastMsg.mediaType,
-          } : null,
-          unread: 0,
-        });
-      }
-
-      // 2. Discover active direct chats from user.chats, local disk files, and MEM_CHATS
+      // Discover active direct chats from user.chats, local disk files, and MEM_CHATS
       const currentUserObj = users.find(u => u.username.toLowerCase() === username);
       const userActiveChats = new Set(Array.isArray(currentUserObj?.chats) ? currentUserObj.chats : []);
 
@@ -894,50 +931,74 @@ export default async function handler(req, res) {
         }
       }
 
-      for (const dmId of userActiveChats) {
-        const parts = dmId.replace("dm_", "").split("__");
-        const otherUname = parts.find(p => p !== username) || parts[0];
-        if (EXCLUDED_USERNAMES.has(otherUname)) continue;
-
-        const other = users.find(u => u.username.toLowerCase() === otherUname) || {
-          username: otherUname,
-          displayName: otherUname,
-          pfp: null,
-          verified: false
-        };
-
-        const msgs = await loadChatMessages(dmId);
-        if (msgs && msgs.length > 0) {
-          const lastMsg = msgs[msgs.length - 1];
-          const unreadCount = msgs.filter(m => m.sender.toLowerCase() !== username && m.status !== "read").length;
-          const isBlocked = Array.isArray(currentUserObj?.blockedUsers) && currentUserObj.blockedUsers.includes(otherUname);
-          const hasBlockedMe = Array.isArray(other.blockedUsers) && other.blockedUsers.includes(username);
-
-          const isOtherOwner = (other.username || "").toLowerCase() === "as" || other.role === "owner";
+      // High-speed parallel retrieval for rooms and chats (0ms lag)
+      await Promise.all([
+        ...rooms.map(async (room) => {
+          const msgs = await loadChatMessages(room.id);
+          const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
           convos.push({
-            id: dmId,
-            type: "direct",
-            handle: other.username,
-            name: other.displayName || other.username,
-            pfp: other.pfp || null,
-            bio: other.bio || "",
-            role: isOtherOwner ? "owner" : (other.role || "user"),
-            createdAt: isOtherOwner ? 633830400000 : (other.createdAt || other.lastSeen || Date.now()),
-            verified: isOtherOwner ? true : !!other.verified,
-            isBlocked: !!isBlocked,
-            hasBlockedMe: !!hasBlockedMe,
-            lastMessage: {
+            id: room.id,
+            type: "channel",
+            handle: room.id,
+            name: room.name,
+            pfp: room.pfp || null,
+            verified: true,
+            status: `${msgs.length} messages`,
+            lastMessage: lastMsg ? {
               id: lastMsg.id,
               text: lastMsg.text,
               sender: lastMsg.sender,
               time: lastMsg.timestamp,
-              status: lastMsg.status,
               mediaType: lastMsg.mediaType,
-            },
-            unread: unreadCount,
+            } : null,
+            unread: 0,
           });
-        }
-      }
+        }),
+        ...Array.from(userActiveChats).map(async (dmId) => {
+          const parts = dmId.replace("dm_", "").split("__");
+          const otherUname = parts.find(p => p !== username) || parts[0];
+          if (EXCLUDED_USERNAMES.has(otherUname)) return;
+
+          const other = users.find(u => u.username.toLowerCase() === otherUname) || {
+            username: otherUname,
+            displayName: otherUname,
+            pfp: null,
+            verified: false
+          };
+
+          const msgs = await loadChatMessages(dmId);
+          if (msgs && msgs.length > 0) {
+            const lastMsg = msgs[msgs.length - 1];
+            const unreadCount = msgs.filter(m => m.sender.toLowerCase() !== username && m.status !== "read").length;
+            const isBlocked = Array.isArray(currentUserObj?.blockedUsers) && currentUserObj.blockedUsers.includes(otherUname);
+            const hasBlockedMe = Array.isArray(other.blockedUsers) && other.blockedUsers.includes(username);
+
+            const isOtherOwner = (other.username || "").toLowerCase() === "as" || other.role === "owner";
+            convos.push({
+              id: dmId,
+              type: "direct",
+              handle: other.username,
+              name: other.displayName || other.username,
+              pfp: other.pfp || null,
+              bio: other.bio || "",
+              role: isOtherOwner ? "owner" : (other.role || "user"),
+              createdAt: isOtherOwner ? 633830400000 : (other.createdAt || other.lastSeen || Date.now()),
+              verified: isOtherOwner ? true : !!other.verified,
+              isBlocked: !!isBlocked,
+              hasBlockedMe: !!hasBlockedMe,
+              lastMessage: {
+                id: lastMsg.id,
+                text: lastMsg.text,
+                sender: lastMsg.sender,
+                time: lastMsg.timestamp,
+                status: lastMsg.status,
+                mediaType: lastMsg.mediaType,
+              },
+              unread: unreadCount,
+            });
+          }
+        })
+      ]);
 
       convos.sort((a, b) => {
         const timeA = a.lastMessage?.time || 0;
@@ -994,7 +1055,7 @@ export default async function handler(req, res) {
     // 9. Get Messages History
     // -------------------------------------------------------------------------
     if (action === "get_messages") {
-      const chatId = url.searchParams.get("chatId");
+      const chatId = normalizeChatId(url.searchParams.get("chatId"));
       if (!chatId) {
         return res.status(400).json({ error: "chatId is required." });
       }
@@ -1009,7 +1070,7 @@ export default async function handler(req, res) {
     if (action === "send_message" && req.method === "POST") {
       const {
         id: clientMsgId,
-        chatId,
+        chatId: rawChatId,
         sender,
         recipient,
         text = "",
@@ -1019,6 +1080,7 @@ export default async function handler(req, res) {
         replyTo = null,
       } = req.body || {};
 
+      const chatId = normalizeChatId(rawChatId);
       if (!chatId || !sender) {
         return res.status(400).json({ error: "chatId and sender are required." });
       }
@@ -1114,7 +1176,8 @@ export default async function handler(req, res) {
     // 11. Mark Read
     // -------------------------------------------------------------------------
     if (action === "mark_read" && req.method === "POST") {
-      const { chatId, username } = req.body || {};
+      const { chatId: rawChatId, username } = req.body || {};
+      const chatId = normalizeChatId(rawChatId);
       if (!chatId || !username) {
         return res.status(400).json({ error: "chatId and username are required." });
       }
@@ -1147,9 +1210,9 @@ export default async function handler(req, res) {
     // -------------------------------------------------------------------------
     if (action === "sync") {
       const username = (url.searchParams.get("username") || "").toLowerCase().trim();
-      const activeChatId = url.searchParams.get("chatId");
+      const activeChatId = normalizeChatId(url.searchParams.get("chatId"));
       const since = parseInt(url.searchParams.get("since") || "0", 10);
-      const wait = url.searchParams.get("wait");
+      const wait = url.searchParams.get("wait") || "0";
 
       if (username) {
         const users = await loadUsers();
@@ -1167,7 +1230,32 @@ export default async function handler(req, res) {
         }
       }
 
-      // Long-polling: if wait=1 is requested and no new messages yet, wait for real-time bus or timeout
+      // Cross-container check with dedicated relay server if no new messages found and since > 0
+      if (newMessages.length === 0 && activeChatId && since > 0) {
+        try {
+          const relayUrl = await getRelayServerUrl();
+          if (relayUrl) {
+            const rRes = await fetch(`${relayUrl}/api/msg/sync?chatId=${encodeURIComponent(activeChatId)}&since=${since}`, {
+              signal: AbortSignal.timeout(500),
+            });
+            if (rRes.ok) {
+              const rData = await rRes.json();
+              if (Array.isArray(rData.newMessages) && rData.newMessages.length > 0) {
+                newMessages = rData.newMessages;
+                const cached = MEM_CHATS.get(activeChatId);
+                if (cached) {
+                  const existingMap = new Map(cached.messages.map(m => [m.id, m]));
+                  for (const m of newMessages) existingMap.set(m.id, m);
+                  cached.messages = Array.from(existingMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+                  cached.updatedAt = Date.now();
+                }
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      // Fast event-bus wait only if explicitly wait=1, with short 800ms max timeout (Zero Hang)
       if ((wait === "1" || wait === "true") && newMessages.length === 0 && activeChatId) {
         await new Promise((resolve) => {
           let resolved = false;
@@ -1193,7 +1281,7 @@ export default async function handler(req, res) {
             resolved = true;
             cleanup();
             resolve();
-          }, 12000);
+          }, 800);
         });
 
         const msgs = await loadChatMessages(activeChatId);

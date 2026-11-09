@@ -382,9 +382,9 @@
   // ---------------------------------------------------------------------------
   // Conversation & Sync State
   // ---------------------------------------------------------------------------
-  let activeConvoId = "general";
+  let activeConvoId = "room_general";
   let activeConvoMeta = {
-    id: "general",
+    id: "room_general",
     type: "channel",
     handle: "general",
     name: "Global Lounge",
@@ -2131,7 +2131,7 @@
 
       try {
         longPollAbortCtrl = new AbortController();
-        const url = `/api/msg?action=sync&wait=1&username=${encodeURIComponent(currentUser.username)}&chatId=${encodeURIComponent(pollTargetChatId || "")}&since=${lastMessageTimestamp}`;
+        const url = `/api/msg?action=sync&wait=0&username=${encodeURIComponent(currentUser.username)}&chatId=${encodeURIComponent(pollTargetChatId || "")}&since=${lastMessageTimestamp}`;
         
         const res = await fetch(url, { signal: longPollAbortCtrl.signal });
         if (!res.ok) {
@@ -2149,6 +2149,7 @@
             newMsgs.forEach((m) => appendLocalChatMessage(resChatId, { ...m, chatId: resChatId }));
             loadConversations();
           }
+          await new Promise((r) => setTimeout(r, 1000));
           continue;
         }
 
@@ -2187,6 +2188,7 @@
             loadConversations();
           }
         }
+        await new Promise((r) => setTimeout(r, 1000));
       } catch (err) {
         if (err.name !== "AbortError") {
           await new Promise((r) => setTimeout(r, 1200));
