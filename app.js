@@ -3794,7 +3794,7 @@
 
 
   // ===========================================================================
-  // AS Cloud Unified Auth & Git-Database Cloud Sync (Backed by ugv0)
+  // AS Cloud Unified Auth & Distributed Vault Cloud Sync
   // ===========================================================================
   let currentUser = null;
   let sessionToken = null;
@@ -3996,7 +3996,7 @@
       hideAuthGate();
       if (typeof triggerHaptic === "function") triggerHaptic("success");
 
-      // Load user conversations synced with ugv0 GitHub database
+      // Load user conversations synced with AS Cloud Vault
       await loadCloudSync();
     } catch (err) {
       showAuthError(err.message || "Failed to sign in. Please verify your details.");
@@ -4089,7 +4089,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Cloud Database Sync Engine (ugv0/as-db-sync)
+  // Cloud Database Sync Engine (AS Cloud Vault)
   // ---------------------------------------------------------------------------
   function triggerCloudSync(immediate = false) {
     if (!currentUser || !sessionToken) return;
@@ -4099,7 +4099,7 @@
     const performSync = async () => {
       if (!currentUser || !sessionToken) return;
       try {
-        if (syncLastStatus) syncLastStatus.textContent = "Syncing to ugv0 database...";
+        if (syncLastStatus) syncLastStatus.textContent = "Syncing to cloud vault...";
         const res = await fetch("/api/msg?action=save_ai_sync", {
           method: "POST",
           headers: {
@@ -4115,7 +4115,7 @@
         });
         if (res.ok) {
           const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-          if (syncLastStatus) syncLastStatus.textContent = `Synced at ${nowStr} (ugv0 DB)`;
+          if (syncLastStatus) syncLastStatus.textContent = `Synced at ${nowStr} (Cloud Vault)`;
         }
       } catch (err) {
         console.warn("Cloud sync notice:", err);
@@ -4132,7 +4132,7 @@
   async function loadCloudSync() {
     if (!currentUser || !sessionToken) return;
     try {
-      if (syncLastStatus) syncLastStatus.textContent = "Connecting to ugv0 database...";
+      if (syncLastStatus) syncLastStatus.textContent = "Connecting to AS Cloud Vault...";
       const res = await fetch(`/api/msg?action=get_ai_sync&token=${encodeURIComponent(sessionToken)}`, {
         headers: { Authorization: "Bearer " + sessionToken },
       });
@@ -4158,7 +4158,7 @@
             scrollToBottom();
           }
         }
-        if (syncLastStatus) syncLastStatus.textContent = "All conversations synchronized (ugv0)";
+        if (syncLastStatus) syncLastStatus.textContent = "All conversations synchronized (Cloud Vault)";
       }
     } catch (err) {
       console.warn("Could not load cloud sync:", err);

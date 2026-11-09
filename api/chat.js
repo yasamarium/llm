@@ -91,18 +91,26 @@ export default async function handler(req, res) {
 
   const {
     messages,
+    prompt,
+    input,
     model = DEFAULT_MODEL,
     temperature = 0.7,
     max_tokens = 2048,
     stream = true,
+    response_format,
   } = req.body || {};
 
-  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+  let effectiveMessages = messages;
+  if ((!effectiveMessages || !Array.isArray(effectiveMessages) || effectiveMessages.length === 0) && (prompt || input)) {
+    effectiveMessages = [{ role: "user", content: String(prompt || input) }];
+  }
+
+  if (!effectiveMessages || !Array.isArray(effectiveMessages) || effectiveMessages.length === 0) {
     return res.status(400).json({ error: { message: "Messages array is required." } });
   }
 
   const targetModel = resolveModel(model);
-  const lastUserMsg = messages[messages.length - 1]?.content || "";
+  const lastUserMsg = effectiveMessages[effectiveMessages.length - 1]?.content || "";
 
   // Fast Greeting Response
   if (isGreeting(lastUserMsg)) {
@@ -141,24 +149,32 @@ export default async function handler(req, res) {
   // Forward to NVIDIA NIM API
   try {
     const apiKey = getNimKey();
+    const upstreamPayload = {
+      model: targetModel,
+      messages: effectiveMessages.slice(-24),
+      temperature: Number(temperature) || 0.7,
+      max_tokens: Number(max_tokens) || 2048,
+      stream: Boolean(stream),
+    };
+    if (response_format && typeof response_format === "object") {
+      upstreamPayload.response_format = response_format;
+    }
+
     const upstreamRes = await fetch(`${NIM_BASE}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: targetModel,
-        messages: messages.slice(-24),
-        temperature: Number(temperature) || 0.7,
-        max_tokens: Number(max_tokens) || 2048,
-        stream: Boolean(stream),
-      }),
+      signal: AbortSignal.timeout(28000),
+      body: JSON.stringify(upstreamPayload),
     });
 
     if (!upstreamRes.ok) {
       const errText = await upstreamRes.text();
-      return res.status(upstreamRes.status).send(errText);
+      let errJson;
+      try { errJson = JSON.parse(errText); } catch (_) { errJson = { message: errText }; }
+      return res.status(upstreamRes.status).json({ error: errJson });
     }
 
     if (stream) {
