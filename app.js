@@ -2903,6 +2903,10 @@
   // Message Transmission with Separated Thinking & 120fps Batching
   // ---------------------------------------------------------------------------
   async function sendMessage() {
+    if (!currentUser || !sessionToken) {
+      showAuthGate("Please log in to AS Cloud to send messages.");
+      return;
+    }
     const text = messageInput.value.trim();
     if ((!text && !attachedImage) || isGenerating) return;
 
@@ -3787,4 +3791,619 @@
   syncVisualViewport();
   autoResizeInput();
   checkConnection();
+
+
+  // ===========================================================================
+  // AS Cloud Unified Auth & Git-Database Cloud Sync (Backed by ugv0)
+  // ===========================================================================
+  let currentUser = null;
+  let sessionToken = null;
+  let cloudSyncTimeout = null;
+  let signupAvatarBase64 = null;
+  let editAvatarBase64 = null;
+
+  // Nav Profile Elements
+  const userNavWrapper = document.getElementById("userNavWrapper");
+  const userProfileNavBtn = document.getElementById("userProfileNavBtn");
+  const navUserAvatarSlot = document.getElementById("navUserAvatarSlot");
+  const navUserNameText = document.getElementById("navUserNameText");
+  const navSyncDot = document.getElementById("navSyncDot");
+  const userProfileDropdown = document.getElementById("userProfileDropdown");
+  const dropdownUserAvatar = document.getElementById("dropdownUserAvatar");
+  const dropdownDisplayName = document.getElementById("dropdownDisplayName");
+  const dropdownBadge = document.getElementById("dropdownBadge");
+  const dropdownHandle = document.getElementById("dropdownHandle");
+  const syncLastStatus = document.getElementById("syncLastStatus");
+  const openEditProfileBtn = document.getElementById("openEditProfileBtn");
+  const userSignOutBtn = document.getElementById("userSignOutBtn");
+
+  // Auth Gate Elements
+  const asAuthGateOverlay = document.getElementById("asAuthGateOverlay");
+  const tabAuthSignIn = document.getElementById("tabAuthSignIn");
+  const tabAuthSignUp = document.getElementById("tabAuthSignUp");
+  const authGateError = document.getElementById("authGateError");
+  const authGateErrorText = document.getElementById("authGateErrorText");
+
+  // Sign In Form Elements
+  const authSignInForm = document.getElementById("authSignInForm");
+  const signInUsername = document.getElementById("signInUsername");
+  const signInPassword = document.getElementById("signInPassword");
+  const signInSubmitBtn = document.getElementById("signInSubmitBtn");
+  const switchToSignUpBtn = document.getElementById("switchToSignUpBtn");
+
+  // Sign Up Form Elements
+  const authSignUpForm = document.getElementById("authSignUpForm");
+  const signUpAvatarSlot = document.getElementById("signUpAvatarSlot");
+  const signUpAvatarInput = document.getElementById("signUpAvatarInput");
+  const triggerAvatarUploadBtn = document.getElementById("triggerAvatarUploadBtn");
+  const signUpUsername = document.getElementById("signUpUsername");
+  const signUpDisplayName = document.getElementById("signUpDisplayName");
+  const signUpPassword = document.getElementById("signUpPassword");
+  const signUpBio = document.getElementById("signUpBio");
+  const signUpSubmitBtn = document.getElementById("signUpSubmitBtn");
+  const switchToSignInBtn = document.getElementById("switchToSignInBtn");
+
+  // Edit Profile Modal Elements
+  const asEditProfileModal = document.getElementById("asEditProfileModal");
+  const closeEditProfileBtn = document.getElementById("closeEditProfileBtn");
+  const editAvatarPreview = document.getElementById("editAvatarPreview");
+  const editAvatarInput = document.getElementById("editAvatarInput");
+  const triggerEditAvatarBtn = document.getElementById("triggerEditAvatarBtn");
+  const removeAvatarBtn = document.getElementById("removeAvatarBtn");
+  const editDisplayName = document.getElementById("editDisplayName");
+  const editBio = document.getElementById("editBio");
+  const editCurrentPassword = document.getElementById("editCurrentPassword");
+  const editNewPassword = document.getElementById("editNewPassword");
+  const saveProfileChangesBtn = document.getElementById("saveProfileChangesBtn");
+
+  function getInitials(name, username) {
+    const src = (name || username || "AS").trim();
+    const parts = src.split(/[\s_]+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return src.substring(0, 2).toUpperCase();
+  }
+
+  function renderAvatar(container, pfp, name, username) {
+    if (!container) return;
+    container.innerHTML = "";
+    if (pfp && typeof pfp === "string" && pfp.trim().length > 0) {
+      const img = document.createElement("img");
+      img.src = pfp;
+      img.alt = name || username || "User";
+      img.onerror = () => {
+        container.innerHTML = getInitials(name, username);
+      };
+      container.appendChild(img);
+    } else {
+      container.textContent = getInitials(name, username);
+    }
+  }
+
+  function showAuthError(msg) {
+    if (!authGateError || !authGateErrorText) return;
+    authGateErrorText.textContent = msg || "An error occurred. Please try again.";
+    authGateError.style.display = "flex";
+  }
+
+  function hideAuthError() {
+    if (authGateError) authGateError.style.display = "none";
+  }
+
+  function showAuthGate(notice) {
+    if (!asAuthGateOverlay) return;
+    hideAuthError();
+    if (notice) showAuthError(notice);
+    asAuthGateOverlay.style.display = "flex";
+    if (messageInput) messageInput.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
+  }
+
+  function hideAuthGate() {
+    if (!asAuthGateOverlay) return;
+    asAuthGateOverlay.style.display = "none";
+    if (messageInput) {
+      messageInput.disabled = false;
+      messageInput.focus();
+    }
+    if (sendBtn) sendBtn.disabled = false;
+  }
+
+  function renderNavProfile() {
+    if (!currentUser) {
+      if (navUserNameText) navUserNameText.textContent = "Sign In";
+      if (navUserAvatarSlot) navUserAvatarSlot.textContent = "AS";
+      if (navSyncDot) navSyncDot.style.display = "none";
+      return;
+    }
+
+    const displayName = currentUser.displayName || currentUser.username;
+    if (navUserNameText) navUserNameText.textContent = displayName;
+    renderAvatar(navUserAvatarSlot, currentUser.pfp, currentUser.displayName, currentUser.username);
+    if (navSyncDot) navSyncDot.style.display = "inline-block";
+
+    // Dropdown updates
+    renderAvatar(dropdownUserAvatar, currentUser.pfp, currentUser.displayName, currentUser.username);
+    if (dropdownDisplayName) dropdownDisplayName.textContent = displayName;
+    if (dropdownHandle) dropdownHandle.textContent = "@" + currentUser.username;
+    
+    const isOwner = currentUser.role === "owner" || currentUser.username.toLowerCase() === "as" || currentUser.username.toLowerCase() === "ugv0";
+    if (dropdownBadge) {
+      dropdownBadge.textContent = isOwner ? "Owner" : "Member";
+      dropdownBadge.style.background = isOwner ? "rgba(245, 158, 11, 0.2)" : "rgba(59, 130, 246, 0.2)";
+      dropdownBadge.style.color = isOwner ? "#fbbf24" : "#60a5fa";
+      dropdownBadge.style.borderColor = isOwner ? "rgba(245, 158, 11, 0.4)" : "rgba(59, 130, 246, 0.4)";
+    }
+  }
+
+  function persistSession(user, token) {
+    currentUser = user;
+    sessionToken = token;
+    try {
+      localStorage.setItem("as_user", JSON.stringify(user));
+      localStorage.setItem("as_token", token);
+      localStorage.setItem("as_msg_current_user", JSON.stringify(user));
+      localStorage.setItem("as_msg_token", token);
+    } catch (_) {}
+  }
+
+  function clearSession() {
+    currentUser = null;
+    sessionToken = null;
+    try {
+      localStorage.removeItem("as_user");
+      localStorage.removeItem("as_token");
+      localStorage.removeItem("as_msg_current_user");
+      localStorage.removeItem("as_msg_token");
+    } catch (_) {}
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sign In & Sign Up API Handlers
+  // ---------------------------------------------------------------------------
+  async function handleSignIn(e) {
+    if (e) e.preventDefault();
+    hideAuthError();
+
+    const username = (signInUsername?.value || "").trim();
+    const password = (signInPassword?.value || "").trim();
+
+    if (!username || !password) {
+      showAuthError("Please enter your username and password.");
+      return;
+    }
+
+    if (signInSubmitBtn) {
+      signInSubmitBtn.disabled = true;
+      signInSubmitBtn.innerHTML = "<span>Signing in...</span>";
+    }
+
+    try {
+      const res = await fetch("/api/msg?action=login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.status !== "ok") {
+        throw new Error(data.error || "Incorrect credentials.");
+      }
+
+      persistSession(data.user, data.token);
+      renderNavProfile();
+      hideAuthGate();
+      if (typeof triggerHaptic === "function") triggerHaptic("success");
+
+      // Load user conversations synced with ugv0 GitHub database
+      await loadCloudSync();
+    } catch (err) {
+      showAuthError(err.message || "Failed to sign in. Please verify your details.");
+      if (typeof triggerHaptic === "function") triggerHaptic("error");
+    } finally {
+      if (signInSubmitBtn) {
+        signInSubmitBtn.disabled = false;
+        signInSubmitBtn.innerHTML = "<span>Sign In to AS Cloud</span>";
+      }
+    }
+  }
+
+  async function handleSignUp(e) {
+    if (e) e.preventDefault();
+    hideAuthError();
+
+    const username = (signUpUsername?.value || "").trim().toLowerCase();
+    const displayName = (signUpDisplayName?.value || "").trim();
+    const password = (signUpPassword?.value || "").trim();
+    const bio = (signUpBio?.value || "").trim();
+
+    if (!username || !password) {
+      showAuthError("Username and password are required.");
+      return;
+    }
+
+    if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+      showAuthError("Username must be 3-24 characters containing only letters, numbers, and underscores.");
+      return;
+    }
+
+    if (password.length < 6) {
+      showAuthError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (signUpSubmitBtn) {
+      signUpSubmitBtn.disabled = true;
+      signUpSubmitBtn.innerHTML = "<span>Creating Account...</span>";
+    }
+
+    try {
+      const res = await fetch("/api/msg?action=register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          displayName: displayName || username,
+          password,
+          bio: bio || "Available on AS Cloud",
+          pfp: signupAvatarBase64 || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.status !== "ok") {
+        throw new Error(data.error || "Failed to create account.");
+      }
+
+      persistSession(data.user, data.token);
+      renderNavProfile();
+      hideAuthGate();
+      if (typeof triggerHaptic === "function") triggerHaptic("success");
+
+      // Initialize empty sync or save initial session
+      await triggerCloudSync(true);
+    } catch (err) {
+      showAuthError(err.message || "Could not register. Username might already be taken.");
+      if (typeof triggerHaptic === "function") triggerHaptic("error");
+    } finally {
+      if (signUpSubmitBtn) {
+        signUpSubmitBtn.disabled = false;
+        signUpSubmitBtn.innerHTML = "<span>Create AS Cloud Account</span>";
+      }
+    }
+  }
+
+  function handleSignOut() {
+    if (!confirm("Are you sure you want to sign out of AS Cloud?")) return;
+    clearSession();
+    renderNavProfile();
+    if (userProfileDropdown) userProfileDropdown.style.display = "none";
+
+    // Clear local chat UI
+    conversation = [];
+    if (messagesFlow) messagesFlow.innerHTML = "";
+    if (welcomeView) welcomeView.style.display = "flex";
+
+    showAuthGate("You have been signed out. Log in to continue.");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cloud Database Sync Engine (ugv0/as-db-sync)
+  // ---------------------------------------------------------------------------
+  function triggerCloudSync(immediate = false) {
+    if (!currentUser || !sessionToken) return;
+
+    if (cloudSyncTimeout) clearTimeout(cloudSyncTimeout);
+
+    const performSync = async () => {
+      if (!currentUser || !sessionToken) return;
+      try {
+        if (syncLastStatus) syncLastStatus.textContent = "Syncing to ugv0 database...";
+        const res = await fetch("/api/msg?action=save_ai_sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + sessionToken,
+          },
+          body: JSON.stringify({
+            token: sessionToken,
+            conversations: conversation,
+            activeId: "current_chat",
+            settings: { selectedModel },
+          }),
+        });
+        if (res.ok) {
+          const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          if (syncLastStatus) syncLastStatus.textContent = `Synced at ${nowStr} (ugv0 DB)`;
+        }
+      } catch (err) {
+        console.warn("Cloud sync notice:", err);
+      }
+    };
+
+    if (immediate) {
+      performSync();
+    } else {
+      cloudSyncTimeout = setTimeout(performSync, 1500);
+    }
+  }
+
+  async function loadCloudSync() {
+    if (!currentUser || !sessionToken) return;
+    try {
+      if (syncLastStatus) syncLastStatus.textContent = "Connecting to ugv0 database...";
+      const res = await fetch(`/api/msg?action=get_ai_sync&token=${encodeURIComponent(sessionToken)}`, {
+        headers: { Authorization: "Bearer " + sessionToken },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.conversations) && data.conversations.length > 0) {
+          if (conversation.length === 0) {
+            conversation = data.conversations;
+            if (messagesFlow) messagesFlow.innerHTML = "";
+            if (welcomeView) welcomeView.style.display = "none";
+
+            // Re-render chat messages from synced state
+            conversation.forEach((msg) => {
+              if (msg.role === "user") {
+                appendMessage("user", msg.content);
+              } else if (msg.role === "assistant") {
+                const b = appendMessage("assistant", msg.content);
+                if (typeof parseAndRenderMarkdown === "function") {
+                  parseAndRenderMarkdown(b, msg.content);
+                }
+              }
+            });
+            scrollToBottom();
+          }
+        }
+        if (syncLastStatus) syncLastStatus.textContent = "All conversations synchronized (ugv0)";
+      }
+    } catch (err) {
+      console.warn("Could not load cloud sync:", err);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Edit Profile Handlers
+  // ---------------------------------------------------------------------------
+  function openEditProfile() {
+    if (!currentUser) return;
+    if (userProfileDropdown) userProfileDropdown.style.display = "none";
+    if (editDisplayName) editDisplayName.value = currentUser.displayName || "";
+    if (editBio) editBio.value = currentUser.bio || "";
+    if (editCurrentPassword) editCurrentPassword.value = "";
+    if (editNewPassword) editNewPassword.value = "";
+    editAvatarBase64 = null;
+    renderAvatar(editAvatarPreview, currentUser.pfp, currentUser.displayName, currentUser.username);
+    if (asEditProfileModal) asEditProfileModal.style.display = "flex";
+  }
+
+  function closeEditProfile() {
+    if (asEditProfileModal) asEditProfileModal.style.display = "none";
+  }
+
+  async function handleSaveProfileChanges() {
+    if (!currentUser || !sessionToken) return;
+
+    const displayName = (editDisplayName?.value || "").trim();
+    const bio = (editBio?.value || "").trim();
+    const oldPassword = (editCurrentPassword?.value || "").trim();
+    const newPassword = (editNewPassword?.value || "").trim();
+
+    if (newPassword && newPassword.length < 6) {
+      alert("New password must be at least 6 characters.");
+      return;
+    }
+
+    if (saveProfileChangesBtn) {
+      saveProfileChangesBtn.disabled = true;
+      saveProfileChangesBtn.textContent = "Saving...";
+    }
+
+    try {
+      const payload = {
+        displayName,
+        bio,
+      };
+      if (editAvatarBase64 !== null) {
+        payload.pfp = editAvatarBase64;
+      }
+      if (newPassword) {
+        payload.oldPassword = oldPassword;
+        payload.newPassword = newPassword;
+      }
+
+      const res = await fetch(`/api/msg?action=update_profile&token=${encodeURIComponent(sessionToken)}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + sessionToken,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.status !== "ok") {
+        throw new Error(data.error || "Failed to update profile.");
+      }
+
+      persistSession(data.user, sessionToken);
+      renderNavProfile();
+      closeEditProfile();
+      if (typeof triggerHaptic === "function") triggerHaptic("success");
+    } catch (err) {
+      alert(err.message || "Failed to update profile.");
+    } finally {
+      if (saveProfileChangesBtn) {
+        saveProfileChangesBtn.disabled = false;
+        saveProfileChangesBtn.textContent = "Save Changes";
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Setup Event Listeners & Initialize
+  // ---------------------------------------------------------------------------
+  function setupAuthEvents() {
+    // Nav Profile Button & Dropdown Toggle
+    if (userProfileNavBtn) {
+      userProfileNavBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!currentUser) {
+          showAuthGate();
+          return;
+        }
+        if (userProfileDropdown) {
+          const isOpen = userProfileDropdown.style.display === "flex";
+          userProfileDropdown.style.display = isOpen ? "none" : "flex";
+        }
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      if (userProfileDropdown && !userNavWrapper?.contains(e.target)) {
+        userProfileDropdown.style.display = "none";
+      }
+    });
+
+    if (openEditProfileBtn) openEditProfileBtn.addEventListener("click", openEditProfile);
+    if (userSignOutBtn) userSignOutBtn.addEventListener("click", handleSignOut);
+
+    // Segmented Tabs Toggle
+    if (tabAuthSignIn && tabAuthSignUp) {
+      tabAuthSignIn.addEventListener("click", () => {
+        tabAuthSignIn.classList.add("active");
+        tabAuthSignUp.classList.remove("active");
+        if (authSignInForm) authSignInForm.style.display = "flex";
+        if (authSignUpForm) authSignUpForm.style.display = "none";
+        hideAuthError();
+      });
+
+      tabAuthSignUp.addEventListener("click", () => {
+        tabAuthSignUp.classList.add("active");
+        tabAuthSignIn.classList.remove("active");
+        if (authSignInForm) authSignInForm.style.display = "none";
+        if (authSignUpForm) authSignUpForm.style.display = "flex";
+        hideAuthError();
+      });
+    }
+
+    if (switchToSignUpBtn) {
+      switchToSignUpBtn.addEventListener("click", () => {
+        tabAuthSignUp?.click();
+      });
+    }
+
+    if (switchToSignInBtn) {
+      switchToSignInBtn.addEventListener("click", () => {
+        tabAuthSignIn?.click();
+      });
+    }
+
+    // Password Eye Toggles
+    document.querySelectorAll(".auth-eye-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.getAttribute("data-target");
+        const inp = document.getElementById(targetId);
+        if (inp) {
+          inp.type = inp.type === "password" ? "text" : "password";
+        }
+      });
+    });
+
+    // Form Submissions
+    if (authSignInForm) authSignInForm.addEventListener("submit", handleSignIn);
+    if (signInSubmitBtn) signInSubmitBtn.addEventListener("click", handleSignIn);
+    if (authSignUpForm) authSignUpForm.addEventListener("submit", handleSignUp);
+    if (signUpSubmitBtn) signUpSubmitBtn.addEventListener("click", handleSignUp);
+
+    // Avatar Uploads
+    if (triggerAvatarUploadBtn && signUpAvatarInput) {
+      triggerAvatarUploadBtn.addEventListener("click", () => signUpAvatarInput.click());
+      signUpAvatarInput.addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            signupAvatarBase64 = evt.target.result;
+            renderAvatar(signUpAvatarSlot, signupAvatarBase64, signUpDisplayName?.value, signUpUsername?.value);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Edit Profile Modal
+    if (closeEditProfileBtn) closeEditProfileBtn.addEventListener("click", closeEditProfile);
+    if (triggerEditAvatarBtn && editAvatarInput) {
+      triggerEditAvatarBtn.addEventListener("click", () => editAvatarInput.click());
+      editAvatarInput.addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            editAvatarBase64 = evt.target.result;
+            renderAvatar(editAvatarPreview, editAvatarBase64, editDisplayName?.value, currentUser?.username);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    if (removeAvatarBtn) {
+      removeAvatarBtn.addEventListener("click", () => {
+        editAvatarBase64 = "remove";
+        renderAvatar(editAvatarPreview, null, editDisplayName?.value, currentUser?.username);
+      });
+    }
+
+    if (saveProfileChangesBtn) saveProfileChangesBtn.addEventListener("click", handleSaveProfileChanges);
+  }
+
+  // Initial Auth Check
+  function initAuthSystem() {
+    setupAuthEvents();
+
+    try {
+      const savedUser = localStorage.getItem("as_user") || localStorage.getItem("as_msg_current_user");
+      const savedToken = localStorage.getItem("as_token") || localStorage.getItem("as_msg_token");
+
+      if (savedUser && savedToken) {
+        currentUser = JSON.parse(savedUser);
+        sessionToken = savedToken;
+        renderNavProfile();
+
+        // Background session verification
+        fetch(`/api/msg?action=verify_session&token=${encodeURIComponent(sessionToken)}`, {
+          headers: { Authorization: "Bearer " + sessionToken },
+        })
+          .then((r) => r.json())
+          .then((d) => {
+            if (d && d.status === "ok" && d.user) {
+              persistSession(d.user, sessionToken);
+              renderNavProfile();
+              loadCloudSync();
+            } else {
+              clearSession();
+              renderNavProfile();
+              showAuthGate("Your session has expired. Please log in again.");
+            }
+          })
+          .catch(() => {
+            // Keep local session if network check fails
+            loadCloudSync();
+          });
+      } else {
+        // Enforce Gate: Bina login ke use nahi kar sacte
+        showAuthGate();
+      }
+    } catch (_) {
+      showAuthGate();
+    }
+  }
+
+  initAuthSystem();
+
 })();

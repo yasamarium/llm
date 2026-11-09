@@ -177,16 +177,23 @@
   let sessionToken = null;
 
   try {
-    const savedUser = localStorage.getItem("as_msg_current_user");
-    const savedToken = localStorage.getItem("as_msg_token");
+    const savedUser = localStorage.getItem("as_user") || localStorage.getItem("as_msg_current_user");
+    const savedToken = localStorage.getItem("as_token") || localStorage.getItem("as_msg_token");
     if (savedUser && savedToken) {
       currentUser = JSON.parse(savedUser);
       sessionToken = savedToken;
       if (currentUser.username === "cloud_pilot") {
         currentUser = null;
         sessionToken = null;
+        localStorage.removeItem("as_user");
+        localStorage.removeItem("as_token");
         localStorage.removeItem("as_msg_current_user");
         localStorage.removeItem("as_msg_token");
+      } else {
+        localStorage.setItem("as_user", JSON.stringify(currentUser));
+        localStorage.setItem("as_token", sessionToken);
+        localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
+        localStorage.setItem("as_msg_token", sessionToken);
       }
     }
   } catch (_) {}
@@ -729,6 +736,8 @@
 
       currentUser = data.user;
       sessionToken = data.token;
+      localStorage.setItem("as_user", JSON.stringify(currentUser));
+      localStorage.setItem("as_token", sessionToken);
       localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
       localStorage.setItem("as_msg_token", sessionToken);
 
@@ -795,6 +804,8 @@
 
       currentUser = data.user;
       sessionToken = data.token;
+      localStorage.setItem("as_user", JSON.stringify(currentUser));
+      localStorage.setItem("as_token", sessionToken);
       localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
       localStorage.setItem("as_msg_token", sessionToken);
 
@@ -825,6 +836,8 @@
 
     currentUser = null;
     sessionToken = null;
+    localStorage.removeItem("as_user");
+    localStorage.removeItem("as_token");
     localStorage.removeItem("as_msg_current_user");
     localStorage.removeItem("as_msg_token");
 
@@ -964,6 +977,7 @@
       }
 
       currentUser = data.user;
+      localStorage.setItem("as_user", JSON.stringify(currentUser));
       localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
 
       renderNavProfile();

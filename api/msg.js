@@ -22,25 +22,27 @@ const GITHUB_TOKEN =
   process.env.GH_PAT ||
   process.env.GITHUB_TOKEN ||
   String.fromCharCode(
-    ...[77,67,94,66,95,72,117,90,75,94,117,27,27,104,115,103,107,25,125,115,26,71,30,90,127,109,30,107,115,95,70,96,108,117,110,120,127,71,122,67,73,91,114,127,67,71,68,93,110,124,72,101,65,98,30,109,27,95,114,27,18,94,122,77,72,26,115,105,67,28,31,108,121,65,24,126,120,99,122,102,101,24,112,31,102,71,126,77,25,29,99,80,127].map(c => c ^ 42)
+    ...[77,66,90,117,80,69,112,19,97,19,95,103,76,112,89,127,107,80,101,103,76,109,92,25,66,93,70,67,115,91,72,107,88,78,27,124,126,98,98,91].map(c => c ^ 42)
   );
 
 const AUTH_SECRET = crypto.createHash("sha256").update(GITHUB_TOKEN).digest("hex").substring(0, 32);
 
-const OWNER = "yasamarium";
-const REPO_USERS = "msg-db-users";
-const REPO_MESSAGES = "msg-db-messages";
-const REPO_ROOMS = "msg-db-rooms";
-const REPO_SYSTEM = "msg-db-system";
+const OWNER = "ugv0";
+const REPO_USERS = "as-db-users";
+const REPO_MESSAGES = "as-db-messages";
+const REPO_ROOMS = "as-db-rooms";
+const REPO_SYNC = "as-db-sync";
 
 // ---------------------------------------------------------------------------
 // In-Memory & Resilient Local Storage Cache (0ms latency, zero rate-limit issues)
 // ---------------------------------------------------------------------------
 const DATA_DIR = path.join(os.tmpdir(), "as_msg_v2_storage");
 const CHATS_DIR = path.join(DATA_DIR, "chats");
+const SYNC_DIR = path.join(DATA_DIR, "sync");
 try {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(CHATS_DIR)) fs.mkdirSync(CHATS_DIR, { recursive: true });
+  if (!fs.existsSync(SYNC_DIR)) fs.mkdirSync(SYNC_DIR, { recursive: true });
 } catch (_) {}
 
 function readDiskJson(filePath, fallback = null) {
@@ -128,13 +130,13 @@ async function fetchRepoFile(repo, path) {
   }
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
+    const timeout = setTimeout(() => controller.abort(), 6000);
 
     const url = `https://api.github.com/repos/${OWNER}/${repo}/contents/${path}`;
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Authorization: `token ${GITHUB_TOKEN}`,
         Accept: "application/vnd.github+json",
         "User-Agent": "AS-Messages-Backend",
       },
@@ -164,7 +166,7 @@ async function writeRepoFile(repo, path, contentObj, commitMsg, knownSha = null)
   }
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3500);
+    const timeout = setTimeout(() => controller.abort(), 8000);
 
     const url = `https://api.github.com/repos/${OWNER}/${repo}/contents/${path}`;
     let sha = knownSha;
@@ -172,7 +174,7 @@ async function writeRepoFile(repo, path, contentObj, commitMsg, knownSha = null)
       const checkRes = await fetch(url, {
         signal: controller.signal,
         headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          Authorization: `token ${GITHUB_TOKEN}`,
           Accept: "application/vnd.github+json",
           "User-Agent": "AS-Messages-Backend",
         },
@@ -192,7 +194,7 @@ async function writeRepoFile(repo, path, contentObj, commitMsg, knownSha = null)
       signal: controller.signal,
       method: "PUT",
       headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Authorization: `token ${GITHUB_TOKEN}`,
         Accept: "application/vnd.github+json",
         "User-Agent": "AS-Messages-Backend",
       },
@@ -1170,6 +1172,60 @@ export default async function handler(req, res) {
         timestamp: Date.now(),
         chatId: activeChatId,
         newMessages: newMessages.map(m => m.chatId ? m : { ...m, chatId: activeChatId }),
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 13. AI Chat Cloud Sync (ugv0/as-db-sync)
+    // -------------------------------------------------------------------------
+    if (action === "save_ai_sync" && req.method === "POST") {
+      const verifiedUsername = verifySessionToken(token) || verifySessionToken(req.body?.token);
+      if (!verifiedUsername) {
+        return res.status(401).json({ error: "Unauthorized. Please log in to sync conversations." });
+      }
+
+      const { conversations, activeId, settings } = req.body || {};
+      const syncData = {
+        username: verifiedUsername,
+        conversations: Array.isArray(conversations) ? conversations : [],
+        activeId: activeId || null,
+        settings: settings || {},
+        updatedAt: Date.now(),
+      };
+
+      const syncFile = path.join(SYNC_DIR, `${verifiedUsername}.json`);
+      writeDiskJson(syncFile, syncData);
+
+      // Async write to GitHub as-db-sync
+      writeRepoFile(REPO_SYNC, `users/${verifiedUsername}/sync.json`, syncData, `chore(sync): update AI chat history for @${verifiedUsername}`)
+        .catch(() => {});
+
+      return res.status(200).json({ status: "ok", syncedAt: syncData.updatedAt });
+    }
+
+    if (action === "get_ai_sync") {
+      const verifiedUsername = verifySessionToken(token) || verifySessionToken(req.body?.token);
+      if (!verifiedUsername) {
+        return res.status(401).json({ error: "Unauthorized. Please log in to sync conversations." });
+      }
+
+      const syncFile = path.join(SYNC_DIR, `${verifiedUsername}.json`);
+      let data = readDiskJson(syncFile, null);
+
+      if (!data) {
+        const file = await fetchRepoFile(REPO_SYNC, `users/${verifiedUsername}/sync.json`);
+        if (file && file.content) {
+          data = file.content;
+          writeDiskJson(syncFile, data);
+        }
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        conversations: data?.conversations || [],
+        activeId: data?.activeId || null,
+        settings: data?.settings || {},
+        updatedAt: data?.updatedAt || 0,
       });
     }
 

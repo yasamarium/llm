@@ -78,6 +78,260 @@
     .app-name { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; letter-spacing: -0.2px; }
     .app-desc { font-size: 11px; color: #8b8e96; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; margin-top: 2px; }
     @keyframes modalSpring { from { opacity: 0; transform: translateY(-8px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  
+    /* User Nav Chip & Profile Dropdown */
+    .user-profile-nav-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 10px 4px 5px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f5f5f7; cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: inherit; outline: none;
+    }
+    .user-profile-nav-btn:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-1px);
+    }
+    .user-avatar-pill {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      color: #fff; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .user-avatar-pill img { width: 100%; height: 100%; object-fit: cover; }
+    .user-name-text {
+      font-size: 12px; font-weight: 600; color: #f5f5f7;
+      max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .nav-sync-indicator {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #30d158; box-shadow: 0 0 8px rgba(48, 209, 88, 0.7);
+      animation: pulseSync 2s infinite ease-in-out;
+    }
+    @keyframes pulseSync {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .user-profile-dropdown {
+      position: absolute; top: calc(100% + 8px); right: 0; width: 280px;
+      background: rgba(18, 18, 22, 0.94);
+      backdrop-filter: blur(32px) saturate(200%);
+      -webkit-backdrop-filter: blur(32px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(99, 102, 241, 0.15);
+      padding: 14px; display: flex; flex-direction: column; gap: 12px; z-index: 1000;
+      animation: modalSpring 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .user-dropdown-header {
+      display: flex; align-items: center; gap: 12px; padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .dropdown-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      color: #fff; font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .dropdown-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-dropdown-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .user-dropdown-name-row { display: flex; align-items: center; gap: 6px; }
+    .dropdown-name { font-size: 14px; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dropdown-badge {
+      font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 6px;
+      background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);
+      text-transform: uppercase;
+    }
+    .dropdown-handle { font-size: 12px; color: #8e92a2; font-family: monospace; }
+    .user-dropdown-sync-card {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 4px;
+    }
+    .sync-card-status { display: flex; align-items: center; gap: 6px; }
+    .sync-pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #30d158; box-shadow: 0 0 6px #30d158; }
+    .sync-card-title { font-size: 11px; font-weight: 700; color: #30d158; text-transform: uppercase; letter-spacing: 0.4px; }
+    .sync-card-repo { font-size: 11px; color: #cbd5e1; font-family: monospace; }
+    .sync-card-sub { font-size: 10px; color: #94a3b8; }
+    .user-dropdown-actions { display: flex; flex-direction: column; gap: 6px; }
+    .user-dropdown-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      border-radius: 10px; font-size: 13px; font-weight: 600; color: #f5f5f7;
+      text-decoration: none; background: transparent; border: none; cursor: pointer;
+      transition: background 0.15s; font-family: inherit; width: 100%; box-sizing: border-box; text-align: left;
+    }
+    .user-dropdown-item:hover { background: rgba(255, 255, 255, 0.07); }
+    .user-dropdown-item.danger-item { color: #ff453a; }
+    .user-dropdown-item.danger-item:hover { background: rgba(255, 69, 58, 0.12); }
+    .item-tag-pill {
+      margin-left: auto; font-size: 9px; font-weight: 700; padding: 2px 6px;
+      border-radius: 6px; background: rgba(59, 130, 246, 0.18); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    /* Auth Gate Overlay */
+    .auth-gate-overlay {
+      position: fixed; inset: 0; z-index: 99999;
+      background: rgba(6, 7, 10, 0.88);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px; box-sizing: border-box;
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+    .auth-gate-card {
+      width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto;
+      background: rgba(18, 19, 24, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 24px; padding: 28px 24px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(99, 102, 241, 0.16);
+      display: flex; flex-direction: column; gap: 18px;
+      box-sizing: border-box;
+      animation: modalSpring 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .auth-gate-header { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .auth-brand-glyph {
+      width: 50px; height: 50px; border-radius: 16px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.45);
+      color: #a5b4fc; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+    }
+    .auth-gate-title { font-size: 20px; font-weight: 700; color: #fff; margin: 0; }
+    .auth-gate-sub { font-size: 13px; color: #8e92a2; line-height: 1.4; margin: 0; }
+    .auth-db-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 12px;
+      background: rgba(48, 209, 88, 0.12); color: #30d158;
+      border: 1px solid rgba(48, 209, 88, 0.3); font-size: 11px; font-family: monospace; font-weight: 600;
+    }
+    .auth-db-dot { width: 6px; height: 6px; border-radius: 50%; background: #30d158; box-shadow: 0 0 6px #30d158; }
+
+    .auth-segmented-tabs {
+      display: flex; background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px; padding: 4px; gap: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .auth-seg-tab {
+      flex: 1; padding: 9px; font-size: 13px; font-weight: 600; color: #8e92a2;
+      background: transparent; border: none; border-radius: 8px; cursor: pointer;
+      transition: all 0.18s; font-family: inherit;
+    }
+    .auth-seg-tab.active {
+      background: rgba(255, 255, 255, 0.14); color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .auth-gate-error {
+      background: rgba(255, 69, 58, 0.14); border: 1px solid rgba(255, 69, 58, 0.35);
+      color: #ff6961; border-radius: 10px; padding: 10px 12px;
+      font-size: 12px; display: flex; align-items: center; gap: 8px;
+    }
+
+    .auth-gate-form { display: flex; flex-direction: column; gap: 14px; }
+    .auth-form-group { display: flex; flex-direction: column; gap: 6px; }
+    .auth-form-group label { font-size: 12px; font-weight: 600; color: #cbd5e1; }
+    .auth-hint { font-size: 11px; color: #64748b; }
+    .auth-input-wrapper {
+      display: flex; align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px; padding: 0 12px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .auth-input-wrapper:focus-within {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+    }
+    .auth-input-prefix { color: #818cf8; font-weight: 700; margin-right: 4px; font-family: monospace; }
+    .auth-input-wrapper input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #fff; font-size: 14px; padding: 12px 0; font-family: inherit; width: 100%;
+    }
+    .auth-input-wrapper input::placeholder { color: #64748b; }
+    .auth-eye-btn { background: transparent; border: none; color: #8e92a2; cursor: pointer; padding: 4px; display: flex; align-items: center; }
+    .auth-eye-btn:hover { color: #fff; }
+
+    .auth-avatar-picker-row { display: flex; align-items: center; gap: 14px; padding: 4px 0; }
+    .auth-avatar-preview-slot {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      color: #fff; font-size: 18px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(255, 255, 255, 0.2); overflow: hidden; flex-shrink: 0;
+    }
+    .auth-avatar-preview-slot img { width: 100%; height: 100%; object-fit: cover; }
+    .auth-avatar-upload-info { display: flex; flex-direction: column; gap: 4px; }
+    .auth-upload-pill {
+      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px; color: #f5f5f7; font-size: 12px; font-weight: 600;
+      padding: 6px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      font-family: inherit; width: fit-content;
+    }
+    .auth-upload-pill:hover { background: rgba(255, 255, 255, 0.14); }
+    .auth-avatar-subtext { font-size: 11px; color: #8e92a2; }
+
+    .auth-submit-btn {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #fff; border: none; border-radius: 12px; padding: 13px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 18px rgba(79, 70, 229, 0.38); font-family: inherit;
+    }
+    .auth-submit-btn:hover { filter: brightness(1.1); transform: translateY(-1.5px); }
+    .auth-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .auth-bottom-switch {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 12px; color: #8e92a2; margin-top: 4px;
+    }
+    .auth-switch-link {
+      background: transparent; border: none; color: #818cf8;
+      font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; font-family: inherit;
+    }
+    .auth-switch-link:hover { text-decoration: underline; color: #a5b4fc; }
+
+    /* Custom Edit Profile Modal */
+    .modal-backdrop-custom {
+      position: fixed; inset: 0; z-index: 100000;
+      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-card-custom {
+      width: 100%; max-width: 400px; background: rgba(20, 20, 26, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 20px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.8); padding: 22px;
+      display: flex; flex-direction: column; gap: 16px; box-sizing: border-box;
+      animation: modalSpring 0.2s ease-out;
+    }
+    .modal-header-custom { display: flex; align-items: center; justify-content: space-between; }
+    .modal-title-custom { font-size: 17px; font-weight: 700; color: #fff; margin: 0; }
+    .modal-sub-custom { font-size: 12px; color: #8e92a2; margin: 2px 0 0; }
+    .modal-close-custom {
+      background: rgba(255, 255, 255, 0.08); border: none; border-radius: 50%;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      color: #8e92a2; cursor: pointer;
+    }
+    .modal-close-custom:hover { color: #fff; background: rgba(255, 255, 255, 0.15); }
+    .modal-body-custom { display: flex; flex-direction: column; gap: 12px; }
+    .edit-avatar-center { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .edit-avatar-slot {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      color: #fff; font-size: 22px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(255, 255, 255, 0.2); overflow: hidden;
+    }
+    .edit-avatar-slot img { width: 100%; height: 100%; object-fit: cover; }
+    .modal-footer-custom { display: flex; justify-content: flex-end; margin-top: 4px; }
+
   </style>
 </head>
 <body>
@@ -105,9 +359,18 @@
           <div id="appsDropdownMenu" class="apps-dropdown-panel">
             <div class="apps-panel-header">
               <span class="apps-panel-title">AS Cloud Ecosystem</span>
-              <span class="apps-panel-badge">7 Services</span>
+              <span class="apps-panel-badge">8 Services</span>
             </div>
             <div class="apps-grid">
+            <a href="/home" class="app-item">
+              <div class="app-icon" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.35) 100%); border: 1px solid rgba(59, 130, 246, 0.4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="app-meta">
+                <div class="app-name">Live Messages</div>
+                <div class="app-desc">Direct & Global Lounge</div>
+              </div>
+            </a>
             <a href="/" class="app-item active">
               <div class="app-icon" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.35) 100%); border: 1px solid rgba(16, 185, 129, 0.4);">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.5" fill="#34d399"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="#34d399" stroke-width="2" stroke-linecap="round"/></svg>
@@ -221,6 +484,63 @@
             <line x1="12" y1="22.08" x2="12" y2="12"/>
           </svg>
         </a>
+        <!-- Unified User Account & Git-Sync Hub -->
+        <div class="user-nav-wrapper" id="userNavWrapper">
+          <button id="userProfileNavBtn" class="user-profile-nav-btn" type="button" aria-label="Account and Sync">
+            <div id="navUserAvatarSlot" class="user-avatar-pill">AS</div>
+            <span id="navUserNameText" class="user-name-text">Sign In</span>
+            <span id="navSyncDot" class="nav-sync-indicator" title="GitHub Database: ugv0 (Connected)"></span>
+          </button>
+
+          <!-- Dropdown Profile Card -->
+          <div id="userProfileDropdown" class="user-profile-dropdown" style="display: none;">
+            <div class="user-dropdown-header">
+              <div id="dropdownUserAvatar" class="dropdown-avatar">AS</div>
+              <div class="user-dropdown-info">
+                <div class="user-dropdown-name-row">
+                  <span id="dropdownDisplayName" class="dropdown-name">AS Cloud User</span>
+                  <span id="dropdownBadge" class="dropdown-badge">Owner</span>
+                </div>
+                <span id="dropdownHandle" class="dropdown-handle">@username</span>
+              </div>
+            </div>
+
+            <!-- Cloud Database Card -->
+            <div class="user-dropdown-sync-card">
+              <div class="sync-card-status">
+                <span class="sync-pulse-dot"></span>
+                <span class="sync-card-title">GitHub Database Connected</span>
+              </div>
+              <div class="sync-card-repo">Owner: <strong>ugv0</strong> &bull; Repos: as-db-users, as-db-sync</div>
+              <div class="sync-card-sub" id="syncLastStatus">All conversations synchronized</div>
+            </div>
+
+            <div class="user-dropdown-actions">
+              <a href="/home" class="user-dropdown-item">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Live Messages & Lounge</span>
+                <span class="item-tag-pill">Unified ID</span>
+              </a>
+
+              <button id="openEditProfileBtn" class="user-dropdown-item" type="button">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Edit Profile</span>
+              </button>
+
+              <button id="userSignOutBtn" class="user-dropdown-item danger-item" type="button">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <button id="newChatBtn" class="ios-circle-btn" title="New Conversation" aria-label="New Conversation">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <path d="M12 5v14M5 12h14"/>
@@ -771,5 +1091,190 @@
     });
   </script>
   <script src="app.js"></script>
+  <!-- ========================================================================= -->
+  <!-- AS Cloud Universal Auth Gate Modal (Bina login ke use nahi kar sacte)   -->
+  <!-- ========================================================================= -->
+  <div id="asAuthGateOverlay" class="auth-gate-overlay" style="display: none;">
+    <div class="auth-gate-card">
+      <div class="auth-gate-header">
+        <div class="auth-brand-glyph">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <h2 class="auth-gate-title">AS Cloud Universal ID</h2>
+        <p class="auth-gate-sub">Sign in to unlock AI Intelligence, Real-time Messages & Cloud Database Sync.</p>
+        <div class="auth-db-badge">
+          <span class="auth-db-dot"></span>
+          <span>Database Backend: ugv0</span>
+        </div>
+      </div>
+
+      <!-- Segmented Control Tabs -->
+      <div class="auth-segmented-tabs">
+        <button type="button" id="tabAuthSignIn" class="auth-seg-tab active">Sign In</button>
+        <button type="button" id="tabAuthSignUp" class="auth-seg-tab">Create Account</button>
+      </div>
+
+      <!-- Live Error Banner -->
+      <div id="authGateError" class="auth-gate-error" style="display: none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="authGateErrorText">Error message</span>
+      </div>
+
+      <!-- Form 1: Sign In -->
+      <form id="authSignInForm" class="auth-gate-form" onsubmit="return false;">
+        <div class="auth-form-group">
+          <label for="signInUsername">Username or @handle</label>
+          <div class="auth-input-wrapper">
+            <span class="auth-input-prefix">@</span>
+            <input type="text" id="signInUsername" placeholder="username" autocomplete="username" required>
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label for="signInPassword">Password</label>
+          <div class="auth-input-wrapper">
+            <input type="password" id="signInPassword" placeholder="Enter your password" autocomplete="current-password" required>
+            <button type="button" class="auth-eye-btn" data-target="signInPassword" aria-label="Toggle password">
+              <svg class="eye-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="signInSubmitBtn" class="auth-submit-btn">
+          <span>Sign In to AS Cloud</span>
+        </button>
+
+        <div class="auth-bottom-switch">
+          <span>Don't have an account yet?</span>
+          <button type="button" id="switchToSignUpBtn" class="auth-switch-link">Create Account</button>
+        </div>
+      </form>
+
+      <!-- Form 2: Create Account -->
+      <form id="authSignUpForm" class="auth-gate-form" style="display: none;" onsubmit="return false;">
+        <div class="auth-avatar-picker-row">
+          <div class="auth-avatar-preview-slot" id="signUpAvatarSlot">AS</div>
+          <input type="file" id="signUpAvatarInput" accept="image/*" style="display: none;">
+          <div class="auth-avatar-upload-info">
+            <button type="button" id="triggerAvatarUploadBtn" class="auth-upload-pill">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+              </svg>
+              <span>Upload Photo</span>
+            </button>
+            <span class="auth-avatar-subtext">Optional. Initial avatar used by default.</span>
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label for="signUpUsername">Choose Unique Handle</label>
+          <div class="auth-input-wrapper">
+            <span class="auth-input-prefix">@</span>
+            <input type="text" id="signUpUsername" placeholder="your_handle" maxlength="24" autocomplete="username" required>
+          </div>
+          <span class="auth-hint">3-24 characters (letters, numbers, underscore)</span>
+        </div>
+
+        <div class="auth-form-group">
+          <label for="signUpDisplayName">Full / Display Name</label>
+          <div class="auth-input-wrapper">
+            <input type="text" id="signUpDisplayName" placeholder="e.g. Alex Sterling" maxlength="32" autocomplete="name">
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label for="signUpPassword">Password</label>
+          <div class="auth-input-wrapper">
+            <input type="password" id="signUpPassword" placeholder="At least 6 characters" autocomplete="new-password" required minlength="6">
+            <button type="button" class="auth-eye-btn" data-target="signUpPassword" aria-label="Toggle password">
+              <svg class="eye-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label for="signUpBio">Bio / Status</label>
+          <div class="auth-input-wrapper">
+            <input type="text" id="signUpBio" placeholder="Available on AS Cloud" maxlength="60">
+          </div>
+        </div>
+
+        <button type="submit" id="signUpSubmitBtn" class="auth-submit-btn">
+          <span>Create AS Cloud Account</span>
+        </button>
+
+        <div class="auth-bottom-switch">
+          <span>Already have an account?</span>
+          <button type="button" id="switchToSignInBtn" class="auth-switch-link">Sign In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- Edit Profile Modal                                                        -->
+  <!-- ========================================================================= -->
+  <div id="asEditProfileModal" class="modal-backdrop-custom" style="display: none;">
+    <div class="modal-card-custom">
+      <div class="modal-header-custom">
+        <div>
+          <h3 class="modal-title-custom">Account Settings</h3>
+          <p class="modal-sub-custom">Manage your profile and security</p>
+        </div>
+        <button type="button" id="closeEditProfileBtn" class="modal-close-custom" aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body-custom">
+        <div class="edit-avatar-center">
+          <div class="edit-avatar-slot" id="editAvatarPreview">AS</div>
+          <input type="file" id="editAvatarInput" accept="image/*" style="display: none;">
+          <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <button type="button" id="triggerEditAvatarBtn" class="auth-upload-pill">Upload New</button>
+            <button type="button" id="removeAvatarBtn" class="auth-upload-pill" style="color: #ff453a; border-color: rgba(255,69,58,0.3);">Remove</button>
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label>Display Name</label>
+          <div class="auth-input-wrapper">
+            <input type="text" id="editDisplayName" placeholder="Display Name" maxlength="32">
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label>Bio / Status</label>
+          <div class="auth-input-wrapper">
+            <input type="text" id="editBio" placeholder="Bio" maxlength="60">
+          </div>
+        </div>
+
+        <div style="height: 1px; background: rgba(255,255,255,0.08); margin: 12px 0;"></div>
+
+        <div class="auth-form-group">
+          <label>Change Password (Optional)</label>
+          <div class="auth-input-wrapper" style="margin-bottom: 8px;">
+            <input type="password" id="editCurrentPassword" placeholder="Current Password">
+          </div>
+          <div class="auth-input-wrapper">
+            <input type="password" id="editNewPassword" placeholder="New Password (min 6 chars)">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <button type="button" id="saveProfileChangesBtn" class="auth-submit-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
