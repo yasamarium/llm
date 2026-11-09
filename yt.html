@@ -1114,14 +1114,12 @@
 
         if (data && data.success && data.formats && data.formats.length > 0) {
           renderYouTubeResults(data, cleanUrl);
-        } else if (data && data.previewUrl) {
-          fallbackToClientFrame(data.previewUrl);
         } else {
-          fallbackToClientStream(cleanUrl);
+          showError((data && data.error && data.error.message) || "Could not resolve video stream. Please verify the link.");
         }
       } catch (err) {
-        console.warn("Direct API call error, switching to direct client stream runner:", err);
-        fallbackToClientStream(cleanUrl);
+        console.warn("Direct API call error:", err);
+        showError("Network connection error. Please try again: " + err.message);
       } finally {
         submitBtn.disabled = false;
         btnText.innerHTML = 'Fetch Video Streams';

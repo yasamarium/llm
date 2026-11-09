@@ -15,7 +15,9 @@ async function getSnapYtNonce() {
   try {
     const res = await fetch("https://www.snapyt.app/", {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9"
       }
     });
     if (res.ok) {
@@ -34,30 +36,47 @@ async function getSnapYtNonce() {
 }
 
 async function resolveSnapYt(ytUrl, signal) {
+  // Normalize YouTube URL to standard watch format (supports shorts, embed, youtu.be)
+  const idMatch = ytUrl.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/|\/shorts\/)([a-zA-Z0-9_-]{11})/i);
+  const normalizedUrl = idMatch ? ("https://www.youtube.com/watch?v=" + idMatch[1]) : ytUrl;
+
   const nonce = await getSnapYtNonce();
   const body = new URLSearchParams();
   body.set("action", "process_video_url");
-  body.set("video_url", ytUrl);
+  body.set("video_url", normalizedUrl);
   body.set("security", nonce);
 
   const ajaxRes = await fetch("https://www.snapyt.app/wp-admin/admin-ajax.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Referer": "https://www.snapyt.app/",
+      "Origin": "https://www.snapyt.app",
+      "X-Requested-With": "XMLHttpRequest",
+      "Accept": "application/json, text/javascript, */*; q=0.01"
     },
-    body: body,
+    body: body.toString(),
     signal: signal
   });
 
-  const ajaxData = await ajaxRes.json();
+  const rawText = await ajaxRes.text();
+  let ajaxData;
+  try {
+    ajaxData = JSON.parse(rawText);
+  } catch (parseErr) {
+    throw new Error("SnapYT AJAX returned non-JSON (status " + ajaxRes.status + "): " + rawText.slice(0, 150));
+  }
+
   if (!ajaxData || !ajaxData.success || !ajaxData.data?.redirect) {
-    throw new Error((ajaxData && ajaxData.data) || "SnapYT extraction failed");
+    throw new Error((ajaxData && (typeof ajaxData.data === 'string' ? ajaxData.data : JSON.stringify(ajaxData.data))) || "SnapYT extraction failed");
   }
 
   const prevRes = await fetch(ajaxData.data.redirect, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Referer": "https://www.snapyt.app/",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     },
     signal: signal
   });
@@ -72,7 +91,7 @@ async function resolveSnapYt(ytUrl, signal) {
   // Extract Thumbnail
   const thumbMatch = prevHtml.match(/<img[^>]*id="vd-image"[^>]*src="([^"]+)"/i) ||
                      prevHtml.match(/<img[^>]*class="[^"]*thumb[^"]*"[^>]*src="([^"]+)"/i);
-  let thumbnail = thumbMatch ? thumbMatch[1] : "";
+  let thumbnail = thumbMatch ? thumbMatch[1] : (idMatch ? ("https://i.ytimg.com/vi/" + idMatch[1] + "/hqdefault.jpg") : "");
 
   // Extract Duration
   const durMatch = prevHtml.match(/<span[^>]*class="[^"]*duration[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
@@ -156,9 +175,12 @@ export default async function handler(req, res) {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Referer": "https://www.snapyt.app/",
+          "Origin": "https://www.snapyt.app",
+          "X-Requested-With": "XMLHttpRequest"
         },
-        body: body
+        body: body.toString()
       });
       const data = await muxRes.json();
       return res.status(200).json(data);
@@ -175,96 +197,15 @@ export default async function handler(req, res) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 40000);
 
-  // 1. Primary: SnapYT Full Resolution Engine
   try {
     const snapResult = await resolveSnapYt(cleanUrl, controller.signal);
     clearTimeout(timer);
     return res.status(200).json(snapResult);
   } catch (snapErr) {
-    console.warn("SnapYT engine fallback triggered:", snapErr.message);
-  }
-
-  // 2. Secondary Fallback: David Cyril YT Downloader API
-  try {
-    const encodedUrl = encodeURIComponent(cleanUrl);
-    const ytUrl = `https://apis.davidcyril.name.ng/download/yt?url=${encodedUrl}`;
-    const ytRes = await fetch(ytUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json",
-      },
-      signal: controller.signal,
-    });
-
-    if (ytRes.ok) {
-      const ytData = await ytRes.json();
-      if (ytData && ytData.result && (ytData.result.download_url || ytData.result.videos)) {
-        clearTimeout(timer);
-        return res.status(200).json({
-          success: true,
-          title: ytData.result.title || "YouTube Video",
-          thumbnail: ytData.result.thumbnail || "",
-          formats: [
-            {
-              value: "360",
-              label: "360p MP4",
-              text: "360p MP4 (Direct Ready)",
-              kind: "video+audio",
-              ext: "mp4",
-              url: ytData.result.download_url || ytData.result.videos?.[0]?.url || "",
-              force: ytData.result.download_url || ""
-            },
-            {
-              value: "720",
-              label: "720p HD MP4",
-              text: "720p HD MP4",
-              kind: "video",
-              ext: "mp4",
-              url: ytData.result.videos?.find(v => v.quality === "720p")?.url || ytData.result.download_url || "",
-              force: ""
-            },
-            {
-              value: "mp3",
-              label: "MP3 Audio",
-              text: "MP3 Audio (Lossless)",
-              kind: "audio",
-              ext: "mp3",
-              url: ytData.result.audio_url || ytData.result.download_url || "",
-              force: ""
-            }
-          ]
-        });
-      }
-    }
-  } catch (e) {
-    // Proceed to snapsaver fallback
-  }
-
-  // 3. Tertiary: Snapsaver API Fallback
-  try {
-    const encodedUrl = encodeURIComponent(cleanUrl);
-    const upstreamUrl = `https://apis.davidcyril.name.ng/download/snapsaver?url=${encodedUrl}`;
-    const upstreamRes = await fetch(upstreamUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json",
-      },
-      signal: controller.signal,
-    });
     clearTimeout(timer);
-
-    if (upstreamRes.ok) {
-      const data = await upstreamRes.json();
-      return res.status(200).json(data);
-    }
-
-    return res.status(upstreamRes.status).json({
-      error: { message: `Upstream service returned HTTP ${upstreamRes.status}` },
-    });
-  } catch (err) {
-    clearTimeout(timer);
+    console.error("SnapYT error:", snapErr.message);
     return res.status(500).json({
-      error: { message: err.message || "Failed to resolve YouTube media stream." },
+      error: { message: snapErr.message || "Failed to resolve YouTube media stream." }
     });
   }
 }

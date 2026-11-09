@@ -2109,89 +2109,26 @@
     abortController = new AbortController();
 
     try {
-      let data = null;
+      const idMatch = ytUrl.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/|\/shorts\/)([a-zA-Z0-9_-]{11})/i);
+      const normalizedUrl = idMatch ? ("https://www.youtube.com/watch?v=" + idMatch[1]) : ytUrl;
 
-      // 1. Try serverless proxy first
-      try {
-        const proxyRes = await fetch(`/api/youtube?url=${encodeURIComponent(ytUrl)}`, {
-          signal: abortController.signal,
-        });
-        if (proxyRes.ok) {
-          data = await proxyRes.json();
-        }
-      } catch (e) {}
+      const proxyRes = await fetch("/api/youtube?url=" + encodeURIComponent(normalizedUrl), {
+        signal: abortController.signal,
+      });
 
-      // 2. Direct client fallback (prioritize download/yt, then snapsaver)
-      if (!data || (!data.formats && !data.result)) {
-        try {
-          const directYt = await fetch(`https://apis.davidcyril.name.ng/download/yt?url=${encodeURIComponent(ytUrl)}`, {
-            signal: abortController.signal,
-          });
-          if (directYt.ok) {
-            data = await directYt.json();
-          }
-        } catch (e) {}
-
-        if (!data || (!data.formats && !data.result)) {
-          const directRes = await fetch(`https://apis.davidcyril.name.ng/download/snapsaver?url=${encodeURIComponent(ytUrl)}`, {
-            signal: abortController.signal,
-          });
-          if (directRes.ok) {
-            data = await directRes.json();
-          }
-        }
+      const data = await proxyRes.json();
+      if (!proxyRes.ok || !data || data.error || !data.formats || data.formats.length === 0) {
+        throw new Error((data && data.error && data.error.message) || "Could not resolve stream for this YouTube link.");
       }
 
-      const res = data?.result || data;
-      if (!res) {
-        throw new Error("Could not extract media data from this YouTube link.");
-      }
-
-      const ytIdMatch = ytUrl.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
-      const ytVideoId = ytIdMatch ? ytIdMatch[1] : "";
-      const fallbackThumb = ytVideoId ? `https://i.ytimg.com/vi/${ytVideoId}/hqdefault.jpg` : "";
+      const res = data;
+      const ytVideoId = idMatch ? idMatch[1] : "";
+      const fallbackThumb = ytVideoId ? ("https://i.ytimg.com/vi/" + ytVideoId + "/hqdefault.jpg") : "";
 
       const title = res.title || "YouTube Video";
-      const author = res.author || "YouTube Creator";
       const thumbnail = res.thumbnail || fallbackThumb;
       const duration = res.duration || "";
-      const viewsFormatted = res.views ? formatViews(res.views) : "";
-
-      // Extract all formats
-      let allFormats = [];
-      if (Array.isArray(res.formats) && res.formats.length > 0) {
-        allFormats = res.formats;
-      } else {
-        const videos = Array.isArray(res.videos) ? [...res.videos] : [];
-        const audios = Array.isArray(res.audios) ? [...res.audios] : [];
-        if (res.download_url && !videos.some((v) => v.url === res.download_url)) {
-          videos.unshift({
-            url: res.download_url,
-            quality: res.quality || "720p",
-            format: res.format || "mp4",
-          });
-        }
-        videos.forEach(v => {
-          allFormats.push({
-            value: v.quality || "720p",
-            label: v.quality ? `${v.quality.replace(/x\d+/, "p")} ${v.format?.toUpperCase() || "MP4"}` : "HD MP4",
-            text: v.quality ? `${v.quality.replace(/x\d+/, "p")} ${v.format?.toUpperCase() || "MP4"}` : "HD MP4",
-            kind: "video",
-            url: v.url,
-            force: v.url
-          });
-        });
-        audios.forEach(a => {
-          allFormats.push({
-            value: a.quality || "mp3",
-            label: `Audio (${a.quality || "HQ"} ${a.format?.toUpperCase() || "MP3"})`,
-            text: `Audio (${a.quality || "HQ"} ${a.format?.toUpperCase() || "MP3"})`,
-            kind: "audio",
-            url: a.url,
-            force: a.url
-          });
-        });
-      }
+      const allFormats = res.formats || [];
 
       // Quick 360p, 1080p, MP3
       const fmt360 = allFormats.find(f => f.kind === 'video+audio' || (f.label && f.label.includes('360p'))) || allFormats.find(f => f.url && f.kind !== 'audio');
@@ -2200,7 +2137,7 @@
 
       const dl360 = (fmt360 && (fmt360.force || fmt360.url)) || ytUrl;
       const dl1080 = (fmt1080 && (fmt1080.force || fmt1080.url)) || dl360;
-      const dlMp3 = (fmtMp3 && (fmtMp3.force || fmtMp3.url)) || `https://apis.davidcyril.name.ng/download/yt?url=${encodeURIComponent(ytUrl)}`;
+      const dlMp3 = (fmtMp3 && (fmtMp3.force || fmtMp3.url)) || dl360;
 
       // Best playable stream for HTML5 preview
       const playableFmt = allFormats.find(f => f.url && (f.kind === 'video+audio' || (f.label && f.label.includes('360p')))) || allFormats.find(f => f.url && f.kind !== 'audio');
@@ -2225,7 +2162,7 @@
       }
 
       const initialCombineUrl = (videoFormats[0] && (videoFormats[0].force || videoFormats[0].url)) || dl1080;
-      const studioUrl = `/yt?url=${encodeURIComponent(ytUrl)}`;
+      const studioUrl = "/yt?url=" + encodeURIComponent(ytUrl);
 
       assistantBubble.innerHTML = `
         <div class="ios-media-card ios-video-card">
@@ -2255,15 +2192,10 @@
 
           <div class="yt-card-body" style="padding-top: 10px;">
             <div class="yt-card-title">${escapeHtml(title)}</div>
-            <div class="yt-card-author">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              <span>${escapeHtml(author)}</span>
-            </div>
 
             <div class="yt-meta-pills" style="margin-bottom: 10px;">
               ${duration ? `<span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${escapeHtml(duration)}</span>` : ""}
-              ${viewsFormatted ? `<span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> ${viewsFormatted}</span>` : ""}
-              <span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YouTube</span>
+              <span class="yt-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> ${escapeHtml(mediaType)}</span>
             </div>
 
             <div class="yt-downloads-header" style="margin-bottom: 6px;">Quick 1-Click Formats</div>
@@ -2273,7 +2205,7 @@
               </a>
               <a href="${escapeHtml(dlMp3)}" target="_blank" rel="noopener noreferrer" class="yt-dl-chip" title="Download isolated audio">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                <span>🎵 Lossless MP3 (320k)</span>
+                <span>🎵 Lossless MP3</span>
               </a>
               <a href="${escapeHtml(dl1080)}" target="_blank" rel="noopener noreferrer" class="yt-dl-chip" title="Download 1080p HD stream">
                 <span>🎬 1080p HD Stream</span>
@@ -2330,14 +2262,14 @@
           const chosenFmt = allFormats.find(f => f.value === vidSel.value) || allFormats[0];
           if (chosenFmt && (chosenFmt.force || chosenFmt.url)) {
             dlBtn.href = chosenFmt.force || chosenFmt.url;
-            dlBtn.innerHTML = `<span>📥 Download ${escapeHtml(chosenFmt.label || "Selected Stream")}</span>`;
+            dlBtn.innerHTML = "<span>📥 Download " + escapeHtml(chosenFmt.label || "Selected Stream") + "</span>";
           }
         };
         vidSel.addEventListener("change", updateBtn);
         audSel.addEventListener("change", updateBtn);
       }
 
-      conversation.push({ role: "assistant", content: `[YouTube Media: "${title}"]` });
+      conversation.push({ role: "assistant", content: "[YouTube Media: \"" + title + "\"]" });
       smoothScrollToBottom();
     } catch (err) {
       if (err.name === "AbortError") {
