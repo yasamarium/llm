@@ -40,53 +40,30 @@ async function resolveSnapYt(ytUrl, signal) {
   const idMatch = ytUrl.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/|\/shorts\/)([a-zA-Z0-9_-]{11})/i);
   const normalizedUrl = idMatch ? ("https://www.youtube.com/watch?v=" + idMatch[1]) : ytUrl;
 
-  const nonce = await getSnapYtNonce();
-  const body = new URLSearchParams();
-  body.set("action", "process_video_url");
-  body.set("video_url", normalizedUrl);
-  body.set("security", nonce);
-
-  const ajaxRes = await fetch("https://www.snapyt.app/wp-admin/admin-ajax.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Referer": "https://www.snapyt.app/",
-      "Origin": "https://www.snapyt.app",
-      "X-Requested-With": "XMLHttpRequest",
-      "Accept": "application/json, text/javascript, */*; q=0.01"
-    },
-    body: body.toString(),
-    signal: signal
-  });
-
-  const rawText = await ajaxRes.text();
-  let ajaxData;
-  try {
-    ajaxData = JSON.parse(rawText);
-  } catch (parseErr) {
-    throw new Error("SnapYT AJAX returned non-JSON (status " + ajaxRes.status + "): " + rawText.slice(0, 150));
-  }
-
-  if (!ajaxData || !ajaxData.success || !ajaxData.data?.redirect) {
-    throw new Error((ajaxData && (typeof ajaxData.data === 'string' ? ajaxData.data : JSON.stringify(ajaxData.data))) || "SnapYT extraction failed");
-  }
-
-  const prevRes = await fetch(ajaxData.data.redirect, {
+  const previewUrl = "https://www.snapyt.app/video-preview/?q=" + encodeURIComponent(normalizedUrl);
+  const prevRes = await fetch(previewUrl, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Referer": "https://www.snapyt.app/",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9"
     },
     signal: signal
   });
+
+  if (!prevRes.ok) {
+    throw new Error("Video preview returned HTTP " + prevRes.status);
+  }
+
   const prevHtml = await prevRes.text();
 
   // Extract Title
-  const titleMatch = prevHtml.match(/<h1[^>]*class="[^"]*title[^"]*"[^>]*>([\s\S]*?)<\/h1>/i) ||
-                     prevHtml.match(/<div[^>]*class="[^"]*video-title[^"]*"[^>]*>([\s\S]*?)<\/div>/i) ||
-                     prevHtml.match(/<title>([\s\S]*?)<\/title>/i);
+  const titleMatch = prevHtml.match(/var VIDEO_TITLE\s*=\s*"([^"]+)"/i) ||
+                     prevHtml.match(/<h1[^>]*class="[^"]*title[^"]*"[^>]*>([\s\S]*?)<\/h1>/i) ||
+                     prevHtml.match(/<img[^>]*id="vd-image"[^>]*alt="([^"]+)"/i);
   let title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : "YouTube Video";
+  if (title === "Video Preview - SnapYT.App" && idMatch) {
+    title = "YouTube Video (" + idMatch[1] + ")";
+  }
 
   // Extract Thumbnail
   const thumbMatch = prevHtml.match(/<img[^>]*id="vd-image"[^>]*src="([^"]+)"/i) ||
@@ -132,6 +109,10 @@ async function resolveSnapYt(ytUrl, signal) {
     });
   }
 
+  if (formats.length === 0) {
+    throw new Error("No media streams available for this video.");
+  }
+
   return {
     success: true,
     title,
@@ -139,7 +120,7 @@ async function resolveSnapYt(ytUrl, signal) {
     duration,
     pid,
     muxNonce,
-    previewUrl: ajaxData.data.redirect,
+    previewUrl,
     formats
   };
 }
