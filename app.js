@@ -4246,6 +4246,33 @@
   // ---------------------------------------------------------------------------
   // Setup Event Listeners & Initialize
   // ---------------------------------------------------------------------------
+  
+  window.switchAuthTab = function(mode) {
+    const tabIn = document.getElementById("tabAuthSignIn");
+    const tabUp = document.getElementById("tabAuthSignUp");
+    const formIn = document.getElementById("authSignInForm");
+    const formUp = document.getElementById("authSignUpForm");
+
+    if (mode === 'signup') {
+      tabUp?.classList.add("active");
+      tabIn?.classList.remove("active");
+      if (formIn) formIn.style.display = "none";
+      if (formUp) formUp.style.display = "flex";
+      hideAuthError();
+    } else {
+      tabIn?.classList.add("active");
+      tabUp?.classList.remove("active");
+      if (formIn) formIn.style.display = "flex";
+      if (formUp) formUp.style.display = "none";
+      hideAuthError();
+    }
+  };
+
+  window.handleSignInClick = handleSignIn;
+  window.handleSignUpClick = handleSignUp;
+  window.showASAuthGate = showAuthGate;
+  window.hideASAuthGate = hideAuthGate;
+
   function setupAuthEvents() {
     // Nav Profile Button & Dropdown Toggle
     if (userProfileNavBtn) {
@@ -4312,6 +4339,16 @@
         }
       });
     });
+
+    // Close overlay on backdrop click
+    const overlayElem = document.getElementById("asAuthGateOverlay");
+    if (overlayElem) {
+      overlayElem.addEventListener("click", (e) => {
+        if (e.target === overlayElem) {
+          hideAuthGate();
+        }
+      });
+    }
 
     // Form Submissions
     if (authSignInForm) authSignInForm.addEventListener("submit", handleSignIn);

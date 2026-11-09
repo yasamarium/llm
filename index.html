@@ -332,6 +332,16 @@
     .edit-avatar-slot img { width: 100%; height: 100%; object-fit: cover; }
     .modal-footer-custom { display: flex; justify-content: flex-end; margin-top: 4px; }
 
+  
+    .auth-gate-card { position: relative; }
+    .auth-gate-close-btn {
+      position: absolute; top: 18px; right: 18px;
+      background: rgba(255, 255, 255, 0.08); border: none; border-radius: 50%;
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      color: #8e92a2; cursor: pointer; transition: all 0.15s; z-index: 10;
+    }
+    .auth-gate-close-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.18); transform: scale(1.05); }
+    
   </style>
 </head>
 <body>
@@ -1090,12 +1100,14 @@
       }
     });
   </script>
-  <script src="app.js"></script>
   <!-- ========================================================================= -->
   <!-- AS Cloud Universal Auth Gate Modal (Bina login ke use nahi kar sacte)   -->
   <!-- ========================================================================= -->
   <div id="asAuthGateOverlay" class="auth-gate-overlay" style="display: none;">
     <div class="auth-gate-card">
+        <button type="button" id="closeAuthGateBtn" class="auth-gate-close-btn" onclick="window.hideASAuthGate && window.hideASAuthGate()" aria-label="Close dialog">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       <div class="auth-gate-header">
         <div class="auth-brand-glyph">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1112,8 +1124,8 @@
 
       <!-- Segmented Control Tabs -->
       <div class="auth-segmented-tabs">
-        <button type="button" id="tabAuthSignIn" class="auth-seg-tab active">Sign In</button>
-        <button type="button" id="tabAuthSignUp" class="auth-seg-tab">Create Account</button>
+        <button type="button" id="tabAuthSignIn" class="auth-seg-tab active" onclick="window.switchAuthTab && window.switchAuthTab('signin')">Sign In</button>
+        <button type="button" id="tabAuthSignUp" class="auth-seg-tab" onclick="window.switchAuthTab && window.switchAuthTab('signup')">Create Account</button>
       </div>
 
       <!-- Live Error Banner -->
@@ -1146,13 +1158,13 @@
           </div>
         </div>
 
-        <button type="submit" id="signInSubmitBtn" class="auth-submit-btn">
+        <button type="submit" id="signInSubmitBtn" class="auth-submit-btn" onclick="window.handleSignInClick && window.handleSignInClick(event)">
           <span>Sign In to AS Cloud</span>
         </button>
 
         <div class="auth-bottom-switch">
           <span>Don't have an account yet?</span>
-          <button type="button" id="switchToSignUpBtn" class="auth-switch-link">Create Account</button>
+          <button type="button" id="switchToSignUpBtn" class="auth-switch-link" onclick="window.switchAuthTab && window.switchAuthTab('signup')">Create Account</button>
         </div>
       </form>
 
@@ -1207,13 +1219,13 @@
           </div>
         </div>
 
-        <button type="submit" id="signUpSubmitBtn" class="auth-submit-btn">
+        <button type="submit" id="signUpSubmitBtn" class="auth-submit-btn" onclick="window.handleSignUpClick && window.handleSignUpClick(event)">
           <span>Create AS Cloud Account</span>
         </button>
 
         <div class="auth-bottom-switch">
           <span>Already have an account?</span>
-          <button type="button" id="switchToSignInBtn" class="auth-switch-link">Sign In</button>
+          <button type="button" id="switchToSignInBtn" class="auth-switch-link" onclick="window.switchAuthTab && window.switchAuthTab('signin')">Sign In</button>
         </div>
       </form>
     </div>
@@ -1276,5 +1288,6 @@
       </div>
     </div>
   </div>
+  <script src="app.js" defer></script>
 </body>
 </html>
