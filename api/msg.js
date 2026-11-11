@@ -838,14 +838,15 @@ export default async function handler(req, res) {
     // -------------------------------------------------------------------------
     if (action === "tg_login_confirm" && req.method === "POST") {
       const { code, username, telegramUser } = req.body || {};
-      if (!code || !username) {
-        return res.status(400).json({ error: "Missing code or username" });
+      if (!code) {
+        return res.status(400).json({ error: "Missing verification code" });
       }
 
       const cleanCode = code.toUpperCase().trim();
-      const cleanHandle = username.toLowerCase().trim();
+      const existing = MEM_TG_VERIFICATIONS.get(cleanCode);
+      const cleanHandle = (username || existing?.username || telegramUser?.username || "user_" + cleanCode.replace(/[^0-9]/g, "")).toLowerCase().trim();
 
-      const record = MEM_TG_VERIFICATIONS.get(cleanCode) || {
+      const record = existing || {
         code: cleanCode,
         username: cleanHandle,
         createdAt: Date.now(),
@@ -855,6 +856,7 @@ export default async function handler(req, res) {
       record.status = "verified";
       record.telegramUser = telegramUser || null;
       record.verifiedAt = Date.now();
+      if (!record.username) record.username = cleanHandle;
 
       MEM_TG_VERIFICATIONS.set(cleanCode, record);
       saveTgVerifications();
@@ -887,6 +889,15 @@ export default async function handler(req, res) {
       await saveUsers(users);
 
       return res.status(200).json({ status: "ok", verified: true, username: cleanHandle });
+    }
+
+    if (action === "set_relay_url" && req.method === "POST") {
+      const { url } = req.body || {};
+      if (url && typeof url === "string" && url.startsWith("https://")) {
+        RELAY_ENDPOINT_CACHE = { url: url.trim(), timestamp: Date.now() };
+        return res.status(200).json({ status: "ok", url: url.trim() });
+      }
+      return res.status(400).json({ error: "Invalid URL" });
     }
 
     // -------------------------------------------------------------------------
