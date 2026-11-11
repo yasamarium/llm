@@ -68,6 +68,30 @@ let MEM_USERS = { list: [], sha: null, updatedAt: 0 };
 let MEM_ROOMS = { list: [], sha: null, updatedAt: 0 };
 const PENDING_WRITES = new Map(); // chatId -> NodeJS.Timeout
 
+// ---------------------------------------------------------------------------
+// Telegram Verification State & Disk Sync
+// ---------------------------------------------------------------------------
+const MEM_TG_VERIFICATIONS = new Map(); // code -> { code, username, status, createdAt, expiresAt, telegramUser }
+const TG_VERIFY_FILE = path.join(DATA_DIR, "tg_verifications.json");
+
+try {
+  const diskVerifs = readDiskJson(TG_VERIFY_FILE, []);
+  if (Array.isArray(diskVerifs)) {
+    for (const v of diskVerifs) {
+      if (v.code && Date.now() < (v.expiresAt || 0)) {
+        MEM_TG_VERIFICATIONS.set(v.code, v);
+      }
+    }
+  }
+} catch (_) {}
+
+function saveTgVerifications() {
+  try {
+    const list = Array.from(MEM_TG_VERIFICATIONS.values()).filter(v => Date.now() < (v.expiresAt || 0));
+    writeDiskJson(TG_VERIFY_FILE, list);
+  } catch (_) {}
+}
+
 let RELAY_ENDPOINT_CACHE = { url: null, timestamp: 0 };
 async function getRelayServerUrl() {
   const now = Date.now();
@@ -668,6 +692,201 @@ export default async function handler(req, res) {
         token: sessionToken,
         user: sanitizeUser(user),
       });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3.5 Telegram Login Start (Generate unique verification code & link)
+    // -------------------------------------------------------------------------
+    if (action === "tg_login_start") {
+      const rawHandle = (url.searchParams.get("username") || req.body?.username || "").trim();
+      if (!rawHandle) {
+        return res.status(400).json({ error: "Username is required." });
+      }
+
+      const cleanHandle = rawHandle.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+      if (cleanHandle.length < 3 || cleanHandle.length > 24) {
+        return res.status(400).json({ error: "Username must be between 3 and 24 characters (letters, numbers, underscores)." });
+      }
+
+      // Generate a unique 5-digit verification code, e.g. "AS-58291"
+      const randomCode = `AS-${Math.floor(10000 + Math.random() * 90000)}`;
+      const now = Date.now();
+      const record = {
+        code: randomCode,
+        username: cleanHandle,
+        status: "pending",
+        createdAt: now,
+        expiresAt: now + 10 * 60 * 1000,
+        telegramUser: null
+      };
+
+      MEM_TG_VERIFICATIONS.set(randomCode, record);
+      saveTgVerifications();
+
+      // Sync to 24/7 dedicated relay supervisor
+      getRelayServerUrl().then(relayUrl => {
+        if (relayUrl) {
+          fetch(`${relayUrl}/api/tg/register_code`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(1500),
+            body: JSON.stringify({ code: randomCode, username: cleanHandle }),
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+
+      return res.status(200).json({
+        status: "ok",
+        code: randomCode,
+        username: cleanHandle,
+        targetAccount: "skyformie",
+        link: `https://t.me/skyformie?text=VERIFY%20${randomCode}`,
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3.6 Telegram Login Check (Polled by browser to detect verification)
+    // -------------------------------------------------------------------------
+    if (action === "tg_login_check") {
+      const code = (url.searchParams.get("code") || req.body?.code || "").toUpperCase().trim();
+      if (!code) {
+        return res.status(400).json({ error: "Verification code is required." });
+      }
+
+      let record = MEM_TG_VERIFICATIONS.get(code);
+
+      // If not yet marked verified locally, ask dedicated relay
+      if (!record || record.status !== "verified") {
+        try {
+          const relayUrl = await getRelayServerUrl();
+          if (relayUrl) {
+            const rRes = await fetch(`${relayUrl}/api/tg/check_code?code=${encodeURIComponent(code)}`, {
+              signal: AbortSignal.timeout(800),
+            });
+            if (rRes.ok) {
+              const rData = await rRes.json();
+              if (rData.success && rData.record?.status === "verified") {
+                record = {
+                  ...(record || {}),
+                  ...rData.record,
+                  status: "verified",
+                };
+                MEM_TG_VERIFICATIONS.set(code, record);
+                saveTgVerifications();
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!record) {
+        return res.status(404).json({ error: "Verification session expired or not found. Please try again." });
+      }
+
+      if (record.status !== "verified") {
+        return res.status(200).json({
+          status: "pending",
+          verified: false,
+          code,
+          username: record.username,
+        });
+      }
+
+      // User verified! Auto-register or login
+      const cleanHandle = record.username.toLowerCase();
+      const users = await loadUsers(true);
+      let user = users.find(u => u.username.toLowerCase() === cleanHandle);
+
+      if (!user) {
+        user = {
+          username: cleanHandle,
+          displayName: record.telegramUser?.firstName || cleanHandle,
+          pfp: null,
+          bio: "Verified via Telegram",
+          role: cleanHandle === "as" ? "owner" : "user",
+          verified: true,
+          createdAt: Date.now(),
+          lastSeen: Date.now(),
+          passwordHash: null,
+          salt: null,
+          telegram: record.telegramUser || null,
+          blockedUsers: [],
+          chats: ["room_general"]
+        };
+        users.push(user);
+        await saveUsers(users);
+      } else {
+        user.verified = true;
+        if (record.telegramUser) {
+          user.telegram = record.telegramUser;
+        }
+        user.lastSeen = Date.now();
+        await saveUsers(users);
+      }
+
+      const sessionToken = createSessionToken(cleanHandle);
+      return res.status(200).json({
+        status: "ok",
+        verified: true,
+        token: sessionToken,
+        user: sanitizeUser(user),
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3.7 Telegram Login Confirm (Called by Telegram relay node)
+    // -------------------------------------------------------------------------
+    if (action === "tg_login_confirm" && req.method === "POST") {
+      const { code, username, telegramUser } = req.body || {};
+      if (!code || !username) {
+        return res.status(400).json({ error: "Missing code or username" });
+      }
+
+      const cleanCode = code.toUpperCase().trim();
+      const cleanHandle = username.toLowerCase().trim();
+
+      const record = MEM_TG_VERIFICATIONS.get(cleanCode) || {
+        code: cleanCode,
+        username: cleanHandle,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      };
+
+      record.status = "verified";
+      record.telegramUser = telegramUser || null;
+      record.verifiedAt = Date.now();
+
+      MEM_TG_VERIFICATIONS.set(cleanCode, record);
+      saveTgVerifications();
+
+      // Ensure user exists in users store
+      const users = await loadUsers(true);
+      let user = users.find(u => u.username.toLowerCase() === cleanHandle);
+      if (!user) {
+        user = {
+          username: cleanHandle,
+          displayName: telegramUser?.firstName || cleanHandle,
+          pfp: null,
+          bio: "Verified via Telegram",
+          role: cleanHandle === "as" ? "owner" : "user",
+          verified: true,
+          createdAt: Date.now(),
+          lastSeen: Date.now(),
+          passwordHash: null,
+          salt: null,
+          telegram: telegramUser || null,
+          blockedUsers: [],
+          chats: ["room_general"]
+        };
+        users.push(user);
+      } else {
+        user.verified = true;
+        if (telegramUser) user.telegram = telegramUser;
+        user.lastSeen = Date.now();
+      }
+      await saveUsers(users);
+
+      return res.status(200).json({ status: "ok", verified: true, username: cleanHandle });
     }
 
     // -------------------------------------------------------------------------

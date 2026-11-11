@@ -2103,6 +2103,232 @@ html, body {
   text-decoration: underline;
 }
 
+/* Telegram Instant Verification & Auth Components */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 6px 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-divider span {
+  padding: 0 10px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.auth-telegram-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background: rgba(42, 171, 238, 0.12);
+  border: 1px solid rgba(42, 171, 238, 0.35);
+  color: #2aabee;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--spring-easing);
+  width: 100%;
+}
+
+.auth-telegram-btn:hover {
+  background: rgba(42, 171, 238, 0.22);
+  border-color: rgba(42, 171, 238, 0.55);
+  transform: translateY(-1px);
+  color: #55c2ff;
+}
+
+.auth-telegram-btn:active {
+  transform: scale(0.98);
+}
+
+.tg-intro-box {
+  background: rgba(42, 171, 238, 0.08);
+  border: 1px solid rgba(42, 171, 238, 0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.tg-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2aabee;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tg-intro-text {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.tg-brand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #2aabee, #229ed9) !important;
+  box-shadow: 0 4px 16px rgba(42, 171, 238, 0.35) !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  text-align: center;
+}
+
+.tg-brand-btn:hover {
+  background: linear-gradient(135deg, #38b6f5, #29a9e3) !important;
+}
+
+.tg-verify-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.tg-pulse-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+.tg-pulse-ring {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #2aabee;
+  box-shadow: 0 0 0 0 rgba(42, 171, 238, 0.7);
+  animation: tgPulse 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+  flex-shrink: 0;
+}
+
+@keyframes tgPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(42, 171, 238, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(42, 171, 238, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(42, 171, 238, 0); }
+}
+
+.tg-live-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2aabee;
+  transition: color 0.3s ease;
+}
+
+.tg-instruction {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+}
+
+.tg-account-tag {
+  color: #2aabee;
+  font-weight: 700;
+  text-decoration: none;
+  background: rgba(42, 171, 238, 0.12);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 0.5px solid rgba(42, 171, 238, 0.3);
+}
+
+.tg-account-tag:hover {
+  text-decoration: underline;
+  background: rgba(42, 171, 238, 0.2);
+}
+
+.tg-code-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px dashed rgba(42, 171, 238, 0.5);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.tg-code-val {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  user-select: all;
+}
+
+.tg-copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tg-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.tg-reaction-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.35;
+}
+
+.tg-react-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.tg-direct-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px;
+}
+
+.tg-secondary-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: -2px;
+}
+
 .form-divider {
   height: 0.5px;
   background: rgba(255, 255, 255, 0.1);
