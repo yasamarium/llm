@@ -3843,6 +3843,125 @@
   const signUpSubmitBtn = document.getElementById("signUpSubmitBtn");
   const switchToSignInBtn = document.getElementById("switchToSignInBtn");
 
+  // Telegram Auth Elements
+  const tabAuthTelegram = document.getElementById("tabAuthTelegram");
+  const authTelegramForm = document.getElementById("authTelegramForm");
+  const chatTgStepInput = document.getElementById("chatTgStepInput");
+  const chatTgStepVerify = document.getElementById("chatTgStepVerify");
+  const chatTgUsername = document.getElementById("chatTgUsername");
+  const chatTgStartBtn = document.getElementById("chatTgStartBtn");
+  const chatTgDisplayCode = document.getElementById("chatTgDisplayCode");
+  const chatTgCopyCodeBtn = document.getElementById("chatTgCopyCodeBtn");
+  const chatTgCopyBtnText = document.getElementById("chatTgCopyBtnText");
+  const chatTgLiveStatus = document.getElementById("chatTgLiveStatus");
+  const chatTgDirectLinkBtn = document.getElementById("chatTgDirectLinkBtn");
+  const chatTgBackBtn = document.getElementById("chatTgBackBtn");
+
+  let chatTgPollInterval = null;
+  let chatActiveTgCode = null;
+
+  function stopChatTgPolling() {
+    if (chatTgPollInterval) {
+      clearInterval(chatTgPollInterval);
+      chatTgPollInterval = null;
+    }
+  }
+
+  function resetChatTgView() {
+    stopChatTgPolling();
+    chatActiveTgCode = null;
+    if (chatTgStepInput) chatTgStepInput.style.display = "block";
+    if (chatTgStepVerify) chatTgStepVerify.style.display = "none";
+    if (chatTgStartBtn) {
+      chatTgStartBtn.disabled = false;
+      chatTgStartBtn.innerHTML = `
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+        </svg>
+        Get Verification Link
+      `;
+    }
+    if (chatTgLiveStatus) {
+      chatTgLiveStatus.textContent = "Listening for your message...";
+      chatTgLiveStatus.style.color = "#2aabee";
+    }
+  }
+
+  async function handleChatStartTg() {
+    const rawVal = (chatTgUsername?.value || "").trim();
+    const handle = rawVal.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+
+    if (!handle || handle.length < 3) {
+      showAuthError("Please enter a username with at least 3 characters (letters, numbers, underscores).");
+      return;
+    }
+
+    hideAuthError();
+    if (chatTgStartBtn) {
+      chatTgStartBtn.disabled = true;
+      chatTgStartBtn.textContent = "Generating Link...";
+    }
+
+    try {
+      const res = await fetch(`/api/msg?action=tg_login_start&username=${encodeURIComponent(handle)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to start verification.");
+      }
+
+      chatActiveTgCode = data.code;
+
+      if (chatTgDisplayCode) chatTgDisplayCode.textContent = data.code;
+      if (chatTgDirectLinkBtn) chatTgDirectLinkBtn.href = data.link || `https://t.me/skyformie?text=VERIFY%20${data.code}`;
+
+      if (chatTgStepInput) chatTgStepInput.style.display = "none";
+      if (chatTgStepVerify) chatTgStepVerify.style.display = "block";
+
+      startChatTgPolling(data.code);
+    } catch (err) {
+      showAuthError(err.message);
+      if (chatTgStartBtn) {
+        chatTgStartBtn.disabled = false;
+        chatTgStartBtn.innerHTML = `
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          Get Verification Link
+        `;
+      }
+    }
+  }
+
+  function startChatTgPolling(code) {
+    stopChatTgPolling();
+
+    chatTgPollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/msg?action=tg_login_check&code=${encodeURIComponent(code)}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.verified && data.token && data.user) {
+          stopChatTgPolling();
+
+          if (chatTgLiveStatus) {
+            chatTgLiveStatus.innerHTML = "✅ <strong>Approved! Verified via Telegram 👍</strong>";
+            chatTgLiveStatus.style.color = "#34c759";
+          }
+
+          setTimeout(async () => {
+            persistSession(data.user, data.token);
+            renderNavProfile();
+            hideAuthGate();
+            if (typeof triggerHaptic === "function") triggerHaptic("success");
+            await loadCloudSync();
+          }, 800);
+        }
+      } catch (_) {}
+    }, 1500);
+  }
+
   // Edit Profile Modal Elements
   const asEditProfileModal = document.getElementById("asEditProfileModal");
   const closeEditProfileBtn = document.getElementById("closeEditProfileBtn");
@@ -3901,6 +4020,7 @@
   }
 
   function hideAuthGate() {
+    stopChatTgPolling();
     if (!asAuthGateOverlay) return;
     asAuthGateOverlay.style.display = "none";
     if (messageInput) {
@@ -4250,21 +4370,43 @@
   window.switchAuthTab = function(mode) {
     const tabIn = document.getElementById("tabAuthSignIn");
     const tabUp = document.getElementById("tabAuthSignUp");
+    const tabTg = document.getElementById("tabAuthTelegram");
     const formIn = document.getElementById("authSignInForm");
     const formUp = document.getElementById("authSignUpForm");
+    const formTg = document.getElementById("authTelegramForm");
+
+    hideAuthError();
 
     if (mode === 'signup') {
+      stopChatTgPolling();
       tabUp?.classList.add("active");
       tabIn?.classList.remove("active");
+      tabTg?.classList.remove("active");
       if (formIn) formIn.style.display = "none";
       if (formUp) formUp.style.display = "flex";
-      hideAuthError();
+      if (formTg) formTg.style.display = "none";
+    } else if (mode === 'telegram') {
+      tabTg?.classList.add("active");
+      tabIn?.classList.remove("active");
+      tabUp?.classList.remove("active");
+      if (formIn) formIn.style.display = "none";
+      if (formUp) formUp.style.display = "none";
+      if (formTg) formTg.style.display = "flex";
+
+      const prefill = (signInUsername?.value || signUpUsername?.value || "").trim();
+      if (prefill && chatTgUsername && !chatTgUsername.value) {
+        chatTgUsername.value = prefill;
+      }
+      resetChatTgView();
+      if (chatTgUsername) chatTgUsername.focus();
     } else {
+      stopChatTgPolling();
       tabIn?.classList.add("active");
       tabUp?.classList.remove("active");
+      tabTg?.classList.remove("active");
       if (formIn) formIn.style.display = "flex";
       if (formUp) formUp.style.display = "none";
-      hideAuthError();
+      if (formTg) formTg.style.display = "none";
     }
   };
 
@@ -4297,6 +4439,33 @@
 
     if (openEditProfileBtn) openEditProfileBtn.addEventListener("click", openEditProfile);
     if (userSignOutBtn) userSignOutBtn.addEventListener("click", handleSignOut);
+
+    // Telegram Auth Event Listeners
+    if (chatTgStartBtn) chatTgStartBtn.addEventListener("click", handleChatStartTg);
+    if (chatTgUsername) {
+      chatTgUsername.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleChatStartTg();
+      });
+    }
+    if (chatTgBackBtn) {
+      chatTgBackBtn.addEventListener("click", () => {
+        resetChatTgView();
+        if (chatTgUsername) chatTgUsername.focus();
+      });
+    }
+    if (chatTgCopyCodeBtn) {
+      chatTgCopyCodeBtn.addEventListener("click", () => {
+        const code = chatTgDisplayCode?.textContent || chatActiveTgCode || "";
+        if (!code) return;
+        navigator.clipboard.writeText(code).then(() => {
+          if (chatTgCopyBtnText) {
+            const orig = chatTgCopyBtnText.textContent;
+            chatTgCopyBtnText.textContent = "Copied! ✓";
+            setTimeout(() => { chatTgCopyBtnText.textContent = orig; }, 2000);
+          }
+        }).catch(() => {});
+      });
+    }
 
     // Segmented Tabs Toggle
     if (tabAuthSignIn && tabAuthSignUp) {

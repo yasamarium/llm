@@ -298,6 +298,208 @@
     }
     .auth-switch-link:hover { text-decoration: underline; color: #a5b4fc; }
 
+    /* Telegram Instant Verification & Auth Components */
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+      color: #8e92a2;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .auth-divider::before,
+    .auth-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .auth-divider span {
+      padding: 0 10px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+    .auth-telegram-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 14px;
+      background: rgba(42, 171, 238, 0.12);
+      border: 1px solid rgba(42, 171, 238, 0.35);
+      color: #2aabee;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 100%;
+      font-family: inherit;
+    }
+    .auth-telegram-btn:hover {
+      background: rgba(42, 171, 238, 0.22);
+      border-color: rgba(42, 171, 238, 0.55);
+      transform: translateY(-1px);
+      color: #55c2ff;
+    }
+    .auth-telegram-btn:active {
+      transform: scale(0.98);
+    }
+    .tg-intro-box {
+      background: rgba(42, 171, 238, 0.08);
+      border: 1px solid rgba(42, 171, 238, 0.2);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .tg-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #2aabee;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .tg-intro-text {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.45;
+      margin: 0;
+    }
+    .tg-brand-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #2aabee, #229ed9) !important;
+      box-shadow: 0 4px 16px rgba(42, 171, 238, 0.35) !important;
+      color: #ffffff !important;
+      text-decoration: none !important;
+      text-align: center;
+    }
+    .tg-brand-btn:hover {
+      background: linear-gradient(135deg, #38b6f5, #29a9e3) !important;
+    }
+    .tg-verify-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .tg-pulse-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 4px;
+    }
+    .tg-pulse-ring {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #2aabee;
+      box-shadow: 0 0 0 0 rgba(42, 171, 238, 0.7);
+      animation: tgPulse 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+      flex-shrink: 0;
+    }
+    @keyframes tgPulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(42, 171, 238, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(42, 171, 238, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(42, 171, 238, 0); }
+    }
+    .tg-live-status {
+      font-size: 13px;
+      font-weight: 600;
+      color: #2aabee;
+      transition: color 0.3s ease;
+    }
+    .tg-instruction {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.4;
+    }
+    .tg-account-tag {
+      color: #2aabee;
+      font-weight: 700;
+      text-decoration: none;
+      background: rgba(42, 171, 238, 0.12);
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 0.5px solid rgba(42, 171, 238, 0.3);
+    }
+    .tg-account-tag:hover {
+      text-decoration: underline;
+      background: rgba(42, 171, 238, 0.2);
+    }
+    .tg-code-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px dashed rgba(42, 171, 238, 0.5);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .tg-code-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: #ffffff;
+      user-select: all;
+    }
+    .tg-copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .tg-copy-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      transform: translateY(-1px);
+    }
+    .tg-reaction-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.35;
+    }
+    .tg-react-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+    .tg-direct-btn {
+      width: 100%;
+      margin-top: 4px;
+      padding: 12px;
+    }
+    .tg-secondary-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: -2px;
+    }
+
     /* Custom Edit Profile Modal */
     .modal-backdrop-custom {
       position: fixed; inset: 0; z-index: 100000;
@@ -1143,6 +1345,12 @@
       <div class="auth-segmented-tabs">
         <button type="button" id="tabAuthSignIn" class="auth-seg-tab active" onclick="window.switchAuthTab && window.switchAuthTab('signin')">Sign In</button>
         <button type="button" id="tabAuthSignUp" class="auth-seg-tab" onclick="window.switchAuthTab && window.switchAuthTab('signup')">Create Account</button>
+        <button type="button" id="tabAuthTelegram" class="auth-seg-tab" onclick="window.switchAuthTab && window.switchAuthTab('telegram')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: -2px; margin-right: 4px;">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          Telegram
+        </button>
       </div>
 
       <!-- Live Error Banner -->
@@ -1183,6 +1391,14 @@
           <span>Don't have an account yet?</span>
           <button type="button" id="switchToSignUpBtn" class="auth-switch-link" onclick="window.switchAuthTab && window.switchAuthTab('signup')">Create Account</button>
         </div>
+
+        <div class="auth-divider"><span>OR</span></div>
+        <button type="button" class="auth-telegram-btn" onclick="window.switchAuthTab && window.switchAuthTab('telegram')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          Instant Telegram Verification
+        </button>
       </form>
 
       <!-- Form 2: Create Account -->
@@ -1244,7 +1460,89 @@
           <span>Already have an account?</span>
           <button type="button" id="switchToSignInBtn" class="auth-switch-link" onclick="window.switchAuthTab && window.switchAuthTab('signin')">Sign In</button>
         </div>
+
+        <div class="auth-divider"><span>OR</span></div>
+        <button type="button" class="auth-telegram-btn" onclick="window.switchAuthTab && window.switchAuthTab('telegram')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          Instant Telegram Verification
+        </button>
       </form>
+
+      <!-- Form 3: Telegram Instant Verification -->
+      <div id="authTelegramForm" class="auth-gate-form" style="display: none;">
+        <!-- Step 1: Input Handle -->
+        <div id="chatTgStepInput">
+          <div class="tg-intro-box">
+            <div class="tg-badge-pill">⚡ Instant Passwordless Login</div>
+            <p class="tg-intro-text">
+              Enter your handle. You'll get a direct link to send a quick verification code to our linked account on Telegram. An instant reaction emoji confirms your identity and logs you in immediately!
+            </p>
+          </div>
+
+          <div class="auth-form-group" style="margin-top: 10px;">
+            <label for="chatTgUsername">Enter @username</label>
+            <div class="auth-input-wrapper">
+              <span class="auth-input-prefix">@</span>
+              <input type="text" id="chatTgUsername" placeholder="your_handle" maxlength="24" autocomplete="username">
+            </div>
+            <span class="auth-hint">Works for both new and existing accounts</span>
+          </div>
+
+          <button id="chatTgStartBtn" class="auth-submit-btn tg-brand-btn" type="button" style="margin-top: 10px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+            </svg>
+            Get Verification Link
+          </button>
+        </div>
+
+        <!-- Step 2: Verification In Progress -->
+        <div id="chatTgStepVerify" style="display: none;">
+          <div class="tg-verify-card">
+            <div class="tg-pulse-header">
+              <div class="tg-pulse-ring"></div>
+              <span class="tg-live-status" id="chatTgLiveStatus">Listening for your message...</span>
+            </div>
+
+            <div class="tg-instruction">
+              Send this verification code to linked account <a href="https://t.me/skyformie" target="_blank" rel="noopener noreferrer" class="tg-account-tag">@skyformie</a>:
+            </div>
+
+            <div class="tg-code-box">
+              <span id="chatTgDisplayCode" class="tg-code-val">AS-00000</span>
+              <button type="button" id="chatTgCopyCodeBtn" class="tg-copy-btn" title="Copy Code">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                </svg>
+                <span id="chatTgCopyBtnText">Copy</span>
+              </button>
+            </div>
+
+            <div class="tg-reaction-note">
+              <span class="tg-react-icon">👍</span>
+              <span>The linked account will react with <strong>👍</strong> as soon as the code arrives to instantly log you in!</span>
+            </div>
+
+            <a id="chatTgDirectLinkBtn" href="https://t.me/skyformie" target="_blank" rel="noopener noreferrer" class="auth-submit-btn tg-brand-btn tg-direct-btn">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+              </svg>
+              Open in Telegram &amp; Send Code
+            </a>
+
+            <div class="tg-secondary-actions">
+              <button type="button" id="chatTgBackBtn" class="auth-switch-link">← Use different username</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-bottom-switch" style="margin-top: 10px;">
+          <span>Prefer standard password?</span>
+          <button type="button" class="auth-switch-link" onclick="window.switchAuthTab && window.switchAuthTab('signin')">Sign In</button>
+        </div>
+      </div>
     </div>
   </div>
 
