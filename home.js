@@ -4075,6 +4075,26 @@
       item.addEventListener("click", () => Taptic.light());
     });
 
+    // Auto-verify / auto-fill if link opened with email verification code
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlEmail = urlParams.get("email");
+    const urlCode = urlParams.get("code");
+    if (urlEmail && urlCode) {
+      localStorage.setItem("as_invite_cleared", "true");
+      renderHomeGateViews();
+      showAuthOverlay("email");
+      if (homeEmailInput) homeEmailInput.value = urlEmail;
+      activeEmailAddress = urlEmail;
+      if (homeEmailTargetDisplay) homeEmailTargetDisplay.textContent = urlEmail;
+      if (emailStepInput) emailStepInput.style.display = "none";
+      if (emailStepVerify) emailStepVerify.style.display = "block";
+      if (homeEmailCodeInput) homeEmailCodeInput.value = urlCode;
+      setTimeout(() => {
+        handleVerifyHomeEmailCode();
+      }, 400);
+      return;
+    }
+
     if (currentUser && sessionToken) {
       // 1. Immediately render UI and unhide workspace with local session (0ms instant login)
       renderNavProfile();

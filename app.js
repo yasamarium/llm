@@ -5293,11 +5293,28 @@
   function initAuthSystem() {
     setupAuthEvents();
     setupSupportModalEvents();
-    setupSupportModalEvents();
-    setupSupportModalEvents();
-    setupSupportModalEvents();
 
     try {
+      // Auto-verify if link opened with email verification code
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlEmail = urlParams.get("email");
+      const urlCode = urlParams.get("code");
+      if (urlEmail && urlCode) {
+        localStorage.setItem("as_invite_cleared", "true");
+        showAuthGate();
+        switchAuthMode("email");
+        if (chatEmailInput) chatEmailInput.value = urlEmail;
+        chatActiveEmail = urlEmail;
+        if (chatEmailTargetDisplay) chatEmailTargetDisplay.textContent = urlEmail;
+        if (chatEmailStepInput) chatEmailStepInput.style.display = "none";
+        if (chatEmailStepVerify) chatEmailStepVerify.style.display = "block";
+        if (chatEmailCodeInput) chatEmailCodeInput.value = urlCode;
+        setTimeout(() => {
+          handleChatVerifyEmailCode();
+        }, 400);
+        return;
+      }
+
       const savedUser = localStorage.getItem("as_user") || localStorage.getItem("as_msg_current_user");
       const savedToken = localStorage.getItem("as_token") || localStorage.getItem("as_msg_token");
 
