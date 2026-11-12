@@ -116,6 +116,30 @@ function saveEmailVerifications() {
   } catch (_) {}
 }
 
+// ---------------------------------------------------------------------------
+// WhatsApp Verification State & Disk Sync
+// ---------------------------------------------------------------------------
+const MEM_WA_VERIFICATIONS = new Map(); // code -> { code, username, status, createdAt, expiresAt, whatsapp }
+const WA_VERIFY_FILE = path.join(DATA_DIR, "wa_verifications.json");
+
+try {
+  const diskWaVerifs = readDiskJson(WA_VERIFY_FILE, []);
+  if (Array.isArray(diskWaVerifs)) {
+    for (const v of diskWaVerifs) {
+      if (v.code && Date.now() < (v.expiresAt || 0)) {
+        MEM_WA_VERIFICATIONS.set(v.code, v);
+      }
+    }
+  }
+} catch (_) {}
+
+function saveWaVerifications() {
+  try {
+    const list = Array.from(MEM_WA_VERIFICATIONS.values()).filter(v => Date.now() < (v.expiresAt || 0));
+    writeDiskJson(WA_VERIFY_FILE, list);
+  } catch (_) {}
+}
+
 function getClientIp(req) {
   return (
     req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
@@ -1314,6 +1338,224 @@ export default async function handler(req, res) {
         token: sessionToken,
         user: sanitizeUser(user),
       });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3.10 WhatsApp Login Start (Generate unique code & wa.me link)
+    // -------------------------------------------------------------------------
+    if (action === "wa_login_start") {
+      const rawHandle = (url.searchParams.get("username") || req.body?.username || "").trim();
+      if (!rawHandle) {
+        return res.status(400).json({ error: "Username is required." });
+      }
+
+      const cleanHandle = rawHandle.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+      if (cleanHandle.length < 3 || cleanHandle.length > 24) {
+        return res.status(400).json({ error: "Username must be between 3 and 24 characters (letters, numbers, underscores)." });
+      }
+
+      const randomCode = `AS-${Math.floor(10000 + Math.random() * 90000)}`;
+      const now = Date.now();
+      const record = {
+        code: randomCode,
+        username: cleanHandle,
+        status: "pending",
+        createdAt: now,
+        expiresAt: now + 10 * 60 * 1000,
+        whatsapp: null
+      };
+
+      MEM_WA_VERIFICATIONS.set(randomCode, record);
+      saveWaVerifications();
+
+      let targetPhone = "919627404432";
+      try {
+        const relayUrl = await getRelayServerUrl();
+        if (relayUrl) {
+          fetch(`${relayUrl}/api/wa/register_code`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(1500),
+            body: JSON.stringify({ code: randomCode, username: cleanHandle }),
+          }).catch(() => {});
+
+          const sRes = await fetch(`${relayUrl}/api/wa/status`, { signal: AbortSignal.timeout(1000) });
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            if (sData.phone) targetPhone = sData.phone;
+          }
+        }
+      } catch (_) {}
+
+      const cleanPhone = targetPhone.replace(/[^0-9]/g, "");
+      const waLink = `https://wa.me/${cleanPhone}?text=VERIFY%20${randomCode}`;
+
+      return res.status(200).json({
+        status: "ok",
+        code: randomCode,
+        username: cleanHandle,
+        targetPhone: cleanPhone,
+        link: waLink,
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3.11 WhatsApp Login Check (Polled by browser to detect verification)
+    // -------------------------------------------------------------------------
+    if (action === "wa_login_check") {
+      const code = (url.searchParams.get("code") || req.body?.code || "").toUpperCase().trim();
+      if (!code) {
+        return res.status(400).json({ error: "Verification code is required." });
+      }
+
+      let record = MEM_WA_VERIFICATIONS.get(code);
+
+      if (!record || record.status !== "verified") {
+        try {
+          const relayUrl = await getRelayServerUrl();
+          if (relayUrl) {
+            const rRes = await fetch(`${relayUrl}/api/wa/check_code?code=${encodeURIComponent(code)}`, {
+              signal: AbortSignal.timeout(1000),
+            });
+            if (rRes.ok) {
+              const rData = await rRes.json();
+              if (rData.success && rData.record?.status === "verified") {
+                record = {
+                  ...(record || {}),
+                  ...rData.record,
+                  status: "verified",
+                };
+                MEM_WA_VERIFICATIONS.set(code, record);
+                saveWaVerifications();
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!record) {
+        return res.status(404).json({ error: "Verification session expired or not found. Please try again." });
+      }
+
+      if (record.status !== "verified") {
+        return res.status(200).json({
+          status: "pending",
+          verified: false,
+          code,
+          username: record.username,
+        });
+      }
+
+      // User verified! Auto-register or login
+      const cleanHandle = record.username.toLowerCase();
+      const users = await loadUsers(true);
+      let user = users.find(u => u.username.toLowerCase() === cleanHandle);
+
+      if (!user) {
+        user = {
+          username: cleanHandle,
+          displayName: record.whatsapp?.pushName || cleanHandle,
+          pfp: null,
+          bio: "Verified via WhatsApp",
+          role: cleanHandle === "as" ? "owner" : "user",
+          verified: true,
+          createdAt: Date.now(),
+          lastSeen: Date.now(),
+          passwordHash: null,
+          salt: null,
+          whatsapp: record.whatsapp || null,
+          blockedUsers: [],
+          chats: ["room_general"]
+        };
+        users.push(user);
+        await saveUsers(users);
+      } else {
+        user.verified = true;
+        if (record.whatsapp) user.whatsapp = record.whatsapp;
+        user.lastSeen = Date.now();
+        await saveUsers(users);
+      }
+
+      logLoginAttempt({
+        username: cleanHandle,
+        method: `WhatsApp (+${record.whatsapp?.phone || "Direct"})`,
+        status: "SUCCESS",
+        ip: getClientIp(req),
+        userAgent: req.headers["user-agent"]
+      });
+
+      const sessionToken = createSessionToken(cleanHandle);
+      return res.status(200).json({
+        status: "ok",
+        verified: true,
+        token: sessionToken,
+        user: sanitizeUser(user),
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3.12 WhatsApp Login Confirm (Called by WhatsApp relay node)
+    // -------------------------------------------------------------------------
+    if (action === "wa_login_confirm" && req.method === "POST") {
+      const { code, username, whatsapp } = req.body || {};
+      if (!code) {
+        return res.status(400).json({ error: "Missing verification code" });
+      }
+
+      const cleanCode = code.toUpperCase().trim();
+      const existing = MEM_WA_VERIFICATIONS.get(cleanCode);
+      const cleanHandle = (username || existing?.username || "wa_" + (whatsapp?.phone || cleanCode.replace(/[^0-9]/g, ""))).toLowerCase().trim();
+
+      const record = existing || {
+        code: cleanCode,
+        username: cleanHandle,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      };
+
+      record.status = "verified";
+      record.whatsapp = whatsapp || null;
+      record.verifiedAt = Date.now();
+      if (!record.username) record.username = cleanHandle;
+
+      MEM_WA_VERIFICATIONS.set(cleanCode, record);
+      saveWaVerifications();
+
+      const users = await loadUsers(true);
+      let user = users.find(u => u.username.toLowerCase() === cleanHandle);
+      if (!user) {
+        user = {
+          username: cleanHandle,
+          displayName: whatsapp?.pushName || cleanHandle,
+          pfp: null,
+          bio: "Verified via WhatsApp",
+          role: cleanHandle === "as" ? "owner" : "user",
+          verified: true,
+          createdAt: Date.now(),
+          lastSeen: Date.now(),
+          passwordHash: null,
+          salt: null,
+          whatsapp: whatsapp || null,
+          blockedUsers: [],
+          chats: ["room_general"]
+        };
+        users.push(user);
+      } else {
+        user.verified = true;
+        if (whatsapp) user.whatsapp = whatsapp;
+        user.lastSeen = Date.now();
+      }
+      await saveUsers(users);
+
+      logLoginAttempt({
+        username: cleanHandle,
+        method: `WhatsApp (+${whatsapp?.phone || "Direct"})`,
+        status: "SUCCESS (Confirmed by Relay)",
+        ip: getClientIp(req),
+        userAgent: req.headers["user-agent"]
+      });
+
+      return res.status(200).json({ status: "ok", verified: true, username: cleanHandle });
     }
 
     if (action === "set_relay_url" && req.method === "POST") {

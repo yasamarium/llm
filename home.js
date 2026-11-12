@@ -324,6 +324,27 @@
   const tgBackBtn = document.getElementById("tgBackBtn");
   const switchToLoginFromTgBtn = document.getElementById("switchToLoginFromTgBtn");
 
+  // WhatsApp Auth Elements
+  const tabWhatsApp = document.getElementById("tabWhatsApp");
+  const whatsappForm = document.getElementById("whatsappForm");
+  const quickWaLoginBtn = document.getElementById("quickWaLoginBtn");
+  const quickWaSignupBtn = document.getElementById("quickWaSignupBtn");
+  const waStepInput = document.getElementById("waStepInput");
+  const waStepVerify = document.getElementById("waStepVerify");
+  const waUsername = document.getElementById("waUsername");
+  const waStartBtn = document.getElementById("waStartBtn");
+  const waDisplayCode = document.getElementById("waDisplayCode");
+  const waCopyCodeBtn = document.getElementById("waCopyCodeBtn");
+  const waCopyBtnText = document.getElementById("waCopyBtnText");
+  const waLiveStatus = document.getElementById("waLiveStatus");
+  const waDirectLinkBtn = document.getElementById("waDirectLinkBtn");
+  const waBackBtn = document.getElementById("waBackBtn");
+  const switchToLoginFromWaBtn = document.getElementById("switchToLoginFromWaBtn");
+  const waTargetPhoneTag = document.getElementById("waTargetPhoneTag");
+
+  let waPollInterval = null;
+  let activeWaCode = null;
+
   // Email Auth Elements
   const tabEmail = document.getElementById("tabEmail");
   const emailForm = document.getElementById("emailForm");
@@ -655,6 +676,33 @@
     }
   }
 
+  function stopWaPolling() {
+    if (waPollInterval) {
+      clearInterval(waPollInterval);
+      waPollInterval = null;
+    }
+  }
+
+  function resetWaView() {
+    stopWaPolling();
+    activeWaCode = null;
+    if (waStepInput) waStepInput.style.display = "block";
+    if (waStepVerify) waStepVerify.style.display = "none";
+    if (waStartBtn) {
+      waStartBtn.disabled = false;
+      waStartBtn.innerHTML = `
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+        </svg>
+        Get WhatsApp Verification Link
+      `;
+    }
+    if (waLiveStatus) {
+      waLiveStatus.textContent = "Listening for your WhatsApp message...";
+      waLiveStatus.style.color = "#25D366";
+    }
+  }
+
   function isInviteCleared() {
     const cleared = localStorage.getItem("as_invite_cleared") === "true";
     const hasUser = !!(localStorage.getItem("as_user") || localStorage.getItem("as_msg_current_user"));
@@ -796,25 +844,32 @@
     if (mode !== "telegram") {
       stopTgPolling();
     }
+    if (mode !== "whatsapp") {
+      stopWaPolling();
+    }
 
     if (mode === "login") {
       if (tabLogin) tabLogin.classList.add("active");
       if (tabSignup) tabSignup.classList.remove("active");
       if (tabTelegram) tabTelegram.classList.remove("active");
+      if (tabWhatsApp) tabWhatsApp.classList.remove("active");
       if (tabEmail) tabEmail.classList.remove("active");
       if (loginForm) loginForm.style.display = "flex";
       if (signupForm) signupForm.style.display = "none";
       if (telegramForm) telegramForm.style.display = "none";
+      if (whatsappForm) whatsappForm.style.display = "none";
       if (emailForm) emailForm.style.display = "none";
       if (loginUsername) loginUsername.focus();
     } else if (mode === "signup") {
       if (tabSignup) tabSignup.classList.add("active");
       if (tabLogin) tabLogin.classList.remove("active");
       if (tabTelegram) tabTelegram.classList.remove("active");
+      if (tabWhatsApp) tabWhatsApp.classList.remove("active");
       if (tabEmail) tabEmail.classList.remove("active");
       if (loginForm) loginForm.style.display = "none";
       if (signupForm) signupForm.style.display = "flex";
       if (telegramForm) telegramForm.style.display = "none";
+      if (whatsappForm) whatsappForm.style.display = "none";
       if (emailForm) emailForm.style.display = "none";
       signupUploadedPfp = null;
       updateSignupAvatarPreview();
@@ -823,10 +878,12 @@
       if (tabTelegram) tabTelegram.classList.add("active");
       if (tabLogin) tabLogin.classList.remove("active");
       if (tabSignup) tabSignup.classList.remove("active");
+      if (tabWhatsApp) tabWhatsApp.classList.remove("active");
       if (tabEmail) tabEmail.classList.remove("active");
       if (loginForm) loginForm.style.display = "none";
       if (signupForm) signupForm.style.display = "none";
       if (telegramForm) telegramForm.style.display = "flex";
+      if (whatsappForm) whatsappForm.style.display = "none";
       if (emailForm) emailForm.style.display = "none";
 
       const prefill = (loginUsername?.value || signupUsername?.value || "").trim();
@@ -835,14 +892,34 @@
       }
       resetTgView();
       if (tgUsername) tgUsername.focus();
+    } else if (mode === "whatsapp") {
+      if (tabWhatsApp) tabWhatsApp.classList.add("active");
+      if (tabLogin) tabLogin.classList.remove("active");
+      if (tabSignup) tabSignup.classList.remove("active");
+      if (tabTelegram) tabTelegram.classList.remove("active");
+      if (tabEmail) tabEmail.classList.remove("active");
+      if (loginForm) loginForm.style.display = "none";
+      if (signupForm) signupForm.style.display = "none";
+      if (telegramForm) telegramForm.style.display = "none";
+      if (whatsappForm) whatsappForm.style.display = "flex";
+      if (emailForm) emailForm.style.display = "none";
+
+      const prefill = (loginUsername?.value || signupUsername?.value || "").trim();
+      if (prefill && waUsername && !waUsername.value) {
+        waUsername.value = prefill;
+      }
+      resetWaView();
+      if (waUsername) waUsername.focus();
     } else if (mode === "email") {
       if (tabEmail) tabEmail.classList.add("active");
       if (tabLogin) tabLogin.classList.remove("active");
       if (tabSignup) tabSignup.classList.remove("active");
       if (tabTelegram) tabTelegram.classList.remove("active");
+      if (tabWhatsApp) tabWhatsApp.classList.remove("active");
       if (loginForm) loginForm.style.display = "none";
       if (signupForm) signupForm.style.display = "none";
       if (telegramForm) telegramForm.style.display = "none";
+      if (whatsappForm) whatsappForm.style.display = "none";
       if (emailForm) emailForm.style.display = "flex";
 
       const prefill = (loginUsername?.value || signupUsername?.value || "").trim();
@@ -856,6 +933,7 @@
 
   function hideAuthOverlay() {
     stopTgPolling();
+    stopWaPolling();
     if (authOverlay) authOverlay.style.display = "none";
   }
 
@@ -931,6 +1009,93 @@
           if (tgLiveStatus) {
             tgLiveStatus.innerHTML = "✅ <strong>Approved! Verified via Telegram 👍</strong>";
             tgLiveStatus.style.color = "#34c759";
+          }
+
+          setTimeout(async () => {
+            currentUser = data.user;
+            sessionToken = data.token;
+            localStorage.setItem("as_user", JSON.stringify(currentUser));
+            localStorage.setItem("as_token", sessionToken);
+            localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
+            localStorage.setItem("as_msg_token", sessionToken);
+
+            hideAuthOverlay();
+            renderNavProfile();
+
+            await loadConversations();
+            await openChat(activeConvoId);
+            startSyncEngine();
+          }, 800);
+        }
+      } catch (_) {}
+    }, 1500);
+  }
+
+  async function handleStartWaVerification() {
+    const rawVal = (waUsername?.value || "").trim();
+    const handle = rawVal.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+
+    if (!handle || handle.length < 3) {
+      showAuthError("Please enter a username with at least 3 characters (letters, numbers, underscores).");
+      return;
+    }
+
+    hideAuthError();
+    if (waStartBtn) {
+      waStartBtn.disabled = true;
+      waStartBtn.textContent = "Generating Link...";
+    }
+
+    try {
+      const res = await fetch(`/api/msg?action=wa_login_start&username=${encodeURIComponent(handle)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to start verification.");
+      }
+
+      activeWaCode = data.code;
+
+      if (waDisplayCode) waDisplayCode.textContent = data.code;
+      if (waDirectLinkBtn) waDirectLinkBtn.href = data.link || `https://wa.me/919627404432?text=VERIFY%20${data.code}`;
+      if (waTargetPhoneTag && data.targetPhone) {
+        waTargetPhoneTag.href = `https://wa.me/${data.targetPhone}`;
+        waTargetPhoneTag.textContent = `+${data.targetPhone}`;
+      }
+
+      if (waStepInput) waStepInput.style.display = "none";
+      if (waStepVerify) waStepVerify.style.display = "block";
+
+      startWaPolling(data.code);
+    } catch (err) {
+      showAuthError(err.message);
+      if (waStartBtn) {
+        waStartBtn.disabled = false;
+        waStartBtn.innerHTML = `
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+          </svg>
+          Get WhatsApp Verification Link
+        `;
+      }
+    }
+  }
+
+  function startWaPolling(code) {
+    stopWaPolling();
+
+    waPollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/msg?action=wa_login_check&code=${encodeURIComponent(code)}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.verified && data.token && data.user) {
+          stopWaPolling();
+
+          if (waLiveStatus) {
+            waLiveStatus.innerHTML = "✅ <strong>Approved! Verified via WhatsApp</strong>";
+            waLiveStatus.style.color = "#34c759";
           }
 
           setTimeout(async () => {
@@ -1076,13 +1241,17 @@
   if (tabSignup) tabSignup.addEventListener("click", () => showAuthOverlay("signup"));
   if (tabEmail) tabEmail.addEventListener("click", () => showAuthOverlay("email"));
   if (tabTelegram) tabTelegram.addEventListener("click", () => showAuthOverlay("telegram"));
+  if (tabWhatsApp) tabWhatsApp.addEventListener("click", () => showAuthOverlay("whatsapp"));
   if (quickEmailLoginBtn) quickEmailLoginBtn.addEventListener("click", () => showAuthOverlay("email"));
   if (quickEmailSignupBtn) quickEmailSignupBtn.addEventListener("click", () => showAuthOverlay("email"));
   if (quickTgLoginBtn) quickTgLoginBtn.addEventListener("click", () => showAuthOverlay("telegram"));
   if (quickTgSignupBtn) quickTgSignupBtn.addEventListener("click", () => showAuthOverlay("telegram"));
+  if (quickWaLoginBtn) quickWaLoginBtn.addEventListener("click", () => showAuthOverlay("whatsapp"));
+  if (quickWaSignupBtn) quickWaSignupBtn.addEventListener("click", () => showAuthOverlay("whatsapp"));
   if (switchToSignupBtn) switchToSignupBtn.addEventListener("click", () => showAuthOverlay("signup"));
   if (switchToLoginBtn) switchToLoginBtn.addEventListener("click", () => showAuthOverlay("login"));
   if (switchToLoginFromTgBtn) switchToLoginFromTgBtn.addEventListener("click", () => showAuthOverlay("login"));
+  if (switchToLoginFromWaBtn) switchToLoginFromWaBtn.addEventListener("click", () => showAuthOverlay("login"));
   if (switchToLoginFromEmailBtn) switchToLoginFromEmailBtn.addEventListener("click", () => showAuthOverlay("login"));
 
   // Invite-Only Gate Listeners
@@ -1182,6 +1351,34 @@
           tgCopyBtnText.textContent = "Copied! ✓";
           setTimeout(() => {
             tgCopyBtnText.textContent = original;
+          }, 2000);
+        }
+      }).catch(() => {});
+    });
+  }
+
+  if (waStartBtn) waStartBtn.addEventListener("click", handleStartWaVerification);
+  if (waUsername) {
+    waUsername.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleStartWaVerification();
+    });
+  }
+  if (waBackBtn) {
+    waBackBtn.addEventListener("click", () => {
+      resetWaView();
+      if (waUsername) waUsername.focus();
+    });
+  }
+  if (waCopyCodeBtn) {
+    waCopyCodeBtn.addEventListener("click", () => {
+      const code = waDisplayCode?.textContent || activeWaCode || "";
+      if (!code) return;
+      navigator.clipboard.writeText(code).then(() => {
+        if (waCopyBtnText) {
+          const original = waCopyBtnText.textContent;
+          waCopyBtnText.textContent = "Copied! ✓";
+          setTimeout(() => {
+            waCopyBtnText.textContent = original;
           }, 2000);
         }
       }).catch(() => {});

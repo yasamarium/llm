@@ -3963,6 +3963,132 @@
   }
 
   // ---------------------------------------------------------------------------
+  // WhatsApp Auth Elements & Handlers
+  // ---------------------------------------------------------------------------
+  const tabAuthWhatsApp = document.getElementById("tabAuthWhatsApp");
+  const authWhatsAppForm = document.getElementById("authWhatsAppForm");
+  const chatWaStepInput = document.getElementById("chatWaStepInput");
+  const chatWaStepVerify = document.getElementById("chatWaStepVerify");
+  const chatWaUsername = document.getElementById("chatWaUsername");
+  const chatWaStartBtn = document.getElementById("chatWaStartBtn");
+  const chatWaDisplayCode = document.getElementById("chatWaDisplayCode");
+  const chatWaCopyCodeBtn = document.getElementById("chatWaCopyCodeBtn");
+  const chatWaCopyBtnText = document.getElementById("chatWaCopyBtnText");
+  const chatWaLiveStatus = document.getElementById("chatWaLiveStatus");
+  const chatWaDirectLinkBtn = document.getElementById("chatWaDirectLinkBtn");
+  const chatWaBackBtn = document.getElementById("chatWaBackBtn");
+  const chatWaTargetPhoneTag = document.getElementById("chatWaTargetPhoneTag");
+
+  let chatWaPollInterval = null;
+  let chatActiveWaCode = null;
+
+  function stopChatWaPolling() {
+    if (chatWaPollInterval) {
+      clearInterval(chatWaPollInterval);
+      chatWaPollInterval = null;
+    }
+  }
+
+  function resetChatWaView() {
+    stopChatWaPolling();
+    chatActiveWaCode = null;
+    if (chatWaStepInput) chatWaStepInput.style.display = "block";
+    if (chatWaStepVerify) chatWaStepVerify.style.display = "none";
+    if (chatWaStartBtn) {
+      chatWaStartBtn.disabled = false;
+      chatWaStartBtn.innerHTML = `
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+        </svg>
+        Get Verification Link
+      `;
+    }
+    if (chatWaLiveStatus) {
+      chatWaLiveStatus.textContent = "Listening for your WhatsApp message...";
+      chatWaLiveStatus.style.color = "#25D366";
+    }
+  }
+
+  async function handleChatStartWa() {
+    const rawVal = (chatWaUsername?.value || "").trim();
+    const handle = rawVal.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+
+    if (!handle || handle.length < 3) {
+      showAuthError("Please enter a username with at least 3 characters (letters, numbers, underscores).");
+      return;
+    }
+
+    hideAuthError();
+    if (chatWaStartBtn) {
+      chatWaStartBtn.disabled = true;
+      chatWaStartBtn.textContent = "Generating Link...";
+    }
+
+    try {
+      const res = await fetch(`/api/msg?action=wa_login_start&username=${encodeURIComponent(handle)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to start verification.");
+      }
+
+      chatActiveWaCode = data.code;
+
+      if (chatWaDisplayCode) chatWaDisplayCode.textContent = data.code;
+      if (chatWaDirectLinkBtn) chatWaDirectLinkBtn.href = data.link || `https://wa.me/919627404432?text=VERIFY%20${data.code}`;
+      if (chatWaTargetPhoneTag && data.targetPhone) {
+        chatWaTargetPhoneTag.href = `https://wa.me/${data.targetPhone}`;
+        chatWaTargetPhoneTag.textContent = `+${data.targetPhone}`;
+      }
+
+      if (chatWaStepInput) chatWaStepInput.style.display = "none";
+      if (chatWaStepVerify) chatWaStepVerify.style.display = "block";
+
+      startChatWaPolling(data.code);
+    } catch (err) {
+      showAuthError(err.message);
+      if (chatWaStartBtn) {
+        chatWaStartBtn.disabled = false;
+        chatWaStartBtn.innerHTML = `
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+          </svg>
+          Get Verification Link
+        `;
+      }
+    }
+  }
+
+  function startChatWaPolling(code) {
+    stopChatWaPolling();
+
+    chatWaPollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/msg?action=wa_login_check&code=${encodeURIComponent(code)}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.verified && data.token && data.user) {
+          stopChatWaPolling();
+
+          if (chatWaLiveStatus) {
+            chatWaLiveStatus.innerHTML = "✅ <strong>Approved! Verified via WhatsApp</strong>";
+            chatWaLiveStatus.style.color = "#34c759";
+          }
+
+          setTimeout(async () => {
+            persistSession(data.user, data.token);
+            renderNavProfile();
+            hideAuthGate();
+            if (typeof triggerHaptic === "function") triggerHaptic("success");
+            await loadCloudSync();
+          }, 800);
+        }
+      } catch (_) {}
+    }, 1500);
+  }
+
+  // ---------------------------------------------------------------------------
   // Email Auth Elements & State
   // ---------------------------------------------------------------------------
   const tabAuthEmail = document.getElementById("tabAuthEmail");
@@ -4300,6 +4426,7 @@
 
   function hideAuthGate() {
     stopChatTgPolling();
+    stopChatWaPolling();
     if (!asAuthGateOverlay) return;
     asAuthGateOverlay.style.display = "none";
     if (messageInput) {
@@ -4653,32 +4780,40 @@
     const tabIn = document.getElementById("tabAuthSignIn");
     const tabUp = document.getElementById("tabAuthSignUp");
     const tabTg = document.getElementById("tabAuthTelegram");
+    const tabWa = document.getElementById("tabAuthWhatsApp");
     const tabEm = document.getElementById("tabAuthEmail");
     const formIn = document.getElementById("authSignInForm");
     const formUp = document.getElementById("authSignUpForm");
     const formTg = document.getElementById("authTelegramForm");
+    const formWa = document.getElementById("authWhatsAppForm");
     const formEm = document.getElementById("authEmailForm");
 
     hideAuthError();
 
     if (mode === 'signup') {
       stopChatTgPolling();
+      stopChatWaPolling();
       tabUp?.classList.add("active");
       tabIn?.classList.remove("active");
       tabTg?.classList.remove("active");
+      tabWa?.classList.remove("active");
       tabEm?.classList.remove("active");
       if (formIn) formIn.style.display = "none";
       if (formUp) formUp.style.display = "flex";
       if (formTg) formTg.style.display = "none";
+      if (formWa) formWa.style.display = "none";
       if (formEm) formEm.style.display = "none";
     } else if (mode === 'telegram') {
+      stopChatWaPolling();
       tabTg?.classList.add("active");
       tabIn?.classList.remove("active");
       tabUp?.classList.remove("active");
+      tabWa?.classList.remove("active");
       tabEm?.classList.remove("active");
       if (formIn) formIn.style.display = "none";
       if (formUp) formUp.style.display = "none";
       if (formTg) formTg.style.display = "flex";
+      if (formWa) formWa.style.display = "none";
       if (formEm) formEm.style.display = "none";
 
       const prefill = (signInUsername?.value || signUpUsername?.value || "").trim();
@@ -4687,15 +4822,37 @@
       }
       resetChatTgView();
       if (chatTgUsername) chatTgUsername.focus();
+    } else if (mode === 'whatsapp') {
+      stopChatTgPolling();
+      tabWa?.classList.add("active");
+      tabIn?.classList.remove("active");
+      tabUp?.classList.remove("active");
+      tabTg?.classList.remove("active");
+      tabEm?.classList.remove("active");
+      if (formIn) formIn.style.display = "none";
+      if (formUp) formUp.style.display = "none";
+      if (formTg) formTg.style.display = "none";
+      if (formWa) formWa.style.display = "flex";
+      if (formEm) formEm.style.display = "none";
+
+      const prefill = (signInUsername?.value || signUpUsername?.value || "").trim();
+      if (prefill && chatWaUsername && !chatWaUsername.value) {
+        chatWaUsername.value = prefill;
+      }
+      resetChatWaView();
+      if (chatWaUsername) chatWaUsername.focus();
     } else if (mode === 'email') {
       stopChatTgPolling();
+      stopChatWaPolling();
       tabEm?.classList.add("active");
       tabIn?.classList.remove("active");
       tabUp?.classList.remove("active");
       tabTg?.classList.remove("active");
+      tabWa?.classList.remove("active");
       if (formIn) formIn.style.display = "none";
       if (formUp) formUp.style.display = "none";
       if (formTg) formTg.style.display = "none";
+      if (formWa) formWa.style.display = "none";
       if (formEm) formEm.style.display = "flex";
 
       const prefill = (signInUsername?.value || signUpUsername?.value || "").trim();
@@ -4706,13 +4863,16 @@
       if (chatEmailInput) chatEmailInput.focus();
     } else {
       stopChatTgPolling();
+      stopChatWaPolling();
       tabIn?.classList.add("active");
       tabUp?.classList.remove("active");
       tabTg?.classList.remove("active");
+      tabWa?.classList.remove("active");
       tabEm?.classList.remove("active");
       if (formIn) formIn.style.display = "flex";
       if (formUp) formUp.style.display = "none";
       if (formTg) formTg.style.display = "none";
+      if (formWa) formWa.style.display = "none";
       if (formEm) formEm.style.display = "none";
     }
   };
@@ -4769,6 +4929,34 @@
             const orig = chatTgCopyBtnText.textContent;
             chatTgCopyBtnText.textContent = "Copied! ✓";
             setTimeout(() => { chatTgCopyBtnText.textContent = orig; }, 2000);
+          }
+        }).catch(() => {});
+      });
+    }
+
+    // WhatsApp Auth Event Listeners
+    if (tabAuthWhatsApp) tabAuthWhatsApp.addEventListener("click", () => window.switchAuthTab('whatsapp'));
+    if (chatWaStartBtn) chatWaStartBtn.addEventListener("click", handleChatStartWa);
+    if (chatWaUsername) {
+      chatWaUsername.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleChatStartWa();
+      });
+    }
+    if (chatWaBackBtn) {
+      chatWaBackBtn.addEventListener("click", () => {
+        resetChatWaView();
+        if (chatWaUsername) chatWaUsername.focus();
+      });
+    }
+    if (chatWaCopyCodeBtn) {
+      chatWaCopyCodeBtn.addEventListener("click", () => {
+        const code = chatWaDisplayCode?.textContent || chatActiveWaCode || "";
+        if (!code) return;
+        navigator.clipboard.writeText(code).then(() => {
+          if (chatWaCopyBtnText) {
+            const orig = chatWaCopyBtnText.textContent;
+            chatWaCopyBtnText.textContent = "Copied! ✓";
+            setTimeout(() => { chatWaCopyBtnText.textContent = orig; }, 2000);
           }
         }).catch(() => {});
       });

@@ -500,6 +500,186 @@
       margin-top: -2px;
     }
 
+    /* WhatsApp Instant Verification Styles */
+    .auth-wa-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 14px;
+      background: rgba(37, 211, 102, 0.12);
+      border: 1px solid rgba(37, 211, 102, 0.35);
+      color: #25D366;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s var(--spring-easing);
+      width: 100%;
+    }
+    .auth-wa-btn:hover {
+      background: rgba(37, 211, 102, 0.22);
+      border-color: rgba(37, 211, 102, 0.55);
+      transform: translateY(-1px);
+      color: #38e27b;
+    }
+    .auth-wa-btn:active {
+      transform: scale(0.98);
+    }
+    .wa-intro-box {
+      background: rgba(37, 211, 102, 0.08);
+      border: 1px solid rgba(37, 211, 102, 0.2);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .wa-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #25D366;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .wa-intro-text {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.45;
+      margin: 0;
+    }
+    .wa-brand-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #25D366, #128C7E) !important;
+      box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35) !important;
+      color: #ffffff !important;
+      text-decoration: none !important;
+      text-align: center;
+    }
+    .wa-brand-btn:hover {
+      background: linear-gradient(135deg, #2ae06e, #169e8f) !important;
+    }
+    .wa-verify-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .wa-pulse-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 4px;
+    }
+    .wa-pulse-ring {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #25D366;
+      box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+      animation: waPulse 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+      flex-shrink: 0;
+    }
+    @keyframes waPulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+    }
+    .wa-live-status {
+      font-size: 13px;
+      font-weight: 600;
+      color: #25D366;
+      transition: color 0.3s ease;
+    }
+    .wa-instruction {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.4;
+    }
+    .wa-account-tag {
+      color: #25D366;
+      font-weight: 700;
+      text-decoration: none;
+      background: rgba(37, 211, 102, 0.12);
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 0.5px solid rgba(37, 211, 102, 0.3);
+    }
+    .wa-account-tag:hover {
+      text-decoration: underline;
+      background: rgba(37, 211, 102, 0.2);
+    }
+    .wa-code-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px dashed rgba(37, 211, 102, 0.5);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .wa-code-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: #ffffff;
+      user-select: all;
+    }
+    .wa-copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .wa-copy-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      transform: translateY(-1px);
+    }
+    .wa-reaction-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.35;
+    }
+    .wa-react-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+    .wa-direct-btn {
+      width: 100%;
+      margin-top: 4px;
+      padding: 12px;
+    }
+    .wa-secondary-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: -2px;
+    }
+
     /* Email Instant Verification Styles */
     .auth-email-btn {
       display: flex;
@@ -1764,6 +1944,12 @@
           </svg>
           Telegram
         </button>
+        <button type="button" id="tabAuthWhatsApp" class="auth-seg-tab" onclick="window.switchAuthTab && window.switchAuthTab('whatsapp')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: -2px; margin-right: 4px; color: #22c55e;">
+            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+          </svg>
+          WhatsApp
+        </button>
       </div>
 
       <!-- Live Error Banner -->
@@ -1818,6 +2004,12 @@
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
             </svg>
             Telegram
+          </button>
+          <button type="button" class="auth-wa-btn" onclick="window.switchAuthTab && window.switchAuthTab('whatsapp')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+            </svg>
+            WhatsApp
           </button>
         </div>
       </form>
@@ -1896,6 +2088,12 @@
             </svg>
             Telegram
           </button>
+          <button type="button" class="auth-wa-btn" onclick="window.switchAuthTab && window.switchAuthTab('whatsapp')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+            </svg>
+            WhatsApp
+          </button>
         </div>
       </form>
 
@@ -1963,6 +2161,80 @@
 
             <div class="tg-secondary-actions">
               <button type="button" id="chatTgBackBtn" class="auth-switch-link">← Use different username</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-bottom-switch" style="margin-top: 10px;">
+          <span>Prefer standard password?</span>
+          <button type="button" class="auth-switch-link" onclick="window.switchAuthTab && window.switchAuthTab('signin')">Sign In</button>
+        </div>
+      </div>
+
+      <!-- Form 3b: WhatsApp Instant Verification -->
+      <div id="authWhatsAppForm" class="auth-gate-form" style="display: none;">
+        <!-- Step 1: Input Handle -->
+        <div id="chatWaStepInput">
+          <div class="wa-intro-box">
+            <div class="wa-badge-pill">⚡ Instant Passwordless Login</div>
+            <p class="wa-intro-text">
+              Enter your handle. You'll get a direct link to send a quick verification code to our linked WhatsApp account. An instant reaction emoji (✅) confirms your identity and logs you in immediately!
+            </p>
+          </div>
+
+          <div class="auth-form-group" style="margin-top: 10px;">
+            <label for="chatWaUsername">Enter @username</label>
+            <div class="auth-input-wrapper">
+              <span class="auth-input-prefix">@</span>
+              <input type="text" id="chatWaUsername" placeholder="your_handle" maxlength="24" autocomplete="username">
+            </div>
+            <span class="auth-hint">Works for both new and existing accounts</span>
+          </div>
+
+          <button id="chatWaStartBtn" class="auth-submit-btn wa-brand-btn" type="button" style="margin-top: 10px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+            </svg>
+            Get Verification Link
+          </button>
+        </div>
+
+        <!-- Step 2: Verification In Progress -->
+        <div id="chatWaStepVerify" style="display: none;">
+          <div class="wa-verify-card">
+            <div class="wa-pulse-header">
+              <div class="wa-pulse-ring"></div>
+              <span class="wa-live-status" id="chatWaLiveStatus">Listening for your WhatsApp message...</span>
+            </div>
+
+            <div class="wa-instruction">
+              Send this verification code to linked WhatsApp account <a id="chatWaTargetPhoneTag" href="https://wa.me/919627404432" target="_blank" rel="noopener noreferrer" class="wa-account-tag">+91 96274 04432</a>:
+            </div>
+
+            <div class="wa-code-box">
+              <span id="chatWaDisplayCode" class="wa-code-val">AS-00000</span>
+              <button type="button" id="chatWaCopyCodeBtn" class="wa-copy-btn" title="Copy Code">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                </svg>
+                <span id="chatWaCopyBtnText">Copy</span>
+              </button>
+            </div>
+
+            <div class="wa-reaction-note">
+              <span class="wa-react-icon">✅</span>
+              <span>The linked account will react with <strong>✅</strong> as soon as the code arrives to instantly log you in!</span>
+            </div>
+
+            <a id="chatWaDirectLinkBtn" href="https://wa.me/919627404432" target="_blank" rel="noopener noreferrer" class="auth-submit-btn wa-brand-btn wa-direct-btn">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+              </svg>
+              Open in WhatsApp &amp; Send Code
+            </a>
+
+            <div class="wa-secondary-actions">
+              <button type="button" id="chatWaBackBtn" class="auth-switch-link">← Use different username</button>
             </div>
           </div>
         </div>

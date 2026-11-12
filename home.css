@@ -2329,6 +2329,208 @@ html, body {
   margin-top: -2px;
 }
 
+/* WhatsApp Instant Verification Styles */
+.auth-wa-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background: rgba(37, 211, 102, 0.12);
+  border: 1px solid rgba(37, 211, 102, 0.35);
+  color: #25D366;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--spring-easing);
+  width: 100%;
+}
+
+.auth-wa-btn:hover {
+  background: rgba(37, 211, 102, 0.22);
+  border-color: rgba(37, 211, 102, 0.55);
+  transform: translateY(-1px);
+  color: #38e27b;
+}
+
+.auth-wa-btn:active {
+  transform: scale(0.98);
+}
+
+.wa-intro-box {
+  background: rgba(37, 211, 102, 0.08);
+  border: 1px solid rgba(37, 211, 102, 0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.wa-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #25D366;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wa-intro-text {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.wa-brand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #25D366, #128C7E) !important;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35) !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  text-align: center;
+}
+
+.wa-brand-btn:hover {
+  background: linear-gradient(135deg, #2ae06e, #169e8f) !important;
+}
+
+.wa-verify-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.wa-pulse-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+.wa-pulse-ring {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #25D366;
+  box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+  animation: waPulse 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+  flex-shrink: 0;
+}
+
+@keyframes waPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+.wa-live-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: #25D366;
+  transition: color 0.3s ease;
+}
+
+.wa-instruction {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+}
+
+.wa-account-tag {
+  color: #25D366;
+  font-weight: 700;
+  text-decoration: none;
+  background: rgba(37, 211, 102, 0.12);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 0.5px solid rgba(37, 211, 102, 0.3);
+}
+
+.wa-account-tag:hover {
+  text-decoration: underline;
+  background: rgba(37, 211, 102, 0.2);
+}
+
+.wa-code-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px dashed rgba(37, 211, 102, 0.5);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.wa-code-val {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  user-select: all;
+}
+
+.wa-copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wa-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.wa-reaction-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.35;
+}
+
+.wa-react-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.wa-direct-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px;
+}
+
+.wa-secondary-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: -2px;
+}
+
 /* Email Instant Verification Styles */
 .auth-email-btn {
   display: flex;
