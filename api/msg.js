@@ -92,6 +92,59 @@ function saveTgVerifications() {
   } catch (_) {}
 }
 
+// ---------------------------------------------------------------------------
+// Email Verification State & Disk Sync
+// ---------------------------------------------------------------------------
+const MEM_EMAIL_VERIFICATIONS = new Map(); // email -> { code, email, username, status, createdAt, expiresAt, attempts }
+const EMAIL_VERIFY_FILE = path.join(DATA_DIR, "email_verifications.json");
+
+try {
+  const diskEmailVerifs = readDiskJson(EMAIL_VERIFY_FILE, []);
+  if (Array.isArray(diskEmailVerifs)) {
+    for (const v of diskEmailVerifs) {
+      if (v.email && Date.now() < (v.expiresAt || 0)) {
+        MEM_EMAIL_VERIFICATIONS.set(v.email.toLowerCase(), v);
+      }
+    }
+  }
+} catch (_) {}
+
+function saveEmailVerifications() {
+  try {
+    const list = Array.from(MEM_EMAIL_VERIFICATIONS.values()).filter(v => Date.now() < (v.expiresAt || 0));
+    writeDiskJson(EMAIL_VERIFY_FILE, list);
+  } catch (_) {}
+}
+
+function getClientIp(req) {
+  return (
+    req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    req.headers["x-real-ip"] ||
+    req.socket?.remoteAddress ||
+    "Unknown IP"
+  );
+}
+
+async function logLoginAttempt({ username, method, status, ip, userAgent }) {
+  try {
+    const relayUrl = await getRelayServerUrl();
+    if (!relayUrl) return;
+    fetch(`${relayUrl}/api/email/log_attempt`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(3000),
+      body: JSON.stringify({
+        username: username || "anonymous",
+        method: method || "Unknown",
+        status: status || "ATTEMPT",
+        ip: ip || "Unknown",
+        userAgent: userAgent || "Browser",
+        time: new Date().toISOString(),
+      }),
+    }).catch(() => {});
+  } catch (_) {}
+}
+
 let RELAY_ENDPOINT_CACHE = { url: null, timestamp: 0 };
 async function getRelayServerUrl() {
   const now = Date.now();
@@ -645,6 +698,14 @@ export default async function handler(req, res) {
       users.push(newUser);
       await saveUsers(users);
 
+      logLoginAttempt({
+        username: cleanHandle,
+        method: "Registration",
+        status: "SUCCESS (New User Created)",
+        ip: getClientIp(req),
+        userAgent: req.headers["user-agent"]
+      });
+
       const sessionToken = createSessionToken(cleanHandle);
       return res.status(201).json({
         status: "ok",
@@ -668,6 +729,13 @@ export default async function handler(req, res) {
       const user = users.find(u => u.username.toLowerCase() === cleanHandle);
 
       if (!user) {
+        logLoginAttempt({
+          username: cleanHandle,
+          method: "Password",
+          status: "FAILED (User Not Found)",
+          ip: getClientIp(req),
+          userAgent: req.headers["user-agent"]
+        });
         return res.status(404).json({ error: `Account @${cleanHandle} not found. Please sign up.` });
       }
 
@@ -681,10 +749,25 @@ export default async function handler(req, res) {
       } else {
         const isValid = verifyPassword(password, user.passwordHash, user.salt);
         if (!isValid) {
+          logLoginAttempt({
+            username: cleanHandle,
+            method: "Password",
+            status: "FAILED (Incorrect Password)",
+            ip: getClientIp(req),
+            userAgent: req.headers["user-agent"]
+          });
           return res.status(401).json({ error: "Incorrect password. Please check and try again." });
         }
         user.lastSeen = Date.now();
       }
+
+      logLoginAttempt({
+        username: cleanHandle,
+        method: "Password",
+        status: "SUCCESS",
+        ip: getClientIp(req),
+        userAgent: req.headers["user-agent"]
+      });
 
       const sessionToken = createSessionToken(cleanHandle);
       return res.status(200).json({
@@ -824,6 +907,14 @@ export default async function handler(req, res) {
         await saveUsers(users);
       }
 
+      logLoginAttempt({
+        username: cleanHandle,
+        method: `Telegram (@${record.telegramUser?.username || "Direct"})`,
+        status: "SUCCESS",
+        ip: getClientIp(req),
+        userAgent: req.headers["user-agent"]
+      });
+
       const sessionToken = createSessionToken(cleanHandle);
       return res.status(200).json({
         status: "ok",
@@ -888,7 +979,170 @@ export default async function handler(req, res) {
       }
       await saveUsers(users);
 
+      logLoginAttempt({
+        username: cleanHandle,
+        method: `Telegram (@${telegramUser?.username || "Direct"})`,
+        status: "SUCCESS (Confirmed by Relay)",
+        ip: getClientIp(req),
+        userAgent: req.headers["user-agent"]
+      });
+
       return res.status(200).json({ status: "ok", verified: true, username: cleanHandle });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3.8 Email Login Start (Generate 6-digit code & send from hy8y@proton.me)
+    // -------------------------------------------------------------------------
+    if (action === "email_login_start") {
+      const rawEmail = (url.searchParams.get("email") || req.body?.email || "").trim().toLowerCase();
+      const rawUsername = (url.searchParams.get("username") || req.body?.username || "").trim();
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!rawEmail || !emailRegex.test(rawEmail)) {
+        return res.status(400).json({ error: "Please provide a valid email address." });
+      }
+
+      // If username provided, sanitize it; else derive handle from email name
+      let cleanHandle = rawUsername.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+      if (!cleanHandle) {
+        cleanHandle = rawEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "").substring(0, 20);
+      }
+      if (cleanHandle.length < 3) cleanHandle = `user_${cleanHandle}`;
+
+      // Generate a 6-digit verification code, e.g. "482910"
+      const randomCode = String(Math.floor(100000 + Math.random() * 900000));
+      const now = Date.now();
+      const record = {
+        code: randomCode,
+        email: rawEmail,
+        username: cleanHandle,
+        status: "pending",
+        createdAt: now,
+        expiresAt: now + 10 * 60 * 1000,
+        attempts: 0,
+      };
+
+      MEM_EMAIL_VERIFICATIONS.set(rawEmail, record);
+      saveEmailVerifications();
+
+      // Dispatch verification email via dedicated relay node
+      let emailDispatched = false;
+      try {
+        const relayUrl = await getRelayServerUrl();
+        if (relayUrl) {
+          const rRes = await fetch(`${relayUrl}/api/email/send_verification`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(12000),
+            body: JSON.stringify({
+              to: rawEmail,
+              code: randomCode,
+              username: cleanHandle,
+            }),
+          });
+          if (rRes.ok) {
+            emailDispatched = true;
+          }
+        }
+      } catch (err) {
+        console.warn("[Email Auth] Relay email dispatch warning:", err.message);
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        email: rawEmail,
+        username: cleanHandle,
+        expiresIn: 600,
+        message: "Verification code sent to your email.",
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3.9 Email Login Check (Verify 6-digit code & authenticate)
+    // -------------------------------------------------------------------------
+    if (action === "email_login_check") {
+      const rawEmail = (url.searchParams.get("email") || req.body?.email || "").trim().toLowerCase();
+      const inputCode = (url.searchParams.get("code") || req.body?.code || "").trim();
+
+      if (!rawEmail || !inputCode) {
+        return res.status(400).json({ error: "Email and verification code are required." });
+      }
+
+      const record = MEM_EMAIL_VERIFICATIONS.get(rawEmail);
+      if (!record || Date.now() > (record.expiresAt || 0)) {
+        logLoginAttempt({
+          username: rawEmail,
+          method: `Email OTP (${rawEmail})`,
+          status: "FAILED (Code Expired or Not Found)",
+          ip: getClientIp(req),
+          userAgent: req.headers["user-agent"]
+        });
+        return res.status(400).json({ error: "Verification code expired or not found. Please request a new one." });
+      }
+
+      if (record.code !== inputCode) {
+        record.attempts = (record.attempts || 0) + 1;
+        saveEmailVerifications();
+        logLoginAttempt({
+          username: rawEmail,
+          method: `Email OTP (${rawEmail})`,
+          status: `FAILED (Incorrect Code: ${inputCode})`,
+          ip: getClientIp(req),
+          userAgent: req.headers["user-agent"]
+        });
+        return res.status(401).json({ error: "Incorrect verification code. Please check and try again." });
+      }
+
+      // Valid code! Authenticate user
+      const cleanHandle = record.username.toLowerCase();
+      const users = await loadUsers(true);
+      let user = users.find(u => u.email === rawEmail || u.username.toLowerCase() === cleanHandle);
+
+      if (!user) {
+        user = {
+          username: cleanHandle,
+          displayName: cleanHandle,
+          email: rawEmail,
+          pfp: null,
+          bio: "Verified via Email",
+          role: cleanHandle === "as" ? "owner" : "user",
+          verified: true,
+          createdAt: Date.now(),
+          lastSeen: Date.now(),
+          passwordHash: null,
+          salt: null,
+          blockedUsers: [],
+          chats: ["room_general"]
+        };
+        users.push(user);
+        await saveUsers(users);
+      } else {
+        user.verified = true;
+        user.email = rawEmail;
+        user.lastSeen = Date.now();
+        await saveUsers(users);
+      }
+
+      // Clear used verification record
+      MEM_EMAIL_VERIFICATIONS.delete(rawEmail);
+      saveEmailVerifications();
+
+      // Dispatch security audit log
+      logLoginAttempt({
+        username: user.username,
+        method: `Email OTP (${rawEmail})`,
+        status: "SUCCESS",
+        ip: getClientIp(req),
+        userAgent: req.headers["user-agent"]
+      });
+
+      const sessionToken = createSessionToken(user.username);
+      return res.status(200).json({
+        status: "ok",
+        verified: true,
+        token: sessionToken,
+        user: sanitizeUser(user),
+      });
     }
 
     if (action === "set_relay_url" && req.method === "POST") {

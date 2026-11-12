@@ -3962,6 +3962,136 @@
     }, 1500);
   }
 
+  // ---------------------------------------------------------------------------
+  // Email Auth Elements & State
+  // ---------------------------------------------------------------------------
+  const tabAuthEmail = document.getElementById("tabAuthEmail");
+  const authEmailForm = document.getElementById("authEmailForm");
+  const chatEmailStepInput = document.getElementById("chatEmailStepInput");
+  const chatEmailStepVerify = document.getElementById("chatEmailStepVerify");
+  const chatEmailInput = document.getElementById("chatEmailInput");
+  const chatEmailUsername = document.getElementById("chatEmailUsername");
+  const chatEmailSendBtn = document.getElementById("chatEmailSendBtn");
+  const chatEmailTargetDisplay = document.getElementById("chatEmailTargetDisplay");
+  const chatEmailCodeInput = document.getElementById("chatEmailCodeInput");
+  const chatEmailVerifyBtn = document.getElementById("chatEmailVerifyBtn");
+  const chatEmailLiveStatus = document.getElementById("chatEmailLiveStatus");
+  const chatEmailResendBtn = document.getElementById("chatEmailResendBtn");
+  const chatEmailBackBtn = document.getElementById("chatEmailBackBtn");
+
+  let chatActiveEmail = "";
+
+  function resetChatEmailView() {
+    if (chatEmailStepInput) chatEmailStepInput.style.display = "block";
+    if (chatEmailStepVerify) chatEmailStepVerify.style.display = "none";
+    if (chatEmailCodeInput) chatEmailCodeInput.value = "";
+    if (chatEmailSendBtn) {
+      chatEmailSendBtn.disabled = false;
+      chatEmailSendBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+        Send Verification Code
+      `;
+    }
+    if (chatEmailVerifyBtn) {
+      chatEmailVerifyBtn.disabled = false;
+      chatEmailVerifyBtn.textContent = "Verify & Sign In";
+    }
+    if (chatEmailLiveStatus) {
+      chatEmailLiveStatus.textContent = "Verification code dispatched";
+      chatEmailLiveStatus.style.color = "#a78bfa";
+    }
+  }
+
+  async function handleChatSendEmailCode() {
+    const emailVal = (chatEmailInput?.value || "").trim().toLowerCase();
+    const usernameVal = (chatEmailUsername?.value || "").trim();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailVal || !emailRegex.test(emailVal)) {
+      showAuthError("Please enter a valid email address.");
+      return;
+    }
+
+    hideAuthError();
+    if (chatEmailSendBtn) {
+      chatEmailSendBtn.disabled = true;
+      chatEmailSendBtn.textContent = "Sending Code...";
+    }
+
+    try {
+      const res = await fetch(`/api/msg?action=email_login_start&email=${encodeURIComponent(emailVal)}&username=${encodeURIComponent(usernameVal)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to dispatch verification code.");
+      }
+
+      chatActiveEmail = emailVal;
+      if (chatEmailTargetDisplay) chatEmailTargetDisplay.textContent = emailVal;
+      if (chatEmailStepInput) chatEmailStepInput.style.display = "none";
+      if (chatEmailStepVerify) chatEmailStepVerify.style.display = "block";
+      if (chatEmailCodeInput) {
+        chatEmailCodeInput.value = "";
+        chatEmailCodeInput.focus();
+      }
+    } catch (err) {
+      showAuthError(err.message);
+      if (chatEmailSendBtn) {
+        chatEmailSendBtn.disabled = false;
+        chatEmailSendBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          Send Verification Code
+        `;
+      }
+    }
+  }
+
+  async function handleChatVerifyEmailCode() {
+    const codeVal = (chatEmailCodeInput?.value || "").trim();
+    if (!codeVal || codeVal.length < 5) {
+      showAuthError("Please enter the 6-digit verification code from your email.");
+      return;
+    }
+
+    hideAuthError();
+    if (chatEmailVerifyBtn) {
+      chatEmailVerifyBtn.disabled = true;
+      chatEmailVerifyBtn.textContent = "Verifying...";
+    }
+
+    try {
+      const res = await fetch(`/api/msg?action=email_login_check&email=${encodeURIComponent(chatActiveEmail)}&code=${encodeURIComponent(codeVal)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Verification failed. Please check the code.");
+      }
+
+      if (chatEmailLiveStatus) {
+        chatEmailLiveStatus.innerHTML = "✅ <strong>Verified! Authenticating...</strong>";
+        chatEmailLiveStatus.style.color = "#34c759";
+      }
+
+      setTimeout(async () => {
+        persistSession(data.user, data.token);
+        renderNavProfile();
+        hideAuthGate();
+        if (typeof triggerHaptic === "function") triggerHaptic("success");
+        await loadCloudSync();
+      }, 700);
+    } catch (err) {
+      showAuthError(err.message);
+      if (chatEmailVerifyBtn) {
+        chatEmailVerifyBtn.disabled = false;
+        chatEmailVerifyBtn.textContent = "Verify & Sign In";
+      }
+    }
+  }
+
   // Edit Profile Modal Elements
   const asEditProfileModal = document.getElementById("asEditProfileModal");
   const closeEditProfileBtn = document.getElementById("closeEditProfileBtn");
@@ -4371,9 +4501,11 @@
     const tabIn = document.getElementById("tabAuthSignIn");
     const tabUp = document.getElementById("tabAuthSignUp");
     const tabTg = document.getElementById("tabAuthTelegram");
+    const tabEm = document.getElementById("tabAuthEmail");
     const formIn = document.getElementById("authSignInForm");
     const formUp = document.getElementById("authSignUpForm");
     const formTg = document.getElementById("authTelegramForm");
+    const formEm = document.getElementById("authEmailForm");
 
     hideAuthError();
 
@@ -4382,16 +4514,20 @@
       tabUp?.classList.add("active");
       tabIn?.classList.remove("active");
       tabTg?.classList.remove("active");
+      tabEm?.classList.remove("active");
       if (formIn) formIn.style.display = "none";
       if (formUp) formUp.style.display = "flex";
       if (formTg) formTg.style.display = "none";
+      if (formEm) formEm.style.display = "none";
     } else if (mode === 'telegram') {
       tabTg?.classList.add("active");
       tabIn?.classList.remove("active");
       tabUp?.classList.remove("active");
+      tabEm?.classList.remove("active");
       if (formIn) formIn.style.display = "none";
       if (formUp) formUp.style.display = "none";
       if (formTg) formTg.style.display = "flex";
+      if (formEm) formEm.style.display = "none";
 
       const prefill = (signInUsername?.value || signUpUsername?.value || "").trim();
       if (prefill && chatTgUsername && !chatTgUsername.value) {
@@ -4399,14 +4535,33 @@
       }
       resetChatTgView();
       if (chatTgUsername) chatTgUsername.focus();
+    } else if (mode === 'email') {
+      stopChatTgPolling();
+      tabEm?.classList.add("active");
+      tabIn?.classList.remove("active");
+      tabUp?.classList.remove("active");
+      tabTg?.classList.remove("active");
+      if (formIn) formIn.style.display = "none";
+      if (formUp) formUp.style.display = "none";
+      if (formTg) formTg.style.display = "none";
+      if (formEm) formEm.style.display = "flex";
+
+      const prefill = (signInUsername?.value || signUpUsername?.value || "").trim();
+      if (prefill && chatEmailUsername && !chatEmailUsername.value) {
+        chatEmailUsername.value = prefill;
+      }
+      resetChatEmailView();
+      if (chatEmailInput) chatEmailInput.focus();
     } else {
       stopChatTgPolling();
       tabIn?.classList.add("active");
       tabUp?.classList.remove("active");
       tabTg?.classList.remove("active");
+      tabEm?.classList.remove("active");
       if (formIn) formIn.style.display = "flex";
       if (formUp) formUp.style.display = "none";
       if (formTg) formTg.style.display = "none";
+      if (formEm) formEm.style.display = "none";
     }
   };
 
@@ -4464,6 +4619,42 @@
             setTimeout(() => { chatTgCopyBtnText.textContent = orig; }, 2000);
           }
         }).catch(() => {});
+      });
+    }
+
+    // Email Auth Event Listeners
+    if (tabAuthEmail) tabAuthEmail.addEventListener("click", () => window.switchAuthTab('email'));
+    if (chatEmailSendBtn) chatEmailSendBtn.addEventListener("click", handleChatSendEmailCode);
+    if (chatEmailInput) {
+      chatEmailInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleChatSendEmailCode();
+      });
+    }
+    if (chatEmailUsername) {
+      chatEmailUsername.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleChatSendEmailCode();
+      });
+    }
+    if (chatEmailVerifyBtn) chatEmailVerifyBtn.addEventListener("click", handleChatVerifyEmailCode);
+    if (chatEmailCodeInput) {
+      chatEmailCodeInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleChatVerifyEmailCode();
+        }
+      });
+      chatEmailCodeInput.addEventListener("input", () => {
+        const val = chatEmailCodeInput.value.trim();
+        if (val.length === 6 && /^\d{6}$/.test(val)) {
+          handleChatVerifyEmailCode();
+        }
+      });
+    }
+    if (chatEmailResendBtn) chatEmailResendBtn.addEventListener("click", handleChatSendEmailCode);
+    if (chatEmailBackBtn) {
+      chatEmailBackBtn.addEventListener("click", () => {
+        resetChatEmailView();
+        if (chatEmailInput) chatEmailInput.focus();
       });
     }
 

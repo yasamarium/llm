@@ -324,6 +324,26 @@
   const tgBackBtn = document.getElementById("tgBackBtn");
   const switchToLoginFromTgBtn = document.getElementById("switchToLoginFromTgBtn");
 
+  // Email Auth Elements
+  const tabEmail = document.getElementById("tabEmail");
+  const emailForm = document.getElementById("emailForm");
+  const quickEmailLoginBtn = document.getElementById("quickEmailLoginBtn");
+  const quickEmailSignupBtn = document.getElementById("quickEmailSignupBtn");
+  const emailStepInput = document.getElementById("emailStepInput");
+  const emailStepVerify = document.getElementById("emailStepVerify");
+  const homeEmailInput = document.getElementById("homeEmailInput");
+  const homeEmailUsername = document.getElementById("homeEmailUsername");
+  const emailSendBtn = document.getElementById("emailSendBtn");
+  const homeEmailTargetDisplay = document.getElementById("homeEmailTargetDisplay");
+  const homeEmailCodeInput = document.getElementById("homeEmailCodeInput");
+  const emailVerifyBtn = document.getElementById("emailVerifyBtn");
+  const homeEmailLiveStatus = document.getElementById("homeEmailLiveStatus");
+  const homeEmailResendBtn = document.getElementById("homeEmailResendBtn");
+  const homeEmailBackBtn = document.getElementById("homeEmailBackBtn");
+  const switchToLoginFromEmailBtn = document.getElementById("switchToLoginFromEmailBtn");
+
+  let activeEmailAddress = "";
+
   let signupUploadedPfp = null;
 
   // Profile Modal Elements
@@ -648,17 +668,21 @@
       if (tabLogin) tabLogin.classList.add("active");
       if (tabSignup) tabSignup.classList.remove("active");
       if (tabTelegram) tabTelegram.classList.remove("active");
+      if (tabEmail) tabEmail.classList.remove("active");
       if (loginForm) loginForm.style.display = "flex";
       if (signupForm) signupForm.style.display = "none";
       if (telegramForm) telegramForm.style.display = "none";
+      if (emailForm) emailForm.style.display = "none";
       if (loginUsername) loginUsername.focus();
     } else if (mode === "signup") {
       if (tabSignup) tabSignup.classList.add("active");
       if (tabLogin) tabLogin.classList.remove("active");
       if (tabTelegram) tabTelegram.classList.remove("active");
+      if (tabEmail) tabEmail.classList.remove("active");
       if (loginForm) loginForm.style.display = "none";
       if (signupForm) signupForm.style.display = "flex";
       if (telegramForm) telegramForm.style.display = "none";
+      if (emailForm) emailForm.style.display = "none";
       signupUploadedPfp = null;
       updateSignupAvatarPreview();
       if (signupUsername) signupUsername.focus();
@@ -666,9 +690,11 @@
       if (tabTelegram) tabTelegram.classList.add("active");
       if (tabLogin) tabLogin.classList.remove("active");
       if (tabSignup) tabSignup.classList.remove("active");
+      if (tabEmail) tabEmail.classList.remove("active");
       if (loginForm) loginForm.style.display = "none";
       if (signupForm) signupForm.style.display = "none";
       if (telegramForm) telegramForm.style.display = "flex";
+      if (emailForm) emailForm.style.display = "none";
 
       const prefill = (loginUsername?.value || signupUsername?.value || "").trim();
       if (prefill && tgUsername && !tgUsername.value) {
@@ -676,6 +702,22 @@
       }
       resetTgView();
       if (tgUsername) tgUsername.focus();
+    } else if (mode === "email") {
+      if (tabEmail) tabEmail.classList.add("active");
+      if (tabLogin) tabLogin.classList.remove("active");
+      if (tabSignup) tabSignup.classList.remove("active");
+      if (tabTelegram) tabTelegram.classList.remove("active");
+      if (loginForm) loginForm.style.display = "none";
+      if (signupForm) signupForm.style.display = "none";
+      if (telegramForm) telegramForm.style.display = "none";
+      if (emailForm) emailForm.style.display = "flex";
+
+      const prefill = (loginUsername?.value || signupUsername?.value || "").trim();
+      if (prefill && homeEmailUsername && !homeEmailUsername.value) {
+        homeEmailUsername.value = prefill;
+      }
+      resetHomeEmailView();
+      if (homeEmailInput) homeEmailInput.focus();
     }
   }
 
@@ -778,14 +820,171 @@
     }, 1500);
   }
 
+  function resetHomeEmailView() {
+    if (emailStepInput) emailStepInput.style.display = "block";
+    if (emailStepVerify) emailStepVerify.style.display = "none";
+    if (homeEmailCodeInput) homeEmailCodeInput.value = "";
+    if (emailSendBtn) {
+      emailSendBtn.disabled = false;
+      emailSendBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+        Send Verification Code
+      `;
+    }
+    if (emailVerifyBtn) {
+      emailVerifyBtn.disabled = false;
+      emailVerifyBtn.textContent = "Verify & Sign In";
+    }
+    if (homeEmailLiveStatus) {
+      homeEmailLiveStatus.textContent = "Verification code dispatched";
+      homeEmailLiveStatus.style.color = "#a78bfa";
+    }
+  }
+
+  async function handleStartHomeEmailVerification() {
+    const rawEmail = (homeEmailInput?.value || "").trim().toLowerCase();
+    const rawUser = (homeEmailUsername?.value || "").trim();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!rawEmail || !emailRegex.test(rawEmail)) {
+      showAuthError("Please enter a valid email address.");
+      return;
+    }
+
+    hideAuthError();
+    if (emailSendBtn) {
+      emailSendBtn.disabled = true;
+      emailSendBtn.textContent = "Sending Code...";
+    }
+
+    try {
+      const res = await fetch(`/api/msg?action=email_login_start&email=${encodeURIComponent(rawEmail)}&username=${encodeURIComponent(rawUser)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to dispatch verification code.");
+      }
+
+      activeEmailAddress = rawEmail;
+      if (homeEmailTargetDisplay) homeEmailTargetDisplay.textContent = rawEmail;
+      if (emailStepInput) emailStepInput.style.display = "none";
+      if (emailStepVerify) emailStepVerify.style.display = "block";
+      if (homeEmailCodeInput) {
+        homeEmailCodeInput.value = "";
+        homeEmailCodeInput.focus();
+      }
+    } catch (err) {
+      showAuthError(err.message);
+      if (emailSendBtn) {
+        emailSendBtn.disabled = false;
+        emailSendBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          Send Verification Code
+        `;
+      }
+    }
+  }
+
+  async function handleVerifyHomeEmailCode() {
+    const codeVal = (homeEmailCodeInput?.value || "").trim();
+    if (!codeVal || codeVal.length < 5) {
+      showAuthError("Please enter the 6-digit verification code from your email.");
+      return;
+    }
+
+    hideAuthError();
+    if (emailVerifyBtn) {
+      emailVerifyBtn.disabled = true;
+      emailVerifyBtn.textContent = "Verifying...";
+    }
+
+    try {
+      const res = await fetch(`/api/msg?action=email_login_check&email=${encodeURIComponent(activeEmailAddress)}&code=${encodeURIComponent(codeVal)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Verification failed. Please check the code.");
+      }
+
+      if (homeEmailLiveStatus) {
+        homeEmailLiveStatus.innerHTML = "✅ <strong>Verified! Authenticating...</strong>";
+        homeEmailLiveStatus.style.color = "#34c759";
+      }
+
+      setTimeout(async () => {
+        currentUser = data.user;
+        sessionToken = data.token;
+        localStorage.setItem("as_user", JSON.stringify(currentUser));
+        localStorage.setItem("as_token", sessionToken);
+        localStorage.setItem("as_msg_current_user", JSON.stringify(currentUser));
+        localStorage.setItem("as_msg_token", sessionToken);
+
+        hideAuthOverlay();
+        renderNavProfile();
+
+        await loadConversations();
+        await openChat(activeConvoId);
+        startSyncEngine();
+      }, 700);
+    } catch (err) {
+      showAuthError(err.message);
+      if (emailVerifyBtn) {
+        emailVerifyBtn.disabled = false;
+        emailVerifyBtn.textContent = "Verify & Sign In";
+      }
+    }
+  }
+
   if (tabLogin) tabLogin.addEventListener("click", () => showAuthOverlay("login"));
   if (tabSignup) tabSignup.addEventListener("click", () => showAuthOverlay("signup"));
+  if (tabEmail) tabEmail.addEventListener("click", () => showAuthOverlay("email"));
   if (tabTelegram) tabTelegram.addEventListener("click", () => showAuthOverlay("telegram"));
+  if (quickEmailLoginBtn) quickEmailLoginBtn.addEventListener("click", () => showAuthOverlay("email"));
+  if (quickEmailSignupBtn) quickEmailSignupBtn.addEventListener("click", () => showAuthOverlay("email"));
   if (quickTgLoginBtn) quickTgLoginBtn.addEventListener("click", () => showAuthOverlay("telegram"));
   if (quickTgSignupBtn) quickTgSignupBtn.addEventListener("click", () => showAuthOverlay("telegram"));
   if (switchToSignupBtn) switchToSignupBtn.addEventListener("click", () => showAuthOverlay("signup"));
   if (switchToLoginBtn) switchToLoginBtn.addEventListener("click", () => showAuthOverlay("login"));
   if (switchToLoginFromTgBtn) switchToLoginFromTgBtn.addEventListener("click", () => showAuthOverlay("login"));
+  if (switchToLoginFromEmailBtn) switchToLoginFromEmailBtn.addEventListener("click", () => showAuthOverlay("login"));
+
+  if (emailSendBtn) emailSendBtn.addEventListener("click", handleStartHomeEmailVerification);
+  if (homeEmailInput) {
+    homeEmailInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleStartHomeEmailVerification();
+    });
+  }
+  if (homeEmailUsername) {
+    homeEmailUsername.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleStartHomeEmailVerification();
+    });
+  }
+  if (emailVerifyBtn) emailVerifyBtn.addEventListener("click", handleVerifyHomeEmailCode);
+  if (homeEmailCodeInput) {
+    homeEmailCodeInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleVerifyHomeEmailCode();
+      }
+    });
+    homeEmailCodeInput.addEventListener("input", () => {
+      const val = homeEmailCodeInput.value.trim();
+      if (val.length === 6 && /^\d{6}$/.test(val)) {
+        handleVerifyHomeEmailCode();
+      }
+    });
+  }
+  if (homeEmailResendBtn) homeEmailResendBtn.addEventListener("click", handleStartHomeEmailVerification);
+  if (homeEmailBackBtn) {
+    homeEmailBackBtn.addEventListener("click", () => {
+      resetHomeEmailView();
+      if (homeEmailInput) homeEmailInput.focus();
+    });
+  }
 
   if (tgStartBtn) tgStartBtn.addEventListener("click", handleStartTgVerification);
   if (tgUsername) {
