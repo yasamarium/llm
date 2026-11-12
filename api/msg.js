@@ -1341,28 +1341,40 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------------------------
-    // 3.10 WhatsApp Login Start (Generate unique code & wa.me link)
+    // 3.10 WhatsApp Login Start (Generate unique code & wa.me link by Phone Number)
     // -------------------------------------------------------------------------
     if (action === "wa_login_start") {
-      const rawHandle = (url.searchParams.get("username") || req.body?.username || "").trim();
-      if (!rawHandle) {
-        return res.status(400).json({ error: "Username is required." });
+      const rawPhone = (url.searchParams.get("phone") || req.body?.phone || url.searchParams.get("username") || req.body?.username || "").trim();
+      const cleanPhone = rawPhone.replace(/[^0-9]/g, "");
+
+      if (!cleanPhone || cleanPhone.length < 7 || cleanPhone.length > 16) {
+        return res.status(400).json({
+          error: "Please enter a valid WhatsApp phone number with country code (e.g. +91 98765 43210).",
+        });
       }
 
-      const cleanHandle = rawHandle.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
-      if (cleanHandle.length < 3 || cleanHandle.length > 24) {
-        return res.status(400).json({ error: "Username must be between 3 and 24 characters (letters, numbers, underscores)." });
-      }
+      // Check if user already exists with this phone number
+      const users = await loadUsers(true);
+      let existingUser = users.find((u) => {
+        const p1 = (u.phone || "").replace(/[^0-9]/g, "");
+        const p2 = (u.whatsapp?.phone || "").replace(/[^0-9]/g, "");
+        return (
+          (p1 && (p1 === cleanPhone || (p1.length >= 10 && cleanPhone.endsWith(p1.slice(-10))))) ||
+          (p2 && (p2 === cleanPhone || (p2.length >= 10 && cleanPhone.endsWith(p2.slice(-10)))))
+        );
+      });
 
+      const assignedUsername = existingUser ? existingUser.username : `wa_${cleanPhone.slice(-6)}`;
       const randomCode = `AS-${Math.floor(10000 + Math.random() * 90000)}`;
       const now = Date.now();
       const record = {
         code: randomCode,
-        username: cleanHandle,
+        phone: cleanPhone,
+        username: assignedUsername,
         status: "pending",
         createdAt: now,
         expiresAt: now + 10 * 60 * 1000,
-        whatsapp: null
+        whatsapp: null,
       };
 
       MEM_WA_VERIFICATIONS.set(randomCode, record);
@@ -1376,7 +1388,7 @@ export default async function handler(req, res) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             signal: AbortSignal.timeout(1500),
-            body: JSON.stringify({ code: randomCode, username: cleanHandle }),
+            body: JSON.stringify({ code: randomCode, phone: cleanPhone, username: assignedUsername }),
           }).catch(() => {});
 
           const sRes = await fetch(`${relayUrl}/api/wa/status`, { signal: AbortSignal.timeout(1000) });
@@ -1387,14 +1399,15 @@ export default async function handler(req, res) {
         }
       } catch (_) {}
 
-      const cleanPhone = targetPhone.replace(/[^0-9]/g, "");
-      const waLink = `https://wa.me/${cleanPhone}?text=VERIFY%20${randomCode}`;
+      const cleanTargetPhone = targetPhone.replace(/[^0-9]/g, "");
+      const waLink = `https://wa.me/${cleanTargetPhone}?text=VERIFY%20${randomCode}`;
 
       return res.status(200).json({
         status: "ok",
         code: randomCode,
-        username: cleanHandle,
-        targetPhone: cleanPhone,
+        phone: cleanPhone,
+        username: assignedUsername,
+        targetPhone: cleanTargetPhone,
         link: waLink,
       });
     }
@@ -1442,49 +1455,75 @@ export default async function handler(req, res) {
           status: "pending",
           verified: false,
           code,
+          phone: record.phone || null,
           username: record.username,
         });
       }
 
-      // User verified! Auto-register or login
-      const cleanHandle = record.username.toLowerCase();
+      // User verified! Auto-register or login by Phone Number
+      const verifiedPhone = (record.whatsapp?.phone || record.phone || "").replace(/[^0-9]/g, "");
       const users = await loadUsers(true);
-      let user = users.find(u => u.username.toLowerCase() === cleanHandle);
+      let user = null;
+
+      if (verifiedPhone) {
+        user = users.find((u) => {
+          const p1 = (u.phone || "").replace(/[^0-9]/g, "");
+          const p2 = (u.whatsapp?.phone || "").replace(/[^0-9]/g, "");
+          return (
+            (p1 && (p1 === verifiedPhone || (p1.length >= 10 && verifiedPhone.endsWith(p1.slice(-10))))) ||
+            (p2 && (p2 === verifiedPhone || (p2.length >= 10 && verifiedPhone.endsWith(p2.slice(-10)))))
+          );
+        });
+      }
+
+      if (!user && record.username) {
+        user = users.find((u) => u.username.toLowerCase() === record.username.toLowerCase());
+      }
 
       if (!user) {
+        let baseHandle = record.username || (verifiedPhone ? `wa_${verifiedPhone.slice(-6)}` : `wa_${Math.floor(100000 + Math.random() * 900000)}`);
+        baseHandle = baseHandle.toLowerCase().replace(/[^a-z0-9_]/g, "");
+        let chosenHandle = baseHandle;
+        let counter = 1;
+        while (users.some((u) => u.username.toLowerCase() === chosenHandle.toLowerCase())) {
+          chosenHandle = `${baseHandle}_${counter++}`;
+        }
+
         user = {
-          username: cleanHandle,
-          displayName: record.whatsapp?.pushName || cleanHandle,
+          username: chosenHandle,
+          displayName: record.whatsapp?.pushName || (verifiedPhone ? `+${verifiedPhone}` : chosenHandle),
           pfp: null,
-          bio: "Verified via WhatsApp",
-          role: cleanHandle === "as" ? "owner" : "user",
+          bio: verifiedPhone ? `Verified via WhatsApp (+${verifiedPhone})` : "Verified via WhatsApp",
+          phone: verifiedPhone || null,
+          role: chosenHandle === "as" ? "owner" : "user",
           verified: true,
           createdAt: Date.now(),
           lastSeen: Date.now(),
           passwordHash: null,
           salt: null,
-          whatsapp: record.whatsapp || null,
+          whatsapp: record.whatsapp || (verifiedPhone ? { phone: verifiedPhone } : null),
           blockedUsers: [],
-          chats: ["room_general"]
+          chats: ["room_general"],
         };
         users.push(user);
         await saveUsers(users);
       } else {
         user.verified = true;
+        if (verifiedPhone && !user.phone) user.phone = verifiedPhone;
         if (record.whatsapp) user.whatsapp = record.whatsapp;
         user.lastSeen = Date.now();
         await saveUsers(users);
       }
 
       logLoginAttempt({
-        username: cleanHandle,
-        method: `WhatsApp (+${record.whatsapp?.phone || "Direct"})`,
+        username: user.username,
+        method: `WhatsApp (+${verifiedPhone || "Direct"})`,
         status: "SUCCESS",
         ip: getClientIp(req),
-        userAgent: req.headers["user-agent"]
+        userAgent: req.headers["user-agent"],
       });
 
-      const sessionToken = createSessionToken(cleanHandle);
+      const sessionToken = createSessionToken(user.username);
       return res.status(200).json({
         status: "ok",
         verified: true,
@@ -1497,65 +1536,92 @@ export default async function handler(req, res) {
     // 3.12 WhatsApp Login Confirm (Called by WhatsApp relay node)
     // -------------------------------------------------------------------------
     if (action === "wa_login_confirm" && req.method === "POST") {
-      const { code, username, whatsapp } = req.body || {};
+      const { code, phone, username, whatsapp } = req.body || {};
       if (!code) {
         return res.status(400).json({ error: "Missing verification code" });
       }
 
       const cleanCode = code.toUpperCase().trim();
       const existing = MEM_WA_VERIFICATIONS.get(cleanCode);
-      const cleanHandle = (username || existing?.username || "wa_" + (whatsapp?.phone || cleanCode.replace(/[^0-9]/g, ""))).toLowerCase().trim();
+      const verifiedPhone = (phone || whatsapp?.phone || existing?.phone || "").replace(/[^0-9]/g, "");
 
       const record = existing || {
         code: cleanCode,
-        username: cleanHandle,
+        phone: verifiedPhone,
+        username: username || (verifiedPhone ? `wa_${verifiedPhone.slice(-6)}` : "wa_user"),
         createdAt: Date.now(),
         expiresAt: Date.now() + 10 * 60 * 1000,
       };
 
       record.status = "verified";
-      record.whatsapp = whatsapp || null;
+      record.phone = verifiedPhone;
+      record.whatsapp = whatsapp || (verifiedPhone ? { phone: verifiedPhone } : null);
       record.verifiedAt = Date.now();
-      if (!record.username) record.username = cleanHandle;
+      if (!record.username) record.username = username || `wa_${verifiedPhone.slice(-6)}`;
 
       MEM_WA_VERIFICATIONS.set(cleanCode, record);
       saveWaVerifications();
 
       const users = await loadUsers(true);
-      let user = users.find(u => u.username.toLowerCase() === cleanHandle);
+      let user = null;
+      if (verifiedPhone) {
+        user = users.find((u) => {
+          const p1 = (u.phone || "").replace(/[^0-9]/g, "");
+          const p2 = (u.whatsapp?.phone || "").replace(/[^0-9]/g, "");
+          return (
+            (p1 && (p1 === verifiedPhone || (p1.length >= 10 && verifiedPhone.endsWith(p1.slice(-10))))) ||
+            (p2 && (p2 === verifiedPhone || (p2.length >= 10 && verifiedPhone.endsWith(p2.slice(-10)))))
+          );
+        });
+      }
+
+      if (!user && record.username) {
+        user = users.find((u) => u.username.toLowerCase() === record.username.toLowerCase());
+      }
+
       if (!user) {
+        let baseHandle = record.username || (verifiedPhone ? `wa_${verifiedPhone.slice(-6)}` : `wa_${Math.floor(100000 + Math.random() * 900000)}`);
+        baseHandle = baseHandle.toLowerCase().replace(/[^a-z0-9_]/g, "");
+        let chosenHandle = baseHandle;
+        let counter = 1;
+        while (users.some((u) => u.username.toLowerCase() === chosenHandle.toLowerCase())) {
+          chosenHandle = `${baseHandle}_${counter++}`;
+        }
+
         user = {
-          username: cleanHandle,
-          displayName: whatsapp?.pushName || cleanHandle,
+          username: chosenHandle,
+          displayName: whatsapp?.pushName || (verifiedPhone ? `+${verifiedPhone}` : chosenHandle),
           pfp: null,
-          bio: "Verified via WhatsApp",
-          role: cleanHandle === "as" ? "owner" : "user",
+          bio: verifiedPhone ? `Verified via WhatsApp (+${verifiedPhone})` : "Verified via WhatsApp",
+          phone: verifiedPhone || null,
+          role: chosenHandle === "as" ? "owner" : "user",
           verified: true,
           createdAt: Date.now(),
           lastSeen: Date.now(),
           passwordHash: null,
           salt: null,
-          whatsapp: whatsapp || null,
+          whatsapp: whatsapp || (verifiedPhone ? { phone: verifiedPhone } : null),
           blockedUsers: [],
-          chats: ["room_general"]
+          chats: ["room_general"],
         };
         users.push(user);
       } else {
         user.verified = true;
+        if (verifiedPhone && !user.phone) user.phone = verifiedPhone;
         if (whatsapp) user.whatsapp = whatsapp;
         user.lastSeen = Date.now();
       }
       await saveUsers(users);
 
       logLoginAttempt({
-        username: cleanHandle,
-        method: `WhatsApp (+${whatsapp?.phone || "Direct"})`,
+        username: user.username,
+        method: `WhatsApp (+${verifiedPhone || "Direct"})`,
         status: "SUCCESS (Confirmed by Relay)",
         ip: getClientIp(req),
-        userAgent: req.headers["user-agent"]
+        userAgent: req.headers["user-agent"],
       });
 
-      return res.status(200).json({ status: "ok", verified: true, username: cleanHandle });
+      return res.status(200).json({ status: "ok", verified: true, username: user.username });
     }
 
     if (action === "set_relay_url" && req.method === "POST") {

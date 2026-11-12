@@ -3969,7 +3969,8 @@
   const authWhatsAppForm = document.getElementById("authWhatsAppForm");
   const chatWaStepInput = document.getElementById("chatWaStepInput");
   const chatWaStepVerify = document.getElementById("chatWaStepVerify");
-  const chatWaUsername = document.getElementById("chatWaUsername");
+  const chatWaPhone = document.getElementById("chatWaPhone") || document.getElementById("chatWaUsername");
+  const chatWaUsername = chatWaPhone;
   const chatWaStartBtn = document.getElementById("chatWaStartBtn");
   const chatWaDisplayCode = document.getElementById("chatWaDisplayCode");
   const chatWaCopyCodeBtn = document.getElementById("chatWaCopyCodeBtn");
@@ -4010,11 +4011,11 @@
   }
 
   async function handleChatStartWa() {
-    const rawVal = (chatWaUsername?.value || "").trim();
-    const handle = rawVal.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+    const rawVal = (chatWaPhone?.value || chatWaUsername?.value || "").trim();
+    const cleanPhone = rawVal.replace(/[^0-9]/g, "");
 
-    if (!handle || handle.length < 3) {
-      showAuthError("Please enter a username with at least 3 characters (letters, numbers, underscores).");
+    if (!cleanPhone || cleanPhone.length < 7 || cleanPhone.length > 16) {
+      showAuthError("Please enter a valid WhatsApp phone number with country code (e.g. +91 98765 43210).");
       return;
     }
 
@@ -4025,7 +4026,7 @@
     }
 
     try {
-      const res = await fetch(`/api/msg?action=wa_login_start&username=${encodeURIComponent(handle)}`);
+      const res = await fetch(`/api/msg?action=wa_login_start&phone=${encodeURIComponent(cleanPhone)}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -4836,11 +4837,11 @@
       if (formEm) formEm.style.display = "none";
 
       const prefill = (signInUsername?.value || signUpUsername?.value || "").trim();
-      if (prefill && chatWaUsername && !chatWaUsername.value) {
-        chatWaUsername.value = prefill;
+      if (prefill && chatWaPhone && !chatWaPhone.value && /^\+?[0-9\s-]{7,20}$/.test(prefill)) {
+        chatWaPhone.value = prefill;
       }
       resetChatWaView();
-      if (chatWaUsername) chatWaUsername.focus();
+      if (chatWaPhone) chatWaPhone.focus();
     } else if (mode === 'email') {
       stopChatTgPolling();
       stopChatWaPolling();
@@ -4937,15 +4938,15 @@
     // WhatsApp Auth Event Listeners
     if (tabAuthWhatsApp) tabAuthWhatsApp.addEventListener("click", () => window.switchAuthTab('whatsapp'));
     if (chatWaStartBtn) chatWaStartBtn.addEventListener("click", handleChatStartWa);
-    if (chatWaUsername) {
-      chatWaUsername.addEventListener("keydown", (e) => {
+    if (chatWaPhone) {
+      chatWaPhone.addEventListener("keydown", (e) => {
         if (e.key === "Enter") handleChatStartWa();
       });
     }
     if (chatWaBackBtn) {
       chatWaBackBtn.addEventListener("click", () => {
         resetChatWaView();
-        if (chatWaUsername) chatWaUsername.focus();
+        if (chatWaPhone) chatWaPhone.focus();
       });
     }
     if (chatWaCopyCodeBtn) {

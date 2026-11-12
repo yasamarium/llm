@@ -2173,22 +2173,22 @@
 
       <!-- Form 3b: WhatsApp Instant Verification -->
       <div id="authWhatsAppForm" class="auth-gate-form" style="display: none;">
-        <!-- Step 1: Input Handle -->
+        <!-- Step 1: Input Phone Number -->
         <div id="chatWaStepInput">
           <div class="wa-intro-box">
             <div class="wa-badge-pill">⚡ Instant Passwordless Login</div>
             <p class="wa-intro-text">
-              Enter your handle. You'll get a direct link to send a quick verification code to our linked WhatsApp account. An instant reaction emoji (✅) confirms your identity and logs you in immediately!
+              Enter your WhatsApp phone number. You'll get a direct link to send a quick verification code to our linked WhatsApp account. An instant reaction emoji (✅) confirms your number and logs you in immediately!
             </p>
           </div>
 
           <div class="auth-form-group" style="margin-top: 10px;">
-            <label for="chatWaUsername">Enter @username</label>
+            <label for="chatWaPhone">WhatsApp Phone Number</label>
             <div class="auth-input-wrapper">
-              <span class="auth-input-prefix">@</span>
-              <input type="text" id="chatWaUsername" placeholder="your_handle" maxlength="24" autocomplete="username">
+              <span class="auth-input-prefix">📞</span>
+              <input type="tel" id="chatWaPhone" placeholder="+91 98765 43210" autocomplete="tel">
             </div>
-            <span class="auth-hint">Works for both new and existing accounts</span>
+            <span class="auth-hint">Include country code (e.g. +91 for India, +1 for US/Canada)</span>
           </div>
 
           <button id="chatWaStartBtn" class="auth-submit-btn wa-brand-btn" type="button" style="margin-top: 10px;">
@@ -2234,7 +2234,7 @@
             </a>
 
             <div class="wa-secondary-actions">
-              <button type="button" id="chatWaBackBtn" class="auth-switch-link">← Use different username</button>
+              <button type="button" id="chatWaBackBtn" class="auth-switch-link">← Use different phone number</button>
             </div>
           </div>
         </div>

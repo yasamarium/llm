@@ -331,7 +331,8 @@
   const quickWaSignupBtn = document.getElementById("quickWaSignupBtn");
   const waStepInput = document.getElementById("waStepInput");
   const waStepVerify = document.getElementById("waStepVerify");
-  const waUsername = document.getElementById("waUsername");
+  const waPhone = document.getElementById("waPhone") || document.getElementById("waUsername");
+  const waUsername = waPhone;
   const waStartBtn = document.getElementById("waStartBtn");
   const waDisplayCode = document.getElementById("waDisplayCode");
   const waCopyCodeBtn = document.getElementById("waCopyCodeBtn");
@@ -905,11 +906,11 @@
       if (emailForm) emailForm.style.display = "none";
 
       const prefill = (loginUsername?.value || signupUsername?.value || "").trim();
-      if (prefill && waUsername && !waUsername.value) {
-        waUsername.value = prefill;
+      if (prefill && waPhone && !waPhone.value && /^\+?[0-9\s-]{7,20}$/.test(prefill)) {
+        waPhone.value = prefill;
       }
       resetWaView();
-      if (waUsername) waUsername.focus();
+      if (waPhone) waPhone.focus();
     } else if (mode === "email") {
       if (tabEmail) tabEmail.classList.add("active");
       if (tabLogin) tabLogin.classList.remove("active");
@@ -1032,11 +1033,11 @@
   }
 
   async function handleStartWaVerification() {
-    const rawVal = (waUsername?.value || "").trim();
-    const handle = rawVal.toLowerCase().replace(/[^a-z0-9_]/g, "").trim();
+    const rawVal = (waPhone?.value || waUsername?.value || "").trim();
+    const cleanPhone = rawVal.replace(/[^0-9]/g, "");
 
-    if (!handle || handle.length < 3) {
-      showAuthError("Please enter a username with at least 3 characters (letters, numbers, underscores).");
+    if (!cleanPhone || cleanPhone.length < 7 || cleanPhone.length > 16) {
+      showAuthError("Please enter a valid WhatsApp phone number with country code (e.g. +91 98765 43210).");
       return;
     }
 
@@ -1047,7 +1048,7 @@
     }
 
     try {
-      const res = await fetch(`/api/msg?action=wa_login_start&username=${encodeURIComponent(handle)}`);
+      const res = await fetch(`/api/msg?action=wa_login_start&phone=${encodeURIComponent(cleanPhone)}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -1358,15 +1359,15 @@
   }
 
   if (waStartBtn) waStartBtn.addEventListener("click", handleStartWaVerification);
-  if (waUsername) {
-    waUsername.addEventListener("keydown", (e) => {
+  if (waPhone) {
+    waPhone.addEventListener("keydown", (e) => {
       if (e.key === "Enter") handleStartWaVerification();
     });
   }
   if (waBackBtn) {
     waBackBtn.addEventListener("click", () => {
       resetWaView();
-      if (waUsername) waUsername.focus();
+      if (waPhone) waPhone.focus();
     });
   }
   if (waCopyCodeBtn) {
