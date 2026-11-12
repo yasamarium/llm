@@ -4154,7 +4154,7 @@
     if (modal) modal.style.display = "flex";
     const directBtn = document.getElementById("homeDirectSupportEmailRedirectBtn");
     if (directBtn && currentUser) {
-      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request (@" + currentUser.username + ")")}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + currentUser.username + "\n\nPlease describe your inquiry:\n")}`;
+      directBtn.href = `mailto:tanuqna@proton.me?subject=${encodeURIComponent("AS Cloud Support Request (@" + currentUser.username + ")")}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + currentUser.username + "\n\nPlease describe your inquiry:\n")}`;
     }
   };
 
@@ -4166,7 +4166,7 @@
   const copyHomeSupportBtn = document.getElementById("copyHomeSupportBtn");
   if (copyHomeSupportBtn) {
     copyHomeSupportBtn.addEventListener("click", () => {
-      navigator.clipboard.writeText("asycs@proton.me").then(() => {
+      navigator.clipboard.writeText("tanuqna@proton.me").then(() => {
         copyHomeSupportBtn.textContent = "Copied!";
         setTimeout(() => { copyHomeSupportBtn.textContent = "Copy"; }, 2000);
       }).catch(() => {});

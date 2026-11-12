@@ -701,7 +701,7 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------------------------
-    // 1.6 24/7 AI Support Ticket Dispatch (asycs@proton.me)
+    // 1.6 24/7 AI Support Ticket Dispatch (tanuqna@proton.me)
     // -------------------------------------------------------------------------
     if (action === "support_ticket" && req.method === "POST") {
       const { subject, message, email, username } = req.body || {};
@@ -727,12 +727,12 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         status: "ok",
-        message: "Support ticket received. An automated AI response will be sent to your email from asycs@proton.me.",
+        message: "Support ticket received. An automated AI response will be sent to your email from tanuqna@proton.me.",
       });
     }
 
     // -------------------------------------------------------------------------
-    // 1.6 24/7 AI Support Ticket Dispatch (asycs@proton.me)
+    // 1.6 24/7 AI Support Ticket Dispatch (tanuqna@proton.me)
     // -------------------------------------------------------------------------
     if (action === "support_ticket" && req.method === "POST") {
       const { subject, message, email, username } = req.body || {};
@@ -758,12 +758,12 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         status: "ok",
-        message: "Support ticket received. An automated AI response will be sent to your email from asycs@proton.me.",
+        message: "Support ticket received. An automated AI response will be sent to your email from tanuqna@proton.me.",
       });
     }
 
     // -------------------------------------------------------------------------
-    // 1.6 24/7 AI Support Ticket Dispatch (asycs@proton.me)
+    // 1.6 24/7 AI Support Ticket Dispatch (tanuqna@proton.me)
     // -------------------------------------------------------------------------
     if (action === "support_ticket" && req.method === "POST") {
       const { subject, message, email, username } = req.body || {};
@@ -789,12 +789,12 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         status: "ok",
-        message: "Support ticket received. An automated AI response will be sent to your email from asycs@proton.me.",
+        message: "Support ticket received. An automated AI response will be sent to your email from tanuqna@proton.me.",
       });
     }
 
     // -------------------------------------------------------------------------
-    // 1.6 24/7 AI Support Ticket Dispatch (asycs@proton.me)
+    // 1.6 24/7 AI Support Ticket Dispatch (tanuqna@proton.me)
     // -------------------------------------------------------------------------
     if (action === "support_ticket" && req.method === "POST") {
       const { subject, message, email, username } = req.body || {};
@@ -820,7 +820,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         status: "ok",
-        message: "Support ticket received. An automated AI response will be sent to your email from asycs@proton.me.",
+        message: "Support ticket received. An automated AI response will be sent to your email from tanuqna@proton.me.",
       });
     }
 

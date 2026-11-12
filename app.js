@@ -4957,7 +4957,7 @@
     const directBtn = document.getElementById("directSupportEmailRedirectBtn");
     if (directBtn) {
       const userParam = currentUser ? ` (@${currentUser.username})` : "";
-      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
+      directBtn.href = `mailto:tanuqna@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
     }
     modal.style.display = "flex";
   };
@@ -4974,7 +4974,7 @@
     const copyText = document.getElementById("copySupportText");
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText("asycs@proton.me").then(() => {
+        navigator.clipboard.writeText("tanuqna@proton.me").then(() => {
           if (copyText) copyText.textContent = "Copied!";
           setTimeout(() => { if (copyText) copyText.textContent = "Copy"; }, 2000);
         }).catch(() => {});
@@ -5016,7 +5016,7 @@
           });
           const data = await res.json().catch(() => ({}));
           if (ticketAlert) {
-            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from asycs@proton.me.";
+            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from tanuqna@proton.me.";
             ticketAlert.style.display = "block";
             ticketAlert.style.color = "#34d399";
             ticketAlert.style.background = "rgba(16, 185, 129, 0.12)";
@@ -5024,7 +5024,7 @@
           if (ticketMsg) ticketMsg.value = "";
         } catch (_) {
           if (ticketAlert) {
-            ticketAlert.textContent = "Ticket dispatched to asycs@proton.me";
+            ticketAlert.textContent = "Ticket dispatched to tanuqna@proton.me";
             ticketAlert.style.display = "block";
           }
         } finally {
@@ -5042,7 +5042,7 @@
     const directBtn = document.getElementById("directSupportEmailRedirectBtn");
     if (directBtn) {
       const userParam = currentUser ? ` (@${currentUser.username})` : "";
-      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
+      directBtn.href = `mailto:tanuqna@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
     }
     modal.style.display = "flex";
   };
@@ -5059,7 +5059,7 @@
     const copyText = document.getElementById("copySupportText");
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText("asycs@proton.me").then(() => {
+        navigator.clipboard.writeText("tanuqna@proton.me").then(() => {
           if (copyText) copyText.textContent = "Copied!";
           setTimeout(() => { if (copyText) copyText.textContent = "Copy"; }, 2000);
         }).catch(() => {});
@@ -5101,7 +5101,7 @@
           });
           const data = await res.json().catch(() => ({}));
           if (ticketAlert) {
-            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from asycs@proton.me.";
+            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from tanuqna@proton.me.";
             ticketAlert.style.display = "block";
             ticketAlert.style.color = "#34d399";
             ticketAlert.style.background = "rgba(16, 185, 129, 0.12)";
@@ -5109,7 +5109,7 @@
           if (ticketMsg) ticketMsg.value = "";
         } catch (_) {
           if (ticketAlert) {
-            ticketAlert.textContent = "Ticket dispatched to asycs@proton.me";
+            ticketAlert.textContent = "Ticket dispatched to tanuqna@proton.me";
             ticketAlert.style.display = "block";
           }
         } finally {
@@ -5127,7 +5127,7 @@
     const directBtn = document.getElementById("directSupportEmailRedirectBtn");
     if (directBtn) {
       const userParam = currentUser ? ` (@${currentUser.username})` : "";
-      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
+      directBtn.href = `mailto:tanuqna@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
     }
     modal.style.display = "flex";
   };
@@ -5144,7 +5144,7 @@
     const copyText = document.getElementById("copySupportText");
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText("asycs@proton.me").then(() => {
+        navigator.clipboard.writeText("tanuqna@proton.me").then(() => {
           if (copyText) copyText.textContent = "Copied!";
           setTimeout(() => { if (copyText) copyText.textContent = "Copy"; }, 2000);
         }).catch(() => {});
@@ -5186,7 +5186,7 @@
           });
           const data = await res.json().catch(() => ({}));
           if (ticketAlert) {
-            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from asycs@proton.me.";
+            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from tanuqna@proton.me.";
             ticketAlert.style.display = "block";
             ticketAlert.style.color = "#34d399";
             ticketAlert.style.background = "rgba(16, 185, 129, 0.12)";
@@ -5194,7 +5194,7 @@
           if (ticketMsg) ticketMsg.value = "";
         } catch (_) {
           if (ticketAlert) {
-            ticketAlert.textContent = "Ticket dispatched to asycs@proton.me";
+            ticketAlert.textContent = "Ticket dispatched to tanuqna@proton.me";
             ticketAlert.style.display = "block";
           }
         } finally {
@@ -5212,7 +5212,7 @@
     const directBtn = document.getElementById("directSupportEmailRedirectBtn");
     if (directBtn) {
       const userParam = currentUser ? ` (@${currentUser.username})` : "";
-      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
+      directBtn.href = `mailto:tanuqna@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
     }
     modal.style.display = "flex";
   };
@@ -5229,7 +5229,7 @@
     const copyText = document.getElementById("copySupportText");
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText("asycs@proton.me").then(() => {
+        navigator.clipboard.writeText("tanuqna@proton.me").then(() => {
           if (copyText) copyText.textContent = "Copied!";
           setTimeout(() => { if (copyText) copyText.textContent = "Copy"; }, 2000);
         }).catch(() => {});
@@ -5271,7 +5271,7 @@
           });
           const data = await res.json().catch(() => ({}));
           if (ticketAlert) {
-            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from asycs@proton.me.";
+            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from tanuqna@proton.me.";
             ticketAlert.style.display = "block";
             ticketAlert.style.color = "#34d399";
             ticketAlert.style.background = "rgba(16, 185, 129, 0.12)";
@@ -5279,7 +5279,7 @@
           if (ticketMsg) ticketMsg.value = "";
         } catch (_) {
           if (ticketAlert) {
-            ticketAlert.textContent = "Ticket dispatched to asycs@proton.me";
+            ticketAlert.textContent = "Ticket dispatched to tanuqna@proton.me";
             ticketAlert.style.display = "block";
           }
         } finally {
