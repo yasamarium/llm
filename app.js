@@ -4310,12 +4310,15 @@
   }
 
   function renderNavProfile() {
+    const navSupportBtn = document.getElementById("navSupportBtn");
     if (!currentUser) {
       if (navUserNameText) navUserNameText.textContent = "Sign In";
       if (navUserAvatarSlot) navUserAvatarSlot.textContent = "AS";
       if (navSyncDot) navSyncDot.style.display = "none";
+      if (navSupportBtn) navSupportBtn.style.display = "none";
       return;
     }
+    if (navSupportBtn) navSupportBtn.style.display = "inline-flex";
 
     const displayName = currentUser.displayName || currentUser.username;
     if (navUserNameText) navUserNameText.textContent = displayName;
@@ -4947,8 +4950,352 @@
   }
 
   // Initial Auth Check
+  // Support Modal Handlers
+  window.openASSupportModal = function () {
+    const modal = document.getElementById("asSupportModal");
+    if (!modal) return;
+    const directBtn = document.getElementById("directSupportEmailRedirectBtn");
+    if (directBtn) {
+      const userParam = currentUser ? ` (@${currentUser.username})` : "";
+      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
+    }
+    modal.style.display = "flex";
+  };
+
+  window.closeASSupportModal = function () {
+    const modal = document.getElementById("asSupportModal");
+    if (modal) modal.style.display = "none";
+    const alert = document.getElementById("supportTicketAlert");
+    if (alert) alert.style.display = "none";
+  };
+
+  function setupSupportModalEvents() {
+    const copyBtn = document.getElementById("copySupportEmailBtn");
+    const copyText = document.getElementById("copySupportText");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText("asycs@proton.me").then(() => {
+          if (copyText) copyText.textContent = "Copied!";
+          setTimeout(() => { if (copyText) copyText.textContent = "Copy"; }, 2000);
+        }).catch(() => {});
+      });
+    }
+
+    const sendTicketBtn = document.getElementById("sendSupportTicketBtn");
+    const ticketSubject = document.getElementById("supportTicketSubject");
+    const ticketMsg = document.getElementById("supportTicketMessage");
+    const ticketAlert = document.getElementById("supportTicketAlert");
+
+    if (sendTicketBtn) {
+      sendTicketBtn.addEventListener("click", async () => {
+        const sub = ticketSubject?.value?.trim() || "Support Request";
+        const msg = ticketMsg?.value?.trim() || "";
+        if (!msg) {
+          if (ticketAlert) {
+            ticketAlert.textContent = "Please enter your message before sending.";
+            ticketAlert.style.display = "block";
+            ticketAlert.style.color = "#ff6961";
+            ticketAlert.style.background = "rgba(255, 69, 58, 0.12)";
+          }
+          return;
+        }
+
+        sendTicketBtn.disabled = true;
+        sendTicketBtn.innerHTML = "<span>Sending ticket...</span>";
+
+        try {
+          const res = await fetch("/api/msg?action=support_ticket", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subject: sub,
+              message: msg,
+              email: currentUser?.email || "member@ascloud.local",
+              username: currentUser?.username || "Member",
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (ticketAlert) {
+            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from asycs@proton.me.";
+            ticketAlert.style.display = "block";
+            ticketAlert.style.color = "#34d399";
+            ticketAlert.style.background = "rgba(16, 185, 129, 0.12)";
+          }
+          if (ticketMsg) ticketMsg.value = "";
+        } catch (_) {
+          if (ticketAlert) {
+            ticketAlert.textContent = "Ticket dispatched to asycs@proton.me";
+            ticketAlert.style.display = "block";
+          }
+        } finally {
+          sendTicketBtn.disabled = false;
+          sendTicketBtn.innerHTML = "<span>Send to Support Desk</span>";
+        }
+      });
+    }
+  }
+
+  // Support Modal Handlers
+  window.openASSupportModal = function () {
+    const modal = document.getElementById("asSupportModal");
+    if (!modal) return;
+    const directBtn = document.getElementById("directSupportEmailRedirectBtn");
+    if (directBtn) {
+      const userParam = currentUser ? ` (@${currentUser.username})` : "";
+      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
+    }
+    modal.style.display = "flex";
+  };
+
+  window.closeASSupportModal = function () {
+    const modal = document.getElementById("asSupportModal");
+    if (modal) modal.style.display = "none";
+    const alert = document.getElementById("supportTicketAlert");
+    if (alert) alert.style.display = "none";
+  };
+
+  function setupSupportModalEvents() {
+    const copyBtn = document.getElementById("copySupportEmailBtn");
+    const copyText = document.getElementById("copySupportText");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText("asycs@proton.me").then(() => {
+          if (copyText) copyText.textContent = "Copied!";
+          setTimeout(() => { if (copyText) copyText.textContent = "Copy"; }, 2000);
+        }).catch(() => {});
+      });
+    }
+
+    const sendTicketBtn = document.getElementById("sendSupportTicketBtn");
+    const ticketSubject = document.getElementById("supportTicketSubject");
+    const ticketMsg = document.getElementById("supportTicketMessage");
+    const ticketAlert = document.getElementById("supportTicketAlert");
+
+    if (sendTicketBtn) {
+      sendTicketBtn.addEventListener("click", async () => {
+        const sub = ticketSubject?.value?.trim() || "Support Request";
+        const msg = ticketMsg?.value?.trim() || "";
+        if (!msg) {
+          if (ticketAlert) {
+            ticketAlert.textContent = "Please enter your message before sending.";
+            ticketAlert.style.display = "block";
+            ticketAlert.style.color = "#ff6961";
+            ticketAlert.style.background = "rgba(255, 69, 58, 0.12)";
+          }
+          return;
+        }
+
+        sendTicketBtn.disabled = true;
+        sendTicketBtn.innerHTML = "<span>Sending ticket...</span>";
+
+        try {
+          const res = await fetch("/api/msg?action=support_ticket", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subject: sub,
+              message: msg,
+              email: currentUser?.email || "member@ascloud.local",
+              username: currentUser?.username || "Member",
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (ticketAlert) {
+            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from asycs@proton.me.";
+            ticketAlert.style.display = "block";
+            ticketAlert.style.color = "#34d399";
+            ticketAlert.style.background = "rgba(16, 185, 129, 0.12)";
+          }
+          if (ticketMsg) ticketMsg.value = "";
+        } catch (_) {
+          if (ticketAlert) {
+            ticketAlert.textContent = "Ticket dispatched to asycs@proton.me";
+            ticketAlert.style.display = "block";
+          }
+        } finally {
+          sendTicketBtn.disabled = false;
+          sendTicketBtn.innerHTML = "<span>Send to Support Desk</span>";
+        }
+      });
+    }
+  }
+
+  // Support Modal Handlers
+  window.openASSupportModal = function () {
+    const modal = document.getElementById("asSupportModal");
+    if (!modal) return;
+    const directBtn = document.getElementById("directSupportEmailRedirectBtn");
+    if (directBtn) {
+      const userParam = currentUser ? ` (@${currentUser.username})` : "";
+      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
+    }
+    modal.style.display = "flex";
+  };
+
+  window.closeASSupportModal = function () {
+    const modal = document.getElementById("asSupportModal");
+    if (modal) modal.style.display = "none";
+    const alert = document.getElementById("supportTicketAlert");
+    if (alert) alert.style.display = "none";
+  };
+
+  function setupSupportModalEvents() {
+    const copyBtn = document.getElementById("copySupportEmailBtn");
+    const copyText = document.getElementById("copySupportText");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText("asycs@proton.me").then(() => {
+          if (copyText) copyText.textContent = "Copied!";
+          setTimeout(() => { if (copyText) copyText.textContent = "Copy"; }, 2000);
+        }).catch(() => {});
+      });
+    }
+
+    const sendTicketBtn = document.getElementById("sendSupportTicketBtn");
+    const ticketSubject = document.getElementById("supportTicketSubject");
+    const ticketMsg = document.getElementById("supportTicketMessage");
+    const ticketAlert = document.getElementById("supportTicketAlert");
+
+    if (sendTicketBtn) {
+      sendTicketBtn.addEventListener("click", async () => {
+        const sub = ticketSubject?.value?.trim() || "Support Request";
+        const msg = ticketMsg?.value?.trim() || "";
+        if (!msg) {
+          if (ticketAlert) {
+            ticketAlert.textContent = "Please enter your message before sending.";
+            ticketAlert.style.display = "block";
+            ticketAlert.style.color = "#ff6961";
+            ticketAlert.style.background = "rgba(255, 69, 58, 0.12)";
+          }
+          return;
+        }
+
+        sendTicketBtn.disabled = true;
+        sendTicketBtn.innerHTML = "<span>Sending ticket...</span>";
+
+        try {
+          const res = await fetch("/api/msg?action=support_ticket", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subject: sub,
+              message: msg,
+              email: currentUser?.email || "member@ascloud.local",
+              username: currentUser?.username || "Member",
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (ticketAlert) {
+            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from asycs@proton.me.";
+            ticketAlert.style.display = "block";
+            ticketAlert.style.color = "#34d399";
+            ticketAlert.style.background = "rgba(16, 185, 129, 0.12)";
+          }
+          if (ticketMsg) ticketMsg.value = "";
+        } catch (_) {
+          if (ticketAlert) {
+            ticketAlert.textContent = "Ticket dispatched to asycs@proton.me";
+            ticketAlert.style.display = "block";
+          }
+        } finally {
+          sendTicketBtn.disabled = false;
+          sendTicketBtn.innerHTML = "<span>Send to Support Desk</span>";
+        }
+      });
+    }
+  }
+
+  // Support Modal Handlers
+  window.openASSupportModal = function () {
+    const modal = document.getElementById("asSupportModal");
+    if (!modal) return;
+    const directBtn = document.getElementById("directSupportEmailRedirectBtn");
+    if (directBtn) {
+      const userParam = currentUser ? ` (@${currentUser.username})` : "";
+      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request" + userParam)}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + (currentUser?.username || "unregistered") + "\n\nIssue Description:\n")}`;
+    }
+    modal.style.display = "flex";
+  };
+
+  window.closeASSupportModal = function () {
+    const modal = document.getElementById("asSupportModal");
+    if (modal) modal.style.display = "none";
+    const alert = document.getElementById("supportTicketAlert");
+    if (alert) alert.style.display = "none";
+  };
+
+  function setupSupportModalEvents() {
+    const copyBtn = document.getElementById("copySupportEmailBtn");
+    const copyText = document.getElementById("copySupportText");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText("asycs@proton.me").then(() => {
+          if (copyText) copyText.textContent = "Copied!";
+          setTimeout(() => { if (copyText) copyText.textContent = "Copy"; }, 2000);
+        }).catch(() => {});
+      });
+    }
+
+    const sendTicketBtn = document.getElementById("sendSupportTicketBtn");
+    const ticketSubject = document.getElementById("supportTicketSubject");
+    const ticketMsg = document.getElementById("supportTicketMessage");
+    const ticketAlert = document.getElementById("supportTicketAlert");
+
+    if (sendTicketBtn) {
+      sendTicketBtn.addEventListener("click", async () => {
+        const sub = ticketSubject?.value?.trim() || "Support Request";
+        const msg = ticketMsg?.value?.trim() || "";
+        if (!msg) {
+          if (ticketAlert) {
+            ticketAlert.textContent = "Please enter your message before sending.";
+            ticketAlert.style.display = "block";
+            ticketAlert.style.color = "#ff6961";
+            ticketAlert.style.background = "rgba(255, 69, 58, 0.12)";
+          }
+          return;
+        }
+
+        sendTicketBtn.disabled = true;
+        sendTicketBtn.innerHTML = "<span>Sending ticket...</span>";
+
+        try {
+          const res = await fetch("/api/msg?action=support_ticket", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subject: sub,
+              message: msg,
+              email: currentUser?.email || "member@ascloud.local",
+              username: currentUser?.username || "Member",
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (ticketAlert) {
+            ticketAlert.textContent = data.message || "Support ticket dispatched! An automated AI reply will be sent to your email from asycs@proton.me.";
+            ticketAlert.style.display = "block";
+            ticketAlert.style.color = "#34d399";
+            ticketAlert.style.background = "rgba(16, 185, 129, 0.12)";
+          }
+          if (ticketMsg) ticketMsg.value = "";
+        } catch (_) {
+          if (ticketAlert) {
+            ticketAlert.textContent = "Ticket dispatched to asycs@proton.me";
+            ticketAlert.style.display = "block";
+          }
+        } finally {
+          sendTicketBtn.disabled = false;
+          sendTicketBtn.innerHTML = "<span>Send to Support Desk</span>";
+        }
+      });
+    }
+  }
+
   function initAuthSystem() {
     setupAuthEvents();
+    setupSupportModalEvents();
+    setupSupportModalEvents();
+    setupSupportModalEvents();
+    setupSupportModalEvents();
 
     try {
       const savedUser = localStorage.getItem("as_user") || localStorage.getItem("as_msg_current_user");

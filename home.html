@@ -47,6 +47,11 @@
           </a>
         </div>
         <div class="wa-rail-bottom">
+          <button id="railSupportBtn" class="wa-rail-item wa-rail-support-btn" type="button" title="24/7 AI Platform Support" onclick="window.openHomeSupportModal && window.openHomeSupportModal()" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </button>
           <button id="userProfileChip" class="wa-rail-profile" type="button" title="Profile Settings">
             <div id="navUserAvatarSlot"></div>
           </button>
@@ -330,6 +335,38 @@
           </div>
 
           <div class="form-divider"></div>
+
+          <!-- 24/7 AI Platform Support -->
+          <div class="settings-support-item" onclick="window.openHomeSupportModal && window.openHomeSupportModal()">
+            <div class="settings-support-left">
+              <div class="settings-support-glyph">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <div class="settings-support-text">
+                <div class="settings-support-title">24/7 AI Platform Support</div>
+                <div class="settings-support-desc">Instant automated support via asycs@proton.me</div>
+              </div>
+            </div>
+            <a href="mailto:asycs@proton.me?subject=AS%20Cloud%20Support%20Request" class="settings-support-pill-btn" onclick="event.stopPropagation()">Email Support →</a>
+          </div>
+
+          <!-- 24/7 AI Platform Support -->
+          <div class="settings-support-item" onclick="window.openHomeSupportModal && window.openHomeSupportModal()">
+            <div class="settings-support-left">
+              <div class="settings-support-glyph">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <div class="settings-support-text">
+                <div class="settings-support-title">24/7 AI Platform Support</div>
+                <div class="settings-support-desc">Instant automated support via asycs@proton.me</div>
+              </div>
+            </div>
+            <a href="mailto:asycs@proton.me?subject=AS%20Cloud%20Support%20Request" class="settings-support-pill-btn" onclick="event.stopPropagation()">Email Support →</a>
+          </div>
 
           <!-- Blocked Accounts Settings Section -->
           <div class="settings-blocklist-section">
@@ -1188,6 +1225,88 @@
 </svg>
     </div>
   </div>
+
+    <!-- Modal: 24/7 AI Platform Support -->
+    <div class="modal-overlay" id="homeSupportModal" style="display: none;">
+      <div class="modal-card" style="max-width: 420px;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: #34d399;">🎧</span> 24/7 AI Platform Support
+            </h3>
+            <p class="modal-sub">Instant automated help &amp; assistance desk</p>
+          </div>
+          <button id="closeHomeSupportModalBtn" class="modal-close-btn" type="button" onclick="window.closeHomeSupportModal && window.closeHomeSupportModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 10px 12px; font-size: 11.5px; color: rgba(255,255,255,0.82); line-height: 1.45;">
+            <strong style="color: #34d399;">Instant 24/7 AI Responder:</strong> Send an email to our linked address <strong>asycs@proton.me</strong> to receive an immediate response answering questions about login, real-time messaging, or invite access.
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <div style="font-size: 10px; color: #8e92a2; font-weight: 700; text-transform: uppercase;">Official Support Mail</div>
+                <div style="font-size: 14px; font-weight: 700; color: #fff; font-family: monospace;">asycs@proton.me</div>
+              </div>
+              <button type="button" id="copyHomeSupportBtn" class="auth-link-btn" style="font-size: 12px; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: 6px;">Copy</button>
+            </div>
+
+            <a id="homeDirectSupportEmailRedirectBtn" href="mailto:asycs@proton.me?subject=AS%20Cloud%20Support%20Request" class="auth-primary-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); text-decoration: none; text-align: center; justify-content: center;" target="_blank" rel="noopener noreferrer">
+              Open in Mail App (asycs@proton.me) →
+            </a>
+          </div>
+
+          <div style="text-align: center; color: #64748b; font-size: 11px;">
+            Protected by AS Cloud Cryptographic Vault
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: 24/7 AI Platform Support -->
+    <div class="modal-overlay" id="homeSupportModal" style="display: none;">
+      <div class="modal-card" style="max-width: 420px;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: #34d399;">🎧</span> 24/7 AI Platform Support
+            </h3>
+            <p class="modal-sub">Instant automated help &amp; assistance desk</p>
+          </div>
+          <button id="closeHomeSupportModalBtn" class="modal-close-btn" type="button" onclick="window.closeHomeSupportModal && window.closeHomeSupportModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 10px 12px; font-size: 11.5px; color: rgba(255,255,255,0.82); line-height: 1.45;">
+            <strong style="color: #34d399;">Instant 24/7 AI Responder:</strong> Send an email to our linked address <strong>asycs@proton.me</strong> to receive an immediate response answering questions about login, real-time messaging, or invite access.
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <div style="font-size: 10px; color: #8e92a2; font-weight: 700; text-transform: uppercase;">Official Support Mail</div>
+                <div style="font-size: 14px; font-weight: 700; color: #fff; font-family: monospace;">asycs@proton.me</div>
+              </div>
+              <button type="button" id="copyHomeSupportBtn" class="auth-link-btn" style="font-size: 12px; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: 6px;">Copy</button>
+            </div>
+
+            <a id="homeDirectSupportEmailRedirectBtn" href="mailto:asycs@proton.me?subject=AS%20Cloud%20Support%20Request" class="auth-primary-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); text-decoration: none; text-align: center; justify-content: center;" target="_blank" rel="noopener noreferrer">
+              Open in Mail App (asycs@proton.me) →
+            </a>
+          </div>
+
+          <div style="text-align: center; color: #64748b; font-size: 11px;">
+            Protected by AS Cloud Cryptographic Vault
+          </div>
+        </div>
+      </div>
+    </div>
 
   <script src="home.js"></script>
 </body>

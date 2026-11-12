@@ -712,6 +712,135 @@
       color: #8e92a2; cursor: pointer; transition: all 0.15s; z-index: 10;
     }
     .auth-gate-close-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.18); transform: scale(1.05); }
+
+    /* Support Button in Nav Bar */
+    .nav-support-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 20px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: inherit; margin-right: 4px;
+    }
+    .nav-support-btn:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.55);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+    .nav-support-badge {
+      font-size: 10px; font-weight: 700; padding: 1px 5px;
+      border-radius: 6px; background: rgba(16, 185, 129, 0.25);
+      color: #6ee7b7; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+
+    /* Support Modal Styling */
+    .support-modal-card {
+      max-width: 440px !important;
+    }
+    .support-header-glyph {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399; display: flex; align-items: center; justify-content: center;
+    }
+    .support-modal-body {
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .support-ai-banner {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 12px; padding: 10px 12px;
+    }
+    .support-ai-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #34d399; box-shadow: 0 0 8px #34d399;
+      margin-top: 4px; flex-shrink: 0;
+      animation: pulseGlow 1.8s infinite;
+    }
+    .support-ai-text {
+      font-size: 11.5px; color: rgba(255, 255, 255, 0.82); line-height: 1.45;
+    }
+    .support-email-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .support-email-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .support-email-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .support-email-details {
+      display: flex; flex-direction: column; min-width: 0; flex: 1;
+    }
+    .support-email-label {
+      font-size: 10.5px; color: #8e92a2; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .support-email-addr {
+      font-size: 14px; font-weight: 700; color: #ffffff; font-family: monospace;
+    }
+    .support-copy-pill {
+      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px; color: #f5f5f7; font-size: 11.5px; font-weight: 600;
+      padding: 5px 9px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+      font-family: inherit; transition: all 0.15s ease;
+    }
+    .support-copy-pill:hover { background: rgba(255, 255, 255, 0.15); }
+    .support-redirect-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff; text-decoration: none; border-radius: 10px; padding: 11px 14px;
+      font-size: 13px; font-weight: 700; transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35); text-align: center;
+    }
+    .support-redirect-btn:hover {
+      filter: brightness(1.1); transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+    }
+    .support-form-divider {
+      display: flex; align-items: center; text-align: center; color: #64748b; font-size: 11px; margin: 2px 0;
+    }
+    .support-form-divider::before, .support-form-divider::after {
+      content: ""; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08);
+    }
+    .support-form-divider span { padding: 0 8px; }
+    .support-ticket-form {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .support-form-group {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .support-form-group label {
+      font-size: 11.5px; font-weight: 600; color: #cbd5e1;
+    }
+    .support-input, .support-textarea {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px; padding: 8px 12px; color: #fff; font-size: 13px; font-family: inherit;
+      outline: none; transition: all 0.15s ease;
+    }
+    .support-input:focus, .support-textarea:focus {
+      background: rgba(255, 255, 255, 0.08); border-color: rgba(16, 185, 129, 0.6);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+    }
+    .support-textarea { resize: vertical; min-height: 60px; }
+    .support-submit-btn {
+      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff; border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-family: inherit; transition: all 0.2s ease;
+    }
+    .support-submit-btn:hover { background: rgba(255, 255, 255, 0.14); }
+    .support-ticket-alert {
+      padding: 8px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 600;
+      background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); color: #34d399;
+    }
     
   </style>
 </head>
@@ -875,6 +1004,14 @@
             <line x1="12" y1="22.08" x2="12" y2="12"/>
           </svg>
         </a>
+        <!-- 24/7 AI Support Button (Visible on login) -->
+        <button id="navSupportBtn" class="nav-support-btn" type="button" onclick="window.openASSupportModal && window.openASSupportModal()" title="24/7 AI Platform Support" style="display: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span>Support</span>
+          <span class="nav-support-badge">AI</span>
+        </button>
         <!-- Unified User Account & Git-Sync Hub -->
         <div class="user-nav-wrapper" id="userNavWrapper">
           <button id="userProfileNavBtn" class="user-profile-nav-btn" type="button" aria-label="Account and Sync">
@@ -927,6 +1064,14 @@
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>
                 <span>Edit Profile</span>
+              </button>
+
+              <button id="openSupportModalBtn" class="user-dropdown-item support-item" type="button" onclick="window.openASSupportModal && window.openASSupportModal()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Help &amp; Support</span>
+                <span class="item-tag-pill" style="background: rgba(16, 185, 129, 0.18); color: #34d399; border-color: rgba(16, 185, 129, 0.35);">Instant AI</span>
               </button>
 
               <button id="userSignOutBtn" class="user-dropdown-item danger-item" type="button">
@@ -1961,6 +2106,88 @@
       </div>
     </div>
   </div>
+  <!-- ========================================================================= -->
+  <!-- 24/7 AI Platform Support Modal                                            -->
+  <!-- ========================================================================= -->
+  <div id="asSupportModal" class="modal-backdrop-custom" style="display: none;">
+    <div class="modal-card-custom support-modal-card">
+      <div class="modal-header-custom">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="support-header-glyph">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title-custom">24/7 Platform Support</h3>
+            <p class="modal-sub-custom">Instant automated AI assistance &amp; ticket desk</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-custom" onclick="window.closeASSupportModal && window.closeASSupportModal()" aria-label="Close dialog">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="support-modal-body">
+        <!-- AI Instant Responder Badge -->
+        <div class="support-ai-banner">
+          <div class="support-ai-dot"></div>
+          <div class="support-ai-text">
+            <strong>Instant 24/7 AI Responder:</strong> Send an email to our linked support address to receive an immediate intelligent reply regarding platform features, accounts, or troubleshooting.
+          </div>
+        </div>
+
+        <!-- Official Support Email Card with Direct Redirect Action -->
+        <div class="support-email-card">
+          <div class="support-email-row">
+            <div class="support-email-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </div>
+            <div class="support-email-details">
+              <span class="support-email-label">Official Support Mailbox</span>
+              <span class="support-email-addr">asycs@proton.me</span>
+            </div>
+            <button type="button" id="copySupportEmailBtn" class="support-copy-pill" title="Copy Email">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span id="copySupportText">Copy</span>
+            </button>
+          </div>
+
+          <a id="directSupportEmailRedirectBtn" href="mailto:asycs@proton.me?subject=AS%20Cloud%20Support%20Request" class="support-redirect-btn" target="_blank" rel="noopener noreferrer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            <span>Open Email App to asycs@proton.me</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        </div>
+
+        <!-- Quick In-App Ticket Form -->
+        <div class="support-form-divider">
+          <span>Or send ticket directly from here</span>
+        </div>
+
+        <form id="inAppSupportForm" class="support-ticket-form" onsubmit="return false;">
+          <div class="support-form-group">
+            <label for="supportTicketSubject">Subject / Issue Topic</label>
+            <input type="text" id="supportTicketSubject" class="support-input" placeholder="e.g. Question about login or real-time messages" required>
+          </div>
+          <div class="support-form-group">
+            <label for="supportTicketMessage">Message / Query</label>
+            <textarea id="supportTicketMessage" class="support-textarea" rows="3" placeholder="Describe your question or issue in detail..." required></textarea>
+          </div>
+
+          <div id="supportTicketAlert" class="support-ticket-alert" style="display: none;"></div>
+
+          <button type="button" id="sendSupportTicketBtn" class="support-submit-btn">
+            <span>Send to Support Desk</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js" defer></script>
 </body>
 </html>

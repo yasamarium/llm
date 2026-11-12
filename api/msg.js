@@ -701,6 +701,130 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------------------------
+    // 1.6 24/7 AI Support Ticket Dispatch (asycs@proton.me)
+    // -------------------------------------------------------------------------
+    if (action === "support_ticket" && req.method === "POST") {
+      const { subject, message, email, username } = req.body || {};
+      if (!message || typeof message !== "string") {
+        return res.status(400).json({ error: "Message text is required." });
+      }
+
+      const relay = await getRelayUrl();
+      if (relay) {
+        try {
+          fetch(`${relay}/api/support/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fromEmail: email || "support-request@ascloud.local",
+              name: username || "Member",
+              subject: subject || "Support Ticket",
+              message: message.trim(),
+            }),
+          }).catch(() => {});
+        } catch (_) {}
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        message: "Support ticket received. An automated AI response will be sent to your email from asycs@proton.me.",
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 1.6 24/7 AI Support Ticket Dispatch (asycs@proton.me)
+    // -------------------------------------------------------------------------
+    if (action === "support_ticket" && req.method === "POST") {
+      const { subject, message, email, username } = req.body || {};
+      if (!message || typeof message !== "string") {
+        return res.status(400).json({ error: "Message text is required." });
+      }
+
+      const relay = await getRelayUrl();
+      if (relay) {
+        try {
+          fetch(`${relay}/api/support/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fromEmail: email || "support-request@ascloud.local",
+              name: username || "Member",
+              subject: subject || "Support Ticket",
+              message: message.trim(),
+            }),
+          }).catch(() => {});
+        } catch (_) {}
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        message: "Support ticket received. An automated AI response will be sent to your email from asycs@proton.me.",
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 1.6 24/7 AI Support Ticket Dispatch (asycs@proton.me)
+    // -------------------------------------------------------------------------
+    if (action === "support_ticket" && req.method === "POST") {
+      const { subject, message, email, username } = req.body || {};
+      if (!message || typeof message !== "string") {
+        return res.status(400).json({ error: "Message text is required." });
+      }
+
+      const relay = await getRelayUrl();
+      if (relay) {
+        try {
+          fetch(`${relay}/api/support/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fromEmail: email || "support-request@ascloud.local",
+              name: username || "Member",
+              subject: subject || "Support Ticket",
+              message: message.trim(),
+            }),
+          }).catch(() => {});
+        } catch (_) {}
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        message: "Support ticket received. An automated AI response will be sent to your email from asycs@proton.me.",
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 1.6 24/7 AI Support Ticket Dispatch (asycs@proton.me)
+    // -------------------------------------------------------------------------
+    if (action === "support_ticket" && req.method === "POST") {
+      const { subject, message, email, username } = req.body || {};
+      if (!message || typeof message !== "string") {
+        return res.status(400).json({ error: "Message text is required." });
+      }
+
+      const relay = await getRelayUrl();
+      if (relay) {
+        try {
+          fetch(`${relay}/api/support/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fromEmail: email || "support-request@ascloud.local",
+              name: username || "Member",
+              subject: subject || "Support Ticket",
+              message: message.trim(),
+            }),
+          }).catch(() => {});
+        } catch (_) {}
+      }
+
+      return res.status(200).json({
+        status: "ok",
+        message: "Support ticket received. An automated AI response will be sent to your email from asycs@proton.me.",
+      });
+    }
+
+    // -------------------------------------------------------------------------
     // 2. User Registration (Instagram Style: Username + Password)
     // -------------------------------------------------------------------------
     if (action === "register" && req.method === "POST") {

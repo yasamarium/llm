@@ -1554,7 +1554,12 @@
   if (userProfileChip) userProfileChip.addEventListener("click", openProfileModal);
 
   function renderNavProfile() {
-    if (!currentUser) return;
+    const railSupportBtn = document.getElementById("railSupportBtn");
+    if (!currentUser) {
+      if (railSupportBtn) railSupportBtn.style.display = "none";
+      return;
+    }
+    if (railSupportBtn) railSupportBtn.style.display = "flex";
     if (navUserAvatarSlot) {
       const name = currentUser.displayName || currentUser.username;
       navUserAvatarSlot.innerHTML = renderAvatarHtml(name, currentUser.pfp, "avatar-sm");
@@ -4122,6 +4127,34 @@
 
     showAuthOverlay("login");
   }
+
+  // Home Support Modal Handlers
+  window.openHomeSupportModal = function () {
+    const modal = document.getElementById("homeSupportModal");
+    if (modal) modal.style.display = "flex";
+    const directBtn = document.getElementById("homeDirectSupportEmailRedirectBtn");
+    if (directBtn && currentUser) {
+      directBtn.href = `mailto:asycs@proton.me?subject=${encodeURIComponent("AS Cloud Support Request (@" + currentUser.username + ")")}&body=${encodeURIComponent("Hello AS Cloud Support Team,\n\nAccount: @" + currentUser.username + "\n\nPlease describe your inquiry:\n")}`;
+    }
+  };
+
+  window.closeHomeSupportModal = function () {
+    const modal = document.getElementById("homeSupportModal");
+    if (modal) modal.style.display = "none";
+  };
+
+  const copyHomeSupportBtn = document.getElementById("copyHomeSupportBtn");
+  if (copyHomeSupportBtn) {
+    copyHomeSupportBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText("asycs@proton.me").then(() => {
+        copyHomeSupportBtn.textContent = "Copied!";
+        setTimeout(() => { copyHomeSupportBtn.textContent = "Copy"; }, 2000);
+      }).catch(() => {});
+    });
+  }
+
+  const railSupportBtn = document.getElementById("railSupportBtn");
+  if (railSupportBtn) railSupportBtn.addEventListener("click", window.openHomeSupportModal);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
