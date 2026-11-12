@@ -622,6 +622,53 @@
       margin-top: 4px;
     }
 
+    /* Invite-Only Gate Styling */
+    .invite-glyph {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%) !important;
+      border: 1px solid rgba(245, 158, 11, 0.45) !important;
+      color: #fbbf24 !important;
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2) !important;
+    }
+    .invite-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 12px;
+      background: rgba(245, 158, 11, 0.12); color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .invite-pulse-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #fbbf24; box-shadow: 0 0 8px #fbbf24;
+      animation: pulseGlow 1.8s infinite;
+    }
+    .invite-btn {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+      box-shadow: 0 4px 18px rgba(245, 158, 11, 0.38) !important;
+    }
+    .invite-btn:hover {
+      box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5) !important;
+      transform: translateY(-1.5px);
+    }
+    .invite-gate-success {
+      background: rgba(48, 209, 88, 0.15); border: 1px solid rgba(48, 209, 88, 0.4);
+      color: #30d158; border-radius: 10px; padding: 10px 12px;
+      font-size: 12px; display: flex; align-items: center; gap: 8px; font-weight: 600;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .invite-footer-sec {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      color: #64748b; font-size: 11px; margin-top: 6px;
+    }
+    .shake-anim {
+      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
     /* Custom Edit Profile Modal */
     .modal-backdrop-custom {
       position: fixed; inset: 0; z-index: 100000;
@@ -1449,6 +1496,99 @@
         <button type="button" id="closeAuthGateBtn" class="auth-gate-close-btn" onclick="window.hideASAuthGate && window.hideASAuthGate()" aria-label="Close dialog">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
+
+      <!-- VIEW 1: INVITE-ONLY GATE (Shifted before login) -->
+      <div id="authInviteGateView">
+        <div class="auth-gate-header">
+          <div class="auth-brand-glyph invite-glyph">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h2 class="auth-gate-title">Invite-Only Access</h2>
+          <p class="auth-gate-sub">This service is private. Please enter your permanent membership code or an invitation key to continue.</p>
+          <div class="invite-badge">
+            <span class="invite-pulse-dot"></span>
+            <span>Private Community Gate</span>
+          </div>
+        </div>
+
+        <!-- Segmented Control: Membership Code vs Invite Key -->
+        <div class="auth-segmented-tabs" style="margin-top: 6px;">
+          <button type="button" id="tabChoiceMembership" class="auth-seg-tab active" onclick="window.switchInviteChoice && window.switchInviteChoice('membership')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Membership Code
+          </button>
+          <button type="button" id="tabChoiceInvite" class="auth-seg-tab" onclick="window.switchInviteChoice && window.switchInviteChoice('invite')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
+              <path d="M21 2l-2 2m-2-2l2 2"/><path d="M15.5 8.5l3 3L7 23l-4-1 1-4L15.5 8.5z"/>
+            </svg>
+            Invite Key
+          </button>
+        </div>
+
+        <!-- Invite Gate Live Error Banner -->
+        <div id="inviteGateError" class="auth-gate-error" style="display: none;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="inviteGateErrorText">Error message</span>
+        </div>
+
+        <!-- Invite Gate Success Banner -->
+        <div id="inviteGateSuccess" class="invite-gate-success" style="display: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          <span id="inviteGateSuccessText">Access Verified! Opening login portal...</span>
+        </div>
+
+        <!-- Option 1: Permanent Membership Code Form -->
+        <form id="inviteMembershipForm" class="auth-gate-form" onsubmit="return false;">
+          <div class="auth-form-group">
+            <label for="inviteMembershipCode">Permanent Membership Code</label>
+            <div class="auth-input-wrapper">
+              <span class="auth-input-prefix">🔑</span>
+              <input type="password" id="inviteMembershipCode" placeholder="Enter membership code" autocomplete="off" required>
+              <button type="button" class="auth-eye-btn" data-target="inviteMembershipCode" aria-label="Toggle code visibility">
+                <svg class="eye-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <span class="auth-hint">Enter your private permanent membership code to unlock access.</span>
+          </div>
+
+          <button type="button" id="inviteMembershipBtn" class="auth-submit-btn invite-btn">
+            <span>Unlock Access</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </form>
+
+        <!-- Option 2: Invitation Key Form -->
+        <form id="inviteKeyForm" class="auth-gate-form" style="display: none;" onsubmit="return false;">
+          <div class="auth-form-group">
+            <label for="inviteKeyInput">Invitation Key</label>
+            <div class="auth-input-wrapper">
+              <span class="auth-input-prefix">🎟️</span>
+              <input type="text" id="inviteKeyInput" placeholder="Enter invite key (e.g. AS-INV-XXXX)" autocomplete="off" required>
+            </div>
+            <span class="auth-hint">Enter single-use invite ticket issued by an administrator.</span>
+          </div>
+
+          <button type="button" id="inviteKeyBtn" class="auth-submit-btn invite-btn">
+            <span>Verify Invitation Key</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </form>
+
+        <div class="invite-footer-sec">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>End-to-end encrypted • Private invite-only access</span>
+        </div>
+      </div>
+
+      <!-- VIEW 2: MAIN AUTH PORTAL (Unlocks after gate clearance) -->
+      <div id="authMainPortalView" style="display: none;">
       <div class="auth-gate-header">
         <div class="auth-brand-glyph">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1759,6 +1899,7 @@
           <span>Prefer standard password?</span>
           <button type="button" class="auth-switch-link" onclick="window.switchAuthTab && window.switchAuthTab('signin')">Sign In</button>
         </div>
+      </div>
       </div>
     </div>
   </div>

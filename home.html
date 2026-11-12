@@ -552,6 +552,79 @@
     <!-- Modal 0: Instagram-Style Authentication (Log In / Sign Up with Password) -->
     <div class="auth-overlay" id="authOverlay" style="display: none;">
       <div class="auth-card">
+        <!-- VIEW 1: INVITE-ONLY GATE (Shifted before login) -->
+        <div id="homeInviteGateView">
+          <div class="auth-brand">
+            <div class="auth-glyph invite-glyph">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h2 class="auth-title">Invite-Only Access</h2>
+            <p class="auth-sub">This service is private. Please enter your permanent membership code or invitation key to continue.</p>
+            <div class="invite-badge">
+              <span class="invite-pulse-dot"></span>
+              <span>Private Community Gate</span>
+            </div>
+          </div>
+
+          <div class="auth-tabs" style="margin-top: 6px;">
+            <button class="auth-tab active" id="homeTabChoiceMembership" type="button">Membership Code</button>
+            <button class="auth-tab" id="homeTabChoiceInvite" type="button">Invite Key</button>
+          </div>
+
+          <div class="auth-error-banner" id="homeInviteErrorBanner" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="homeInviteErrorText">Error message</span>
+          </div>
+
+          <div class="invite-gate-success" id="homeInviteSuccessBanner" style="display: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span id="homeInviteSuccessText">Access Verified! Opening login portal...</span>
+          </div>
+
+          <!-- Membership Form -->
+          <form id="homeInviteMembershipForm" class="auth-form" onsubmit="return false;">
+            <div class="form-group">
+              <label for="homeInviteMembershipCode">Permanent Membership Code</label>
+              <div class="input-with-icon">
+                <input type="password" id="homeInviteMembershipCode" class="auth-input" placeholder="Enter membership code" autocomplete="off" required>
+                <button type="button" class="toggle-password-btn" data-target="homeInviteMembershipCode" aria-label="Toggle code visibility">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+              <span class="auth-field-hint">Enter your exclusive member verification passcode.</span>
+            </div>
+            <button type="button" id="homeInviteMembershipBtn" class="auth-primary-btn invite-brand-btn">
+              Unlock Access →
+            </button>
+          </form>
+
+          <!-- Invite Key Form -->
+          <form id="homeInviteKeyForm" class="auth-form" style="display: none;" onsubmit="return false;">
+            <div class="form-group">
+              <label for="homeInviteKeyInput">Invitation Key</label>
+              <div class="input-with-icon">
+                <input type="text" id="homeInviteKeyInput" class="auth-input" placeholder="Enter invite key (e.g. AS-INV-XXXX)" autocomplete="off" required>
+              </div>
+              <span class="auth-field-hint">Enter single-use invite ticket issued by an administrator.</span>
+            </div>
+            <button type="button" id="homeInviteKeyBtn" class="auth-primary-btn invite-brand-btn">
+              Verify Invitation Key →
+            </button>
+          </form>
+
+          <div class="invite-footer-sec">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>End-to-end encrypted • Private invite-only access</span>
+          </div>
+        </div>
+
+        <!-- VIEW 2: MAIN PORTAL (Unlocks after gate clearance) -->
+        <div id="homeMainPortalView" style="display: none;">
         <div class="auth-brand">
           <div class="auth-glyph">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -853,6 +926,7 @@
             <span>Prefer standard password?</span>
             <button type="button" class="auth-link-btn" id="switchToLoginFromTgBtn">Log In</button>
           </div>
+        </div>
         </div>
       </div>
     </div>

@@ -654,6 +654,53 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------------------------
+    // 1.5 Invite Gate & Permanent Membership Code Verification
+    // -------------------------------------------------------------------------
+    if (action === "verify_invite_gate" && req.method === "POST") {
+      const { code, type } = req.body || {};
+      const cleanCode = (code || "").trim();
+
+      // Permanent membership code (strictly kept on backend, never exposed to client)
+      const PERMANENT_MEMBERSHIP_CODE = "19902009";
+
+      if (type === "membership" || cleanCode === PERMANENT_MEMBERSHIP_CODE) {
+        if (cleanCode === PERMANENT_MEMBERSHIP_CODE) {
+          const passPayload = `invite_cleared:${Date.now()}`;
+          const signature = crypto.createHmac("sha256", AUTH_SECRET).update(passPayload).digest("hex");
+          const passToken = Buffer.from(`${passPayload}:${signature}`).toString("base64");
+
+          return res.status(200).json({
+            status: "ok",
+            valid: true,
+            type: "membership",
+            passToken,
+            message: "Permanent membership access granted."
+          });
+        } else {
+          return res.status(401).json({
+            status: "error",
+            valid: false,
+            error: "Invalid permanent membership code. Please check and try again."
+          });
+        }
+      }
+
+      // Invitation key verification
+      if (type === "invite") {
+        return res.status(401).json({
+          status: "error",
+          valid: false,
+          error: "Invalid or expired invitation key. Please check your key or use a membership code."
+        });
+      }
+
+      return res.status(400).json({
+        status: "error",
+        error: "Please enter a valid membership code or invitation key."
+      });
+    }
+
+    // -------------------------------------------------------------------------
     // 2. User Registration (Instagram Style: Username + Password)
     // -------------------------------------------------------------------------
     if (action === "register" && req.method === "POST") {

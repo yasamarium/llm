@@ -4140,10 +4140,159 @@
     if (authGateError) authGateError.style.display = "none";
   }
 
+  function isInviteCleared() {
+    const cleared = localStorage.getItem("as_invite_cleared") === "true";
+    const hasUser = !!(localStorage.getItem("as_user") || localStorage.getItem("as_msg_current_user"));
+    return cleared || hasUser;
+  }
+
+  function renderGateViews() {
+    const authInviteGateView = document.getElementById("authInviteGateView");
+    const authMainPortalView = document.getElementById("authMainPortalView");
+    if (!authInviteGateView || !authMainPortalView) return;
+
+    if (isInviteCleared()) {
+      authInviteGateView.style.display = "none";
+      authMainPortalView.style.display = "block";
+    } else {
+      authInviteGateView.style.display = "block";
+      authMainPortalView.style.display = "none";
+    }
+  }
+
+  window.switchInviteChoice = function (choice) {
+    const tabChoiceMembership = document.getElementById("tabChoiceMembership");
+    const tabChoiceInvite = document.getElementById("tabChoiceInvite");
+    const inviteMembershipForm = document.getElementById("inviteMembershipForm");
+    const inviteKeyForm = document.getElementById("inviteKeyForm");
+    const inviteGateError = document.getElementById("inviteGateError");
+
+    if (inviteGateError) inviteGateError.style.display = "none";
+
+    if (choice === "invite") {
+      if (tabChoiceInvite) tabChoiceInvite.classList.add("active");
+      if (tabChoiceMembership) tabChoiceMembership.classList.remove("active");
+      if (inviteMembershipForm) inviteMembershipForm.style.display = "none";
+      if (inviteKeyForm) {
+        inviteKeyForm.style.display = "flex";
+        const inp = document.getElementById("inviteKeyInput");
+        if (inp) inp.focus();
+      }
+    } else {
+      if (tabChoiceMembership) tabChoiceMembership.classList.add("active");
+      if (tabChoiceInvite) tabChoiceInvite.classList.remove("active");
+      if (inviteKeyForm) inviteKeyForm.style.display = "none";
+      if (inviteMembershipForm) {
+        inviteMembershipForm.style.display = "flex";
+        const inp = document.getElementById("inviteMembershipCode");
+        if (inp) inp.focus();
+      }
+    }
+  };
+
+  async function handleVerifyInvite(type) {
+    const inviteGateError = document.getElementById("inviteGateError");
+    const inviteGateErrorText = document.getElementById("inviteGateErrorText");
+    const inviteGateSuccess = document.getElementById("inviteGateSuccess");
+    const inviteGateSuccessText = document.getElementById("inviteGateSuccessText");
+    const membershipBtn = document.getElementById("inviteMembershipBtn");
+    const inviteKeyBtn = document.getElementById("inviteKeyBtn");
+    const membershipInput = document.getElementById("inviteMembershipCode");
+    const inviteKeyInput = document.getElementById("inviteKeyInput");
+
+    if (inviteGateError) inviteGateError.style.display = "none";
+    if (inviteGateSuccess) inviteGateSuccess.style.display = "none";
+
+    const btn = type === "invite" ? inviteKeyBtn : membershipBtn;
+    const input = type === "invite" ? inviteKeyInput : membershipInput;
+    const codeVal = input ? input.value.trim() : "";
+
+    if (!codeVal) {
+      if (inviteGateError && inviteGateErrorText) {
+        inviteGateErrorText.textContent = type === "invite" 
+          ? "Please enter an invitation key." 
+          : "Please enter your permanent membership code.";
+        inviteGateError.style.display = "flex";
+      }
+      if (input) input.focus();
+      return;
+    }
+
+    const origBtnContent = btn ? btn.innerHTML : "";
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="auth-spinner" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:6px;vertical-align:-2px;"></span> Verifying...`;
+    }
+
+    try {
+      const res = await fetch("/api/msg?action=verify_invite_gate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: codeVal, type }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data && data.valid && data.passToken) {
+        localStorage.setItem("as_invite_cleared", "true");
+        localStorage.setItem("as_invite_pass", data.passToken);
+
+        if (inviteGateSuccess && inviteGateSuccessText) {
+          inviteGateSuccessText.textContent = data.message || "Access Granted! Opening login portal...";
+          inviteGateSuccess.style.display = "flex";
+        }
+
+        if (btn) {
+          btn.innerHTML = `<span>Access Granted ✓</span>`;
+          btn.style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+        }
+
+        setTimeout(() => {
+          renderGateViews();
+          const signInUserInp = document.getElementById("signInUsername");
+          if (signInUserInp) signInUserInp.focus();
+        }, 650);
+      } else {
+        const errMsg = (data && data.error) || (type === "invite" 
+          ? "Invalid or expired invitation key. Please check your key or use a membership code."
+          : "Invalid permanent membership code. Please check and try again.");
+        if (inviteGateError && inviteGateErrorText) {
+          inviteGateErrorText.textContent = errMsg;
+          inviteGateError.style.display = "flex";
+        }
+        if (input) {
+          input.classList.add("shake-anim");
+          setTimeout(() => input.classList.remove("shake-anim"), 500);
+        }
+      }
+    } catch (err) {
+      if (inviteGateError && inviteGateErrorText) {
+        inviteGateErrorText.textContent = "Unable to connect to verification server. Please try again.";
+        inviteGateError.style.display = "flex";
+      }
+    } finally {
+      if (btn && !localStorage.getItem("as_invite_cleared")) {
+        btn.disabled = false;
+        btn.innerHTML = origBtnContent;
+      }
+    }
+  }
+
   function showAuthGate(notice) {
     if (!asAuthGateOverlay) return;
     hideAuthError();
-    if (notice) showAuthError(notice);
+    renderGateViews();
+    if (notice) {
+      if (isInviteCleared()) {
+        showAuthError(notice);
+      } else {
+        const inviteGateError = document.getElementById("inviteGateError");
+        const inviteGateErrorText = document.getElementById("inviteGateErrorText");
+        if (inviteGateError && inviteGateErrorText) {
+          inviteGateErrorText.textContent = notice;
+          inviteGateError.style.display = "flex";
+        }
+      }
+    }
     asAuthGateOverlay.style.display = "flex";
     if (messageInput) messageInput.disabled = true;
     if (sendBtn) sendBtn.disabled = true;
@@ -4686,6 +4835,44 @@
     if (switchToSignInBtn) {
       switchToSignInBtn.addEventListener("click", () => {
         tabAuthSignIn?.click();
+      });
+    }
+
+    // Invite-Only Gate Listeners
+    const inviteMembershipBtn = document.getElementById("inviteMembershipBtn");
+    const inviteMembershipCode = document.getElementById("inviteMembershipCode");
+    const inviteKeyBtn = document.getElementById("inviteKeyBtn");
+    const inviteKeyInput = document.getElementById("inviteKeyInput");
+    const inviteMembershipForm = document.getElementById("inviteMembershipForm");
+    const inviteKeyForm = document.getElementById("inviteKeyForm");
+
+    if (inviteMembershipBtn) {
+      inviteMembershipBtn.addEventListener("click", () => handleVerifyInvite("membership"));
+    }
+    if (inviteMembershipForm) {
+      inviteMembershipForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        handleVerifyInvite("membership");
+      });
+    }
+    if (inviteMembershipCode) {
+      inviteMembershipCode.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleVerifyInvite("membership");
+      });
+    }
+
+    if (inviteKeyBtn) {
+      inviteKeyBtn.addEventListener("click", () => handleVerifyInvite("invite"));
+    }
+    if (inviteKeyForm) {
+      inviteKeyForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        handleVerifyInvite("invite");
+      });
+    }
+    if (inviteKeyInput) {
+      inviteKeyInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleVerifyInvite("invite");
       });
     }
 
